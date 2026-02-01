@@ -1,6 +1,7 @@
 ---
 import { REPO_URL, withBase } from "@/config";
 import "../styles/global.css";
+import ThemeToggle from "@/components/ThemeToggle.astro";
 
 interface Props {
   title: string;
@@ -17,6 +18,18 @@ const { title, description = "AI Cookbook - Jupyter notebook examples" } = Astro
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href={withBase("/favicon.svg")} />
+    <!-- Theme initialization script - runs before page renders to prevent flicker -->
+    <script is:inline>
+      (function() {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (theme === 'high-contrast') {
+          document.documentElement.classList.add('high-contrast');
+        }
+        // 'light' is default - no class needed
+      })();
+    </script>
     <link
       rel="alternate"
       type="application/rss+xml"
@@ -34,6 +47,7 @@ const { title, description = "AI Cookbook - Jupyter notebook examples" } = Astro
           📘 Forgebook
         </a>
         <div class="flex items-center gap-4">
+          <ThemeToggle />
           <a
             href={withBase("/rss.xml")}
             class="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
