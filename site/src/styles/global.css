@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Custom theme overrides using Tailwind v4 @theme */
 @theme {
   --font-sans: "Inter", "system-ui", sans-serif;
@@ -62,4 +65,129 @@ img.emoji {
   margin: 0 0.05em 0 0.1em;
   vertical-align: -0.15em;
   display: inline;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --hc-bg: #000000;
+  --hc-bg-elevated: #1a1a1a;
+  --hc-text: #ffffff;
+  --hc-text-muted: #e0e0e0;
+  --hc-border: #ffffff;
+  --hc-link: #ffff00;
+  --hc-link-hover: #ffffff;
+  --hc-accent: #00ffff;
+}
+
+.high-contrast body {
+  background-color: var(--hc-bg);
+  color: var(--hc-text);
+}
+
+.high-contrast header {
+  background-color: var(--hc-bg) !important;
+  border-color: var(--hc-border) !important;
+}
+
+.high-contrast footer {
+  border-color: var(--hc-border) !important;
+}
+
+.high-contrast a {
+  color: var(--hc-link);
+}
+
+.high-contrast a:hover {
+  color: var(--hc-link-hover);
+}
+
+.high-contrast h1,
+.high-contrast h2,
+.high-contrast h3,
+.high-contrast h4,
+.high-contrast h5,
+.high-contrast h6 {
+  color: var(--hc-text);
+}
+
+.high-contrast p,
+.high-contrast span,
+.high-contrast div {
+  color: var(--hc-text);
+}
+
+/* High contrast cards */
+.high-contrast .bg-white,
+.high-contrast .bg-slate-50,
+.high-contrast .bg-slate-100 {
+  background-color: var(--hc-bg-elevated) !important;
+}
+
+.high-contrast .border-slate-200,
+.high-contrast .border-slate-700 {
+  border-color: var(--hc-border) !important;
+}
+
+.high-contrast .text-slate-900,
+.high-contrast .text-slate-800,
+.high-contrast .text-slate-700 {
+  color: var(--hc-text) !important;
+}
+
+.high-contrast .text-slate-600,
+.high-contrast .text-slate-500,
+.high-contrast .text-slate-400 {
+  color: var(--hc-text-muted) !important;
+}
+
+.high-contrast .text-blue-600,
+.high-contrast .text-blue-400 {
+  color: var(--hc-link) !important;
+}
+
+/* High contrast code blocks */
+.high-contrast pre {
+  background-color: var(--hc-bg-elevated) !important;
+  border: 1px solid var(--hc-border);
+}
+
+.high-contrast code {
+  color: var(--hc-accent);
+}
+
+.high-contrast .notebook-cell-output {
+  background-color: var(--hc-bg-elevated);
+  border: 1px solid var(--hc-border);
+}
+
+/* High contrast tags and badges */
+.high-contrast .bg-slate-800,
+.high-contrast .bg-slate-700 {
+  background-color: var(--hc-bg-elevated) !important;
+  border: 1px solid var(--hc-border);
+}
+
+.high-contrast .rounded-full {
+  border: 1px solid var(--hc-border);
+}
+
+/* High contrast prose (for notebook content) */
+.high-contrast .prose {
+  --tw-prose-body: var(--hc-text);
+  --tw-prose-headings: var(--hc-text);
+  --tw-prose-links: var(--hc-link);
+  --tw-prose-bold: var(--hc-text);
+  --tw-prose-code: var(--hc-accent);
+  --tw-prose-pre-bg: var(--hc-bg-elevated);
+}
+
+/* High contrast notebook content */
+.high-contrast .notebook-content h1,
+.high-contrast .notebook-content h2,
+.high-contrast .notebook-content h3 {
+  color: var(--hc-text) !important;
+}
+
+.high-contrast .notebook-content p {
+  color: var(--hc-text) !important;
 }

@@ -1,0 +1,110 @@
+---
+/**
+ * Theme Toggle component for switching between light, dark, and high-contrast modes.
+ * Uses localStorage to persist theme preference across navigation.
+ */
+---
+
+<div class="theme-toggle flex items-center gap-1">
+  <button
+    id="theme-light"
+    class="theme-btn p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 high-contrast:text-white high-contrast:hover:bg-gray-800 transition-colors"
+    title="Light mode"
+    aria-label="Switch to light mode"
+  >
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="5" />
+      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+    </svg>
+  </button>
+  <button
+    id="theme-dark"
+    class="theme-btn p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 high-contrast:text-white high-contrast:hover:bg-gray-800 transition-colors"
+    title="Dark mode"
+    aria-label="Switch to dark mode"
+  >
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  </button>
+  <button
+    id="theme-high-contrast"
+    class="theme-btn p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 high-contrast:text-white high-contrast:hover:bg-gray-800 transition-colors"
+    title="High contrast mode"
+    aria-label="Switch to high contrast mode"
+  >
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" />
+    </svg>
+  </button>
+</div>
+
+<style>
+  .theme-btn[data-active="true"] {
+    background-color: rgb(219 234 254);
+    color: rgb(37 99 235);
+  }
+  
+  :global(.dark) .theme-btn[data-active="true"] {
+    background-color: rgb(30 58 138);
+    color: rgb(147 197 253);
+  }
+  
+  :global(.high-contrast) .theme-btn[data-active="true"] {
+    background-color: rgb(255 255 255);
+    color: rgb(0 0 0);
+  }
+</style>
+
+<script>
+  function initThemeToggle() {
+    const lightBtn = document.getElementById('theme-light');
+    const darkBtn = document.getElementById('theme-dark');
+    const highContrastBtn = document.getElementById('theme-high-contrast');
+    
+    function setTheme(theme: string) {
+      const html = document.documentElement;
+      
+      // Remove all theme classes
+      html.classList.remove('dark', 'high-contrast');
+      
+      // Apply new theme class
+      if (theme === 'dark') {
+        html.classList.add('dark');
+      } else if (theme === 'high-contrast') {
+        html.classList.add('high-contrast');
+      }
+      // 'light' has no class
+      
+      // Save to localStorage
+      localStorage.setItem('theme', theme);
+      
+      // Update active states
+      updateActiveStates(theme);
+    }
+    
+    function updateActiveStates(theme: string) {
+      lightBtn?.setAttribute('data-active', theme === 'light' ? 'true' : 'false');
+      darkBtn?.setAttribute('data-active', theme === 'dark' ? 'true' : 'false');
+      highContrastBtn?.setAttribute('data-active', theme === 'high-contrast' ? 'true' : 'false');
+    }
+    
+    // Event listeners
+    lightBtn?.addEventListener('click', () => setTheme('light'));
+    darkBtn?.addEventListener('click', () => setTheme('dark'));
+    highContrastBtn?.addEventListener('click', () => setTheme('high-contrast'));
+    
+    // Initialize active states based on current theme
+    const currentTheme = localStorage.getItem('theme') || 
+      (document.documentElement.classList.contains('high-contrast') ? 'high-contrast' :
+       document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    updateActiveStates(currentTheme);
+  }
+  
+  // Run on page load
+  initThemeToggle();
+  
+  // Re-run on Astro page navigation (View Transitions / client-side nav)
+  document.addEventListener('astro:page-load', initThemeToggle);
+</script>
