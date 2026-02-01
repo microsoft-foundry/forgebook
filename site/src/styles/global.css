@@ -67,7 +67,10 @@ img.emoji {
   display: inline;
 }
 
-/* High Contrast Mode */
+/* High Contrast Mode 
+ * Note: !important is used to override Tailwind utility classes which have high specificity.
+ * This is a standard practice for accessibility override styles that need to take precedence.
+ */
 .high-contrast {
   --hc-bg: #000000;
   --hc-bg-elevated: #1a1a1a;

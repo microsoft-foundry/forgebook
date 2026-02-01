@@ -96,10 +96,14 @@
     highContrastBtn?.addEventListener('click', () => setTheme('high-contrast'));
     
     // Initialize active states based on current theme
-    const currentTheme = localStorage.getItem('theme') || 
-      (document.documentElement.classList.contains('high-contrast') ? 'high-contrast' :
-       document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-    updateActiveStates(currentTheme);
+    function getCurrentTheme(): string {
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme) return storedTheme;
+      if (document.documentElement.classList.contains('high-contrast')) return 'high-contrast';
+      if (document.documentElement.classList.contains('dark')) return 'dark';
+      return 'light';
+    }
+    updateActiveStates(getCurrentTheme());
   }
   
   // Run on page load
