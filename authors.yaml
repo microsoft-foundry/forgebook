@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=./.github/authors_schema.json
+
+# Optional author metadata cache.
+# If an author is not listed here, their info will be fetched from GitHub API.
+# Use this to override display names, provide custom avatars, or add social links.
+
+# Example:
+# nbrady:
+#   name: "Nick Brady"
+#   website: "https://example.com"
+#   avatar: "https://avatars.githubusercontent.com/u/12345?v=4"

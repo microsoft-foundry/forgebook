@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Authors Schema",
+  "description": "Schema for the authors.yaml file",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Display name for the author"
+      },
+      "website": {
+        "type": "string",
+        "format": "uri",
+        "description": "Author's website or social profile URL"
+      },
+      "avatar": {
+        "type": "string",
+        "format": "uri",
+        "description": "URL to author's avatar image"
+      }
+    },
+    "additionalProperties": false
+  }
+}

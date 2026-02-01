@@ -1,0 +1,50 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Custom theme overrides using Tailwind v4 @theme */
+@theme {
+  --font-sans: "Inter", "system-ui", sans-serif;
+  --color-primary: oklch(0.6 0.2 250);
+  --color-accent: oklch(0.7 0.15 180);
+}
+
+/* Base styles */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Code block styling */
+pre[class*="language-"] {
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+}
+
+code[class*="language-"] {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+/* Notebook cell styling */
+.notebook-cell {
+  margin-bottom: 1rem;
+}
+
+.notebook-cell-code {
+  background-color: rgb(15 23 42);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.notebook-cell-output {
+  background-color: rgb(241 245 249);
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  padding: 1rem;
+  font-size: 0.875rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.dark .notebook-cell-output {
+  background-color: rgb(30 41 59);
+}

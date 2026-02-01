@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=./.github/registry_schema.json
+
+# Registry of notebooks to publish on the site.
+# Each entry maps a notebook to its metadata for the website.
+#
+# Required fields:
+#   - slug: URL-safe identifier (used in site URLs)
+#   - path: Path to the notebook file relative to repo root
+#   - title: Display title for the notebook
+#   - authors: List of author GitHub usernames
+#
+# Optional fields:
+#   - description: Short description for previews
+#   - date: Publication date (YYYY-MM-DD)
+#   - tags: List of topic tags
+
+- slug: hello-world
+  path: notebooks/examples/hello-world.ipynb
+  title: "Hello World"
+  description: "A simple introductory notebook demonstrating the basics."
+  date: "2026-02-01"
+  authors:
+    - github: nbrady
+  tags:
+    - getting-started

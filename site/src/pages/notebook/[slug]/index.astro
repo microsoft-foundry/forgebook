@@ -1,0 +1,128 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import AuthorCard from "@/components/AuthorCard.astro";
+import NotebookActions from "@/components/NotebookActions.astro";
+import { getCollection } from "astro:content";
+import { renderNotebook } from "@/lib/notebook";
+import { resolveAuthors } from "@/lib/registry";
+
+export async function getStaticPaths() {
+  const notebooks = await getCollection("notebooks");
+  return notebooks.map((notebook) => ({
+    params: { slug: notebook.data.slug },
+    props: { notebook },
+  }));
+}
+
+const { notebook } = Astro.props;
+const renderedHtml = renderNotebook(notebook.data.notebook);
+const authors = await resolveAuthors(notebook.data.authors);
+---
+
+<BaseLayout title={notebook.data.title} description={notebook.data.description}>
+  <article class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+        {notebook.data.title}
+      </h1>
+      {
+        notebook.data.description && (
+          <p class="text-lg text-slate-600 dark:text-slate-400 mb-6">
+            {notebook.data.description}
+          </p>
+        )
+      }
+
+      <NotebookActions notebookPath={notebook.data.path} slug={notebook.data.slug} />
+    </header>
+
+    <!-- Authors -->
+    <section class="mb-8">
+      <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
+        Authors
+      </h2>
+      <div class="flex flex-wrap gap-2">
+        {authors.map((author) => <AuthorCard {...author} />)}
+      </div>
+    </section>
+
+    <!-- Notebook Content -->
+    <section class="prose prose-slate dark:prose-invert max-w-none">
+      <div class="notebook-content" set:html={renderedHtml} />
+    </section>
+
+    <!-- Tags -->
+    {
+      notebook.data.tags && notebook.data.tags.length > 0 && (
+        <section class="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
+          <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
+            Tags
+          </h2>
+          <div class="flex flex-wrap gap-2">
+            {notebook.data.tags.map((tag) => (
+              <span class="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>
+
+<style is:global>
+  .notebook-content pre {
+    background-color: rgb(15 23 42);
+    color: rgb(241 245 249);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    margin: 1rem 0;
+  }
+
+  .notebook-content code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+      "Liberation Mono", monospace;
+  }
+
+  .notebook-content h1,
+  .notebook-content h2,
+  .notebook-content h3 {
+    font-weight: 700;
+    color: rgb(15 23 42);
+  }
+
+  :global(.dark) .notebook-content h1,
+  :global(.dark) .notebook-content h2,
+  :global(.dark) .notebook-content h3 {
+    color: rgb(241 245 249);
+  }
+
+  .notebook-content h1 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+  .notebook-content h2 {
+    font-size: 1.25rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .notebook-content h3 {
+    font-size: 1.125rem;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .notebook-content p {
+    margin: 1rem 0;
+    color: rgb(51 65 85);
+  }
+
+  :global(.dark) .notebook-content p {
+    color: rgb(203 213 225);
+  }
+</style>

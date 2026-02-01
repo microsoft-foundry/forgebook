@@ -1,0 +1,51 @@
+---
+import { REPO_URL, withBase } from "@/config";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "AI Cookbook - Jupyter notebook examples" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | Forgebook</title>
+  </head>
+  <body class="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+    <header class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700">
+      <nav class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <a href={withBase("/")} class="text-xl font-bold text-blue-600 dark:text-blue-400">
+          📘 Forgebook
+        </a>
+        <div class="flex items-center gap-4">
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          >
+            GitHub
+          </a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <slot />
+    </main>
+
+    <footer class="border-t border-slate-200 dark:border-slate-700 mt-16">
+      <div class="max-w-6xl mx-auto px-4 py-8 text-center text-slate-500 text-sm">
+        <p>Built with Astro • MIT License</p>
+      </div>
+    </footer>
+  </body>
+</html>

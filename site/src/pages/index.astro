@@ -1,0 +1,76 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import NotebookCard from "@/components/NotebookCard.astro";
+import { getCollection } from "astro:content";
+
+const notebooksCollection = await getCollection("notebooks");
+
+// Transform to the format expected by NotebookCard
+const notebooks = notebooksCollection.map((entry) => ({
+  slug: entry.data.slug,
+  path: entry.data.path,
+  title: entry.data.title,
+  description: entry.data.description,
+  date: entry.data.date,
+  authors: entry.data.authors,
+  tags: entry.data.tags,
+}));
+---
+
+<BaseLayout title="Home">
+  <div class="space-y-8">
+    <section class="text-center py-12">
+      <h1 class="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+        📘 Forgebook
+      </h1>
+      <p class="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+        A collection of Jupyter notebook examples and tutorials. Clone, run, and
+        learn.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+        Notebooks
+      </h2>
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {notebooks.map((notebook) => <NotebookCard notebook={notebook} />)}
+      </div>
+
+      {
+        notebooks.length === 0 && (
+          <div class="text-center py-12 text-slate-500">
+            <p>No notebooks published yet.</p>
+            <p class="text-sm mt-2">
+              Add notebooks to{" "}
+              <code class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                registry.yaml
+              </code>{" "}
+              to get started.
+            </p>
+          </div>
+        )
+      }
+    </section>
+
+    <section class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-8 mt-12">
+      <h2
+        class="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4"
+      >
+        Quick Start
+      </h2>
+      <div class="space-y-4">
+        <div>
+          <h3 class="font-medium text-slate-700 dark:text-slate-300 mb-2">
+            Clone and run locally:
+          </h3>
+          <pre
+            class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto text-sm"><code>git clone https://github.com/your-org/forgebook.git
+cd forgebook
+pip install -r requirements.txt
+jupyter notebook</code></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
