@@ -1,0 +1,16 @@
+# Setup steps for Copilot coding agent
+# These run before the firewall is enabled, allowing network access
+# See: https://gh.io/copilot/actions-setup-steps
+
+- name: Setup Node.js
+  uses: actions/setup-node@v4
+  with:
+    node-version: '20'
+
+- name: Install site dependencies
+  working-directory: site
+  run: npm ci
+
+- name: Install Playwright browsers
+  working-directory: site
+  run: npx playwright install --with-deps chromium
