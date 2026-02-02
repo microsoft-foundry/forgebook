@@ -3,9 +3,26 @@
 # Optional author metadata cache.
 # If an author is not listed here, their info will be fetched from GitHub API.
 # Use this to override display names, provide custom avatars, or add social links.
+# Keys must match the GitHub username used in registry.yaml.
 
 # Example:
-# nbrady:
+# nicholasdbrady:
 #   name: "Nick Brady"
+#   title: "AI Engineer"
 #   website: "https://example.com"
 #   avatar: "https://avatars.githubusercontent.com/u/12345?v=4"
+#   githubUrl: "https://github.com/nicholasdbrady"
+#   linkedinUrl: "https://www.linkedin.com/in/nicholasdbrady"
+#   xUrl: "https://x.com/nicholasdbrady"
+#
+# Notes:
+# - All fields are optional.
+# - Social icons only render when the matching URL is provided.
+nicholasdbrady:
+  name: "Nick Brady"
+  title: "Senior Program Manager"
+  website: "https://example.com"
+  avatar: "https://github.com/nicholasdbrady.png?size=200"
+  githubUrl: "https://github.com/nicholasdbrady"
+  linkedinUrl: "https://www.linkedin.com/in/nicholasdbrady"
+  xUrl: "https://x.com/nicholasdbrady"

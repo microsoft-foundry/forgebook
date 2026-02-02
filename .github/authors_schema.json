@@ -10,6 +10,10 @@
         "type": "string",
         "description": "Display name for the author"
       },
+      "title": {
+        "type": "string",
+        "description": "Author title or role"
+      },
       "website": {
         "type": "string",
         "format": "uri",
@@ -19,6 +23,21 @@
         "type": "string",
         "format": "uri",
         "description": "URL to author's avatar image"
+      },
+      "githubUrl": {
+        "type": "string",
+        "format": "uri",
+        "description": "Author's GitHub profile URL"
+      },
+      "linkedinUrl": {
+        "type": "string",
+        "format": "uri",
+        "description": "Author's LinkedIn profile URL"
+      },
+      "xUrl": {
+        "type": "string",
+        "format": "uri",
+        "description": "Author's X profile URL"
       }
     },
     "additionalProperties": false

@@ -87,7 +87,7 @@ img.emoji {
   color: var(--hc-text);
 }
 
-.high-contrast header {
+.high-contrast .site-header {
   background-color: var(--hc-bg) !important;
   border-color: var(--hc-border) !important;
 }
@@ -102,6 +102,13 @@ img.emoji {
 
 .high-contrast a:hover {
   color: var(--hc-link-hover);
+}
+
+.high-contrast .hc-hover:hover,
+.high-contrast .hc-hover:focus-visible {
+  background-color: var(--hc-bg-elevated) !important;
+  outline: 2px solid var(--hc-border);
+  outline-offset: 2px;
 }
 
 .high-contrast h1,
@@ -193,4 +200,24 @@ img.emoji {
 
 .high-contrast .notebook-content p {
   color: var(--hc-text) !important;
+}
+
+.high-contrast .markdown-badge {
+  background-color: var(--hc-bg-elevated) !important;
+  border: 1px solid var(--hc-border);
+}
+
+.high-contrast .markdown-logo path:first-child {
+  stroke: transparent;
+}
+
+.high-contrast .share-menu-item:hover,
+.high-contrast .share-menu-item:focus-visible {
+  background-color: var(--hc-bg-elevated) !important;
+  outline: 2px solid var(--hc-border);
+  outline-offset: -2px;
+}
+
+.notebook-action {
+  min-height: 2.5rem;
 }

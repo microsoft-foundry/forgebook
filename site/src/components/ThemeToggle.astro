@@ -8,7 +8,7 @@
 <div class="theme-toggle flex items-center gap-1">
   <button
     id="theme-light"
-    class="theme-btn p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 high-contrast:text-white high-contrast:hover:bg-gray-800 transition-colors"
+    class="theme-btn p-2 sm:p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
     title="Light mode"
     aria-label="Switch to light mode"
   >
@@ -19,7 +19,7 @@
   </button>
   <button
     id="theme-dark"
-    class="theme-btn p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 high-contrast:text-white high-contrast:hover:bg-gray-800 transition-colors"
+    class="theme-btn p-2 sm:p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
     title="Dark mode"
     aria-label="Switch to dark mode"
   >
@@ -29,7 +29,7 @@
   </button>
   <button
     id="theme-high-contrast"
-    class="theme-btn p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 high-contrast:text-white high-contrast:hover:bg-gray-800 transition-colors"
+    class="theme-btn p-2 sm:p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
     title="High contrast mode"
     aria-label="Switch to high contrast mode"
   >
@@ -51,9 +51,19 @@
     color: rgb(147 197 253);
   }
   
+  :global(.high-contrast) .theme-btn {
+    color: var(--hc-text) !important;
+  }
+
+  :global(.high-contrast) .theme-btn:hover,
+  :global(.high-contrast) .theme-btn:focus-visible {
+    background-color: rgb(255 255 255) !important;
+    color: rgb(0 0 0) !important;
+  }
+
   :global(.high-contrast) .theme-btn[data-active="true"] {
-    background-color: rgb(255 255 255);
-    color: rgb(0 0 0);
+    background-color: rgb(255 255 255) !important;
+    color: rgb(0 0 0) !important;
   }
 </style>
 
