@@ -10,7 +10,7 @@ interface Props {
 const { notebookPath, slug, title = "Check out this notebook" } = Astro.props;
 
 const githubUrl = getGitHubFileUrl(notebookPath);
-const markdownUrl = withBase(`/notebook/${slug}/markdown`);
+const markdownUrl = withBase(`/notebook/${slug}.md`);
 const shareUrl = withBase(`/notebook/${slug}/`);
 ---
 
@@ -19,7 +19,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
     href={githubUrl}
     target="_blank"
     rel="noopener noreferrer"
-    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 dark:bg-slate-700 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
+    class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 dark:bg-slate-700 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
   >
     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
       <path
@@ -31,33 +31,31 @@ const shareUrl = withBase(`/notebook/${slug}/`);
 
   <a
     href={markdownUrl}
-    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+    class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+    aria-label="View Markdown"
   >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-      ></path>
-    </svg>
-    View as Markdown
+    <span>View</span>
+    <span class="markdown-badge inline-flex items-center rounded bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5" aria-hidden="true">
+      <svg class="markdown-logo h-3.5 w-5 text-slate-700 dark:text-slate-100" viewBox="0 0 208 128" xmlns="http://www.w3.org/2000/svg">
+        <path fill="none" stroke="currentColor" stroke-width="10" d="M15,5h178c5.523,0,10,4.477,10,10v98c0,5.523-4.477,10-10,10H15c-5.523,0-10-4.477-10-10V15C5,9.477,9.477,5,15,5z" />
+        <path fill="currentColor" d="M30,98V30h20l20,25l20-25h20v68H90V59L70,84L50,59v39H30z M155,98l-30-33h20V30h20v35h20L155,98z" />
+      </svg>
+    </span>
   </a>
 
   <button
     id="copy-markdown-btn"
     data-slug={slug}
-    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+    class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+    aria-label="Copy Markdown"
   >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-      ></path>
-    </svg>
-    <span id="copy-btn-text">Copy Markdown</span>
+    <span id="copy-btn-text">Copy</span>
+    <span class="markdown-badge inline-flex items-center rounded bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5" aria-hidden="true">
+      <svg class="markdown-logo h-3.5 w-5 text-slate-700 dark:text-slate-100" viewBox="0 0 208 128" xmlns="http://www.w3.org/2000/svg">
+        <path fill="none" stroke="currentColor" stroke-width="10" d="M15,5h178c5.523,0,10,4.477,10,10v98c0,5.523-4.477,10-10,10H15c-5.523,0-10-4.477-10-10V15C5,9.477,9.477,5,15,5z" />
+        <path fill="currentColor" d="M30,98V30h20l20,25l20-25h20v68H90V59L70,84L50,59v39H30z M155,98l-30-33h20V30h20v35h20L155,98z" />
+      </svg>
+    </span>
   </button>
 
   <!-- Share Button with Dropdown -->
@@ -66,7 +64,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
       id="share-btn"
       data-share-url={shareUrl}
       data-share-title={title}
-      class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+      class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
       aria-haspopup="true"
       aria-expanded="false"
     >
@@ -78,7 +76,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
           d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
         ></path>
       </svg>
-      <span>Share</span>
+      <span class="sr-only">Share</span>
       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
       </svg>
@@ -92,7 +90,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
     >
       <button
         id="copy-link-btn"
-        class="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left"
+        class="share-menu-item w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left"
         role="menuitem"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,7 +104,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
         href="#"
         target="_blank"
         rel="noopener noreferrer"
-        class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        class="share-menu-item flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
         role="menuitem"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -120,7 +118,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
         href="#"
         target="_blank"
         rel="noopener noreferrer"
-        class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        class="share-menu-item flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
         role="menuitem"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -131,7 +129,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
 
       <button
         id="native-share-btn"
-        class="hidden w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left border-t border-slate-200 dark:border-slate-700 mt-1 pt-2"
+        class="share-menu-item hidden w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left border-t border-slate-200 dark:border-slate-700 mt-1 pt-2"
         role="menuitem"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,13 +149,13 @@ const shareUrl = withBase(`/notebook/${slug}/`);
   btn?.addEventListener("click", async () => {
     const slug = btn.getAttribute("data-slug");
     try {
-      const response = await fetch(`${baseUrl}/notebook/${slug}/raw.md`);
+      const response = await fetch(`${baseUrl}/notebook/${slug}.md`);
       const markdown = await response.text();
       await navigator.clipboard.writeText(markdown);
       if (btnText) {
         btnText.textContent = "Copied!";
         setTimeout(() => {
-          btnText.textContent = "Copy Markdown";
+          btnText.textContent = "Copy";
         }, 2000);
       }
     } catch (err) {

@@ -83,6 +83,27 @@ const authors = await resolveAuthors(notebook.data.authors);
     margin: 1rem 0;
   }
 
+  .notebook-content .code-block-wrapper pre {
+    padding-right: 3.5rem;
+  }
+
+  .notebook-content .copy-btn {
+    right: 0.5rem;
+  }
+
+  .notebook-content img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .notebook-content iframe,
+  .notebook-content video {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+  }
+
   .notebook-content code {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
       "Liberation Mono", monospace;
@@ -124,5 +145,11 @@ const authors = await resolveAuthors(notebook.data.authors);
 
   :global(.dark) .notebook-content p {
     color: rgb(203 213 225);
+  }
+
+  @media (max-width: 640px) {
+    .notebook-content .code-block-wrapper pre {
+      padding-right: 3.25rem;
+    }
   }
 </style>
