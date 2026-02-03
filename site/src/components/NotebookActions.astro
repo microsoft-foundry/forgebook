@@ -19,7 +19,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
     href={githubUrl}
     target="_blank"
     rel="noopener noreferrer"
-    class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 dark:bg-slate-700 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
+    class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-primary rounded-lg transition-colors"
   >
     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
       <path
@@ -31,12 +31,12 @@ const shareUrl = withBase(`/notebook/${slug}/`);
 
   <a
     href={markdownUrl}
-    class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+    class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-secondary rounded-lg transition-colors"
     aria-label="View Markdown"
   >
     <span>View</span>
-    <span class="markdown-badge inline-flex items-center rounded bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5" aria-hidden="true">
-      <svg class="markdown-logo h-3.5 w-5 text-slate-700 dark:text-slate-100" viewBox="0 0 208 128" xmlns="http://www.w3.org/2000/svg">
+    <span class="markdown-badge badge inline-flex items-center rounded px-1.5 py-0.5" aria-hidden="true">
+      <svg class="markdown-logo h-3.5 w-5" viewBox="0 0 208 128" xmlns="http://www.w3.org/2000/svg">
         <path fill="none" stroke="currentColor" stroke-width="10" d="M15,5h178c5.523,0,10,4.477,10,10v98c0,5.523-4.477,10-10,10H15c-5.523,0-10-4.477-10-10V15C5,9.477,9.477,5,15,5z" />
         <path fill="currentColor" d="M30,98V30h20l20,25l20-25h20v68H90V59L70,84L50,59v39H30z M155,98l-30-33h20V30h20v35h20L155,98z" />
       </svg>
@@ -46,12 +46,12 @@ const shareUrl = withBase(`/notebook/${slug}/`);
   <button
     id="copy-markdown-btn"
     data-slug={slug}
-    class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+    class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-secondary rounded-lg transition-colors cursor-pointer"
     aria-label="Copy Markdown"
   >
     <span id="copy-btn-text">Copy</span>
-    <span class="markdown-badge inline-flex items-center rounded bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5" aria-hidden="true">
-      <svg class="markdown-logo h-3.5 w-5 text-slate-700 dark:text-slate-100" viewBox="0 0 208 128" xmlns="http://www.w3.org/2000/svg">
+    <span class="markdown-badge badge inline-flex items-center rounded px-1.5 py-0.5" aria-hidden="true">
+      <svg class="markdown-logo h-3.5 w-5" viewBox="0 0 208 128" xmlns="http://www.w3.org/2000/svg">
         <path fill="none" stroke="currentColor" stroke-width="10" d="M15,5h178c5.523,0,10,4.477,10,10v98c0,5.523-4.477,10-10,10H15c-5.523,0-10-4.477-10-10V15C5,9.477,9.477,5,15,5z" />
         <path fill="currentColor" d="M30,98V30h20l20,25l20-25h20v68H90V59L70,84L50,59v39H30z M155,98l-30-33h20V30h20v35h20L155,98z" />
       </svg>
@@ -64,7 +64,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
       id="share-btn"
       data-share-url={shareUrl}
       data-share-title={title}
-      class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+      class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-secondary rounded-lg transition-colors cursor-pointer"
       aria-haspopup="true"
       aria-expanded="false"
     >
@@ -85,12 +85,12 @@ const shareUrl = withBase(`/notebook/${slug}/`);
     <!-- Dropdown Menu -->
     <div
       id="share-dropdown"
-      class="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50 hidden"
+      class="absolute right-0 mt-2 w-48 dropdown-menu rounded-lg shadow-lg py-1 z-50 hidden"
       role="menu"
     >
       <button
         id="copy-link-btn"
-        class="share-menu-item w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left"
+        class="share-menu-item dropdown-item w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left"
         role="menuitem"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,7 +104,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
         href="#"
         target="_blank"
         rel="noopener noreferrer"
-        class="share-menu-item flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        class="share-menu-item dropdown-item flex items-center gap-3 px-4 py-2 text-sm transition-colors"
         role="menuitem"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -118,7 +118,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
         href="#"
         target="_blank"
         rel="noopener noreferrer"
-        class="share-menu-item flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        class="share-menu-item dropdown-item flex items-center gap-3 px-4 py-2 text-sm transition-colors"
         role="menuitem"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -129,7 +129,7 @@ const shareUrl = withBase(`/notebook/${slug}/`);
 
       <button
         id="native-share-btn"
-        class="share-menu-item hidden w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left border-t border-slate-200 dark:border-slate-700 mt-1 pt-2"
+        class="share-menu-item dropdown-item hidden w-full items-center gap-3 px-4 py-2 text-sm transition-colors text-left border-t border-subtle mt-1 pt-2"
         role="menuitem"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
