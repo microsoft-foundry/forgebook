@@ -44,7 +44,7 @@ const notebooks = notebooksCollection.map((entry) => ({
             <p>No notebooks published yet.</p>
             <p class="text-sm mt-2">
               Add notebooks to{" "}
-              <code class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+              <code class="bg-surface-elevated px-2 py-1 rounded border border-subtle">
                 registry.yaml
               </code>{" "}
               to get started.
@@ -54,7 +54,7 @@ const notebooks = notebooksCollection.map((entry) => ({
       }
     </section>
 
-    <section class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-8 mt-12">
+    <section class="bg-surface-elevated rounded-xl p-8 mt-12 border border-subtle">
       <h2
         class="text-xl font-semibold text-primary mb-4"
       >
@@ -66,7 +66,7 @@ const notebooks = notebooksCollection.map((entry) => ({
             Clone and run locally:
           </h3>
           <pre
-            class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto text-sm"><code>{`git clone ${REPO_URL}.git
+            class="bg-code text-code p-4 rounded-lg overflow-x-auto text-sm font-mono"><code>{`git clone ${REPO_URL}.git
 cd forgebook
 pip install -r requirements.txt
 jupyter notebook`}</code></pre>

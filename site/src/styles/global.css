@@ -44,6 +44,16 @@
   --neutral-fg-2: #616161;      /* Secondary text */
   --neutral-fg-3: #9e9e9e;      /* Tertiary/disabled text */
   --accent-brand: #5b5fc7;      /* Fluent brand purple */
+  
+  /* Code block colors */
+  --code-bg: #1e293b;           /* Dark slate for code */
+  --code-fg: #f1f5f9;           /* Light text for code */
+  
+  /* Font stacks as CSS variables for body */
+  --font-stack-sans: "Segoe UI", "Segoe UI Variable", -apple-system, BlinkMacSystemFont,
+    "Inter", system-ui, sans-serif;
+  --font-stack-mono: "Cascadia Code", "Cascadia Mono", ui-monospace, SFMono-Regular,
+    "SF Mono", Menlo, Consolas, monospace;
 }
 
 /* ============================================
@@ -59,6 +69,10 @@
   --neutral-fg-2: #adadad;      /* Secondary text */
   --neutral-fg-3: #737373;      /* Tertiary/disabled text */
   --accent-brand: #7b7fd1;      /* Fluent brand purple (light variant) */
+  
+  /* Code block colors - slightly different in dark mode */
+  --code-bg: #0f172a;           /* Darker slate for code */
+  --code-fg: #f1f5f9;           /* Light text for code */
 }
 
 /* ============================================
@@ -69,7 +83,7 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-stack-sans);
   background-color: var(--neutral-bg-1);
   color: var(--neutral-fg-1);
 }
@@ -84,7 +98,7 @@ pre[class*="language-"] {
 }
 
 code[class*="language-"] {
-  font-family: var(--font-mono);
+  font-family: var(--font-stack-mono);
 }
 
 /* ============================================
@@ -111,7 +125,7 @@ code[class*="language-"] {
   border-bottom-right-radius: var(--radius-80);
   padding: var(--spacing-240);
   font-size: 0.875rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-stack-mono);
 }
 
 /* ============================================
@@ -120,10 +134,13 @@ code[class*="language-"] {
    ============================================ */
 .bg-surface { background-color: var(--neutral-bg-1); }
 .bg-surface-elevated { background-color: var(--neutral-bg-3); }
+.bg-code { background-color: var(--code-bg); }
 .text-primary { color: var(--neutral-fg-1); }
 .text-secondary { color: var(--neutral-fg-2); }
 .text-muted { color: var(--neutral-fg-3); }
+.text-code { color: var(--code-fg); }
 .border-subtle { border-color: var(--neutral-bg-4); }
+.font-mono { font-family: var(--font-stack-mono); }
 
 /* Twemoji styling - inline emoji images */
 img.emoji {
