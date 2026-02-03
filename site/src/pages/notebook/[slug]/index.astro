@@ -23,12 +23,12 @@ const authors = await resolveAuthors(notebook.data.authors);
   <article class="max-w-4xl mx-auto">
     <!-- Header -->
     <header class="mb-8">
-      <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+      <h1 class="text-3xl font-bold text-primary mb-4">
         {notebook.data.title}
       </h1>
       {
         notebook.data.description && (
-          <p class="text-lg text-slate-600 dark:text-slate-400 mb-6">
+          <p class="text-lg text-secondary mb-6">
             {notebook.data.description}
           </p>
         )
@@ -39,7 +39,7 @@ const authors = await resolveAuthors(notebook.data.authors);
 
     <!-- Authors -->
     <section class="mb-8">
-      <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
+      <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
         {authors.length === 1 ? "Author" : "Authors"}
       </h2>
       <div class="flex flex-wrap gap-2">
@@ -55,13 +55,13 @@ const authors = await resolveAuthors(notebook.data.authors);
     <!-- Tags -->
     {
       notebook.data.tags && notebook.data.tags.length > 0 && (
-        <section class="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
-          <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
+        <section class="mt-12 pt-8 border-t border-subtle">
+          <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
             Tags
           </h2>
           <div class="flex flex-wrap gap-2">
             {notebook.data.tags.map((tag) => (
-              <span class="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full">
+              <span class="px-3 py-1 text-sm bg-surface-elevated text-secondary rounded-full">
                 {tag}
               </span>
             ))}
@@ -113,13 +113,7 @@ const authors = await resolveAuthors(notebook.data.authors);
   .notebook-content h2,
   .notebook-content h3 {
     font-weight: 700;
-    color: rgb(15 23 42);
-  }
-
-  :global(.dark) .notebook-content h1,
-  :global(.dark) .notebook-content h2,
-  :global(.dark) .notebook-content h3 {
-    color: rgb(241 245 249);
+    color: var(--neutral-fg-1);
   }
 
   .notebook-content h1 {
@@ -140,11 +134,7 @@ const authors = await resolveAuthors(notebook.data.authors);
 
   .notebook-content p {
     margin: 1rem 0;
-    color: rgb(51 65 85);
-  }
-
-  :global(.dark) .notebook-content p {
-    color: rgb(203 213 225);
+    color: var(--neutral-fg-2);
   }
 
   @media (max-width: 640px) {

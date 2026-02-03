@@ -114,6 +114,17 @@ code[class*="language-"] {
   font-family: var(--font-mono);
 }
 
+/* ============================================
+   Utility Classes for Theme Tokens
+   Use these instead of hardcoded Tailwind colors
+   ============================================ */
+.bg-surface { background-color: var(--neutral-bg-1); }
+.bg-surface-elevated { background-color: var(--neutral-bg-3); }
+.text-primary { color: var(--neutral-fg-1); }
+.text-secondary { color: var(--neutral-fg-2); }
+.text-muted { color: var(--neutral-fg-3); }
+.border-subtle { border-color: var(--neutral-bg-4); }
+
 /* Twemoji styling - inline emoji images */
 img.emoji {
   height: 1.2em;

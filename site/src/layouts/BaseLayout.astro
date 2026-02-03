@@ -47,8 +47,8 @@ const { title, description = "AI Cookbook - Jupyter notebook examples" } = Astro
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
     <title>{title} | Forgebook</title>
   </head>
-  <body class="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-    <header class="site-header sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700">
+  <body class="min-h-screen bg-surface text-primary">
+    <header class="site-header sticky top-0 z-50 backdrop-blur-sm border-b border-subtle" style="background-color: color-mix(in srgb, var(--neutral-bg-1) 80%, transparent);">
       <nav class="max-w-6xl mx-auto px-3 py-3 sm:px-4 sm:py-4 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
         <a href={withBase("/")} class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">
           📘 Forgebook
@@ -57,7 +57,7 @@ const { title, description = "AI Cookbook - Jupyter notebook examples" } = Astro
           <ThemeToggle />
           <a
             href={withBase("/rss.xml")}
-            class="hc-hover inline-flex items-center justify-center rounded-md p-1.5 sm:p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition-colors"
+            class="hc-hover inline-flex items-center justify-center rounded-md p-1.5 sm:p-2 text-secondary hover:text-primary hover:bg-surface-elevated transition-colors"
             title="RSS Feed"
             aria-label="RSS Feed"
           >
@@ -69,7 +69,7 @@ const { title, description = "AI Cookbook - Jupyter notebook examples" } = Astro
             href={REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            class="hc-hover inline-flex items-center rounded-md px-2.5 py-1.5 sm:px-3 sm:py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition-colors"
+            class="hc-hover inline-flex items-center rounded-md px-2.5 py-1.5 sm:px-3 sm:py-2 text-secondary hover:text-primary hover:bg-surface-elevated transition-colors"
           >
             GitHub
           </a>
@@ -81,8 +81,8 @@ const { title, description = "AI Cookbook - Jupyter notebook examples" } = Astro
       <slot />
     </main>
 
-    <footer class="border-t border-slate-200 dark:border-slate-700 mt-16">
-      <div class="max-w-6xl mx-auto px-4 py-8 text-center text-slate-500 text-sm">
+    <footer class="border-t border-subtle mt-16">
+      <div class="max-w-6xl mx-auto px-4 py-8 text-center text-muted text-sm">
         <p>Built with Astro • MIT License</p>
       </div>
     </footer>
