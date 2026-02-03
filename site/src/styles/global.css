@@ -43,7 +43,9 @@
   --neutral-fg-1: #242424;      /* Primary text */
   --neutral-fg-2: #616161;      /* Secondary text */
   --neutral-fg-3: #9e9e9e;      /* Tertiary/disabled text */
-  --accent-brand: #5b5fc7;      /* Fluent brand purple */
+  --accent-brand: #5b5fc7;      /* Fluent brand purple - rest */
+  --accent-brand-hover: #4f52b2; /* Fluent brand purple - hover */
+  --accent-brand-pressed: #444791; /* Fluent brand purple - pressed */
   
   /* Code block colors */
   --code-bg: #1e293b;           /* Dark slate for code */
@@ -68,7 +70,9 @@
   --neutral-fg-1: #ffffff;      /* Primary text */
   --neutral-fg-2: #adadad;      /* Secondary text */
   --neutral-fg-3: #737373;      /* Tertiary/disabled text */
-  --accent-brand: #7b7fd1;      /* Fluent brand purple (light variant) */
+  --accent-brand: #7b7fd1;      /* Fluent brand purple - rest */
+  --accent-brand-hover: #8a8dd9; /* Fluent brand purple - hover */
+  --accent-brand-pressed: #9a9de0; /* Fluent brand purple - pressed */
   
   /* Code block colors - slightly different in dark mode */
   --code-bg: #0f172a;           /* Darker slate for code */
@@ -150,7 +154,10 @@ code[class*="language-"] {
   color: #ffffff;
 }
 .btn-primary:hover {
-  filter: brightness(1.1);
+  background-color: var(--accent-brand-hover);
+}
+.btn-primary:active {
+  background-color: var(--accent-brand-pressed);
 }
 
 .btn-secondary {
