@@ -260,7 +260,7 @@ img.emoji {
 .high-contrast h4,
 .high-contrast h5,
 .high-contrast h6 {
-  color: var(--hc-text);
+  color: var(--hc-text) !important;
 }
 
 .high-contrast p,
@@ -269,7 +269,72 @@ img.emoji {
   color: var(--hc-text);
 }
 
-/* High contrast cards */
+/* ============================================
+   High Contrast - Theme Utility Overrides
+   Override our custom utility classes for HC mode
+   ============================================ */
+.high-contrast .bg-surface,
+.high-contrast .bg-surface-elevated {
+  background-color: var(--hc-bg-elevated) !important;
+  border: 1px solid var(--hc-border);
+}
+
+.high-contrast .text-primary {
+  color: var(--hc-text) !important;
+}
+
+.high-contrast .text-secondary,
+.high-contrast .text-muted {
+  color: var(--hc-text-muted) !important;
+}
+
+.high-contrast .border-subtle {
+  border-color: var(--hc-border) !important;
+}
+
+/* High contrast buttons - ensure readable text */
+.high-contrast .btn-primary {
+  background-color: var(--hc-link) !important;
+  color: var(--hc-bg) !important;
+  border: 2px solid var(--hc-link) !important;
+}
+
+.high-contrast .btn-secondary,
+.high-contrast .btn-ghost {
+  background-color: var(--hc-bg) !important;
+  color: var(--hc-text) !important;
+  border: 2px solid var(--hc-border) !important;
+}
+
+.high-contrast .btn-secondary:hover,
+.high-contrast .btn-ghost:hover {
+  background-color: var(--hc-text) !important;
+  color: var(--hc-bg) !important;
+}
+
+/* High contrast dropdowns */
+.high-contrast .dropdown-menu {
+  background-color: var(--hc-bg) !important;
+  border: 2px solid var(--hc-border) !important;
+}
+
+.high-contrast .dropdown-item {
+  color: var(--hc-text) !important;
+}
+
+.high-contrast .dropdown-item:hover {
+  background-color: var(--hc-text) !important;
+  color: var(--hc-bg) !important;
+}
+
+/* High contrast badges/tags */
+.high-contrast .badge {
+  background-color: var(--hc-bg) !important;
+  color: var(--hc-text) !important;
+  border: 1px solid var(--hc-border) !important;
+}
+
+/* High contrast cards - legacy support */
 .high-contrast .bg-white,
 .high-contrast .bg-slate-50,
 .high-contrast .bg-slate-100 {
