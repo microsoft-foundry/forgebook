@@ -142,6 +142,65 @@ code[class*="language-"] {
 .border-subtle { border-color: var(--neutral-bg-4); }
 .font-mono { font-family: var(--font-stack-mono); }
 
+/* ============================================
+   Button Styles - Next-Gen-Design-System
+   ============================================ */
+.btn-primary {
+  background-color: var(--accent-brand);
+  color: #ffffff;
+}
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-secondary {
+  background-color: var(--neutral-bg-3);
+  color: var(--neutral-fg-1);
+  border: 1px solid var(--neutral-bg-4);
+}
+.btn-secondary:hover {
+  background-color: var(--neutral-bg-4);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--neutral-fg-2);
+}
+.btn-ghost:hover {
+  background-color: var(--neutral-bg-3);
+  color: var(--neutral-fg-1);
+}
+
+/* Dropdown/Menu Styles */
+.dropdown-menu {
+  background-color: var(--neutral-bg-1);
+  border: 1px solid var(--neutral-bg-4);
+}
+.dropdown-item {
+  color: var(--neutral-fg-1);
+}
+.dropdown-item:hover {
+  background-color: var(--neutral-bg-3);
+}
+
+/* Badge Styles */
+.badge {
+  background-color: var(--neutral-bg-3);
+  color: var(--neutral-fg-2);
+  border: 1px solid var(--neutral-bg-4);
+}
+
+/* Active/Selected Button State (for theme toggle) */
+.btn-active {
+  background-color: color-mix(in srgb, var(--accent-brand) 20%, transparent);
+  color: var(--accent-brand);
+}
+
+/* Hover border accent */
+.hover\:border-accent:hover {
+  border-color: var(--accent-brand);
+}
+
 /* Twemoji styling - inline emoji images */
 img.emoji {
   height: 1.2em;

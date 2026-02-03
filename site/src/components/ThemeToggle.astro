@@ -42,13 +42,8 @@
 
 <style>
   .theme-btn[data-active="true"] {
-    background-color: rgb(219 234 254);
-    color: rgb(37 99 235);
-  }
-  
-  :global(.dark) .theme-btn[data-active="true"] {
-    background-color: rgb(30 58 138);
-    color: rgb(147 197 253);
+    background-color: color-mix(in srgb, var(--accent-brand) 20%, transparent);
+    color: var(--accent-brand);
   }
   
   :global(.high-contrast) .theme-btn {
@@ -57,13 +52,13 @@
 
   :global(.high-contrast) .theme-btn:hover,
   :global(.high-contrast) .theme-btn:focus-visible {
-    background-color: rgb(255 255 255) !important;
-    color: rgb(0 0 0) !important;
+    background-color: var(--hc-text) !important;
+    color: var(--hc-bg) !important;
   }
 
   :global(.high-contrast) .theme-btn[data-active="true"] {
-    background-color: rgb(255 255 255) !important;
-    color: rgb(0 0 0) !important;
+    background-color: var(--hc-text) !important;
+    color: var(--hc-bg) !important;
   }
 </style>
 
