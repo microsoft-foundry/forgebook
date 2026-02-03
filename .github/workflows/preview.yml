@@ -30,11 +30,12 @@ jobs:
       - name: Upload preview artifact
         uses: actions/upload-artifact@v4
         with:
-          name: site-preview-${{ github.event.pull_request.number }}
+          name: site-preview-${{ github.event.pull_request.number || github.run_id }}
           path: ./site/dist
           retention-days: 7
 
       - name: Comment PR with preview info
+        if: ${{ github.event_name == 'pull_request' }}
         uses: actions/github-script@v7
         with:
           script: |
