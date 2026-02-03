@@ -24,14 +24,14 @@ const { notebook } = Astro.props;
 
 <a
   href={withBase(`/notebook/${notebook.slug}`)}
-  class="block p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all"
+  class="block p-6 bg-surface-elevated rounded-xl border border-subtle hover:border-accent hover:shadow-lg transition-all"
 >
-  <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+  <h3 class="text-lg font-semibold text-primary mb-2">
     {notebook.title}
   </h3>
   {
     notebook.description && (
-      <p class="text-slate-600 dark:text-slate-400 text-sm mb-4">
+      <p class="text-secondary text-sm mb-4">
         {notebook.description}
       </p>
     )
@@ -43,13 +43,13 @@ const { notebook } = Astro.props;
           <img
             src={`https://github.com/${author.github}.png?size=40`}
             alt={author.github}
-            class="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-600"
+            class="w-6 h-6 rounded-full border border-subtle"
           />
         ))
       }
       {
         notebook.authors.length > 3 && (
-          <span class="text-xs text-slate-500">
+          <span class="text-xs text-muted">
             +{notebook.authors.length - 3}
           </span>
         )
@@ -57,7 +57,7 @@ const { notebook } = Astro.props;
     </div>
     {
       notebook.date && (
-        <span class="text-xs text-slate-400">{notebook.date}</span>
+        <span class="text-xs text-muted">{notebook.date}</span>
       )
     }
   </div>
@@ -65,7 +65,7 @@ const { notebook } = Astro.props;
     notebook.tags && notebook.tags.length > 0 && (
       <div class="flex flex-wrap gap-2 mt-4">
         {notebook.tags.map((tag) => (
-          <span class="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full">
+          <span class="px-2 py-1 text-xs bg-surface-elevated text-secondary rounded-full border border-subtle">
             {tag}
           </span>
         ))}

@@ -4,58 +4,208 @@
 /* Enable class-based dark mode for Tailwind v4 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ============================================
+   Next-Gen-Design-System Theme Tokens
+   Extracted from Figma: Next-Gen-Design-System
+   ============================================ */
+
 /* Custom theme overrides using Tailwind v4 @theme */
 @theme {
-  --font-sans: "Inter", "system-ui", sans-serif;
+  /* Typography - Segoe UI for Fluent alignment with Inter fallback */
+  --font-sans: "Segoe UI", "Segoe UI Variable", -apple-system, BlinkMacSystemFont,
+    "Inter", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "Cascadia Mono", ui-monospace, SFMono-Regular,
+    "SF Mono", Menlo, Consolas, monospace;
+
+  /* Brand colors */
   --color-primary: oklch(0.6 0.2 250);
   --color-accent: oklch(0.7 0.15 180);
+
+  /* Spacing tokens from Figma Global.Size.* */
+  --spacing-120: 12px;
+  --spacing-240: 24px;
+  --spacing-320: 32px;
+
+  /* Corner radius from Figma Global.Corner.Radius.* */
+  --radius-80: 8px;
+  --radius-120: 12px;
 }
 
-/* Base styles */
+/* ============================================
+   Light Mode - Neutral Backgrounds
+   From: --Neutral-Background-*-Rest tokens
+   ============================================ */
+:root {
+  --neutral-bg-1: #ffffff;      /* Primary background */
+  --neutral-bg-2: #fafafa;      /* Secondary background */
+  --neutral-bg-3: #f5f5f5;      /* Elevated/panel background */
+  --neutral-bg-4: #f0f0f0;      /* Borders, dividers */
+  --neutral-fg-1: #242424;      /* Primary text */
+  --neutral-fg-2: #616161;      /* Secondary text */
+  --neutral-fg-3: #9e9e9e;      /* Tertiary/disabled text */
+  --accent-brand: #5b5fc7;      /* Fluent brand purple - rest */
+  --accent-brand-hover: #4f52b2; /* Fluent brand purple - hover */
+  --accent-brand-pressed: #444791; /* Fluent brand purple - pressed */
+  
+  /* Code block colors */
+  --code-bg: #1e293b;           /* Dark slate for code */
+  --code-fg: #f1f5f9;           /* Light text for code */
+  
+  /* Font stacks as CSS variables for body */
+  --font-stack-sans: "Segoe UI", "Segoe UI Variable", -apple-system, BlinkMacSystemFont,
+    "Inter", system-ui, sans-serif;
+  --font-stack-mono: "Cascadia Code", "Cascadia Mono", ui-monospace, SFMono-Regular,
+    "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ============================================
+   Dark Mode - Neutral Backgrounds
+   From: --Neutral-Background-*-Rest tokens
+   ============================================ */
+.dark {
+  --neutral-bg-1: #1f1f1f;      /* Primary background */
+  --neutral-bg-2: #1a1a1a;      /* Secondary background */
+  --neutral-bg-3: #141414;      /* Elevated/panel background */
+  --neutral-bg-4: #0a0a0a;      /* Borders, dividers */
+  --neutral-fg-1: #ffffff;      /* Primary text */
+  --neutral-fg-2: #adadad;      /* Secondary text */
+  --neutral-fg-3: #737373;      /* Tertiary/disabled text */
+  --accent-brand: #7b7fd1;      /* Fluent brand purple - rest */
+  --accent-brand-hover: #8a8dd9; /* Fluent brand purple - hover */
+  --accent-brand-pressed: #9a9de0; /* Fluent brand purple - pressed */
+  
+  /* Code block colors - slightly different in dark mode */
+  --code-bg: #0f172a;           /* Darker slate for code */
+  --code-fg: #f1f5f9;           /* Light text for code */
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, "Noto Color Emoji", "Apple Color Emoji",
-    "Segoe UI Emoji", sans-serif;
+  font-family: var(--font-stack-sans);
+  background-color: var(--neutral-bg-1);
+  color: var(--neutral-fg-1);
 }
 
-/* Code block styling */
+/* ============================================
+   Code Block Styling
+   ============================================ */
 pre[class*="language-"] {
-  border-radius: 0.5rem;
+  border-radius: var(--radius-80);
   overflow-x: auto;
   font-size: 0.875rem;
 }
 
 code[class*="language-"] {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
+  font-family: var(--font-stack-mono);
 }
 
-/* Notebook cell styling */
+/* ============================================
+   Notebook Cell Styling
+   Aligned with Figma panel specifications
+   ============================================ */
 .notebook-cell {
   margin-bottom: 1rem;
 }
 
 .notebook-cell-code {
-  background-color: rgb(15 23 42);
-  border-radius: 0.5rem;
+  background-color: var(--neutral-bg-3);
+  border-radius: var(--radius-80);
   overflow: hidden;
 }
 
-.notebook-cell-output {
-  background-color: rgb(241 245 249);
-  border-bottom-left-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
-  padding: 1rem;
-  font-size: 0.875rem;
-  font-family: ui-monospace, SFMono-Regular, monospace;
+.dark .notebook-cell-code {
+  background-color: rgb(15 23 42); /* Keep darker for code contrast */
 }
 
-.dark .notebook-cell-output {
-  background-color: rgb(30 41 59);
+.notebook-cell-output {
+  background-color: var(--neutral-bg-3);
+  border-bottom-left-radius: var(--radius-80);
+  border-bottom-right-radius: var(--radius-80);
+  padding: var(--spacing-240);
+  font-size: 0.875rem;
+  font-family: var(--font-stack-mono);
+}
+
+/* ============================================
+   Utility Classes for Theme Tokens
+   Use these instead of hardcoded Tailwind colors
+   ============================================ */
+.bg-surface { background-color: var(--neutral-bg-1); }
+.bg-surface-elevated { background-color: var(--neutral-bg-3); }
+.bg-code { background-color: var(--code-bg); }
+.text-primary { color: var(--neutral-fg-1); }
+.text-secondary { color: var(--neutral-fg-2); }
+.text-muted { color: var(--neutral-fg-3); }
+.text-code { color: var(--code-fg); }
+.border-subtle { border-color: var(--neutral-bg-4); }
+.font-mono { font-family: var(--font-stack-mono); }
+
+/* ============================================
+   Button Styles - Next-Gen-Design-System
+   ============================================ */
+.btn-primary {
+  background-color: var(--accent-brand);
+  color: #ffffff;
+}
+.btn-primary:hover {
+  background-color: var(--accent-brand-hover);
+}
+.btn-primary:active {
+  background-color: var(--accent-brand-pressed);
+}
+
+.btn-secondary {
+  background-color: var(--neutral-bg-3);
+  color: var(--neutral-fg-1);
+  border: 1px solid var(--neutral-bg-4);
+}
+.btn-secondary:hover {
+  background-color: var(--neutral-bg-4);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--neutral-fg-2);
+}
+.btn-ghost:hover {
+  background-color: var(--neutral-bg-3);
+  color: var(--neutral-fg-1);
+}
+
+/* Dropdown/Menu Styles */
+.dropdown-menu {
+  background-color: var(--neutral-bg-1);
+  border: 1px solid var(--neutral-bg-4);
+}
+.dropdown-item {
+  color: var(--neutral-fg-1);
+}
+.dropdown-item:hover {
+  background-color: var(--neutral-bg-3);
+}
+
+/* Badge Styles */
+.badge {
+  background-color: var(--neutral-bg-3);
+  color: var(--neutral-fg-2);
+  border: 1px solid var(--neutral-bg-4);
+}
+
+/* Active/Selected Button State (for theme toggle) */
+.btn-active {
+  background-color: color-mix(in srgb, var(--accent-brand) 20%, transparent);
+  color: var(--accent-brand);
+}
+
+/* Hover border accent */
+.hover\:border-accent:hover {
+  border-color: var(--accent-brand);
 }
 
 /* Twemoji styling - inline emoji images */
@@ -117,7 +267,7 @@ img.emoji {
 .high-contrast h4,
 .high-contrast h5,
 .high-contrast h6 {
-  color: var(--hc-text);
+  color: var(--hc-text) !important;
 }
 
 .high-contrast p,
@@ -126,7 +276,72 @@ img.emoji {
   color: var(--hc-text);
 }
 
-/* High contrast cards */
+/* ============================================
+   High Contrast - Theme Utility Overrides
+   Override our custom utility classes for HC mode
+   ============================================ */
+.high-contrast .bg-surface,
+.high-contrast .bg-surface-elevated {
+  background-color: var(--hc-bg-elevated) !important;
+  border: 1px solid var(--hc-border);
+}
+
+.high-contrast .text-primary {
+  color: var(--hc-text) !important;
+}
+
+.high-contrast .text-secondary,
+.high-contrast .text-muted {
+  color: var(--hc-text-muted) !important;
+}
+
+.high-contrast .border-subtle {
+  border-color: var(--hc-border) !important;
+}
+
+/* High contrast buttons - ensure readable text */
+.high-contrast .btn-primary {
+  background-color: var(--hc-link) !important;
+  color: var(--hc-bg) !important;
+  border: 2px solid var(--hc-link) !important;
+}
+
+.high-contrast .btn-secondary,
+.high-contrast .btn-ghost {
+  background-color: var(--hc-bg) !important;
+  color: var(--hc-text) !important;
+  border: 2px solid var(--hc-border) !important;
+}
+
+.high-contrast .btn-secondary:hover,
+.high-contrast .btn-ghost:hover {
+  background-color: var(--hc-text) !important;
+  color: var(--hc-bg) !important;
+}
+
+/* High contrast dropdowns */
+.high-contrast .dropdown-menu {
+  background-color: var(--hc-bg) !important;
+  border: 2px solid var(--hc-border) !important;
+}
+
+.high-contrast .dropdown-item {
+  color: var(--hc-text) !important;
+}
+
+.high-contrast .dropdown-item:hover {
+  background-color: var(--hc-text) !important;
+  color: var(--hc-bg) !important;
+}
+
+/* High contrast badges/tags */
+.high-contrast .badge {
+  background-color: var(--hc-bg) !important;
+  color: var(--hc-text) !important;
+  border: 1px solid var(--hc-border) !important;
+}
+
+/* High contrast cards - legacy support */
 .high-contrast .bg-white,
 .high-contrast .bg-slate-50,
 .high-contrast .bg-slate-100 {

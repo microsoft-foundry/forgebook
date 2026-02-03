@@ -8,7 +8,7 @@
 <div class="theme-toggle flex items-center gap-1">
   <button
     id="theme-light"
-    class="theme-btn p-2 sm:p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
+    class="theme-btn p-2 sm:p-1.5 rounded-md text-secondary hover:bg-surface-elevated transition-colors"
     title="Light mode"
     aria-label="Switch to light mode"
   >
@@ -19,7 +19,7 @@
   </button>
   <button
     id="theme-dark"
-    class="theme-btn p-2 sm:p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
+    class="theme-btn p-2 sm:p-1.5 rounded-md text-secondary hover:bg-surface-elevated transition-colors"
     title="Dark mode"
     aria-label="Switch to dark mode"
   >
@@ -29,7 +29,7 @@
   </button>
   <button
     id="theme-high-contrast"
-    class="theme-btn p-2 sm:p-1.5 rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
+    class="theme-btn p-2 sm:p-1.5 rounded-md text-secondary hover:bg-surface-elevated transition-colors"
     title="High contrast mode"
     aria-label="Switch to high contrast mode"
   >
@@ -42,13 +42,8 @@
 
 <style>
   .theme-btn[data-active="true"] {
-    background-color: rgb(219 234 254);
-    color: rgb(37 99 235);
-  }
-  
-  :global(.dark) .theme-btn[data-active="true"] {
-    background-color: rgb(30 58 138);
-    color: rgb(147 197 253);
+    background-color: color-mix(in srgb, var(--accent-brand) 20%, transparent);
+    color: var(--accent-brand);
   }
   
   :global(.high-contrast) .theme-btn {
@@ -57,13 +52,13 @@
 
   :global(.high-contrast) .theme-btn:hover,
   :global(.high-contrast) .theme-btn:focus-visible {
-    background-color: rgb(255 255 255) !important;
-    color: rgb(0 0 0) !important;
+    background-color: var(--hc-text) !important;
+    color: var(--hc-bg) !important;
   }
 
   :global(.high-contrast) .theme-btn[data-active="true"] {
-    background-color: rgb(255 255 255) !important;
-    color: rgb(0 0 0) !important;
+    background-color: var(--hc-text) !important;
+    color: var(--hc-bg) !important;
   }
 </style>
 
