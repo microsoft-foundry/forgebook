@@ -154,7 +154,7 @@
     
     if (headings.length === 0) {
       // Hide TOC if no headings
-      const tocContainer = document.querySelector('.toc-container');
+      const tocContainer = document.querySelector('.toc-container') as HTMLElement | null;
       if (tocContainer) tocContainer.style.display = 'none';
       return;
     }
