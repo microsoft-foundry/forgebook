@@ -3,7 +3,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import NotebookCard from "@/components/NotebookCard.astro";
 import Logo from "@/components/Logo.astro";
 import { getCollection } from "astro:content";
-import { REPO_URL } from "@/config";
+import { REPO_URL, withBase } from "@/config";
 
 const notebooksCollection = await getCollection("notebooks");
 
