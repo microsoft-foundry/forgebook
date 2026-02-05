@@ -26,7 +26,23 @@ export interface ResolvedAuthor {
   xUrl?: string;
 }
 
-const REPO_ROOT = path.resolve(import.meta.dirname, "../../../");
+// Find repo root by searching upward for authors.yaml
+function findRepoRoot(): string {
+  let dir = import.meta.dirname;
+  // Try up to 10 levels
+  for (let i = 0; i < 10; i++) {
+    if (fs.existsSync(path.join(dir, "authors.yaml"))) {
+      return dir;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break; // Reached filesystem root
+    dir = parent;
+  }
+  // Fallback: assume cwd is site/, go up one level
+  return path.resolve(process.cwd(), "..");
+}
+
+const REPO_ROOT = findRepoRoot();
 
 export function loadAuthorsCache(): Record<string, AuthorInfo> {
   const authorsPath = path.join(REPO_ROOT, "authors.yaml");
