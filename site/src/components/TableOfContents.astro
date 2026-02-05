@@ -1,0 +1,166 @@
+---
+// Table of Contents component
+// Extracts headings from notebook content and displays a sticky TOC on the right
+// Hidden on mobile/tablet, visible on large screens (lg:)
+---
+<aside class="toc-container hidden lg:block">
+  <nav class="toc sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto" aria-label="Table of contents">
+    <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">On this page</h2>
+    <ul class="toc-list space-y-1 text-sm" role="list">
+      <!-- Populated by JavaScript -->
+    </ul>
+  </nav>
+</aside>
+
+<style>
+  .toc-container {
+    width: 220px;
+    flex-shrink: 0;
+    padding-left: 2rem;
+  }
+  
+  .toc-list a {
+    display: block;
+    padding: 0.25rem 0;
+    color: var(--neutral-fg-3);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    padding-left: 0.75rem;
+    transition: all 0.15s ease;
+  }
+  
+  .toc-list a:hover {
+    color: var(--neutral-fg-1);
+  }
+  
+  .toc-list a.active {
+    color: var(--brand-fg);
+    border-left-color: var(--brand-fg);
+  }
+  
+  .toc-list .toc-h3 {
+    padding-left: 1.5rem;
+    font-size: 0.8125rem;
+  }
+  
+  /* Custom scrollbar for TOC */
+  .toc::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .toc::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .toc::-webkit-scrollbar-thumb {
+    background: var(--neutral-stroke-2);
+    border-radius: 2px;
+  }
+</style>
+
+<script>
+  function initTableOfContents() {
+    const tocList = document.querySelector('.toc-list');
+    const notebookContent = document.querySelector('.notebook-content');
+    
+    if (!tocList || !notebookContent) return;
+    
+    // Find all h1, h2, h3 headings in the notebook content
+    const headings = notebookContent.querySelectorAll('h1, h2, h3');
+    
+    if (headings.length === 0) {
+      // Hide TOC if no headings
+      const tocContainer = document.querySelector('.toc-container');
+      if (tocContainer) tocContainer.style.display = 'none';
+      return;
+    }
+    
+    // Generate IDs for headings that don't have them
+    const usedIds = new Set<string>();
+    headings.forEach((heading, index) => {
+      if (!heading.id) {
+        // Create slug from text content
+        let baseId = heading.textContent
+          ?.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '') || `heading-${index}`;
+        
+        // Ensure unique ID
+        let id = baseId;
+        let counter = 1;
+        while (usedIds.has(id)) {
+          id = `${baseId}-${counter++}`;
+        }
+        
+        heading.id = id;
+      }
+      usedIds.add(heading.id);
+    });
+    
+    // Build TOC list
+    const fragment = document.createDocumentFragment();
+    headings.forEach((heading) => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      
+      a.href = `#${heading.id}`;
+      a.textContent = heading.textContent;
+      
+      // Add class based on heading level
+      const level = heading.tagName.toLowerCase();
+      if (level === 'h3') {
+        a.classList.add('toc-h3');
+      }
+      
+      li.appendChild(a);
+      fragment.appendChild(li);
+    });
+    
+    tocList.appendChild(fragment);
+    
+    // Scroll spy - highlight current section
+    const tocLinks = tocList.querySelectorAll('a');
+    
+    const observerOptions = {
+      root: null,
+      rootMargin: '-80px 0px -80% 0px',
+      threshold: 0
+    };
+    
+    let currentActiveLink: Element | null = null;
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          const correspondingLink = tocList.querySelector(`a[href="#${id}"]`);
+          
+          if (correspondingLink && correspondingLink !== currentActiveLink) {
+            currentActiveLink?.classList.remove('active');
+            correspondingLink.classList.add('active');
+            currentActiveLink = correspondingLink;
+          }
+        }
+      });
+    }, observerOptions);
+    
+    headings.forEach((heading) => observer.observe(heading));
+    
+    // Set first item as active initially
+    if (tocLinks.length > 0) {
+      tocLinks[0].classList.add('active');
+      currentActiveLink = tocLinks[0];
+    }
+    
+    // Cleanup on navigation (for Astro view transitions)
+    document.addEventListener('astro:before-swap', () => {
+      observer.disconnect();
+    }, { once: true });
+  }
+  
+  // Initialize on page load
+  initTableOfContents();
+  
+  // Re-initialize on Astro view transitions
+  document.addEventListener('astro:after-swap', initTableOfContents);
+</script>

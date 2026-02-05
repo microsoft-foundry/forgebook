@@ -2,6 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import AuthorCard from "@/components/AuthorCard.astro";
 import NotebookActions from "@/components/NotebookActions.astro";
+import TableOfContents from "@/components/TableOfContents.astro";
 import { getCollection } from "astro:content";
 import { renderNotebook } from "@/lib/notebook";
 import { resolveAuthors } from "@/lib/registry";
@@ -21,55 +22,64 @@ const authors = await resolveAuthors(notebook.data.authors);
 
 <BaseLayout title={notebook.data.title} description={notebook.data.description}>
   <!-- Header -->
-  <header class="max-w-4xl mx-auto mb-8">
-    <h1 class="text-3xl font-bold text-primary mb-4">
-      {notebook.data.title}
-    </h1>
-    {
-      notebook.data.description && (
-        <p class="text-lg text-secondary mb-6">
-          {notebook.data.description}
-        </p>
-      )
-    }
+  <header class="max-w-4xl mx-auto mb-8 lg:max-w-none lg:pr-[252px]">
+    <div class="lg:max-w-4xl">
+      <h1 class="text-3xl font-bold text-primary mb-4">
+        {notebook.data.title}
+      </h1>
+      {
+        notebook.data.description && (
+          <p class="text-lg text-secondary mb-6">
+            {notebook.data.description}
+          </p>
+        )
+      }
 
-    <NotebookActions notebookPath={notebook.data.path} slug={notebook.data.slug} title={notebook.data.title} />
+      <NotebookActions notebookPath={notebook.data.path} slug={notebook.data.slug} title={notebook.data.title} />
+    </div>
   </header>
 
   <!-- Authors (full-bleed for more cards) -->
-  <section class="max-w-5xl mx-auto mb-8">
-    <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
-      {authors.length === 1 ? "Author" : "Authors"}
-    </h2>
-    <div class="flex flex-wrap gap-2">
-      {authors.map((author) => <AuthorCard {...author} />)}
+  <section class="max-w-5xl mx-auto mb-8 lg:max-w-none lg:pr-[252px]">
+    <div class="lg:max-w-5xl">
+      <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
+        {authors.length === 1 ? "Author" : "Authors"}
+      </h2>
+      <div class="flex flex-wrap gap-2">
+        {authors.map((author) => <AuthorCard {...author} />)}
+      </div>
     </div>
   </section>
 
-  <article class="max-w-4xl mx-auto">
-    <!-- Notebook Content -->
-    <section class="prose prose-slate dark:prose-invert max-w-none">
-      <div class="notebook-content" set:html={renderedHtml} />
-    </section>
+  <!-- Main content with TOC -->
+  <div class="flex justify-center">
+    <article class="max-w-4xl w-full">
+      <!-- Notebook Content -->
+      <section class="prose prose-slate dark:prose-invert max-w-none">
+        <div class="notebook-content" set:html={renderedHtml} />
+      </section>
 
-    <!-- Tags -->
-    {
-      notebook.data.tags && notebook.data.tags.length > 0 && (
-        <section class="mt-12 pt-8 border-t border-subtle">
-          <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
-            Tags
-          </h2>
-          <div class="flex flex-wrap gap-2">
-            {notebook.data.tags.map((tag) => (
-              <span class="px-3 py-1 text-sm bg-surface-elevated text-secondary rounded-full">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </section>
-      )
-    }
-  </article>
+      <!-- Tags -->
+      {
+        notebook.data.tags && notebook.data.tags.length > 0 && (
+          <section class="mt-12 pt-8 border-t border-subtle">
+            <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
+              Tags
+            </h2>
+            <div class="flex flex-wrap gap-2">
+              {notebook.data.tags.map((tag) => (
+                <span class="px-3 py-1 text-sm bg-surface-elevated text-secondary rounded-full">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </section>
+        )
+      }
+    </article>
+    
+    <TableOfContents />
+  </div>
 </BaseLayout>
 
 <style is:global>
