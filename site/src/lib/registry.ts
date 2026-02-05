@@ -8,9 +8,8 @@ export interface Author {
 }
 
 export interface AuthorInfo {
-  name?: string;
-  title?: string;
-  website?: string;
+  name: string;
+  title: string;
   avatar?: string;
   githubUrl?: string;
   linkedinUrl?: string;
@@ -20,9 +19,8 @@ export interface AuthorInfo {
 export interface ResolvedAuthor {
   github: string;
   name: string;
-  title?: string;
+  title: string;
   avatar: string;
-  profileUrl: string;
   githubUrl?: string;
   linkedinUrl?: string;
   xUrl?: string;
@@ -49,34 +47,21 @@ export async function resolveAuthor(
 ): Promise<ResolvedAuthor> {
   const cached = cache[author.github];
 
-  if (cached?.name && cached?.avatar) {
-    const githubUrl = cached.githubUrl || `https://github.com/${author.github}`;
-    const profileUrl = cached.website || githubUrl;
-    return {
-      github: author.github,
-      name: cached.name,
-      title: cached.title,
-      avatar: cached.avatar,
-      profileUrl,
-      githubUrl,
-      linkedinUrl: cached.linkedinUrl,
-      xUrl: cached.xUrl,
-    };
+  if (!cached?.name || !cached?.title) {
+    throw new Error(
+      `Author "${author.github}" must have name and title defined in authors.yaml`
+    );
   }
 
-  // Fallback to GitHub API or direct avatar URL
-  // In production, this would fetch from GitHub API
-  // For now, use the direct avatar URL pattern
+  const githubUrl = cached.githubUrl || `https://github.com/${author.github}`;
   return {
     github: author.github,
-    name: cached?.name || `@${author.github}`,
-    title: cached?.title,
-    avatar:
-      cached?.avatar || `https://github.com/${author.github}.png?size=200`,
-    profileUrl: cached?.website || `https://github.com/${author.github}`,
-    githubUrl: cached?.githubUrl || `https://github.com/${author.github}`,
-    linkedinUrl: cached?.linkedinUrl,
-    xUrl: cached?.xUrl,
+    name: cached.name,
+    title: cached.title,
+    avatar: cached.avatar || `https://github.com/${author.github}.png?size=200`,
+    githubUrl,
+    linkedinUrl: cached.linkedinUrl,
+    xUrl: cached.xUrl,
   };
 }
 

@@ -5,6 +5,7 @@
   "type": "object",
   "additionalProperties": {
     "type": "object",
+    "required": ["name", "title"],
     "properties": {
       "name": {
         "type": "string",
@@ -13,11 +14,6 @@
       "title": {
         "type": "string",
         "description": "Author title or role"
-      },
-      "website": {
-        "type": "string",
-        "format": "uri",
-        "description": "Author's website or social profile URL"
       },
       "avatar": {
         "type": "string",

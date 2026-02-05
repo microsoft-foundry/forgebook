@@ -161,13 +161,16 @@ authors:
 
 ## Author Profiles
 
-By default, author info is fetched from GitHub (name, avatar). To customize, add an entry to `authors.yaml`:
+All authors must be defined in `authors.yaml` with at least a `name` and `title`:
 
 ```yaml
 your-username:
   name: "Your Display Name"
-  website: "https://your-website.com"
+  title: "Your Role or Title"
+  # Optional fields:
   avatar: "https://custom-avatar-url.png"
+  linkedinUrl: "https://linkedin.com/in/yourprofile"
+  xUrl: "https://x.com/yourhandle"
 ```
 
 ---

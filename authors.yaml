@@ -1,28 +1,40 @@
 # yaml-language-server: $schema=./.github/authors_schema.json
 
-# Optional author metadata cache.
-# If an author is not listed here, their info will be fetched from GitHub API.
-# Use this to override display names, provide custom avatars, or add social links.
+# Author metadata for the site.
 # Keys must match the GitHub username used in registry.yaml.
-
-# Example:
-# nicholasdbrady:
-#   name: "Nick Brady"
-#   title: "AI Engineer"
-#   website: "https://example.com"
-#   avatar: "https://avatars.githubusercontent.com/u/12345?v=4"
-#   githubUrl: "https://github.com/nicholasdbrady"
-#   linkedinUrl: "https://www.linkedin.com/in/nicholasdbrady"
-#   xUrl: "https://x.com/nicholasdbrady"
 #
-# Notes:
-# - All fields are optional.
-# - Social icons only render when the matching URL is provided.
+# Required fields:
+#   - name: Display name for the author
+#   - title: Author title or role
+#
+# Optional fields:
+#   - avatar: URL to avatar image (defaults to GitHub avatar)
+#   - githubUrl: GitHub profile URL (defaults to github.com/<username>)
+#   - linkedinUrl: LinkedIn profile URL
+#   - xUrl: X (Twitter) profile URL
+
 nicholasdbrady:
   name: "Nick Brady"
   title: "Senior Program Manager"
-  website: "https://example.com"
   avatar: "https://github.com/nicholasdbrady.png?size=200"
   githubUrl: "https://github.com/nicholasdbrady"
   linkedinUrl: "https://www.linkedin.com/in/nicholasdbrady"
   xUrl: "https://x.com/nicholasdbrady"
+
+# Test authors for development
+jane-doe:
+  name: "Jane Doe"
+  title: "Software Engineer"
+  # No avatar - tests GitHub fallback
+  # No social links - tests missing icons
+
+long-name-author:
+  name: "Dr. Alexandria Montgomery-Worthington III"
+  title: "Principal Distinguished Research Scientist & AI Ethics Lead"
+  linkedinUrl: "https://www.linkedin.com/in/example"
+  # No avatar, no GitHub URL, no X - tests various missing fields
+
+minimal-author:
+  name: "Min"
+  title: "Intern"
+  # Minimal info - tests short content

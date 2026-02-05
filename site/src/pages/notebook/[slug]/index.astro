@@ -20,33 +20,33 @@ const authors = await resolveAuthors(notebook.data.authors);
 ---
 
 <BaseLayout title={notebook.data.title} description={notebook.data.description}>
+  <!-- Header -->
+  <header class="max-w-4xl mx-auto mb-8">
+    <h1 class="text-3xl font-bold text-primary mb-4">
+      {notebook.data.title}
+    </h1>
+    {
+      notebook.data.description && (
+        <p class="text-lg text-secondary mb-6">
+          {notebook.data.description}
+        </p>
+      )
+    }
+
+    <NotebookActions notebookPath={notebook.data.path} slug={notebook.data.slug} title={notebook.data.title} />
+  </header>
+
+  <!-- Authors (full-bleed for more cards) -->
+  <section class="max-w-5xl mx-auto mb-8">
+    <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
+      {authors.length === 1 ? "Author" : "Authors"}
+    </h2>
+    <div class="flex flex-wrap gap-2">
+      {authors.map((author) => <AuthorCard {...author} />)}
+    </div>
+  </section>
+
   <article class="max-w-4xl mx-auto">
-    <!-- Header -->
-    <header class="mb-8">
-      <h1 class="text-3xl font-bold text-primary mb-4">
-        {notebook.data.title}
-      </h1>
-      {
-        notebook.data.description && (
-          <p class="text-lg text-secondary mb-6">
-            {notebook.data.description}
-          </p>
-        )
-      }
-
-      <NotebookActions notebookPath={notebook.data.path} slug={notebook.data.slug} title={notebook.data.title} />
-    </header>
-
-    <!-- Authors -->
-    <section class="mb-8">
-      <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
-        {authors.length === 1 ? "Author" : "Authors"}
-      </h2>
-      <div class="flex flex-wrap gap-2">
-        {authors.map((author) => <AuthorCard {...author} />)}
-      </div>
-    </section>
-
     <!-- Notebook Content -->
     <section class="prose prose-slate dark:prose-invert max-w-none">
       <div class="notebook-content" set:html={renderedHtml} />
