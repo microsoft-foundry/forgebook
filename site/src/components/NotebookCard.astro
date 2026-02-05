@@ -44,6 +44,7 @@ const { notebook } = Astro.props;
             src={`https://github.com/${author.github}.png?size=40`}
             alt={author.github}
             class="w-6 h-6 rounded-full border border-subtle"
+            onerror={`this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(author.github)}&size=40&background=6366f1&color=fff&bold=true';`}
           />
         ))
       }
