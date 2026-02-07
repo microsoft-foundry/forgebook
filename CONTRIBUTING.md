@@ -10,8 +10,7 @@ Add your Jupyter notebook to the `notebooks/` directory:
 
 ```
 notebooks/
-└── examples/
-    └── my-notebook.ipynb
+└── my-notebook.ipynb
 ```
 
 **Important:** Do NOT add any site-specific metadata inside your notebook. Keep notebooks clean and portable.
@@ -22,7 +21,7 @@ Add an entry to `registry.yaml` at the root of the repository:
 
 ```yaml
 - slug: my-notebook
-  path: notebooks/examples/my-notebook.ipynb
+  path: notebooks/my-notebook.ipynb
   title: "My Awesome Notebook"
   description: "A brief description of what this notebook demonstrates."
   date: "2026-02-01"

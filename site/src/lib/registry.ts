@@ -1,8 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import yaml from "yaml";
-import { REPO_URL } from "@/config";
-
 export interface Author {
   github: string;
 }
@@ -51,10 +49,6 @@ export function loadAuthorsCache(): Record<string, AuthorInfo> {
   }
   const content = fs.readFileSync(authorsPath, "utf-8");
   return yaml.parse(content) || {};
-}
-
-export function getGitHubNotebookUrl(notebookPath: string): string {
-  return `${REPO_URL}/blob/main/${notebookPath}`;
 }
 
 export async function resolveAuthor(
