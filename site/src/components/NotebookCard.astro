@@ -25,6 +25,7 @@ const { notebook } = Astro.props;
 <a
   href={withBase(`/notebook/${notebook.slug}`)}
   class="block p-6 bg-surface-elevated rounded-xl border border-subtle hover:border-accent hover:shadow-lg transition-all"
+  data-track-click={`notebook-card:${notebook.slug}`}
 >
   <h3 class="text-lg font-semibold text-primary mb-2">
     {notebook.title}

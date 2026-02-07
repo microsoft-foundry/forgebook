@@ -10,5 +10,9 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "yaml": "^2.8.2"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.13.0",
+    "@azure/monitor-query-logs": "^1.0.0"
   }
 }

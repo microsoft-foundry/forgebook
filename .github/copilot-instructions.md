@@ -44,6 +44,8 @@ cd site && npm run build    # Includes astro check
 ```
 forgebook/
 ├── notebooks/          # Jupyter notebooks (source of truth)
+│   ├── data/           # Sample datasets for notebooks
+│   └── media/          # Images referenced in notebooks
 ├── registry.yaml       # Publishing metadata
 ├── authors.yaml        # Optional author profile overrides
 ├── site/               # Astro static site
@@ -53,4 +55,15 @@ forgebook/
 │       ├── lib/        # TypeScript utilities
 │       └── pages/      # Route pages
 └── scripts/            # Validation tooling
+```
+
+## Notebook Assets
+
+Reference data and images using relative paths from notebooks:
+```python
+# From notebooks/my-notebook.ipynb
+df = pd.read_csv("data/sample.csv")
+
+# From notebooks/examples/hello-world.ipynb
+df = pd.read_csv("../data/sample.csv")
 ```

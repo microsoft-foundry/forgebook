@@ -3,7 +3,14 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import NotebookCard from "@/components/NotebookCard.astro";
 import Logo from "@/components/Logo.astro";
 import { getCollection } from "astro:content";
-import { REPO_URL, withBase } from "@/config";
+import { REPO_URL } from "@/config";
+import popularRaw from "@/data/popular.json";
+
+interface PopularData {
+  updatedAt: string;
+  notebooks: { slug: string; views: number }[];
+}
+const popularData = popularRaw as PopularData;
 
 const notebooksCollection = await getCollection("notebooks");
 
@@ -17,6 +24,10 @@ const notebooks = notebooksCollection.map((entry) => ({
   authors: entry.data.authors,
   tags: entry.data.tags,
 }));
+
+// Build the "Most Popular" list by matching popular slugs to notebook data
+const popularSlugs = new Set(popularData.notebooks.map((n) => n.slug));
+const popularNotebooks = notebooks.filter((n) => popularSlugs.has(n.slug));
 ---
 
 <BaseLayout title="Home">
@@ -27,8 +38,7 @@ const notebooks = notebooksCollection.map((entry) => ({
         Forgebook
       </h1>
       <p class="text-xl text-secondary max-w-2xl mx-auto">
-        A collection of Jupyter notebook examples and tutorials. Clone, run, and
-        learn.
+        Your cookbook for building AI in Foundry.
       </p>
     </section>
 
@@ -36,6 +46,21 @@ const notebooks = notebooksCollection.map((entry) => ({
       <h2 class="text-2xl font-semibold text-primary mb-6">
         Notebooks
       </h2>
+
+      {popularNotebooks.length > 0 && (
+        <div class="mb-10">
+          <h3 class="text-lg font-medium text-secondary mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            Most Popular
+          </h3>
+          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {popularNotebooks.map((notebook) => <NotebookCard notebook={notebook} />)}
+          </div>
+        </div>
+      )}
+
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {notebooks.map((notebook) => <NotebookCard notebook={notebook} />)}
       </div>

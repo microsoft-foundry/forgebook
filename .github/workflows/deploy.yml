@@ -34,6 +34,8 @@ jobs:
 
       - name: Build site
         working-directory: ./site
+        env:
+          PUBLIC_APP_INSIGHTS_CONNECTION_STRING: ${{ vars.PUBLIC_APP_INSIGHTS_CONNECTION_STRING }}
         run: npm run build
 
       - name: Setup Pages
