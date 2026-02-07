@@ -39,6 +39,6 @@ test.describe("Site Navigation", () => {
   test("GitHub link points to correct repo", async ({ page }) => {
     await page.goto("/");
     const githubLink = page.getByRole("link", { name: "GitHub" });
-    await expect(githubLink).toHaveAttribute("href", "https://github.com/nicholasdbrady/forgebook");
+    await expect(githubLink).toHaveAttribute("href", "https://github.com/microsoft-foundry/forgebook");
   });
 });

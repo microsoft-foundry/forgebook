@@ -29,12 +29,12 @@ function tagColor(tag: string): string {
   <!-- Header -->
   <header class="max-w-4xl mx-auto mb-8 lg:max-w-none lg:pr-[252px]">
     <div class="lg:max-w-4xl">
-      <h1 class="text-3xl font-bold text-primary mb-4">
+      <h1 data-pagefind-meta="title" class="text-3xl font-bold text-primary mb-4">
         {notebook.data.title}
       </h1>
       {
         notebook.data.description && (
-          <p class="text-lg text-secondary mb-6">
+          <p data-pagefind-meta="description" class="text-lg text-secondary mb-6">
             {notebook.data.description}
           </p>
         )

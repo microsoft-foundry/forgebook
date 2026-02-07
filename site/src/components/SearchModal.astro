@@ -1,0 +1,185 @@
+---
+/**
+ * Search modal powered by Pagefind JS API.
+ * Renders a full-screen overlay with search input, results list,
+ * and keyboard navigation. Uses design system tokens throughout.
+ */
+import { withBase } from "@/config";
+const base = withBase("/");
+---
+
+<div id="search-modal" class="search-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Search notebooks">
+  <div class="search-panel">
+    <div class="search-input-wrapper">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+      </svg>
+      <input
+        id="search-input"
+        class="search-input"
+        type="text"
+        placeholder="Search notebooks..."
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      />
+    </div>
+    <div id="search-results" class="search-results">
+      <div class="search-empty">Type to search notebooks</div>
+    </div>
+    <div class="search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+      <span><kbd>↵</kbd> Open</span>
+      <span><kbd>Esc</kbd> Close</span>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ base }}>
+(function() {
+  var modal = document.getElementById('search-modal');
+  var input = document.getElementById('search-input');
+  var resultsContainer = document.getElementById('search-results');
+  var pagefindInstance = null;
+  var activeIndex = -1;
+  var debounceTimer = null;
+
+  function openSearch() {
+    modal.style.display = 'flex';
+    input.value = '';
+    resultsContainer.innerHTML = '<div class="search-empty">Type to search notebooks</div>';
+    activeIndex = -1;
+    requestAnimationFrame(function() { input.focus(); });
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSearch() {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  async function loadPagefind() {
+    if (pagefindInstance) return pagefindInstance;
+    try {
+      pagefindInstance = await import(base + 'pagefind/pagefind.js');
+      await pagefindInstance.init();
+      return pagefindInstance;
+    } catch (e) {
+      console.warn('Pagefind not available:', e);
+      return null;
+    }
+  }
+
+  async function doSearch(query) {
+    if (!query || query.length < 2) {
+      resultsContainer.innerHTML = '<div class="search-empty">Type to search notebooks</div>';
+      activeIndex = -1;
+      return;
+    }
+
+    var pf = await loadPagefind();
+    if (!pf) {
+      resultsContainer.innerHTML = '<div class="search-empty">Search is not available</div>';
+      return;
+    }
+
+    var search = await pf.search(query);
+
+    if (search.results.length === 0) {
+      resultsContainer.innerHTML = '<div class="search-empty">No results for &ldquo;' + query.replace(/</g, '&lt;') + '&rdquo;</div>';
+      activeIndex = -1;
+      return;
+    }
+
+    // Load first 8 results
+    var sliced = search.results.slice(0, 8);
+    var items = await Promise.all(sliced.map(function(r) { return r.data(); }));
+
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var title = (item.meta && item.meta.title) || 'Untitled';
+      var excerpt = item.excerpt || '';
+      html += '<a class="search-result-item" href="' + item.url + '" data-index="' + i + '">';
+      html += '<div class="search-result-title">' + escapeHtml(title) + '</div>';
+      html += '<div class="search-result-excerpt">' + excerpt + '</div>';
+      html += '</a>';
+    }
+    resultsContainer.innerHTML = html;
+    activeIndex = -1;
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function updateActive() {
+    var items = resultsContainer.querySelectorAll('.search-result-item');
+    for (var i = 0; i < items.length; i++) {
+      if (i === activeIndex) {
+        items[i].setAttribute('data-active', '');
+        items[i].scrollIntoView({ block: 'nearest' });
+      } else {
+        items[i].removeAttribute('data-active');
+      }
+    }
+  }
+
+  // Global keyboard shortcut: Cmd+K / Ctrl+K
+  document.addEventListener('keydown', function(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      if (modal.style.display === 'none') {
+        openSearch();
+      } else {
+        closeSearch();
+      }
+    }
+    if (e.key === 'Escape' && modal.style.display !== 'none') {
+      e.preventDefault();
+      closeSearch();
+    }
+  });
+
+  // Search button trigger
+  var btn = document.getElementById('search-button');
+  if (btn) btn.addEventListener('click', openSearch);
+
+  // Close on backdrop click
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeSearch();
+  });
+
+  // Input handling with debounce
+  input.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    var q = input.value;
+    debounceTimer = setTimeout(function() { doSearch(q); }, 200);
+  });
+
+  // Keyboard navigation within modal
+  input.addEventListener('keydown', function(e) {
+    var items = resultsContainer.querySelectorAll('.search-result-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (items.length > 0) {
+        activeIndex = Math.min(activeIndex + 1, items.length - 1);
+        updateActive();
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (items.length > 0) {
+        activeIndex = Math.max(activeIndex - 1, 0);
+        updateActive();
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0 && items[activeIndex]) {
+        window.location.href = items[activeIndex].getAttribute('href');
+      }
+    }
+  });
+})();
+</script>
