@@ -1,119 +1,97 @@
 ---
 /**
- * Theme Toggle component for switching between light, dark, and high-contrast modes.
- * Uses localStorage to persist theme preference across navigation.
+ * Theme Toggle — single button that cycles: light → dark → high-contrast → light.
+ * Shows the icon of the CURRENT theme so the user knows what mode they're in.
  */
 ---
 
-<div class="theme-toggle flex items-center gap-1">
-  <button
-    id="theme-light"
-    class="theme-btn p-2 sm:p-1.5 rounded-md text-secondary hover:bg-surface-elevated transition-colors"
-    title="Light mode"
-    aria-label="Switch to light mode"
-  >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="5" />
-      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-    </svg>
-  </button>
-  <button
-    id="theme-dark"
-    class="theme-btn p-2 sm:p-1.5 rounded-md text-secondary hover:bg-surface-elevated transition-colors"
-    title="Dark mode"
-    aria-label="Switch to dark mode"
-  >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  </button>
-  <button
-    id="theme-high-contrast"
-    class="theme-btn p-2 sm:p-1.5 rounded-md text-secondary hover:bg-surface-elevated transition-colors"
-    title="High contrast mode"
-    aria-label="Switch to high contrast mode"
-  >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" />
-    </svg>
-  </button>
-</div>
+<button
+  id="theme-toggle"
+  class="theme-toggle-btn hc-hover p-2 sm:p-1.5 rounded-md text-secondary hover:text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
+  title="Toggle theme"
+  aria-label="Toggle theme"
+>
+  <!-- Sun (light mode) -->
+  <svg class="theme-icon theme-icon-light w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="5" />
+    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+  </svg>
+  <!-- Moon (dark mode) -->
+  <svg class="theme-icon theme-icon-dark w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+  </svg>
+  <!-- Half circle (high contrast mode) -->
+  <svg class="theme-icon theme-icon-hc w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" />
+  </svg>
+</button>
 
 <style>
-  .theme-btn[data-active="true"] {
-    background-color: color-mix(in srgb, var(--accent-brand) 20%, transparent);
-    color: var(--accent-brand);
-  }
-  
-  :global(.high-contrast) .theme-btn {
+  :global(.high-contrast) .theme-toggle-btn {
     color: var(--hc-text) !important;
   }
 
-  :global(.high-contrast) .theme-btn:hover,
-  :global(.high-contrast) .theme-btn:focus-visible {
-    background-color: var(--hc-text) !important;
-    color: var(--hc-bg) !important;
-  }
-
-  :global(.high-contrast) .theme-btn[data-active="true"] {
-    background-color: var(--hc-text) !important;
-    color: var(--hc-bg) !important;
+  :global(.high-contrast) .theme-toggle-btn:hover,
+  :global(.high-contrast) .theme-toggle-btn:focus-visible {
+    background-color: var(--hc-bg-elevated) !important;
+    outline: 2px solid var(--hc-border);
+    outline-offset: 2px;
   }
 </style>
 
 <script>
   function initThemeToggle() {
-    const lightBtn = document.getElementById('theme-light');
-    const darkBtn = document.getElementById('theme-dark');
-    const highContrastBtn = document.getElementById('theme-high-contrast');
-    
-    function setTheme(theme: string) {
-      const html = document.documentElement;
-      
-      // Remove all theme classes
-      html.classList.remove('dark', 'high-contrast');
-      
-      // Apply new theme class
-      if (theme === 'dark') {
-        html.classList.add('dark');
-      } else if (theme === 'high-contrast') {
-        html.classList.add('high-contrast');
-      }
-      // 'light' has no class
-      
-      // Save to localStorage
-      localStorage.setItem('theme', theme);
-      
-      // Update active states
-      updateActiveStates(theme);
-    }
-    
-    function updateActiveStates(theme: string) {
-      lightBtn?.setAttribute('data-active', theme === 'light' ? 'true' : 'false');
-      darkBtn?.setAttribute('data-active', theme === 'dark' ? 'true' : 'false');
-      highContrastBtn?.setAttribute('data-active', theme === 'high-contrast' ? 'true' : 'false');
-    }
-    
-    // Event listeners
-    lightBtn?.addEventListener('click', () => setTheme('light'));
-    darkBtn?.addEventListener('click', () => setTheme('dark'));
-    highContrastBtn?.addEventListener('click', () => setTheme('high-contrast'));
-    
-    // Initialize active states based on current theme
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+
+    const themes = ['light', 'dark', 'high-contrast'] as const;
+
     function getCurrentTheme(): string {
-      const storedTheme = localStorage.getItem('theme');
-      if (storedTheme) return storedTheme;
+      const stored = localStorage.getItem('theme');
+      if (stored) return stored;
       if (document.documentElement.classList.contains('high-contrast')) return 'high-contrast';
       if (document.documentElement.classList.contains('dark')) return 'dark';
       return 'light';
     }
-    updateActiveStates(getCurrentTheme());
+
+    function setTheme(theme: string) {
+      const html = document.documentElement;
+      html.classList.remove('dark', 'high-contrast');
+      if (theme === 'dark') html.classList.add('dark');
+      else if (theme === 'high-contrast') html.classList.add('high-contrast');
+      localStorage.setItem('theme', theme);
+      updateIcon(theme);
+    }
+
+    function updateIcon(theme: string) {
+      const icons = btn!.querySelectorAll('.theme-icon');
+      icons.forEach(icon => (icon as HTMLElement).style.display = 'none');
+      const activeIcon = btn!.querySelector(`.theme-icon-${theme === 'high-contrast' ? 'hc' : theme}`);
+      if (activeIcon) (activeIcon as HTMLElement).style.display = '';
+
+      // Update aria-label and title to indicate next theme
+      const idx = themes.indexOf(theme as typeof themes[number]);
+      const next = themes[(idx + 1) % themes.length];
+      const labels: Record<string, string> = {
+        'light': 'Light mode — click for dark',
+        'dark': 'Dark mode — click for high contrast',
+        'high-contrast': 'High contrast — click for light',
+      };
+      btn!.setAttribute('aria-label', labels[theme] || 'Toggle theme');
+      btn!.setAttribute('title', labels[theme] || 'Toggle theme');
+    }
+
+    btn.addEventListener('click', () => {
+      const current = getCurrentTheme();
+      const idx = themes.indexOf(current as typeof themes[number]);
+      const next = themes[(idx + 1) % themes.length];
+      setTheme(next);
+    });
+
+    updateIcon(getCurrentTheme());
   }
-  
-  // Run on page load
+
   initThemeToggle();
-  
-  // Re-run on Astro page navigation (View Transitions / client-side nav)
   document.addEventListener('astro:page-load', initThemeToggle);
 </script>
