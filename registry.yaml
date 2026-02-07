@@ -14,13 +14,46 @@
 #   - date: Publication date (YYYY-MM-DD)
 #   - tags: List of topic tags
 
-- slug: foundry-agent-service
-  path: notebooks/foundry-agent-service.ipynb
-  title: "Getting Started with Foundry Agent Service"
-  description: "Build your first AI agent with Microsoft Foundry Agent Service. Learn to create agents, add tools like Code Interpreter, File Search, and Web Search, and publish to Microsoft 365 Copilot and Teams."
-  date: "2026-02-01"
+- slug: foundry-agent-part-1
+  path: notebooks/foundry-agent-part-1.ipynb
+  title: "Create Your First Agent (Part 1)"
+  description: "Build your first AI agent entirely from the Foundry portal. Deploy a model, create an agent with Web Search, test it, and explore versioning and debug tracing."
+  date: "2026-02-07"
+  authors:
+    - github: nicholasdbrady
+  tags:
+    - agents
+
+- slug: foundry-agent-part-2
+  path: notebooks/foundry-agent-part-2.ipynb
+  title: "Tools and Your First Code (Part 2)"
+  description: "Expand your agent with Microsoft Learn and GitHub MCP servers. Explore the tool catalog, YAML and Code views, and launch VS Code for the web."
+  date: "2026-02-07"
   authors:
     - github: nicholasdbrady
   tags:
     - agents
     - tools
+
+- slug: foundry-agent-part-3
+  path: notebooks/foundry-agent-part-3.ipynb
+  title: "Pro-Code: Custom Tools, Tracing & Evaluation (Part 3)"
+  description: "Go fully pro-code with custom code interpreter, Foundry MCP server, OpenTelemetry tracing, and automated agent evaluations."
+  date: "2026-02-07"
+  authors:
+    - github: nicholasdbrady
+  tags:
+    - agents
+    - tools
+    - evaluation
+
+- slug: foundry-agent-part-4
+  path: notebooks/foundry-agent-part-4.ipynb
+  title: "Red Team, Deploy & Optimize (Part 4)"
+  description: "Red team your agent, deploy with azd to Azure Container Apps, publish to Microsoft 365 Copilot and Teams, and set up production monitoring."
+  date: "2026-02-07"
+  authors:
+    - github: nicholasdbrady
+  tags:
+    - agents
+    - safety
