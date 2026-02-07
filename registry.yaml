@@ -14,14 +14,15 @@
 #   - date: Publication date (YYYY-MM-DD)
 #   - tags: List of topic tags
 
-- slug: hello-world
-  path: notebooks/examples/hello-world.ipynb
-  title: "Hello World"
-  description: "A simple introductory notebook demonstrating the basics."
+- slug: foundry-agent-service
+  path: notebooks/foundry-agent-service.ipynb
+  title: "Getting Started with Foundry Agent Service"
+  description: "Build your first AI agent with Microsoft Foundry Agent Service. Learn to create agents, add tools like Code Interpreter, File Search, and Web Search, and publish to Microsoft 365 Copilot and Teams."
   date: "2026-02-01"
   authors:
     - github: nicholasdbrady
-    - github: jane-doe
-    - github: long-name-author
   tags:
+    - agents
+    - foundry
     - getting-started
+    - tools

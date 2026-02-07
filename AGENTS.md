@@ -7,6 +7,8 @@ A notebook-first AI cookbook publishing platform. Jupyter notebooks are the sour
 ```
 forgebook/
 ├── notebooks/          # Jupyter notebooks (source of truth)
+│   ├── data/           # Sample datasets for notebooks
+│   └── media/          # Images referenced in notebooks
 ├── registry.yaml       # Publishing metadata for notebooks
 ├── authors.yaml        # Optional author profile overrides
 ├── site/               # Astro static site
@@ -57,6 +59,8 @@ npx tsx validate-registry.ts
 - Python 3.10+
 - Keep notebooks clean—no site-specific metadata inside notebooks
 - Run and test notebooks before publishing
+- Reference data using relative paths: `data/file.csv` or `../data/file.csv`
+- Reference images using relative paths: `media/image.png` or `../media/image.png`
 
 ## Registry Format
 
