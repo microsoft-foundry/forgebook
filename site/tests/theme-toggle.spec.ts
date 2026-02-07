@@ -1,39 +1,35 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Theme Toggle", () => {
-  test("theme toggle buttons are visible", async ({ page }) => {
+  test("theme toggle button is visible", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("button", { name: "Switch to light mode" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Switch to dark mode" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Switch to high contrast mode" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /toggle theme|light mode|dark mode|high contrast/i })).toBeVisible();
   });
 
-  test("clicking dark mode button applies dark class to html", async ({ page }) => {
+  test("clicking toggle cycles to dark mode", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Switch to dark mode" }).click();
+    // Default is light; first click goes to dark
+    await page.getByRole("button", { name: /light mode/i }).click();
     await expect(page.locator("html")).toHaveClass(/dark/);
   });
 
-  test("clicking high contrast button applies high-contrast class to html", async ({ page }) => {
+  test("clicking toggle cycles through all modes", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Switch to high contrast mode" }).click();
+    // Light → Dark
+    await page.getByRole("button", { name: /light mode/i }).click();
+    await expect(page.locator("html")).toHaveClass(/dark/);
+    // Dark → High Contrast
+    await page.getByRole("button", { name: /dark mode/i }).click();
     await expect(page.locator("html")).toHaveClass(/high-contrast/);
-  });
-
-  test("clicking light mode removes dark and high-contrast classes", async ({ page }) => {
-    await page.goto("/");
-    // First set to dark mode
-    await page.getByRole("button", { name: "Switch to dark mode" }).click();
-    await expect(page.locator("html")).toHaveClass(/dark/);
-    // Then switch to light mode
-    await page.getByRole("button", { name: "Switch to light mode" }).click();
+    // High Contrast → Light
+    await page.getByRole("button", { name: /high contrast/i }).click();
     await expect(page.locator("html")).not.toHaveClass(/dark/);
     await expect(page.locator("html")).not.toHaveClass(/high-contrast/);
   });
 
   test("theme persists in localStorage", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Switch to dark mode" }).click();
+    await page.getByRole("button", { name: /light mode/i }).click();
     const theme = await page.evaluate(() => localStorage.getItem("theme"));
     expect(theme).toBe("dark");
   });
@@ -41,7 +37,7 @@ test.describe("Theme Toggle", () => {
   test("theme persists across navigation", async ({ page }) => {
     await page.goto("/");
     // Set dark mode on homepage
-    await page.getByRole("button", { name: "Switch to dark mode" }).click();
+    await page.getByRole("button", { name: /light mode/i }).click();
     await expect(page.locator("html")).toHaveClass(/dark/);
     
     // Navigate to a notebook page
