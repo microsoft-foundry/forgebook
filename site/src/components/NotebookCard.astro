@@ -20,6 +20,11 @@ interface Props {
 }
 
 const { notebook } = Astro.props;
+
+function tagColor(tag: string): string {
+  const hash = [...tag].reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
+  return `tag-color-${((hash % 8) + 8) % 8}`;
+}
 ---
 
 <a
@@ -67,10 +72,10 @@ const { notebook } = Astro.props;
     notebook.tags && notebook.tags.length > 0 && (
       <div class="flex flex-wrap gap-2 mt-4">
         {notebook.tags.map((tag) => (
-          <span class="px-2 py-1 text-xs bg-surface-elevated text-secondary rounded-full border border-subtle">
-            {tag}
-          </span>
-        ))}
+              <span class={`px-2 py-1 text-xs rounded-full border font-medium ${tagColor(tag)}`}>
+                {tag}
+              </span>
+            ))}
       </div>
     )
   }

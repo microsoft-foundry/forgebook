@@ -197,6 +197,41 @@ code[class*="language-"] {
   border: 1px solid var(--neutral-bg-4);
 }
 
+/* ============================================
+   Tag Colors — NextGen Design System Palette
+   Each tag-color-N uses a tinted bg + darker fg
+   ============================================ */
+:root {
+  --tag-0-bg: #ede5fb; --tag-0-fg: #5b2db0; --tag-0-border: #d4c4f3;
+  --tag-1-bg: #e2e7fc; --tag-1-fg: #3b4ec2; --tag-1-border: #c5ceee;
+  --tag-2-bg: #fce5f9; --tag-2-fg: #b03a9e; --tag-2-border: #f0c4ea;
+  --tag-3-bg: #ddf5ef; --tag-3-fg: #267a65; --tag-3-border: #b6e6d8;
+  --tag-4-bg: #ddf0fc; --tag-4-fg: #1a6fa3; --tag-4-border: #b3daf5;
+  --tag-5-bg: #dbf0f0; --tag-5-fg: #1a7578; --tag-5-border: #b0dfe0;
+  --tag-6-bg: #fde9e1; --tag-6-fg: #a84e2a; --tag-6-border: #f5cebb;
+  --tag-7-bg: #ebe4f3; --tag-7-fg: #5e3f8a; --tag-7-border: #d4c4e3;
+}
+
+.dark {
+  --tag-0-bg: #2d1f4e; --tag-0-fg: #c4a8f0; --tag-0-border: #3d2d66;
+  --tag-1-bg: #1f2650; --tag-1-fg: #a0b0f0; --tag-1-border: #2d3766;
+  --tag-2-bg: #3d1f38; --tag-2-fg: #f0a0e4; --tag-2-border: #522850;
+  --tag-3-bg: #1a3d32; --tag-3-fg: #80d4b8; --tag-3-border: #254f42;
+  --tag-4-bg: #1a2f44; --tag-4-fg: #80ccf0; --tag-4-border: #253f58;
+  --tag-5-bg: #1a3536; --tag-5-fg: #70c8cc; --tag-5-border: #254546;
+  --tag-6-bg: #3d2518; --tag-6-fg: #f0b090; --tag-6-border: #503220;
+  --tag-7-bg: #2a1f3d; --tag-7-fg: #b8a0d4; --tag-7-border: #382a50;
+}
+
+.tag-color-0 { background-color: var(--tag-0-bg); color: var(--tag-0-fg); border-color: var(--tag-0-border); }
+.tag-color-1 { background-color: var(--tag-1-bg); color: var(--tag-1-fg); border-color: var(--tag-1-border); }
+.tag-color-2 { background-color: var(--tag-2-bg); color: var(--tag-2-fg); border-color: var(--tag-2-border); }
+.tag-color-3 { background-color: var(--tag-3-bg); color: var(--tag-3-fg); border-color: var(--tag-3-border); }
+.tag-color-4 { background-color: var(--tag-4-bg); color: var(--tag-4-fg); border-color: var(--tag-4-border); }
+.tag-color-5 { background-color: var(--tag-5-bg); color: var(--tag-5-fg); border-color: var(--tag-5-border); }
+.tag-color-6 { background-color: var(--tag-6-bg); color: var(--tag-6-fg); border-color: var(--tag-6-border); }
+.tag-color-7 { background-color: var(--tag-7-bg); color: var(--tag-7-fg); border-color: var(--tag-7-border); }
+
 /* Active/Selected Button State (for theme toggle) */
 .btn-active {
   background-color: color-mix(in srgb, var(--accent-brand) 20%, transparent);
@@ -335,7 +370,8 @@ img.emoji {
 }
 
 /* High contrast badges/tags */
-.high-contrast .badge {
+.high-contrast .badge,
+.high-contrast [class*="tag-color-"] {
   background-color: var(--hc-bg) !important;
   color: var(--hc-text) !important;
   border: 1px solid var(--hc-border) !important;

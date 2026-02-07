@@ -28,7 +28,7 @@ Add an entry to `registry.yaml` at the root of the repository:
   authors:
     - github: your-github-username
   tags:
-    - getting-started
+    - beginner
     - tutorial
 ```
 
@@ -146,7 +146,7 @@ Supported languages: Python, JavaScript, TypeScript, JSON, YAML, Bash, SQL, and 
 |-------|------|-------------|
 | `description` | string | Max 500 characters |
 | `date` | `YYYY-MM-DD` | Publication date |
-| `tags` | array | Topic tags |
+| `tags` | array | Topic tags (from `tags.yaml`) |
 
 ### Author Entry
 
@@ -195,7 +195,7 @@ npm run build
 1. **Keep notebooks clean** — No site-specific metadata inside notebooks
 2. **Clear titles** — Be descriptive but concise
 3. **Add descriptions** — Help readers know what to expect
-4. **Tag appropriately** — Use existing tags when possible
+4. **Tag from the allowed list** — Use tags defined in `tags.yaml`; the validator rejects unknown tags
 5. **Test locally** — Run notebooks before publishing
 6. **Responsive embeds** — Use recommended iframe sizes
 7. **Alt text** — Always add alt text to images

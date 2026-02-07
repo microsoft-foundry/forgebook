@@ -34,6 +34,11 @@ function registryLoader(): Loader {
         tags?: string[];
       }>;
 
+      // Load allowed tags
+      const tagsPath = path.join(repoRoot, "tags.yaml");
+      const tagsContent = fs.readFileSync(tagsPath, "utf-8");
+      const allowedTags = new Set<string>(yaml.parse(tagsContent) as string[]);
+
       store.clear();
 
       for (const entry of entries) {
@@ -42,6 +47,13 @@ function registryLoader(): Loader {
         if (!fs.existsSync(notebookPath)) {
           logger.warn(`Notebook not found: ${entry.path}`);
           continue;
+        }
+
+        if (entry.tags) {
+          const unknownTags = entry.tags.filter(t => !allowedTags.has(t));
+          if (unknownTags.length > 0) {
+            logger.warn(`Unknown tags in ${entry.slug}: ${unknownTags.join(", ")}`);
+          }
         }
 
         const notebookContent = fs.readFileSync(notebookPath, "utf-8");

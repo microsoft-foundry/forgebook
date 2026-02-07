@@ -4,7 +4,7 @@
  */
 
 /** GitHub repository URL */
-export const REPO_URL = "https://github.com/nicholasdbrady/forgebook";
+export const REPO_URL = "https://github.com/microsoft-foundry/forgebook";
 
 /** Base URL path for deployment (from Astro config) */
 export const BASE_URL = import.meta.env.BASE_URL;
