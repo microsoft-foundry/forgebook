@@ -71,8 +71,6 @@
       if (activeIcon) (activeIcon as HTMLElement).style.display = '';
 
       // Update aria-label and title to indicate next theme
-      const idx = themes.indexOf(theme as typeof themes[number]);
-      const next = themes[(idx + 1) % themes.length];
       const labels: Record<string, string> = {
         'light': 'Light mode — click for dark',
         'dark': 'Dark mode — click for high contrast',
