@@ -28,8 +28,8 @@ Add an entry to `registry.yaml` at the root of the repository:
   authors:
     - github: your-github-username
   tags:
-    - beginner
-    - tutorial
+    - agents
+    - inference
 ```
 
 ### 3. Push and Deploy

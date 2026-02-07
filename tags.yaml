@@ -2,32 +2,21 @@
 # Tags are enforced by the registry validator and site build.
 # To add a new tag, add it here — PRs that introduce unknown tags will fail CI.
 
-# Difficulty (pick one per notebook)
-- beginner
-- intermediate
-- advanced
-
 # Core Capabilities
 - agents
 - multi-agent
 - inference
-- rag
+- knowledge
 - evaluation
 - fine-tuning
 - memory
 - multimodal
-
-# Tools & Integrations
-- tools
-- mcp
-- semantic-kernel
-
-# Infrastructure
-- foundry
-- local
-- deployment
 - safety
+- local
+- tools
 
-# Content Type
-- tutorial
-- best-practices
+# Integrations
+- agent-framework
+- a2a
+- langchain
+- mcp
