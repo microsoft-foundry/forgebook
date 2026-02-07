@@ -18,6 +18,11 @@ export async function getStaticPaths() {
 const { notebook } = Astro.props;
 const renderedHtml = renderNotebook(notebook.data.notebook);
 const authors = await resolveAuthors(notebook.data.authors);
+
+function tagColor(tag: string): string {
+  const hash = [...tag].reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
+  return `tag-color-${((hash % 8) + 8) % 8}`;
+}
 ---
 
 <BaseLayout title={notebook.data.title} description={notebook.data.description}>
@@ -68,10 +73,10 @@ const authors = await resolveAuthors(notebook.data.authors);
             </h2>
             <div class="flex flex-wrap gap-2">
               {notebook.data.tags.map((tag) => (
-                <span class="px-3 py-1 text-sm bg-surface-elevated text-secondary rounded-full">
-                  {tag}
-                </span>
-              ))}
+                  <span class={`px-3 py-1 text-sm rounded-full border font-medium ${tagColor(tag)}`}>
+                    {tag}
+                  </span>
+                ))}
             </div>
           </section>
         )

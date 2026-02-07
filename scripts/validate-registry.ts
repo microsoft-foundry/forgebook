@@ -54,6 +54,10 @@ function main(): void {
   const warnings: string[] = [];
   const entries = loadRegistry();
 
+  const tagsPath = path.join(REPO_ROOT, "tags.yaml");
+  const tagsContent = fs.readFileSync(tagsPath, "utf-8");
+  const allowedTags = new Set<string>(yaml.parse(tagsContent) as string[]);
+
   if (!Array.isArray(entries)) {
     console.error("❌ Registry must be an array of entries");
     process.exit(1);
@@ -121,8 +125,12 @@ function main(): void {
     if (entry.tags) {
       for (const tag of entry.tags) {
         if (!validateSlug(tag)) {
-          warnings.push(
-            `${prefix}: Tag '${tag}' should use lowercase letters, numbers, and hyphens`
+          errors.push(
+            `${prefix}: Tag '${tag}' must use lowercase letters, numbers, and hyphens`
+          );
+        } else if (!allowedTags.has(tag)) {
+          errors.push(
+            `${prefix}: Unknown tag '${tag}'. Allowed tags: ${[...allowedTags].join(", ")}`
           );
         }
       }
