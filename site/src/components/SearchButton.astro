@@ -1,0 +1,21 @@
+---
+/**
+ * Search button for the header nav.
+ * Opens the search modal on click or ⌘K / Ctrl+K.
+ */
+---
+
+<button
+  id="search-button"
+  class="search-trigger hc-hover inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-secondary hover:text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
+  type="button"
+  aria-label="Search notebooks"
+  aria-keyshortcuts="Control+k Meta+k"
+>
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+  </svg>
+  <span class="search-shortcut hidden sm:inline-flex items-center gap-0.5 text-xs badge rounded px-1.5 py-0.5">
+    <kbd class="font-mono text-[10px]">⌘</kbd><kbd class="font-mono text-[10px]">K</kbd>
+  </span>
+</button>

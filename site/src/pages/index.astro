@@ -31,7 +31,7 @@ const popularNotebooks = notebooks.filter((n) => popularSlugs.has(n.slug));
 ---
 
 <BaseLayout title="Home">
-  <div class="space-y-8">
+  <div class="space-y-8" data-pagefind-ignore>
     <section class="text-center py-12">
       <h1 class="text-4xl font-bold text-primary mb-4 flex items-center justify-center gap-3">
         <Logo size={48} />

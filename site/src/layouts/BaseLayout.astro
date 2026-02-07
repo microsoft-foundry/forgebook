@@ -2,6 +2,8 @@
 import { withBase } from "@/config";
 import "../styles/global.css";
 import ThemeToggle from "@/components/ThemeToggle.astro";
+import SearchButton from "@/components/SearchButton.astro";
+import SearchModal from "@/components/SearchModal.astro";
 import Logo from "@/components/Logo.astro";
 import GitHubButton from "@/components/GitHubButton.astro";
 
@@ -50,13 +52,14 @@ const { title, description = "Recipes for AI alchemists forging with Microsoft F
     <title>{title} | Forgebook</title>
   </head>
   <body class="min-h-screen bg-surface text-primary">
-    <header class="site-header sticky top-0 z-50 backdrop-blur-sm border-b border-subtle" style="background-color: color-mix(in srgb, var(--neutral-bg-1) 80%, transparent);">
+    <header data-pagefind-ignore class="site-header sticky top-0 z-50 backdrop-blur-sm border-b border-subtle" style="background-color: color-mix(in srgb, var(--neutral-bg-1) 80%, transparent);">
       <nav class="max-w-6xl mx-auto px-3 py-3 sm:px-4 sm:py-4 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
         <a href={withBase("/")} class="flex items-center gap-2 text-lg sm:text-xl font-bold text-primary">
           <Logo size={28} />
           Forgebook
         </a>
         <div class="flex items-center gap-2 sm:gap-4">
+          <SearchButton />
           <ThemeToggle />
           <a
             href={withBase("/rss.xml")}
@@ -73,15 +76,17 @@ const { title, description = "Recipes for AI alchemists forging with Microsoft F
       </nav>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 py-8">
+    <main data-pagefind-body class="max-w-6xl mx-auto px-4 py-8">
       <slot />
     </main>
 
-    <footer class="border-t border-subtle mt-16">
+    <footer data-pagefind-ignore class="border-t border-subtle mt-16">
       <div class="max-w-6xl mx-auto px-4 py-8 text-center text-muted text-sm">
         <p>Built with Astro • MIT License</p>
       </div>
     </footer>
+
+    <SearchModal />
 
     <script>
       // Add copy buttons to all code blocks
