@@ -185,8 +185,8 @@ jupyter notebook`}</code></pre>
     background: var(--color-surface-accent, var(--color-border-accent));
     color: var(--color-text-on-accent, #fff);
   }
-  /* Colored tag buttons get a stronger ring when active */
-  .tag-filter-btn[class*="tag-color-"].active {
+  /* Colored tag buttons get a stronger ring when active and filtering */
+  .tag-filter-bar.filtering .tag-filter-btn[class*="tag-color-"].active {
     outline: 3px solid currentColor;
     outline-offset: 2px;
     opacity: 1;
@@ -197,7 +197,7 @@ jupyter notebook`}</code></pre>
     z-index: 1;
     isolation: isolate;
   }
-  .tag-filter-btn[class*="tag-color-"]:not(.active) {
+  .tag-filter-bar.filtering .tag-filter-btn[class*="tag-color-"]:not(.active) {
     opacity: 0.5;
   }
   .tag-clear-btn {
@@ -239,25 +239,34 @@ jupyter notebook`}</code></pre>
     const cards = document.querySelectorAll<HTMLElement>(".notebook-card-wrapper");
     const popularSection = document.getElementById("popular-section");
     const recipeCount = document.getElementById("recipe-count");
-    // Only count cards in the main grid, not popular section duplicates
     const mainCards = document.querySelectorAll<HTMLElement>("#notebooks-grid > .notebook-card-wrapper");
+
+    const filterBar = document.querySelector<HTMLElement>(".tag-filter-bar");
 
     if (!buttons.length) return;
 
-    const activeTags = new Set<string>();
+    const allTags = new Set<string>();
+    buttons.forEach((btn) => allTags.add(btn.dataset.tag!));
+    const activeTags = new Set<string>(allTags);
+
+    function isAllSelected() {
+      return activeTags.size === allTags.size;
+    }
 
     function applyFilter() {
+      const filtering = !isAllSelected();
       buttons.forEach((btn) => {
         btn.classList.toggle("active", activeTags.has(btn.dataset.tag!));
       });
 
-      if (clearBtn) clearBtn.classList.toggle("hidden", activeTags.size === 0);
+      if (filterBar) filterBar.classList.toggle("filtering", filtering);
+      if (clearBtn) clearBtn.classList.toggle("hidden", !filtering);
 
       let visiblePopular = 0;
       let visibleMain = 0;
       cards.forEach((card) => {
         const cardTags = (card.dataset.tags ?? "").split(",");
-        const show = activeTags.size === 0 || cardTags.some((t) => activeTags.has(t));
+        const show = isAllSelected() || cardTags.some((t) => activeTags.has(t));
         card.classList.toggle("hidden", !show);
         if (show && popularSection?.contains(card)) visiblePopular++;
       });
@@ -268,19 +277,29 @@ jupyter notebook`}</code></pre>
       if (recipeCount) recipeCount.textContent = `(${visibleMain})`;
 
       if (popularSection) {
-        popularSection.classList.toggle("hidden", activeTags.size > 0 && visiblePopular === 0);
+        popularSection.classList.toggle("hidden", !isAllSelected() && visiblePopular === 0);
       }
 
-      const hashVal = [...activeTags].join("+");
+      const hashVal = isAllSelected() ? "" : [...activeTags].join("+");
       history.replaceState(null, "", hashVal ? `#tag=${hashVal}` : location.pathname);
     }
 
     buttons.forEach((btn) => {
       btn.addEventListener("click", () => {
         const tag = btn.dataset.tag!;
-        if (activeTags.has(tag)) {
+        if (isAllSelected()) {
+          // From all-selected: narrow to just this one
+          activeTags.clear();
+          activeTags.add(tag);
+        } else if (activeTags.has(tag)) {
+          // Deselect this tag
           activeTags.delete(tag);
+          // If none left, restore all
+          if (activeTags.size === 0) {
+            allTags.forEach((t) => activeTags.add(t));
+          }
         } else {
+          // Add this tag to selection
           activeTags.add(tag);
         }
         applyFilter();
@@ -290,6 +309,7 @@ jupyter notebook`}</code></pre>
     if (clearBtn) {
       clearBtn.addEventListener("click", () => {
         activeTags.clear();
+        allTags.forEach((t) => activeTags.add(t));
         applyFilter();
       });
     }
@@ -297,8 +317,12 @@ jupyter notebook`}</code></pre>
     // Restore from URL hash
     const hash = location.hash;
     if (hash.startsWith("#tag=")) {
+      activeTags.clear();
       for (const t of decodeURIComponent(hash.slice(5)).split("+")) {
-        if (t) activeTags.add(t);
+        if (t && allTags.has(t)) activeTags.add(t);
+      }
+      if (activeTags.size === 0) {
+        allTags.forEach((t) => activeTags.add(t));
       }
       applyFilter();
     }
