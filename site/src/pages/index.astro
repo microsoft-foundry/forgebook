@@ -159,17 +159,27 @@ jupyter notebook`}</code></pre>
     font-size: 0.8125rem;
     font-weight: 500;
     border-radius: 9999px;
-    border: 1px solid var(--color-border-subtle);
-    background: var(--color-surface-elevated);
-    color: var(--color-text-secondary);
     cursor: pointer;
     transition: all 0.15s ease;
     white-space: nowrap;
   }
+  /* "All" button and default (non-colored) style */
+  .tag-filter-btn:not([class*="tag-color-"]) {
+    border: 1px solid var(--color-border-subtle);
+    background: var(--color-surface-elevated);
+    color: var(--color-text-secondary);
+  }
+  /* Colored tag buttons use global .tag-color-N styles; just add border */
+  .tag-filter-btn[class*="tag-color-"] {
+    border: 1px solid transparent;
+  }
   .tag-filter-btn:hover {
+    opacity: 0.85;
+  }
+  .tag-filter-btn:not([class*="tag-color-"]):hover {
     border-color: var(--color-border-accent);
   }
-  .tag-filter-btn.active {
+  .tag-filter-btn.active:not([class*="tag-color-"]) {
     border-color: var(--color-border-accent);
     background: var(--color-surface-accent, var(--color-border-accent));
     color: var(--color-text-on-accent, #fff);
@@ -178,6 +188,10 @@ jupyter notebook`}</code></pre>
   .tag-filter-btn[class*="tag-color-"].active {
     outline: 2px solid var(--color-border-accent);
     outline-offset: 1px;
+    opacity: 1;
+  }
+  .tag-filter-btn[class*="tag-color-"]:not(.active) {
+    opacity: 0.65;
   }
 
   /* Desktop: allow wrapping */
@@ -226,7 +240,16 @@ jupyter notebook`}</code></pre>
     }
 
     buttons.forEach((btn) => {
-      btn.addEventListener("click", () => setFilter(btn.dataset.tag ?? "all"));
+      btn.addEventListener("click", () => {
+        const clickedTag = btn.dataset.tag ?? "all";
+        // Toggle: if clicking the already-active tag, deselect back to "all"
+        const currentActive = document.querySelector<HTMLButtonElement>(".tag-filter-btn.active");
+        if (currentActive?.dataset.tag === clickedTag && clickedTag !== "all") {
+          setFilter("all");
+        } else {
+          setFilter(clickedTag);
+        }
+      });
     });
 
     // Restore from URL hash

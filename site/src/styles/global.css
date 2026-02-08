@@ -369,9 +369,18 @@ img.emoji {
   color: var(--hc-bg) !important;
 }
 
-/* High contrast badges/tags */
-.high-contrast .badge,
-.high-contrast [class*="tag-color-"] {
+/* High contrast badges/tags — use dark-mode tag palette for distinct, visible colors */
+.high-contrast {
+  --tag-0-bg: #2d1f4e; --tag-0-fg: #c4a8f0; --tag-0-border: #3d2d66;
+  --tag-1-bg: #1f2650; --tag-1-fg: #a0b0f0; --tag-1-border: #2d3766;
+  --tag-2-bg: #3d1f38; --tag-2-fg: #f0a0e4; --tag-2-border: #522850;
+  --tag-3-bg: #1f3d2d; --tag-3-fg: #a0f0b0; --tag-3-border: #2d5540;
+  --tag-4-bg: #3d3d1f; --tag-4-fg: #f0f0a0; --tag-4-border: #55552d;
+  --tag-5-bg: #1f3d3d; --tag-5-fg: #a0f0f0; --tag-5-border: #2d5555;
+  --tag-6-bg: #3d2a1f; --tag-6-fg: #f0c0a0; --tag-6-border: #554030;
+  --tag-7-bg: #3d1f2a; --tag-7-fg: #f0a0b8; --tag-7-border: #553040;
+}
+.high-contrast .badge {
   background-color: var(--hc-bg) !important;
   color: var(--hc-text) !important;
   border: 1px solid var(--hc-border) !important;
