@@ -32,7 +32,13 @@ function tagColor(tag: string): string {
       <h1 data-pagefind-meta="title" class="text-3xl font-bold text-primary mb-4">
         {notebook.data.title}
       </h1>
-      {notebook.data.description && <meta data-pagefind-meta={`description:${notebook.data.description}`} />}
+      {
+        notebook.data.description && (
+          <p data-pagefind-meta="description" class="text-lg text-secondary mb-6">
+            {notebook.data.description}
+          </p>
+        )
+      }
 
       <NotebookActions notebookPath={notebook.data.path} slug={notebook.data.slug} title={notebook.data.title} />
     </div>
