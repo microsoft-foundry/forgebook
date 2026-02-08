@@ -100,12 +100,18 @@ Use iframe embeds for YouTube videos. The site automatically wraps them in respo
 ![Alt text](https://example.com/image.png)
 ```
 
-**Repository Images:**
+**Notebook Images:**
 
-Place images in `site/public/images/` and reference with the base path:
+Store images in `notebooks/media/` and reference them with relative paths:
 
 ```markdown
-![Alt text](/forgebook/images/my-image.png)
+![Alt text](media/my-image.png)
+```
+
+From a subdirectory notebook (e.g., `notebooks/examples/foo.ipynb`):
+
+```markdown
+![Alt text](../media/my-image.png)
 ```
 
 **Best Practices:**
@@ -199,6 +205,32 @@ npm run build
 5. **Test locally** — Run notebooks before publishing
 6. **Responsive embeds** — Use recommended iframe sizes
 7. **Alt text** — Always add alt text to images
+
+### Title and Description Deduplication
+
+The site automatically strips duplicate content between your notebook and registry metadata:
+
+- If your notebook starts with an `# H1 Title` that **exactly matches** the `title` in `registry.yaml`, it is stripped from the rendered page (the page header already shows it).
+- If your notebook has an italic subtitle (`*text*`) that **exactly matches** the `description` in `registry.yaml`, it is stripped from the rendered content (the description is shown once in the page body).
+
+**Recommended pattern** — start your notebook like this:
+
+```markdown
+# My Notebook Title
+*A short subtitle describing the notebook*
+
+Your content starts here...
+```
+
+Then set the same values in `registry.yaml`:
+
+```yaml
+- slug: my-notebook
+  title: "My Notebook Title"
+  description: "A short subtitle describing the notebook"
+```
+
+If the title or description don't match, both copies are kept — the notebook content is never silently removed.
 
 ## Local Development
 
