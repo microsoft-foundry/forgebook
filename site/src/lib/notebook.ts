@@ -134,7 +134,7 @@ export interface NotebookCell {
   outputs?: string[];
 }
 
-export function renderNotebook(notebookJson: unknown, title?: string, description?: string): string {
+export function renderNotebook(notebookJson: unknown): string {
   try {
     // Reset iframe storage for this notebook
     currentIframes = new Map<string, string>();
@@ -147,27 +147,7 @@ export function renderNotebook(notebookJson: unknown, title?: string, descriptio
     const sanitized = purify.sanitize(rendered.outerHTML);
     
     // Restore preserved trusted iframes
-    let result = restoreIframes(sanitized, currentIframes);
-
-    // Strip the first H1 only if it matches the page title (already shown in header)
-    if (title) {
-      const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      result = result.replace(
-        new RegExp(
-          `(<div class="nb-cell nb-markdown-cell">)\\s*<h1>${escaped}<\\/h1>`
-        ),
-        "$1"
-      );
-    }
-
-    // Strip italic subtitle if it matches the registry description (shown in page body)
-    if (description) {
-      const escaped = description.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      result = result.replace(
-        new RegExp(`<p><em>${escaped}<\\/em><\\/p>`),
-        ""
-      );
-    }
+    const result = restoreIframes(sanitized, currentIframes);
 
     return result;
   } catch (error) {

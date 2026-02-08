@@ -206,31 +206,19 @@ npm run build
 6. **Responsive embeds** — Use recommended iframe sizes
 7. **Alt text** — Always add alt text to images
 
-### Title and Description Deduplication
+### Title and Description
 
-The site automatically strips duplicate content between your notebook and registry metadata:
+The page header automatically displays the `title` from `registry.yaml`, so **do not start your notebook with an `# H1` title** — it will appear twice on the published page.
 
-- If your notebook starts with an `# H1 Title` that **exactly matches** the `title` in `registry.yaml`, it is stripped from the rendered page (the page header already shows it).
-- If your notebook has an italic subtitle (`*text*`) that **exactly matches** the `description` in `registry.yaml`, it is stripped from the rendered content (the description is shown once in the page body).
-
-**Recommended pattern** — start your notebook like this:
+Instead, start your notebook with the content itself. An italic subtitle is a nice convention:
 
 ```markdown
-# My Notebook Title
-*A short subtitle describing the notebook*
+*A short subtitle or tagline for the notebook*
 
 Your content starts here...
 ```
 
-Then set the same values in `registry.yaml`:
-
-```yaml
-- slug: my-notebook
-  title: "My Notebook Title"
-  description: "A short subtitle describing the notebook"
-```
-
-If the title or description don't match, both copies are kept — the notebook content is never silently removed.
+The `description` in `registry.yaml` is used for search indexing and the card on the homepage — it doesn't appear on the notebook page itself, so it can differ from any subtitle in your notebook.
 
 ## Local Development
 
