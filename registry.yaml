@@ -17,7 +17,7 @@
 - slug: foundry-agent-part-1
   path: notebooks/foundry-agent-part-1.ipynb
   title: "Create Your First Agent (Part 1)"
-  description: "Build your first AI agent entirely from the Foundry portal. Deploy a model, create an agent with Web Search, test it, and explore versioning and debug tracing."
+  description: "Build a Foundry Expert that searches the web — entirely from the portal"
   date: "2026-02-07"
   authors:
     - github: nicholasdbrady

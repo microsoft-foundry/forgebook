@@ -16,7 +16,7 @@ export async function getStaticPaths() {
 }
 
 const { notebook } = Astro.props;
-const renderedHtml = renderNotebook(notebook.data.notebook, notebook.data.title);
+const renderedHtml = renderNotebook(notebook.data.notebook, notebook.data.title, notebook.data.description);
 const authors = await resolveAuthors(notebook.data.authors);
 
 function tagColor(tag: string): string {
@@ -32,13 +32,6 @@ function tagColor(tag: string): string {
       <h1 data-pagefind-meta="title" class="text-3xl font-bold text-primary mb-4">
         {notebook.data.title}
       </h1>
-      {
-        notebook.data.description && (
-          <p data-pagefind-meta="description" class="text-lg text-secondary mb-6">
-            {notebook.data.description}
-          </p>
-        )
-      }
 
       <NotebookActions notebookPath={notebook.data.path} slug={notebook.data.slug} title={notebook.data.title} />
     </div>
@@ -59,6 +52,14 @@ function tagColor(tag: string): string {
   <!-- Main content with TOC -->
   <div class="flex justify-center">
     <article class="max-w-4xl w-full">
+      {
+        notebook.data.description && (
+          <p data-pagefind-meta="description" class="text-lg text-secondary italic mb-6">
+            {notebook.data.description}
+          </p>
+        )
+      }
+
       <!-- Notebook Content -->
       <section class="prose prose-slate dark:prose-invert max-w-none">
         <div class="notebook-content" set:html={renderedHtml} />

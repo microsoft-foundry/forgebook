@@ -134,7 +134,7 @@ export interface NotebookCell {
   outputs?: string[];
 }
 
-export function renderNotebook(notebookJson: unknown, title?: string): string {
+export function renderNotebook(notebookJson: unknown, title?: string, description?: string): string {
   try {
     // Reset iframe storage for this notebook
     currentIframes = new Map<string, string>();
@@ -157,6 +157,15 @@ export function renderNotebook(notebookJson: unknown, title?: string): string {
           `(<div class="nb-cell nb-markdown-cell">)\\s*<h1>${escaped}<\\/h1>`
         ),
         "$1"
+      );
+    }
+
+    // Strip italic subtitle if it matches the registry description (shown in page body)
+    if (description) {
+      const escaped = description.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      result = result.replace(
+        new RegExp(`<p><em>${escaped}<\\/em><\\/p>`),
+        ""
       );
     }
 
