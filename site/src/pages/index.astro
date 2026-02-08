@@ -187,11 +187,11 @@ jupyter notebook`}</code></pre>
   }
   /* Colored tag buttons get a stronger ring when active */
   .tag-filter-btn[class*="tag-color-"].active {
-    outline: 3px solid #a78bfa;
+    outline: 3px solid currentColor;
     outline-offset: 2px;
     opacity: 1;
     transform: scale(1.08);
-    box-shadow: 0 0 12px 2px rgba(167, 139, 250, 0.5);
+    box-shadow: 0 0 12px 2px currentColor;
   }
   .tag-filter-btn[class*="tag-color-"]:not(.active) {
     opacity: 0.5;
@@ -237,44 +237,57 @@ jupyter notebook`}</code></pre>
 
     if (!buttons.length) return;
 
-    function applyFilter(activeTag: string | null) {
+    const activeTags = new Set<string>();
+
+    function applyFilter() {
       buttons.forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.tag === activeTag);
+        btn.classList.toggle("active", activeTags.has(btn.dataset.tag!));
       });
 
-      if (clearBtn) clearBtn.classList.toggle("hidden", !activeTag);
+      if (clearBtn) clearBtn.classList.toggle("hidden", activeTags.size === 0);
 
       let visiblePopular = 0;
       cards.forEach((card) => {
         const cardTags = (card.dataset.tags ?? "").split(",");
-        const show = !activeTag || cardTags.includes(activeTag);
+        const show = activeTags.size === 0 || cardTags.some((t) => activeTags.has(t));
         card.classList.toggle("hidden", !show);
         if (show && popularSection?.contains(card)) visiblePopular++;
       });
 
       if (popularSection) {
-        popularSection.classList.toggle("hidden", !!activeTag && visiblePopular === 0);
+        popularSection.classList.toggle("hidden", activeTags.size > 0 && visiblePopular === 0);
       }
 
-      history.replaceState(null, "", activeTag ? `#tag=${activeTag}` : location.pathname);
+      const hashVal = [...activeTags].join("+");
+      history.replaceState(null, "", hashVal ? `#tag=${hashVal}` : location.pathname);
     }
 
     buttons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        const clickedTag = btn.dataset.tag!;
-        const isActive = btn.classList.contains("active");
-        applyFilter(isActive ? null : clickedTag);
+        const tag = btn.dataset.tag!;
+        if (activeTags.has(tag)) {
+          activeTags.delete(tag);
+        } else {
+          activeTags.add(tag);
+        }
+        applyFilter();
       });
     });
 
     if (clearBtn) {
-      clearBtn.addEventListener("click", () => applyFilter(null));
+      clearBtn.addEventListener("click", () => {
+        activeTags.clear();
+        applyFilter();
+      });
     }
 
     // Restore from URL hash
     const hash = location.hash;
     if (hash.startsWith("#tag=")) {
-      applyFilter(decodeURIComponent(hash.slice(5)));
+      for (const t of decodeURIComponent(hash.slice(5)).split("+")) {
+        if (t) activeTags.add(t);
+      }
+      applyFilter();
     }
   }
 
