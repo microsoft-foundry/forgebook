@@ -17,7 +17,7 @@
 - slug: foundry-agent-part-1
   path: notebooks/foundry-agent-part-1.ipynb
   title: "Create Your First Agent (Part 1)"
-  description: "Build a Foundry Expert that searches the web — entirely from the portal"
+  description: "Step-by-step tutorial to deploy gpt-5-mini on Microsoft Foundry, create an AI agent with Web Search, and test it — all from the Azure AI Foundry portal. Part 1 of 4."
   date: "2026-02-07"
   authors:
     - github: nicholasdbrady
