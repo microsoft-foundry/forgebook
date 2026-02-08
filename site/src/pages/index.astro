@@ -61,11 +61,6 @@ function tagColor(tag: string): string {
 
       {usedTags.length > 0 && (
         <div class="tag-filter-bar mb-6" role="toolbar" aria-label="Filter by tag">
-          <button
-            class="tag-filter-btn active"
-            data-tag="all"
-            type="button"
-          >All</button>
           {usedTags.map((tag) => (
             <button
               class={`tag-filter-btn ${tagColor(tag)}`}
@@ -73,6 +68,12 @@ function tagColor(tag: string): string {
               type="button"
             >{tag}</button>
           ))}
+          <button
+            class="tag-filter-btn tag-clear-btn hidden"
+            data-tag="clear"
+            type="button"
+            aria-label="Clear filter"
+          >✕</button>
         </div>
       )}
 
@@ -190,8 +191,20 @@ jupyter notebook`}</code></pre>
     outline-offset: 1px;
     opacity: 1;
   }
-  .tag-filter-btn[class*="tag-color-"]:not(.active) {
-    opacity: 0.65;
+  .tag-clear-btn {
+    border: 1px solid var(--color-border-subtle);
+    background: var(--color-surface-elevated);
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    padding: 0.375rem 0.625rem;
+    opacity: 1;
+  }
+  .tag-clear-btn:hover {
+    border-color: var(--color-border-accent);
+    color: var(--color-text-primary);
+  }
+  .tag-clear-btn.hidden {
+    display: none;
   }
 
   /* Desktop: allow wrapping */
@@ -212,50 +225,51 @@ jupyter notebook`}</code></pre>
 
 <script>
   function initTagFilter() {
-    const buttons = document.querySelectorAll<HTMLButtonElement>(".tag-filter-btn");
+    const buttons = document.querySelectorAll<HTMLButtonElement>(".tag-filter-btn:not(.tag-clear-btn)");
+    const clearBtn = document.querySelector<HTMLButtonElement>(".tag-clear-btn");
     const cards = document.querySelectorAll<HTMLElement>(".notebook-card-wrapper");
     const popularSection = document.getElementById("popular-section");
 
     if (!buttons.length) return;
 
-    function setFilter(tag: string) {
+    function applyFilter(activeTag: string | null) {
       buttons.forEach((btn) => {
-        const isActive = btn.dataset.tag === tag;
-        btn.classList.toggle("active", isActive);
+        btn.classList.toggle("active", btn.dataset.tag === activeTag);
       });
+
+      if (clearBtn) clearBtn.classList.toggle("hidden", !activeTag);
 
       let visiblePopular = 0;
       cards.forEach((card) => {
         const cardTags = (card.dataset.tags ?? "").split(",");
-        const show = tag === "all" || cardTags.includes(tag);
+        const show = !activeTag || cardTags.includes(activeTag);
         card.classList.toggle("hidden", !show);
         if (show && popularSection?.contains(card)) visiblePopular++;
       });
 
       if (popularSection) {
-        popularSection.classList.toggle("hidden", tag !== "all" && visiblePopular === 0);
+        popularSection.classList.toggle("hidden", !!activeTag && visiblePopular === 0);
       }
 
-      history.replaceState(null, "", tag === "all" ? location.pathname : `#tag=${tag}`);
+      history.replaceState(null, "", activeTag ? `#tag=${activeTag}` : location.pathname);
     }
 
     buttons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        const clickedTag = btn.dataset.tag ?? "all";
-        // Toggle: if clicking the already-active tag, deselect back to "all"
-        const currentActive = document.querySelector<HTMLButtonElement>(".tag-filter-btn.active");
-        if (currentActive?.dataset.tag === clickedTag && clickedTag !== "all") {
-          setFilter("all");
-        } else {
-          setFilter(clickedTag);
-        }
+        const clickedTag = btn.dataset.tag!;
+        const isActive = btn.classList.contains("active");
+        applyFilter(isActive ? null : clickedTag);
       });
     });
+
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => applyFilter(null));
+    }
 
     // Restore from URL hash
     const hash = location.hash;
     if (hash.startsWith("#tag=")) {
-      setFilter(decodeURIComponent(hash.slice(5)));
+      applyFilter(decodeURIComponent(hash.slice(5)));
     }
   }
 
