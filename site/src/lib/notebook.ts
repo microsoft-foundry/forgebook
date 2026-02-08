@@ -154,7 +154,7 @@ export function renderNotebook(notebookJson: unknown, title?: string): string {
       const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       result = result.replace(
         new RegExp(
-          `(<div class="nb-cell nb-markdown-cell">)\\s*<h1>${escaped}<\\/h1>\\s*(?:<p><em>[\\s\\S]*?<\\/em><\\/p>\\s*)?`
+          `(<div class="nb-cell nb-markdown-cell">)\\s*<h1>${escaped}<\\/h1>`
         ),
         "$1"
       );
