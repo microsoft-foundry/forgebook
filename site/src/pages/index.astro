@@ -187,9 +187,14 @@ jupyter notebook`}</code></pre>
   }
   /* Colored tag buttons get a stronger ring when active */
   .tag-filter-btn[class*="tag-color-"].active {
-    outline: 2px solid var(--color-border-accent);
-    outline-offset: 1px;
+    outline: 3px solid #a78bfa;
+    outline-offset: 2px;
     opacity: 1;
+    transform: scale(1.08);
+    box-shadow: 0 0 12px 2px rgba(167, 139, 250, 0.5);
+  }
+  .tag-filter-btn[class*="tag-color-"]:not(.active) {
+    opacity: 0.5;
   }
   .tag-clear-btn {
     border: 1px solid var(--color-border-subtle);
