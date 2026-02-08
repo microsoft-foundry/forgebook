@@ -61,6 +61,7 @@ npx tsx validate-registry.ts
 - Run and test notebooks before publishing
 - Reference data using relative paths: `data/file.csv` or `../data/file.csv`
 - Reference images using relative paths: `media/image.png` or `../media/image.png`
+- Store all images in `notebooks/media/` — they are served via a symlink in `site/public/notebook/media/`
 
 ## Registry Format
 
