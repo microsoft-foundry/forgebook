@@ -134,7 +134,7 @@ export interface NotebookCell {
   outputs?: string[];
 }
 
-export function renderNotebook(notebookJson: unknown): string {
+export function renderNotebook(notebookJson: unknown, title?: string): string {
   try {
     // Reset iframe storage for this notebook
     currentIframes = new Map<string, string>();
@@ -149,11 +149,16 @@ export function renderNotebook(notebookJson: unknown): string {
     // Restore preserved trusted iframes
     let result = restoreIframes(sanitized, currentIframes);
 
-    // Strip the first H1 and its italic subtitle — the page header already shows these
-    result = result.replace(
-      /(<div class="nb-cell nb-markdown-cell">)\s*<h1>[\s\S]*?<\/h1>\s*(?:<p><em>[\s\S]*?<\/em><\/p>\s*)?/,
-      "$1"
-    );
+    // Strip the first H1 only if it matches the page title (already shown in header)
+    if (title) {
+      const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      result = result.replace(
+        new RegExp(
+          `(<div class="nb-cell nb-markdown-cell">)\\s*<h1>${escaped}<\\/h1>\\s*(?:<p><em>[\\s\\S]*?<\\/em><\\/p>\\s*)?`
+        ),
+        "$1"
+      );
+    }
 
     return result;
   } catch (error) {
