@@ -56,7 +56,7 @@ function tagColor(tag: string): string {
 
     <section>
       <h2 class="text-2xl font-semibold text-primary mb-4">
-        Recipes
+        Recipes <span id="recipe-count" class="text-secondary font-normal">({notebooks.length})</span>
       </h2>
 
       {usedTags.length > 0 && (
@@ -238,6 +238,9 @@ jupyter notebook`}</code></pre>
     const clearBtn = document.querySelector<HTMLButtonElement>(".tag-clear-btn");
     const cards = document.querySelectorAll<HTMLElement>(".notebook-card-wrapper");
     const popularSection = document.getElementById("popular-section");
+    const recipeCount = document.getElementById("recipe-count");
+    // Only count cards in the main grid, not popular section duplicates
+    const mainCards = document.querySelectorAll<HTMLElement>("#notebooks-grid > .notebook-card-wrapper");
 
     if (!buttons.length) return;
 
@@ -251,12 +254,18 @@ jupyter notebook`}</code></pre>
       if (clearBtn) clearBtn.classList.toggle("hidden", activeTags.size === 0);
 
       let visiblePopular = 0;
+      let visibleMain = 0;
       cards.forEach((card) => {
         const cardTags = (card.dataset.tags ?? "").split(",");
         const show = activeTags.size === 0 || cardTags.some((t) => activeTags.has(t));
         card.classList.toggle("hidden", !show);
         if (show && popularSection?.contains(card)) visiblePopular++;
       });
+      mainCards.forEach((card) => {
+        if (!card.classList.contains("hidden")) visibleMain++;
+      });
+
+      if (recipeCount) recipeCount.textContent = `(${visibleMain})`;
 
       if (popularSection) {
         popularSection.classList.toggle("hidden", activeTags.size > 0 && visiblePopular === 0);
