@@ -144,7 +144,9 @@ export function renderNotebook(notebookJson: unknown): string {
     
     // Sanitize HTML to prevent XSS attacks
     const purify = DOMPurify(dom.window);
-    const sanitized = purify.sanitize(rendered.outerHTML);
+    let sanitized = purify.sanitize(rendered.outerHTML);
+    // Fix double-encoded entities in code blocks (Prism encodes <> then DOMPurify re-encodes)
+    sanitized = sanitized.replaceAll("&amp;lt;", "&lt;").replaceAll("&amp;gt;", "&gt;").replaceAll("&amp;amp;", "&amp;");
     
     // Restore preserved trusted iframes
     const result = restoreIframes(sanitized, currentIframes);
