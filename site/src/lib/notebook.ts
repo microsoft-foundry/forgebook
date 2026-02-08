@@ -147,8 +147,14 @@ export function renderNotebook(notebookJson: unknown): string {
     const sanitized = purify.sanitize(rendered.outerHTML);
     
     // Restore preserved trusted iframes
-    const result = restoreIframes(sanitized, currentIframes);
-    
+    let result = restoreIframes(sanitized, currentIframes);
+
+    // Strip the first H1 and its italic subtitle — the page header already shows these
+    result = result.replace(
+      /(<div class="nb-cell nb-markdown-cell">)\s*<h1>[\s\S]*?<\/h1>\s*(?:<p><em>[\s\S]*?<\/em><\/p>\s*)?/,
+      "$1"
+    );
+
     return result;
   } catch (error) {
     console.error("Error rendering notebook:", error);
