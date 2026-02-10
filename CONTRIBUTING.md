@@ -2,6 +2,24 @@
 
 Thank you for your interest in contributing to Forgebook! This guide will help you publish notebooks quickly.
 
+## Before You Start
+
+**Planning a new recipe?** [Open a New Recipe Proposal](https://github.com/microsoft-foundry/forgebook/issues/new?template=new-recipe.yml) first. This lets maintainers align on scope, audience, and tags before you write code — preventing wasted effort on content that may need significant rework.
+
+For site bug reports, use the [Bug Report template](https://github.com/microsoft-foundry/forgebook/issues/new?template=bug-report.yml).
+
+## PR Workflow
+
+1. **File an issue** — Use the [New Recipe Proposal](https://github.com/microsoft-foundry/forgebook/issues/new?template=new-recipe.yml) template
+2. **Create a branch** — Branch from `main`
+3. **Add your notebook** — Place it in `notebooks/` and add a `registry.yaml` entry
+4. **Validate** — Run `cd scripts && npx tsx validate-registry.ts`
+5. **Open a PR** — The PR template will guide you through the checklist
+6. **CI checks** — Registry validation and site build run automatically
+7. **Preview** — A live preview URL is posted on your PR so you can verify rendering
+8. **Review** — `@microsoft-foundry/forgebook-maintainers` will be auto-assigned
+9. **Merge** — Once approved, merge to `main` and the site deploys automatically
+
 ## Quick Start: Publishing a Notebook
 
 ### 1. Create Your Notebook
@@ -202,9 +220,12 @@ npm run build
 2. **Clear titles** — Be descriptive but concise
 3. **Add descriptions** — Help readers know what to expect
 4. **Tag from the allowed list** — Use tags defined in `tags.yaml`; the validator rejects unknown tags
-5. **Test locally** — Run notebooks before publishing
-6. **Responsive embeds** — Use recommended iframe sizes
-7. **Alt text** — Always add alt text to images
+5. **Test locally** — Run notebooks end-to-end before publishing
+6. **Clear outputs** — Remove cell outputs before committing
+7. **Responsive embeds** — Use recommended iframe sizes
+8. **Alt text** — Always add alt text to images
+
+> The [PR template](https://github.com/microsoft-foundry/forgebook/blob/main/.github/pull_request_template.md) includes a full checklist — use it as your final pre-submit check.
 
 ### Title and Description
 
@@ -241,4 +262,5 @@ npm run preview  # Preview production build
 
 ## Need Help?
 
-Open an issue on GitHub if you have questions or run into problems.
+- **Questions or problems?** [Open an issue](https://github.com/microsoft-foundry/forgebook/issues/new/choose)
+- **Maintainers:** [@microsoft-foundry/forgebook-maintainers](https://github.com/orgs/microsoft-foundry/teams/forgebook-maintainers)

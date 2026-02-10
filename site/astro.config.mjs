@@ -28,8 +28,8 @@ function pagefindDevPlugin() {
 }
 
 export default defineConfig({
-  site: "https://nicholasdbrady.github.io",
-  base: "/forgebook",
+  site: "https://microsoft-foundry.github.io",
+  base: process.env.ASTRO_BASE || "/forgebook",
   vite: {
     plugins: [tailwindcss(), pagefindDevPlugin()],
   },

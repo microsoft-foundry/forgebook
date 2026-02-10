@@ -1,0 +1,22 @@
+# Forgebook CODEOWNERS
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# When the contributor base grows, replace individual handle with:
+#   @microsoft-foundry/forgebook-maintainers
+
+# Default — catch-all for root config, CI, docs
+*                     @nicholasdbrady
+
+# Notebook content
+notebooks/            @microsoft-foundry/forgebook-maintainers
+
+# Publishing metadata
+registry.yaml         @microsoft-foundry/forgebook-maintainers
+authors.yaml          @microsoft-foundry/forgebook-maintainers
+tags.yaml             @microsoft-foundry/forgebook-maintainers
+
+# Site
+site/                 @microsoft-foundry/forgebook-maintainers
+
+# Validation & scripts
+scripts/              @microsoft-foundry/forgebook-maintainers
