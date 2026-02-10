@@ -23,3 +23,14 @@
     - github: nicholasdbrady
   tags:
     - agents
+
+- slug: foundry-agent-part-4
+  path: notebooks/foundry-agent-part-4.ipynb
+  title: "Red Team, Deploy & Optimize (Part 4)"
+  description: "Red team your agent, deploy with azd to Azure Container Apps, publish to Microsoft 365 Copilot and Teams, and set up production monitoring."
+  date: "2026-02-07"
+  authors:
+    - github: nicholasdbrady
+  tags:
+    - agents
+    - safety
