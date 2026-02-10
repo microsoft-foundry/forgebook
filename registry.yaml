@@ -23,3 +23,14 @@
     - github: nicholasdbrady
   tags:
     - agents
+
+- slug: foundry-agent-part-2
+  path: notebooks/foundry-agent-part-2.ipynb
+  title: "Tools and Your First Code (Part 2)"
+  description: "Expand your agent with Microsoft Learn and GitHub MCP servers. Explore the tool catalog, YAML and Code views, and launch VS Code for the web."
+  date: "2026-02-07"
+  authors:
+    - github: nicholasdbrady
+  tags:
+    - agents
+    - tools
