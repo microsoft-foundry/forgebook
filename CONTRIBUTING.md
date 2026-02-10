@@ -260,6 +260,25 @@ npm run build    # Production build
 npm run preview  # Preview production build
 ```
 
+### Previewing Your Notebook on the Site
+
+After adding your notebook and registry entry, verify it renders correctly:
+
+```bash
+cd site
+npm run build    # Build with your changes
+npm run preview  # Serve at http://localhost:4321/forgebook/
+```
+
+Open `http://localhost:4321/forgebook/` and find your notebook card on the homepage. Click through to confirm:
+
+- Title and description display correctly
+- Markdown, code blocks, and images render as expected
+- Embedded videos and iframes are responsive
+- Navigation links work (home, raw markdown, GitHub source)
+
+**Note:** When your PR is opened, CI will automatically build a live preview and post the URL as a comment on your PR — no local setup required. Local preview is optional but recommended for faster iteration.
+
 ## Need Help?
 
 - **Questions or problems?** [Open an issue](https://github.com/microsoft-foundry/forgebook/issues/new/choose)
