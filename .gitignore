@@ -45,3 +45,5 @@ test-results/
 # Misc
 *.local
 .cache/
+.github/skills/
+.agents/skills/

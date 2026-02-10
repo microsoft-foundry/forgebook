@@ -31,13 +31,6 @@
   :global(.high-contrast) .theme-toggle-btn {
     color: var(--hc-text) !important;
   }
-
-  :global(.high-contrast) .theme-toggle-btn:hover,
-  :global(.high-contrast) .theme-toggle-btn:focus-visible {
-    background-color: var(--hc-bg-elevated) !important;
-    outline: 2px solid var(--hc-border);
-    outline-offset: 2px;
-  }
 </style>
 
 <script>
@@ -85,6 +78,11 @@
       const idx = themes.indexOf(current as typeof themes[number]);
       const next = themes[(idx + 1) % themes.length];
       setTheme(next);
+
+      // Track theme preference changes
+      import('@/lib/telemetry').then(({ trackEvent }) => {
+        trackEvent('ThemeChange', { from: current, to: next });
+      }).catch(() => {});
     });
 
     updateIcon(getCurrentTheme());

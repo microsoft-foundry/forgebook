@@ -89,6 +89,8 @@ const { title, description = "Recipes for AI alchemists forging with Microsoft F
     <SearchModal />
 
     <script>
+      import { trackEvent, trackError } from "@/lib/telemetry";
+
       // Add copy buttons to all code blocks
       document.querySelectorAll('pre').forEach((pre) => {
         // Skip if already has a copy button
@@ -108,13 +110,21 @@ const { title, description = "Recipes for AI alchemists forging with Microsoft F
         btn.innerHTML = iconMarkup;
         btn.addEventListener('click', async () => {
           const code = pre.querySelector('code')?.textContent || pre.textContent || '';
-          await navigator.clipboard.writeText(code);
-          btn.setAttribute('aria-label', 'Copied');
-          btn.textContent = 'Copied!';
-          setTimeout(() => {
-            btn.setAttribute('aria-label', 'Copy code');
-            btn.innerHTML = iconMarkup;
-          }, 2000);
+          try {
+            await navigator.clipboard.writeText(code);
+            trackEvent("CopyCodeBlock", {
+              codeLength: code.length,
+              codePreview: code.slice(0, 80),
+            });
+            btn.setAttribute('aria-label', 'Copied');
+            btn.textContent = 'Copied!';
+            setTimeout(() => {
+              btn.setAttribute('aria-label', 'Copy code');
+              btn.innerHTML = iconMarkup;
+            }, 2000);
+          } catch (err) {
+            trackError(err, { action: "CopyCodeBlock" });
+          }
         });
         wrapper.appendChild(btn);
       });

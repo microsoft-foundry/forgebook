@@ -18,6 +18,10 @@ export default defineConfig({
       use: { ...devices["iPhone 14"] },
     },
     {
+      name: "android",
+      use: { ...devices["Galaxy S24"] },
+    },
+    {
       name: "tablet",
       use: { ...devices["iPad Mini"] },
     },

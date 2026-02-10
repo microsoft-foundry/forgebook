@@ -84,6 +84,7 @@
    ============================================ */
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
 }
 
 body {
@@ -291,9 +292,21 @@ img.emoji {
 
 .high-contrast .hc-hover:hover,
 .high-contrast .hc-hover:focus-visible {
-  background-color: var(--hc-bg-elevated) !important;
+  background-color: var(--hc-text) !important;
+  color: var(--hc-bg) !important;
   outline: 2px solid var(--hc-border);
   outline-offset: 2px;
+}
+
+.high-contrast .hc-hover:hover *,
+.high-contrast .hc-hover:focus-visible * {
+  color: var(--hc-bg) !important;
+}
+
+.high-contrast .hc-hover:hover .badge,
+.high-contrast .hc-hover:focus-visible .badge {
+  background-color: transparent !important;
+  border-color: var(--hc-bg) !important;
 }
 
 .high-contrast h1,
@@ -354,6 +367,17 @@ img.emoji {
   color: var(--hc-bg) !important;
 }
 
+/* Ensure child elements (spans, svgs, badges) also invert on hover */
+.high-contrast .btn-secondary:hover *,
+.high-contrast .btn-ghost:hover * {
+  color: var(--hc-bg) !important;
+}
+
+.high-contrast .btn-secondary:hover .badge {
+  background-color: transparent !important;
+  border-color: var(--hc-bg) !important;
+}
+
 /* High contrast dropdowns */
 .high-contrast .dropdown-menu {
   background-color: var(--hc-bg) !important;
@@ -366,6 +390,10 @@ img.emoji {
 
 .high-contrast .dropdown-item:hover {
   background-color: var(--hc-text) !important;
+  color: var(--hc-bg) !important;
+}
+
+.high-contrast .dropdown-item:hover * {
   color: var(--hc-bg) !important;
 }
 
@@ -473,9 +501,15 @@ img.emoji {
 
 .high-contrast .share-menu-item:hover,
 .high-contrast .share-menu-item:focus-visible {
-  background-color: var(--hc-bg-elevated) !important;
+  background-color: var(--hc-text) !important;
+  color: var(--hc-bg) !important;
   outline: 2px solid var(--hc-border);
   outline-offset: -2px;
+}
+
+.high-contrast .share-menu-item:hover *,
+.high-contrast .share-menu-item:focus-visible * {
+  color: var(--hc-bg) !important;
 }
 
 /* ============================================
@@ -694,6 +728,15 @@ img.emoji {
   background-color: var(--hc-bg-elevated) !important;
   border-color: var(--hc-border) !important;
   color: var(--hc-text) !important;
+}
+
+/* Hide keyboard hints by default, show in high contrast for accessibility */
+.search-footer-hints {
+  display: none;
+}
+
+.high-contrast .search-footer-hints {
+  display: flex;
 }
 
 .notebook-action {

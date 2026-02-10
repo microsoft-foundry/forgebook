@@ -17,8 +17,8 @@ test.describe("Site Navigation", () => {
   test("notebook page has action buttons", async ({ page }) => {
     await page.goto("/notebook/hello-world");
     await expect(page.getByRole("link", { name: "Open in GitHub" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "View as Markdown" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Copy Markdown" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Markdown options" })).toBeVisible();
   });
 
   test("markdown view loads and has back link", async ({ page }) => {

@@ -27,7 +27,7 @@ const base = withBase("/");
     <div id="search-results" class="search-results">
       <div class="search-empty">Type to search notebooks</div>
     </div>
-    <div class="search-footer">
+    <div class="search-footer search-footer-hints">
       <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
       <span><kbd>↵</kbd> Open</span>
       <span><kbd>Esc</kbd> Close</span>
@@ -84,6 +84,15 @@ const base = withBase("/");
     }
 
     var search = await pf.search(query);
+
+    // Track the search query, result count, and whether results were found
+    if (window.__telemetry) {
+      window.__telemetry.trackEvent('Search', {
+        query: query,
+        resultCount: search.results.length,
+        hasResults: search.results.length > 0,
+      });
+    }
 
     if (search.results.length === 0) {
       resultsContainer.innerHTML = '<div class="search-empty">No results for &ldquo;' + query.replace(/</g, '&lt;') + '&rdquo;</div>';
@@ -147,6 +156,18 @@ const base = withBase("/");
   var btn = document.getElementById('search-button');
   if (btn) btn.addEventListener('click', openSearch);
 
+  // Track search result link clicks (mouse)
+  resultsContainer.addEventListener('click', function(e) {
+    var link = e.target.closest && e.target.closest('.search-result-item');
+    if (link && window.__telemetry) {
+      window.__telemetry.trackEvent('SearchResultClick', {
+        query: input.value,
+        resultIndex: parseInt(link.getAttribute('data-index') || '0', 10),
+        resultUrl: link.getAttribute('href'),
+      });
+    }
+  });
+
   // Close on backdrop click
   modal.addEventListener('click', function(e) {
     if (e.target === modal) closeSearch();
@@ -177,7 +198,16 @@ const base = withBase("/");
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (activeIndex >= 0 && items[activeIndex]) {
-        window.location.href = items[activeIndex].getAttribute('href');
+        var resultUrl = items[activeIndex].getAttribute('href');
+        // Track which search result was clicked and its position
+        if (window.__telemetry) {
+          window.__telemetry.trackEvent('SearchResultClick', {
+            query: input.value,
+            resultIndex: activeIndex,
+            resultUrl: resultUrl,
+          });
+        }
+        window.location.href = resultUrl;
       }
     }
   });

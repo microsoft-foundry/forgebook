@@ -1,3 +1,8 @@
 jupyter>=1.0.0
 notebook>=7.0.0
 ipykernel>=6.0.0
+azure-ai-projects==2.0.0b3
+microsoft-agents-hosting-core==0.8.0.dev2
+microsoft-agents-hosting-aiohttp==0.8.0.dev2
+microsoft-agents-activity==0.8.0.dev2
+openai>=2.20.0

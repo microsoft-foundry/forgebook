@@ -233,6 +233,8 @@ jupyter notebook`}</code></pre>
 </style>
 
 <script>
+  import { trackEvent } from "@/lib/telemetry";
+
   function initTagFilter() {
     const buttons = document.querySelectorAll<HTMLButtonElement>(".tag-filter-btn:not(.tag-clear-btn)");
     const clearBtn = document.querySelector<HTMLButtonElement>(".tag-clear-btn");
@@ -303,6 +305,11 @@ jupyter notebook`}</code></pre>
           activeTags.add(tag);
         }
         applyFilter();
+        trackEvent("TagFilter", {
+          tag,
+          activeTags: [...activeTags].join(","),
+          isFiltering: !isAllSelected(),
+        });
       });
     });
 
@@ -311,6 +318,7 @@ jupyter notebook`}</code></pre>
         activeTags.clear();
         allTags.forEach((t) => activeTags.add(t));
         applyFilter();
+        trackEvent("TagFilter", { tag: "clear", activeTags: "all", isFiltering: false });
       });
     }
 
