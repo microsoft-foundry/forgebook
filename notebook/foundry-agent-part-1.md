@@ -332,10 +332,8 @@ Back on the Playground, you'll also find a **Code** tab that generates a Python,
 
 You just built and tested your first agent — entirely from the portal. It has a name, instructions, a model, and a tool. It can search the web and answer questions about Microsoft Foundry with real-time information.
 
-In **Part 2**, you'll:
+In **Part 2** (coming soon), you'll:
 - Explore the full tool catalog (1,400+ tools and counting)
 - Add Microsoft Learn and GitHub MCP servers to your agent
 - Switch from the portal to code using the YAML and Code tabs
 - Launch VS Code for the web and make your first code change
-
-👉 [Continue to Part 2: Tools and Your First Code](foundry-agent-part-2.ipynb)
