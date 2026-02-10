@@ -1,0 +1,82 @@
+name: "\U0001F4D3 New Recipe Proposal"
+description: Propose a new notebook recipe for Forgebook
+labels: ["recipe"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a recipe! Please fill out the details below so we can align on scope before you start writing.
+
+  - type: input
+    id: title
+    attributes:
+      label: Proposed title
+      description: What will the notebook be called?
+      placeholder: "e.g., Build a Multi-Agent Travel Planner"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Summary
+      description: What does this recipe teach? What will the reader build or learn?
+      placeholder: "Describe the goal, key concepts covered, and expected outcome."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Target audience
+      description: Who is this recipe for?
+      options:
+        - Beginner — new to AI/ML development
+        - Intermediate — comfortable with APIs and SDKs
+        - Advanced — deep experience with agents, evals, or infra
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tags
+    attributes:
+      label: Tags
+      description: Select all applicable tags (from tags.yaml).
+      multiple: true
+      options:
+        # Core Capabilities
+        - agents
+        - multi-agent
+        - inference
+        - knowledge
+        - evaluation
+        - fine-tuning
+        - memory
+        - multimodal
+        - safety
+        - local
+        - tools
+        # Integrations
+        - agent-framework
+        - a2a
+        - langchain
+        - mcp
+    validations:
+      required: true
+
+  - type: textarea
+    id: prerequisites
+    attributes:
+      label: Prerequisites & dependencies
+      description: What does the reader need before starting? (Azure subscription, Python packages, API keys, etc.)
+      placeholder: "e.g., Azure subscription, Python 3.10+, azure-ai-projects SDK"
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Any other details — related notebooks, reference docs, design ideas.
+    validations:
+      required: false
