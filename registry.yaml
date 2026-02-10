@@ -23,3 +23,15 @@
     - github: nicholasdbrady
   tags:
     - agents
+
+- slug: foundry-agent-part-3
+  path: notebooks/foundry-agent-part-3.ipynb
+  title: "Pro-Code: Custom Tools, Tracing & Evaluation (Part 3)"
+  description: "Go fully pro-code with custom code interpreter, Foundry MCP server, OpenTelemetry tracing, and automated agent evaluations."
+  date: "2026-02-07"
+  authors:
+    - github: nicholasdbrady
+  tags:
+    - agents
+    - tools
+    - evaluation
