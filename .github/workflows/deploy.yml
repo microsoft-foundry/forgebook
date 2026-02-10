@@ -36,6 +36,9 @@ jobs:
           PUBLIC_APP_INSIGHTS_CONNECTION_STRING: ${{ vars.PUBLIC_APP_INSIGHTS_CONNECTION_STRING }}
         run: npm run build
 
+      - name: Add .nojekyll
+        run: touch ./site/dist/.nojekyll
+
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
