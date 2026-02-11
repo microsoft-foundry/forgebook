@@ -5,6 +5,7 @@ import DOMPurify from "dompurify";
 import { marked } from "marked";
 import markedFootnote from "marked-footnote";
 import katex from "katex";
+import path from "node:path";
 
 // Load common Prism languages
 import "prismjs/components/prism-python";
@@ -134,7 +135,45 @@ export interface NotebookCell {
   outputs?: string[];
 }
 
-export function renderNotebook(notebookJson: unknown): string {
+/**
+ * Rewrite relative image src paths so they resolve correctly on the published site.
+ *
+ * Notebook markdown cells use paths relative to the notebook file, e.g. `media/foo.png`.
+ * On the site the page lives at `/base/notebook/<slug>/`, so the browser would wrongly
+ * resolve that to `/base/notebook/<slug>/media/foo.png`.
+ *
+ * Notebook assets are served from `public/notebook/` which mirrors `notebooks/` in the
+ * repo, so we resolve each relative src against the notebook's directory, strip the
+ * leading `notebooks/` prefix, and prepend `<basePath>/notebook/` to build the correct
+ * absolute URL.
+ */
+function rewriteImagePaths(html: string, notebookPath: string, basePath: string): string {
+  // Directory of the notebook relative to the repo root, e.g. "notebooks" or "notebooks/examples"
+  const notebookDir = path.posix.dirname(notebookPath.replace(/\\/g, "/"));
+
+  // Normalise basePath: ensure it has no trailing slash
+  const base = basePath.replace(/\/$/, "");
+
+  return html.replace(
+    /(<img\b[^>]*\bsrc=["'])([^"']+)(["'])/gi,
+    (_match, prefix: string, src: string, suffix: string) => {
+      // Skip absolute URLs, data URIs, and protocol-relative URLs
+      if (/^(https?:\/\/|\/|data:|#)/.test(src)) return _match;
+
+      // Resolve relative to the notebook's directory, e.g.
+      //   notebookDir = "notebooks", src = "media/foo.png" → "notebooks/media/foo.png"
+      //   notebookDir = "notebooks/examples", src = "../media/foo.png" → "notebooks/media/foo.png"
+      const resolved = path.posix.normalize(path.posix.join(notebookDir, src));
+
+      // Strip leading "notebooks/" to get the path under public/notebook/
+      const underPublic = resolved.replace(/^notebooks\//, "");
+
+      return `${prefix}${base}/notebook/${underPublic}${suffix}`;
+    }
+  );
+}
+
+export function renderNotebook(notebookJson: unknown, notebookPath: string, basePath: string): string {
   try {
     // Reset iframe storage for this notebook
     currentIframes = new Map<string, string>();
@@ -151,7 +190,8 @@ export function renderNotebook(notebookJson: unknown): string {
     // Restore preserved trusted iframes
     const result = restoreIframes(sanitized, currentIframes);
 
-    return result;
+    // Rewrite relative image paths to absolute URLs
+    return rewriteImagePaths(result, notebookPath, basePath);
   } catch (error) {
     console.error("Error rendering notebook:", error);
     return `<div class="text-red-500">Error rendering notebook</div>`;
