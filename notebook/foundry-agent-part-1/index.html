@@ -95,7 +95,7 @@ More options...
 <p>In this tutorial, you'll set the first five: a name, instructions, a model, and a tool. Memory is something we'll touch on later as the agent matures — for now, each conversation starts fresh.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Navigate to Your Project</h2>
 <p>Head to <a href="https://ai.azure.com/nextgen">ai.azure.com/nextgen</a> and select your project. The first thing you'll want to note is your <strong>Project endpoint</strong> — you'll need this later when you move to code.</p>
-<p><img src="media/01-project-home.png" alt="Microsoft Foundry portal home page showing the Welcome message, project endpoint highlighted in a red rectangle, along with API key and region fields"></p>
+<p><img src="/forgebook/notebook/media/01-project-home.png" alt="Microsoft Foundry portal home page showing the Welcome message, project endpoint highlighted in a red rectangle, along with API key and region fields"></p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Deploy Your First Model</h2>
 <blockquote>
 <p><strong>🛠️ Pro-code alternative:</strong> Prefer the command line? You can deploy models with the <a href="https://learn.microsoft.com/cli/azure/install-azure-cli">Azure CLI</a> instead of the portal. Make sure you're logged in with <code>az login</code> first.</p>
@@ -118,17 +118,17 @@ az cognitiveservices account deployment create \
 </blockquote>
 <p>Before you can create an agent, you need a model deployed in your project. Let's get one running.</p>
 <p>From the left sidebar, click <strong>Discover</strong> → <strong>Models</strong>. This opens the model catalog — a searchable collection of hundreds of models from OpenAI, Meta, Mistral, Microsoft, and more.</p>
-<p><img src="media/02-click-discover.png" alt="Foundry portal home page with the Discover tab highlighted in a red rectangle in the top navigation bar"></p>
+<p><img src="/forgebook/notebook/media/02-click-discover.png" alt="Foundry portal home page with the Discover tab highlighted in a red rectangle in the top navigation bar"></p>
 <p>Search for <strong>gpt-5-mini</strong> and select it. You'll see the model card with details about capabilities, pricing, and benchmarks.</p>
-<p><img src="media/03-click-models.png" alt="Discover page showing the model catalog with the Models nav item highlighted, displaying featured models from providers like OpenAI, Anthropic, Meta, and DeepSeek"></p>
+<p><img src="/forgebook/notebook/media/03-click-models.png" alt="Discover page showing the model catalog with the Models nav item highlighted, displaying featured models from providers like OpenAI, Anthropic, Meta, and DeepSeek"></p>
 <p>Click <strong>Deploy</strong> and choose <strong>Custom Settings</strong> so you can configure the deployment yourself.</p>
-<p><img src="media/04-search-gpt5-mini.png" alt="Models page with gpt-5-mini typed in the search bar, showing 40 search results with gpt-5-mini highlighted as the top result"></p>
+<p><img src="/forgebook/notebook/media/04-search-gpt5-mini.png" alt="Models page with gpt-5-mini typed in the search bar, showing 40 search results with gpt-5-mini highlighted as the top result"></p>
 <p>Give the deployment a name and set the quota to the maximum available. For a tutorial like this, higher quota means less throttling while you experiment.</p>
-<p><img src="media/05-model-deploy-button.png" alt="gpt-5-mini model details page showing Quick facts sidebar with model provider, type, lifecycle status, and the Deploy button highlighted in a red rectangle"></p>
+<p><img src="/forgebook/notebook/media/05-model-deploy-button.png" alt="gpt-5-mini model details page showing Quick facts sidebar with model provider, type, lifecycle status, and the Deploy button highlighted in a red rectangle"></p>
 <p>Once the deployment completes, you'll see it listed under your project's deployments.</p>
-<p><img src="media/06-deploy-custom-settings.png" alt="Deploy dropdown showing Default settings and Custom settings options, with Custom settings highlighted in a red rectangle showing SKU, quota, PTU, and spillover configuration"></p>
+<p><img src="/forgebook/notebook/media/06-deploy-custom-settings.png" alt="Deploy dropdown showing Default settings and Custom settings options, with Custom settings highlighted in a red rectangle showing SKU, quota, PTU, and spillover configuration"></p>
 <p>While we're here, let's deploy a few more models to see the breadth of what's available. Foundry isn't locked to a single provider — you can deploy frontier models from across the industry.</p>
-<p><img src="media/07-deployments-overview.png" alt="Build > Models > Deployments page showing a table of 6 deployed models including DeepSeek-V3.2, Mistral-Large-3, Llama-4-Maverick, Phi-4, grok-4, and gpt-5-mini, all with Succeeded status and Global Standard deployment type"></p>
+<p><img src="/forgebook/notebook/media/07-deployments-overview.png" alt="Build > Models > Deployments page showing a table of 6 deployed models including DeepSeek-V3.2, Mistral-Large-3, Llama-4-Maverick, Phi-4, grok-4, and gpt-5-mini, all with Succeeded status and Global Standard deployment type"></p>
 <p>Notice the variety — DeepSeek, Mistral, Meta's Llama, Microsoft's Phi, xAI's Grok, and OpenAI's gpt-5-mini. Foundry gives you access to frontier models from every major provider, all through a single API. For this tutorial, we'll stick with <code>gpt-5-mini</code>, but it's good to know your options.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Create Your Agent</h2>
 <blockquote>
@@ -158,36 +158,36 @@ with (
     )
 </code></pre>
 <p>Now for the fun part. From the left sidebar, click <strong>Build</strong> → <strong>Agents</strong>, then click <strong>Create agent</strong>.</p>
-<p><img src="media/08-click-agents.png" alt="Build section showing the Models > Deployments table with the Agents nav item highlighted in a red rectangle in the left sidebar"></p>
+<p><img src="/forgebook/notebook/media/08-click-agents.png" alt="Build section showing the Models > Deployments table with the Agents nav item highlighted in a red rectangle in the left sidebar"></p>
 <p>You'll land in the agent builder. The first thing to set is the <strong>Name</strong> — this isn't just a label, it's the identifier you'll use to reference this agent in code later. We're calling ours <code>foundry-expert</code>.</p>
-<p><img src="media/09-create-agent.png" alt="Agents page showing an empty state with the message" in=""></p>
+<p><img src="/forgebook/notebook/media/09-create-agent.png" alt="Agents page showing an empty state with the message" in=""></p>
 <p>Pick a name that's descriptive and lowercase. Avoid spaces — think of it like a function name. This is the handle you'll use in the API, so make it something meaningful.</p>
-<p><img src="media/10-name-agent.png" alt="Create an agent dialog with the Agent name field filled in as" in=""></p>
+<p><img src="/forgebook/notebook/media/10-name-agent.png" alt="Create an agent dialog with the Agent name field filled in as" in=""></p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Add Instructions</h2>
 <p>Instructions are the system prompt — they shape how your agent behaves, what it focuses on, and how it responds. Think of them as the job description you'd give a new team member.</p>
 <p>In the <strong>Instructions</strong> field, paste the following:</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">You are a helpful agent that looks up the latest information on Microsoft Foundry<span class="token punctuation">.</span> You search the web <span class="token keyword">for</span> current news<span class="token punctuation">,</span> documentation updates<span class="token punctuation">,</span> <span class="token keyword">and</span> announcements about Microsoft Foundry <span class="token keyword">and</span> Azure AI services<span class="token punctuation">.</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><p><img src="media/11-agent-instructions.png" alt="Agent playground for foundry-expert showing the Instructions field populated with system prompt text, gpt-5-mini model selected, and the Chat, YAML, Code tabs on the right panel"></p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">You are a helpful agent that looks up the latest information on Microsoft Foundry<span class="token punctuation">.</span> You search the web <span class="token keyword">for</span> current news<span class="token punctuation">,</span> documentation updates<span class="token punctuation">,</span> <span class="token keyword">and</span> announcements about Microsoft Foundry <span class="token keyword">and</span> Azure AI services<span class="token punctuation">.</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><p><img src="/forgebook/notebook/media/11-agent-instructions.png" alt="Agent playground for foundry-expert showing the Instructions field populated with system prompt text, gpt-5-mini model selected, and the Chat, YAML, Code tabs on the right panel"></p>
 <p>Keep instructions clear and specific. Tell the agent <em>what</em> it is, <em>what</em> it should do, and <em>how</em> it should do it. You can always refine these later — every change creates a new version, so there's no risk in iterating.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Add the Web Search Tool</h2>
 <p>Right now your agent can think, but it can't <em>do</em> anything. Let's fix that by giving it the ability to search the web.</p>
 <p>Scroll down to the <strong>Tools</strong> section and click <strong>Add</strong>.</p>
-<p><img src="media/12-add-tool.png" alt="Agent playground Tools section with the Add button highlighted in a red rectangle, showing options to Add tools or Upload files"></p>
+<p><img src="/forgebook/notebook/media/12-add-tool.png" alt="Agent playground Tools section with the Add button highlighted in a red rectangle, showing options to Add tools or Upload files"></p>
 <p>You'll see a list of preconfigured tools — these are ready-to-use capabilities you can attach to any agent. Select <strong>Web search</strong>.</p>
-<p><img src="media/13-select-web-search.png" alt="Select a tool dialog showing the Configured tab with 9 available tools including File search, Code interpreter, Azure AI search, Grounding with Bing Search, Web search (selected with checkmark), Computer Use, Fabric Data Agent, SharePoint, and Browser Automation"></p>
+<p><img src="/forgebook/notebook/media/13-select-web-search.png" alt="Select a tool dialog showing the Configured tab with 9 available tools including File search, Code interpreter, Azure AI search, Grounding with Bing Search, Web search (selected with checkmark), Computer Use, Fabric Data Agent, SharePoint, and Browser Automation"></p>
 <p>Click <strong>Add tool</strong> to attach it.</p>
-<p><img src="media/14-web-search-added.png" alt="Agent playground showing Web search tool added to the Tools section with a Bing usage notice banner at the top of the page"></p>
+<p><img src="/forgebook/notebook/media/14-web-search-added.png" alt="Agent playground showing Web search tool added to the Tools section with a Bing usage notice banner at the top of the page"></p>
 <p>Web Search lets your agent access real-time information from the internet. Without it, the agent can only respond based on its training data. With it, your agent can pull current news, documentation, and announcements — exactly what a Foundry Expert needs.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Save and Versioning</h2>
 <p>Click <strong>Save</strong> in the top bar. You'll notice something important: the portal doesn't just save — it creates a <strong>new version</strong>.</p>
-<p><img src="media/15-agent-versioning.png" alt="Agent playground showing version updated to v2 saved Today 1:46 PM highlighted in a red rectangle, with a test prompt typed in the chat input"></p>
+<p><img src="/forgebook/notebook/media/15-agent-versioning.png" alt="Agent playground showing version updated to v2 saved Today 1:46 PM highlighted in a red rectangle, with a test prompt typed in the chat input"></p>
 <p>Open the version history and you'll see every save listed with a timestamp. This is crucial for iterating safely — you can always compare versions and roll back if something breaks.</p>
-<p><img src="media/16-version-history.png" alt="Version dropdown expanded showing v2 (Today 1:46 PM) checked as current and v1 (Today 1:42 PM) available, with options to Compare versions, Show all version history, and Delete current version"></p>
+<p><img src="/forgebook/notebook/media/16-version-history.png" alt="Version dropdown expanded showing v2 (Today 1:46 PM) checked as current and v1 (Today 1:42 PM) available, with options to Compare versions, Show all version history, and Delete current version"></p>
 <p>In the API, you reference agents by name + version (e.g., <code>foundry-expert</code> version <code>1</code>). This means you can test new instructions or tools on a new version while your stable version keeps running. We'll use this more in later parts of the series.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Test Your Agent</h2>
 <p>Time to see it in action. In the chat panel on the right side, type:</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">What's the latest news about Microsoft Foundry?</code></pre></div></div><div class="nb-cell nb-markdown-cell"><p><img src="media/17-chat-prompt.png" alt="Agent playground with the prompt" in=""></p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">What's the latest news about Microsoft Foundry?</code></pre></div></div><div class="nb-cell nb-markdown-cell"><p><img src="/forgebook/notebook/media/17-chat-prompt.png" alt="Agent playground with the prompt" in=""></p>
 <p>Hit send and watch what happens. Your agent searches the web, finds current information, and synthesizes a response with real-time results.</p>
-<p><img src="media/18-agent-response.png" alt="Agent response showing bullet-pointed list of recent Microsoft Foundry news items with dates, a cited source link, and response metadata bar showing gpt-5-mini, 29.3s, 18361 tokens, Web search tool used, AI Quality 100%, Safety 100%, and Debug button"></p>
+<p><img src="/forgebook/notebook/media/18-agent-response.png" alt="Agent response showing bullet-pointed list of recent Microsoft Foundry news items with dates, a cited source link, and response metadata bar showing gpt-5-mini, 29.3s, 18361 tokens, Web search tool used, AI Quality 100%, Safety 100%, and Debug button"></p>
 <p>That's your agent working end to end — it received your question, decided it needed to search the web, executed the search, and composed a response from the results. All from a few lines of instructions and a single tool.</p>
 </div><div class="nb-cell nb-markdown-cell"><blockquote>
 <p><strong>🛠️ Pro-code alternative:</strong> Run a conversation with your agent using the SDK:</p>
@@ -230,7 +230,7 @@ with (
 <span class="token comment">#   Interpreter, and File Search, all managed through the portal or SDK.</span>
 </code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>Understanding Response Details</h2>
 <p>Look at the toolbar below the agent's response. This is where you go from "it works" to "I understand <em>how</em> it works."</p>
-<p><img src="media/19-response-details.png" alt="Response metadata toolbar highlighted in a red rectangle showing model (gpt-5-mini), latency (16.5s), token count (11648t), tool used (Web search), AI Quality (100%), Safety (100%), and Debug button"></p>
+<p><img src="/forgebook/notebook/media/19-response-details.png" alt="Response metadata toolbar highlighted in a red rectangle showing model (gpt-5-mini), latency (16.5s), token count (11648t), tool used (Web search), AI Quality (100%), Safety (100%), and Debug button"></p>
 <p>Each element gives you a different lens into what just happened:</p>
 <table>
 <thead>
@@ -267,19 +267,19 @@ with (
 <p>These metrics update with every response. The quality and safety scores are powered by <a href="https://learn.microsoft.com/azure/ai-foundry/evaluation">Foundry's built-in evaluators</a> — the same ones you can run at scale in Part 3.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Debug Tracing</h2>
 <p>Click <strong>Debug</strong> to open the full execution trace. This is where you see <em>exactly</em> what happened behind the scenes.</p>
-<p><img src="media/20-click-debug.png" alt="Same response metadata toolbar with the Debug button highlighted in a red circle, ready to open the debug trace view"></p>
+<p><img src="/forgebook/notebook/media/20-click-debug.png" alt="Same response metadata toolbar with the Debug button highlighted in a red circle, ready to open the debug trace view"></p>
 <p>The trace shows the complete execution flow: <strong>Conversation → Response → tool calls</strong>. You can see that the agent decided to call <code>web_search</code> and then used the results to compose its answer.</p>
-<p><img src="media/21-debug-trace.png" alt="Debug trace dialog showing a Conversation tree with Conversation, Response, and Tool (web_search) nodes, with the Response node selected displaying Input (user prompt) and Output (agent response with news items)"></p>
+<p><img src="/forgebook/notebook/media/21-debug-trace.png" alt="Debug trace dialog showing a Conversation tree with Conversation, Response, and Tool (web_search) nodes, with the Response node selected displaying Input (user prompt) and Output (agent response with news items)"></p>
 <p>Click into the <code>web_search</code> node and you'll see something interesting — the exact search query the model generated on its own.</p>
-<p><img src="media/22-web-search-trace.png" alt="Debug trace with the web_search Tool node selected, showing the auto-generated search query" in=""></p>
+<p><img src="/forgebook/notebook/media/22-web-search-trace.png" alt="Debug trace with the web_search Tool node selected, showing the auto-generated search query" in=""></p>
 <p>Look at that: from your simple prompt "What's the latest news about Microsoft Foundry?", the model autonomously crafted the search query <em>"Microsoft Foundry latest news February 2026 Microsoft Foundry announcement"</em>. It added the current date and refined the query for better results — no prompt engineering required.</p>
 <p>This is observability built in — no extra setup, no external tracing tools, no SDK configuration. You get full visibility into every decision your agent makes, right from the portal. In Part 3, we'll export these traces and build automated evaluations on top of them.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Preview, Share, and Code</h2>
 <p>Your agent is working — but right now only you can see it. Before deploying to production, you can share a preview with your team.</p>
 <p>Click <strong>Preview</strong> in the top bar to open the dropdown, then select <strong>Preview agent</strong>.</p>
-<p><img src="media/23-preview-dropdown.png" alt="Preview button dropdown expanded showing Last saved timestamp, Preview agent option, and View sample app code option with GitHub icon linking to a sample app that consumes an agent"></p>
+<p><img src="/forgebook/notebook/media/23-preview-dropdown.png" alt="Preview button dropdown expanded showing Last saved timestamp, Preview agent option, and View sample app code option with GitHub icon linking to a sample app that consumes an agent"></p>
 <p>This opens a clean, standalone chat interface — no portal chrome, no configuration panels. Just your agent, ready for someone to try.</p>
-<p><img src="media/24-preview-agent.png" alt="Agent preview page showing a clean chat interface with"></p>
+<p><img src="/forgebook/notebook/media/24-preview-agent.png" alt="Agent preview page showing a clean chat interface with"></p>
 <p>The preview page toolbar gives you four actions:</p>
 <table>
 <thead>
@@ -307,13 +307,13 @@ with (
 </tbody></table>
 <h3>Sharing Your Agent</h3>
 <p>Click <strong>Share</strong> to get a link you can send to anyone on your team.</p>
-<p><img src="media/26-share-dialog.png" alt="Share foundry-expert dialog with instructions to share the link with users who have project access to view the agent preview, and a Copy link button"></p>
+<p><img src="/forgebook/notebook/media/26-share-dialog.png" alt="Share foundry-expert dialog with instructions to share the link with users who have project access to view the agent preview, and a Copy link button"></p>
 <blockquote>
 <p><strong>Important:</strong> To use a shared agent link, users must have at minimum the <strong>Azure AI User</strong> role on your project. Without this role, the link will return an access denied error. You can assign roles in the Azure portal under <strong>Access control (IAM)</strong> for your AI resource or resource group.</p>
 </blockquote>
 <h3>Getting the Code</h3>
 <p>Click the <strong>Code</strong> button (with the GitHub icon) to see a ready-to-use sample application.</p>
-<p><img src="media/29-preview-code-dropdown.png" alt="Preview page with the Code button dropdown open, showing View sample app code option described as"></p>
+<p><img src="/forgebook/notebook/media/29-preview-code-dropdown.png" alt="Preview page with the Code button dropdown open, showing View sample app code option described as"></p>
 <p>Select <strong>View sample app code</strong> to open the GitHub repository. This is an off-the-shelf application that consumes your agent — fork it, customize it, and deploy it as your own.</p>
 <p>Back on the Playground, you'll also find a <strong>Code</strong> tab that generates a Python, C#, or JavaScript snippet with your project endpoint and agent name pre-filled. We'll explore that path in <strong>Part 2</strong>.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>What's Next</h2>
