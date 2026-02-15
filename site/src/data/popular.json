@@ -1,4 +1,9 @@
 {
-  "updatedAt": "",
-  "notebooks": []
+  "updatedAt": "2026-02-15T18:37:06.452Z",
+  "notebooks": [
+    {
+      "slug": "foundry-agent-part-1",
+      "clicks": 4
+    }
+  ]
 }
