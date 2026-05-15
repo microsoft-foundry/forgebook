@@ -19,13 +19,16 @@ For any changes to `registry.yaml`:
 - Paths must start with `notebooks/` and end with `.ipynb`
 - Required fields: `slug`, `path`, `title`, `authors` (at least one with `github` username)
 - Optional: `description` (max 500 chars), `date` (YYYY-MM-DD), `tags`
+- Tags must exist in `tags.yaml` — unknown tags fail CI
+- Authors must exist in `authors.yaml` with `name` and `title`
 
 ## Technology Stack
 
 - **Site**: Astro with TypeScript strict mode
 - **Styling**: Tailwind CSS v4 (use `@custom-variant` syntax, not legacy config)
 - **Components**: Use `.astro` extension
-- **Testing**: Playwright with `baseURL: "http://localhost:4321/forgebook"`
+- **Links**: Always use `withBase()` or `import.meta.env.BASE_URL` — base path changes in PR previews
+- **Testing**: Playwright with `baseURL: "http://localhost:4321/forgebook"`, role-based selectors
 
 ## Validation Commands
 
@@ -39,31 +42,18 @@ cd scripts && npx tsx validate-registry.ts
 cd site && npm run build    # Includes astro check
 ```
 
-## Project Layout
-
-```
-forgebook/
-├── notebooks/          # Jupyter notebooks (source of truth)
-│   ├── data/           # Sample datasets for notebooks
-│   └── media/          # Images referenced in notebooks
-├── registry.yaml       # Publishing metadata
-├── authors.yaml        # Optional author profile overrides
-├── site/               # Astro static site
-│   └── src/
-│       ├── components/ # Astro components
-│       ├── layouts/    # Page layouts
-│       ├── lib/        # TypeScript utilities
-│       └── pages/      # Route pages
-└── scripts/            # Validation tooling
-```
-
 ## Notebook Assets
+
+Organize per-recipe in subdirectories matching the registry slug:
+```
+notebooks/media/<slug>/01-screenshot.png
+notebooks/data/<slug>/sample.csv
+```
 
 Reference data and images using relative paths from notebooks:
 ```python
-# From notebooks/my-notebook.ipynb
-df = pd.read_csv("data/sample.csv")
-
-# From notebooks/examples/hello-world.ipynb
-df = pd.read_csv("../data/sample.csv")
+# From notebooks/my-notebook.ipynb (slug: my-notebook)
+df = pd.read_csv("data/my-notebook/sample.csv")
 ```
+
+For full project details, see [AGENTS.md](../AGENTS.md).
