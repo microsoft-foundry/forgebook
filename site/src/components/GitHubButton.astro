@@ -8,10 +8,15 @@ const repoName = repoPath.split("/").pop() || repoPath;
 // Fetch star count at build time
 let starCount: number | null = null;
 try {
+  const token = import.meta.env.GITHUB_TOKEN;
+  const headers: Record<string, string> = {
+    "Accept": "application/vnd.github.v3+json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   const response = await fetch(`https://api.github.com/repos/${repoPath}`, {
-    headers: {
-      "Accept": "application/vnd.github.v3+json",
-    },
+    headers,
   });
   if (response.ok) {
     const data = await response.json();
@@ -43,12 +48,38 @@ function formatCount(count: number): string {
   <!-- Desktop: full path, Tablet: repo name only, Mobile: icon only -->
   <span class="hidden lg:inline">{repoPath}</span>
   <span class="hidden md:inline lg:hidden">{repoName}</span>
-  {starCount !== null && starCount > 0 && (
-    <span class="inline-flex items-center gap-1 ml-0.5 sm:ml-1 pl-1.5 border-l border-subtle">
-      <svg class="w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-      </svg>
-      <span class="font-medium">{formatCount(starCount)}</span>
-    </span>
-  )}
+  <span
+    id="github-stars"
+    class="inline-flex items-center gap-1 ml-0.5 sm:ml-1 pl-1.5 border-l border-subtle"
+    data-repo={repoPath}
+    style={starCount === null ? "display:none" : ""}
+  >
+    <svg class="w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+    </svg>
+    <span class="font-medium" id="github-star-count">{starCount !== null ? formatCount(starCount) : ""}</span>
+  </span>
 </a>
+
+<script>
+  const el = document.getElementById("github-stars");
+  const countEl = document.getElementById("github-star-count");
+  if (el && countEl && !countEl.textContent) {
+    const repo = el.dataset.repo;
+    fetch(`https://api.github.com/repos/${repo}`, {
+      headers: { Accept: "application/vnd.github.v3+json" },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && typeof data.stargazers_count === "number") {
+          const count = data.stargazers_count;
+          countEl.textContent =
+            count >= 1000
+              ? (count / 1000).toFixed(1).replace(/\.0$/, "") + "k"
+              : count.toString();
+          el.style.display = "";
+        }
+      })
+      .catch(() => {});
+  }
+</script>
