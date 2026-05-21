@@ -56,6 +56,8 @@ body:
         - safety
         - local
         - tools
+        - models
+        - mai
         # Integrations
         - agent-framework
         - a2a
