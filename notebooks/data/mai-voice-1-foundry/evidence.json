@@ -1,0 +1,32 @@
+{
+  "generated_at_utc": "2026-05-21T22:24:24.249110Z",
+  "voice_name": "en-us-Grant:MAI-Voice-1",
+  "auth_mode": "entra",
+  "samples": [
+    {
+      "label": "Basic plain text",
+      "file": "media/mai-voice-1-foundry/output_basic.mp3",
+      "size_bytes": 311520
+    },
+    {
+      "label": "Emotion (SSML express-as)",
+      "file": "media/mai-voice-1-foundry/output_emotion.mp3",
+      "size_bytes": 293760
+    },
+    {
+      "label": "Prosody (rate/pitch/volume)",
+      "file": "media/mai-voice-1-foundry/output_prosody.mp3",
+      "size_bytes": 123840
+    },
+    {
+      "label": "SDK synthesis (REST-fallback safe)",
+      "file": "media/mai-voice-1-foundry/output_sdk.mp3",
+      "size_bytes": 149760
+    },
+    {
+      "label": "Long-form narration (~900 chars)",
+      "file": "media/mai-voice-1-foundry/output_longform.mp3",
+      "size_bytes": 1236480
+    }
+  ]
+}
