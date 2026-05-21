@@ -1,4 +1,4 @@
-## MAI-Image-2 on Foundry (Direct Endpoint Recipe)
+## Build a Direct Foundry Image Generation Recipe with MAI-Image-2
 
 **Problem this recipe solves:** You need the leanest possible MAI-Image-2 integration against the raw Foundry REST endpoint, with both single-shot and batch prompts demonstrated, plus saved evidence the technique works.
 
@@ -384,3 +384,10 @@ Two artifacts to reuse:
 
 1. **`generate_image(endpoint, auth_headers, deployment_name, prompt, ...)`** — copy verbatim. The headers param keeps it auth-agnostic.
 2. **`data/mai-image-2-foundry/evidence.json`** — drop into every release branch to give reviewers a deterministic gallery + manifest pair.
+
+
+## Over to you
+
+Our Microsoft Superintelligence (MSI) team is excited for you to try out **MAI-Image-2** on Microsoft Foundry and see how easy it is to wire direct REST image generation into your next app! Whether you're integrating image generation into a backend service, building a developer tool, or experimenting with batch creative pipelines, this recipe gives you the minimal helper, the deployment routing, and the evidence pack to confidently take it from notebook to production.
+
+If you build something cool with this recipe, share it back with us! Open an issue or PR on Forgebook and tell us what worked, what surprised you, and where you'd like a deeper-dive recipe next.

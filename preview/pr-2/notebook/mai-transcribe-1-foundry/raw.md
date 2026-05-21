@@ -1,4 +1,4 @@
-## MAI-Transcribe-1: Build a Robust Speech-to-Text Recipe
+## Build a Robust Speech-to-Text Recipe with MAI-Transcribe-1
 
 **Problem this recipe solves:** You need a production-ready transcription pipeline that handles diarization, prompt-tuning, translation, and clear failure modes — without trial-and-error against an unfamiliar endpoint. The wrapper degrades gracefully when the endpoint rejects newer payload options.
 
@@ -547,3 +547,10 @@ Reuse two things from this recipe in your own services:
 
 1. **`transcribe_audio(...)`** — the helper with progressive `enhancedMode` fallback. Drop it in your codebase as-is; only change the headers / endpoint resolution.
 2. **`data/mai-transcribe-1-foundry/evidence.json`** — the cached manifest pattern. Replicate it for every transcription job to give reviewers and downstream teams a paper trail of what you ran and what came back.
+
+
+## Over to you
+
+Our Microsoft Superintelligence (MSI) team is excited for you to try out **MAI-Transcribe-1** and see how it can make it easier to build complex, multimodal, speech-to-text interactions in your next app! Whether you're transcribing call-center audio, generating captions, indexing media archives, or shipping a real-time meeting assistant, this recipe gives you the helper, the failure-mode playbook, and the evidence pack to ship with confidence.
+
+If you build something cool with this recipe, share it back with us! Open an issue or PR on Forgebook and tell us what worked, what surprised you, and where you'd like a deeper-dive recipe next.

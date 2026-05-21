@@ -1,4 +1,4 @@
-## MAI-Image-2: Build a Production-Ready Text-to-Image Recipe
+## Build a Production-Ready Text-to-Image Recipe with MAI-Image-2 and MAI-Image-2e
 
 **Problem this recipe solves:** You need a single endpoint + helper to generate, A/B compare, and batch images across MAI-Image-2 and MAI-Image-2e, with cost visibility and failure-mode awareness — before you wire it into a product.
 
@@ -524,3 +524,10 @@ Reuse three things from this recipe:
 1. **`generate_image(...)`** — the single helper that every other section layers on top of.
 2. **The dimension table in §7** — gives you four production-safe aspect ratios that respect the 1,048,576 total-pixel cap.
 3. **`data/mai-image-2/evidence.json`** — the manifest pattern. Commit one per batch release.
+
+
+## Over to you
+
+Our Microsoft Superintelligence (MSI) team is excited for you to try out **MAI-Image-2** and **MAI-Image-2e** and see how easy it is to build high-fidelity, fast, and cost-aware text-to-image experiences in your next app! Whether you're powering a creative tool, generating marketing assets at scale, illustrating storyboards, or building product visualization workflows, this recipe hands you the helper, the dimension table, the 2-vs-2e tradeoff, and the failure-mode playbook to ship with confidence.
+
+If you build something cool with this recipe, share it back with us! Open an issue or PR on Forgebook and tell us what worked, what surprised you, and where you'd like a deeper-dive recipe next.

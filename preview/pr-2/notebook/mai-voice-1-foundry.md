@@ -1,4 +1,4 @@
-## MAI-Voice-1: Build a Production-Ready Text-to-Speech Recipe
+## Build a Production-Ready Text-to-Speech Recipe with MAI-Voice-1
 
 **Problem this recipe solves:** You need expressive, low-latency TTS on Foundry that supports plain text, SSML emotion/prosody, batch long-form narration, and the Azure Speech SDK — all wired through a single endpoint and credential.
 
@@ -548,3 +548,10 @@ Copy three things from this notebook into your service:
 1. **`synthesize_to_file(...)`** — the REST helper with SDK fallback baked in.
 2. **The SSML template in §3 / §4** — change the voice + style, keep the namespace block. This is the only SSML you need for 90% of MAI-Voice-1 work.
 3. **`data/mai-voice-1-foundry/evidence.json`** — the manifest pattern. Run it on every batch job to give reviewers a record of voice, character counts, and file sizes per release.
+
+
+## Over to you
+
+Our Microsoft Superintelligence (MSI) team is excited for you to try out **MAI-Voice-1** and see how it can make it easier to build expressive, low-latency text-to-speech experiences in your next app! Whether you're voicing IVR menus, narrating long-form content, giving characters a voice in a game, or sending personalized audio notifications, this recipe equips you with the SSML patterns, the SDK fallback, and the cost model to go from prototype to product.
+
+If you build something cool with this recipe, share it back with us! Open an issue or PR on Forgebook and tell us what worked, what surprised you, and where you'd like a deeper-dive recipe next.
