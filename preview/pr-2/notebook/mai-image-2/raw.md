@@ -478,7 +478,7 @@ The 19 images below are committed to `media/mai-image-2/` so reviewers can verif
 from datetime import datetime
 from pathlib import Path
 import json
-from IPython.display import display, Markdown, Image as IPyImage
+from IPython.display import display, Markdown, HTML
 
 MEDIA_DIR = Path("media/mai-image-2/")
 EVIDENCE_PATH = Path("data/mai-image-2/evidence.json")
@@ -488,8 +488,10 @@ gallery = sorted(MEDIA_DIR.glob("*.png"))
 files = []
 for p in gallery:
     files.append({"file": p.as_posix(), "size_bytes": p.stat().st_size})
-    display(Markdown(f"**{p.name}** — {p.stat().st_size:,} bytes"))
-    display(IPyImage(filename=str(p), width=320))
+    display(HTML(
+        f'<p><strong>{p.name}</strong> — {p.stat().st_size:,} bytes</p>'
+        f'<img src="media/mai-image-2/{p.name}" width="320" alt="{p.name}" />'
+    ))
 
 evidence = {
     "generated_at_utc": datetime.utcnow().isoformat() + "Z",
