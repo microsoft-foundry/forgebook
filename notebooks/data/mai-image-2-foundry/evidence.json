@@ -1,0 +1,45 @@
+{
+  "generated_at_utc": "2026-05-21T22:24:35.045810Z",
+  "endpoint": "",
+  "deployment_image_2": "",
+  "deployment_image_2e": "",
+  "image_count": 9,
+  "images": [
+    {
+      "file": "media/mai-image-2-foundry/A_majestic_snow_leopard.png",
+      "size_bytes": 1460846
+    },
+    {
+      "file": "media/mai-image-2-foundry/A_minimalist_modernist_villa_p.png",
+      "size_bytes": 1451514
+    },
+    {
+      "file": "media/mai-image-2-foundry/A_photorealistic_close-up_port.png",
+      "size_bytes": 1664260
+    },
+    {
+      "file": "media/mai-image-2-foundry/A_photorealistic_studio_portra.png",
+      "size_bytes": 1291043
+    },
+    {
+      "file": "media/mai-image-2-foundry/A_surrealist_melting_clock_lan.png",
+      "size_bytes": 1505042
+    },
+    {
+      "file": "media/mai-image-2-foundry/A_vast_desert_landscape_with_t.png",
+      "size_bytes": 1703325
+    },
+    {
+      "file": "media/mai-image-2-foundry/Beautiful_Na'vi,_avatar,_photo.png",
+      "size_bytes": 1673389
+    },
+    {
+      "file": "media/mai-image-2-foundry/image.png",
+      "size_bytes": 933995
+    },
+    {
+      "file": "media/mai-image-2-foundry/People_walking_through_a_livel.png",
+      "size_bytes": 2061223
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "generated_at_utc": "2026-05-21T22:24:29.041045Z",
+  "deployment_image_2": "mai-image-2",
+  "image_count": 19,
+  "images": [
+    {
+      "file": "media/mai-image-2/batch_art.png",
+      "size_bytes": 835728
+    },
+    {
+      "file": "media/mai-image-2/batch_cafe.png",
+      "size_bytes": 2026715
+    },
+    {
+      "file": "media/mai-image-2/batch_car.png",
+      "size_bytes": 1418378
+    },
+    {
+      "file": "media/mai-image-2/batch_food.png",
+      "size_bytes": 1843228
+    },
+    {
+      "file": "media/mai-image-2/img_anime.png",
+      "size_bytes": 1605216
+    },
+    {
+      "file": "media/mai-image-2/img_banner.png",
+      "size_bytes": 545047
+    },
+    {
+      "file": "media/mai-image-2/img_dim_1024x1024.png",
+      "size_bytes": 2455327
+    },
+    {
+      "file": "media/mai-image-2/img_dim_1024x768.png",
+      "size_bytes": 1926517
+    },
+    {
+      "file": "media/mai-image-2/img_dim_1365x768.png",
+      "size_bytes": 2348878
+    },
+    {
+      "file": "media/mai-image-2/img_dim_768x1024.png",
+      "size_bytes": 1810606
+    },
+    {
+      "file": "media/mai-image-2/img_image2_compare.png",
+      "size_bytes": 492823
+    },
+    {
+      "file": "media/mai-image-2/img_image2e_compare.png",
+      "size_bytes": 666772
+    },
+    {
+      "file": "media/mai-image-2/img_image2e_variant.png",
+      "size_bytes": 829141
+    },
+    {
+      "file": "media/mai-image-2/img_infographic.png",
+      "size_bytes": 246576
+    },
+    {
+      "file": "media/mai-image-2/img_landscape.png",
+      "size_bytes": 1114369
+    },
+    {
+      "file": "media/mai-image-2/img_portrait.png",
+      "size_bytes": 1211098
+    },
+    {
+      "file": "media/mai-image-2/img_product.png",
+      "size_bytes": 861197
+    },
+    {
+      "file": "media/mai-image-2/img_unified_eff.png",
+      "size_bytes": 673546
+    },
+    {
+      "file": "media/mai-image-2/img_unified_eff_variant.png",
+      "size_bytes": 748177
+    }
+  ]
+}
