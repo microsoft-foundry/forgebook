@@ -54,6 +54,8 @@
   authors:
     - github: anihitk07
   tags:
+    - mai
+    - models
     - inference
     - multimodal
 
@@ -65,6 +67,8 @@
   authors:
     - github: anihitk07
   tags:
+    - mai
+    - models
     - inference
     - multimodal
 
@@ -76,5 +80,7 @@
   authors:
     - github: anihitk07
   tags:
+    - mai
+    - models
     - inference
     - multimodal
