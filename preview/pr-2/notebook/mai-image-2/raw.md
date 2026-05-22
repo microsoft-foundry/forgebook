@@ -30,9 +30,6 @@
 - Cost is per **image token**, not per image; large images burn more tokens.
 
 
-> **Note on rendered output.** Each `generate_image(...)` call writes its PNG to `media/mai-image-2/`. The embedded base64 image previews were stripped from this committed notebook so the site renderer doesn't OOM on multi-MB image blobs. Re-run any cell locally to regenerate the inline preview, or browse the PNG files directly in the repo.
-
-
 ## 1. Setup
 
 **What this does:** loads env, builds auth headers, prints deployment names so you can confirm `mai-image-2` vs `mai-image-2e` are reachable.

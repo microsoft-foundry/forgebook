@@ -32,9 +32,6 @@
 - [Foundry usage docs](https://learn.microsoft.com/azure/foundry/foundry-models/how-to/use-foundry-models-mai?tabs=python)
 
 
-> **Note on rendered output.** Each generation call writes its PNG to `media/mai-image-2-foundry/`. The embedded base64 image previews were stripped from this committed notebook so the site renderer doesn't OOM on multi-MB image blobs. Re-run any cell locally to regenerate the inline preview, or browse the PNG files directly in the repo.
-
-
 ## 1. Install dependencies
 
 **What to run:** these imports once per environment. The `dotenv` + `azure.identity` stack reads `deployment.env` and powers Entra auth.

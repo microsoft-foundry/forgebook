@@ -29,9 +29,6 @@
 - File grows but won't play → wrong content type (request `audio-24khz-48kbitrate-mono-mp3`).
 
 
-> **Note on rendered output.** Each `synthesize_to_file(...)` call writes its audio to `media/mai-voice-1-foundry/`. The embedded base64 audio players were stripped from this committed notebook so the site renderer doesn't have to parse multi-MB binary blobs. Re-run any cell locally to regenerate the inline player, or browse the MP3 files directly in the repo.
-
-
 ## 1. Setup
 
 **What this does:** loads `deployment.env`, picks the voice name, and prints the auth principal so you can validate RBAC.
