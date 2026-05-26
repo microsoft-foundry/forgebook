@@ -173,6 +173,32 @@ function rewriteImagePaths(html: string, notebookPath: string, basePath: string)
   );
 }
 
+/**
+ * Rewrite relative `.ipynb` links so they point to the rendered notebook pages.
+ *
+ * Notebook markdown cells link to sibling notebooks with relative paths like
+ * `foundry-agent-part-1.ipynb`. On the site these need to become
+ * `<basePath>/notebook/<slug>/` where slug is derived from the filename.
+ */
+function rewriteNotebookLinks(html: string, notebookPath: string, basePath: string): string {
+  const notebookDir = path.posix.dirname(notebookPath.replace(/\\/g, "/"));
+  const base = basePath.replace(/\/$/, "");
+
+  return html.replace(
+    /(<a\b[^>]*\bhref=["'])([^"']+\.ipynb)(["'])/gi,
+    (_match, prefix: string, href: string, suffix: string) => {
+      // Skip absolute URLs
+      if (/^(https?:\/\/|\/|data:|#)/.test(href)) return _match;
+
+      // Resolve relative to the notebook's directory and extract the slug
+      const resolved = path.posix.normalize(path.posix.join(notebookDir, href));
+      const slug = path.posix.basename(resolved, ".ipynb");
+
+      return `${prefix}${base}/notebook/${slug}/${suffix}`;
+    }
+  );
+}
+
 export function renderNotebook(notebookJson: unknown, notebookPath: string, basePath: string): string {
   try {
     // Reset iframe storage for this notebook
@@ -188,10 +214,13 @@ export function renderNotebook(notebookJson: unknown, notebookPath: string, base
     sanitized = sanitized.replaceAll("&amp;lt;", "&lt;").replaceAll("&amp;gt;", "&gt;").replaceAll("&amp;amp;", "&amp;");
     
     // Restore preserved trusted iframes
-    const result = restoreIframes(sanitized, currentIframes);
+    let result = restoreIframes(sanitized, currentIframes);
 
     // Rewrite relative image paths to absolute URLs
-    return rewriteImagePaths(result, notebookPath, basePath);
+    result = rewriteImagePaths(result, notebookPath, basePath);
+
+    // Rewrite relative .ipynb links to site notebook pages
+    return rewriteNotebookLinks(result, notebookPath, basePath);
   } catch (error) {
     console.error("Error rendering notebook:", error);
     return `<div class="text-red-500">Error rendering notebook</div>`;
