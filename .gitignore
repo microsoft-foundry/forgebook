@@ -47,3 +47,5 @@ test-results/
 .cache/
 .github/skills/
 .agents/skills/
+.mcp.json
+.github/agents/recipe-author.agent.md

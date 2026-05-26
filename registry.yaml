@@ -18,7 +18,7 @@
   path: notebooks/foundry-agent-part-1.ipynb
   title: "Create Your First Agent (Part 1)"
   description: "Step-by-step tutorial to deploy gpt-5-mini on Microsoft Foundry, create an AI agent with Web Search, and test it — all from the Foundry portal. Part 1 of 4."
-  date: "2026-02-07"
+  date: "2026-05-15"
   authors:
     - github: nicholasdbrady
   tags:
@@ -27,8 +27,8 @@
 - slug: foundry-agent-part-2
   path: notebooks/foundry-agent-part-2.ipynb
   title: "Tools and Your First Code (Part 2)"
-  description: "Expand your agent with Microsoft Learn and GitHub MCP servers. Explore the tool catalog, YAML and Code views, and launch VS Code for the web."
-  date: "2026-02-07"
+  description: "Connect your agent to Microsoft Learn and GitHub MCP servers. Handle MCP approval requests, explore the tool catalog, and see your agent defined in YAML and Python."
+  date: "2026-05-15"
   authors:
     - github: nicholasdbrady
   tags:
