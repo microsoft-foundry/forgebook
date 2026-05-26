@@ -18,7 +18,7 @@
   path: notebooks/foundry-agent-part-1.ipynb
   title: "Create Your First Agent (Part 1)"
   description: "Step-by-step tutorial to deploy gpt-5-mini on Microsoft Foundry, create an AI agent with Web Search, and test it — all from the Foundry portal. Part 1 of 4."
-  date: "2026-05-15"
+  date: "2026-06-02"
   authors:
     - github: nicholasdbrady
   tags:
@@ -28,9 +28,61 @@
   path: notebooks/foundry-agent-part-2.ipynb
   title: "Tools and Your First Code (Part 2)"
   description: "Connect your agent to Microsoft Learn and GitHub MCP servers. Handle MCP approval requests, explore the tool catalog, and see your agent defined in YAML and Python."
-  date: "2026-05-15"
+  date: "2026-06-02"
   authors:
     - github: nicholasdbrady
   tags:
     - agents
     - tools
+
+- slug: mai-transcribe-1-foundry
+  path: notebooks/mai-transcribe-1-foundry.ipynb
+  title: "Build a Robust Speech-to-Text Recipe with MAI-Transcribe-1"
+  description: "Entra-first MAI-Transcribe-1 notebook with Foundry endpoint setup, local audio transcription, diarization, translation, and cost estimation."
+  date: "2026-06-02"
+  authors:
+    - github: anihitk07
+  tags:
+    - mai
+    - models
+    - inference
+    - multimodal
+
+- slug: mai-voice-1-foundry
+  path: notebooks/mai-voice-1-foundry.ipynb
+  title: "Build a Production-Ready Text-to-Speech Recipe with MAI-Voice-1"
+  description: "MAI-Voice-1 notebook using Foundry endpoint with REST and SDK patterns, long-form synthesis, and character-based cost estimation."
+  date: "2026-06-02"
+  authors:
+    - github: anihitk07
+  tags:
+    - mai
+    - models
+    - inference
+    - multimodal
+
+- slug: mai-image-2
+  path: notebooks/mai-image-2.ipynb
+  title: "Build a Production-Ready Text-to-Image Recipe with MAI-Image-2 and MAI-Image-2e"
+  description: "MAI-Image-2 and MAI-Image-2e text-to-image notebook with prompt variations, parameter tuning, and token-based cost calculations."
+  date: "2026-06-02"
+  authors:
+    - github: anihitk07
+  tags:
+    - mai
+    - models
+    - inference
+    - multimodal
+
+- slug: mai-image-2-foundry
+  path: notebooks/mai-image-2-foundry.ipynb
+  title: "Build a Direct Foundry Image Generation Recipe with MAI-Image-2"
+  description: "Foundry-focused MAI-Image-2 notebook covering deployment-based calls, prompt variants, and cost breakdown."
+  date: "2026-06-02"
+  authors:
+    - github: anihitk07
+  tags:
+    - mai
+    - models
+    - inference
+    - multimodal
