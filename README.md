@@ -67,7 +67,7 @@ Notebooks are the source of truth — they stay clean and portable with no site-
 
 Recipes cover a range of AI development topics:
 
-`agents` · `multi-agent` · `inference` · `knowledge` · `evaluation` · `fine-tuning` · `memory` · `multimodal` · `safety` · `local` · `tools` · `agent-framework` · `a2a` · `langchain` · `mcp`
+`agents` · `multi-agent` · `inference` · `knowledge` · `evaluation` · `fine-tuning` · `memory` · `multimodal` · `safety` · `local` · `tools` · `models` · `mai` · `agent-framework` · `a2a` · `langchain` · `mcp`
 
 ## Resources
 
