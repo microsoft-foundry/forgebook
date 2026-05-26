@@ -8,7 +8,7 @@ import popularRaw from "@/data/popular.json";
 
 interface PopularData {
   updatedAt: string;
-  notebooks: { slug: string; views: number }[];
+  notebooks: { slug: string; clicks: number }[];
 }
 const popularData = popularRaw as PopularData;
 
