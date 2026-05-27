@@ -1,9 +1,21 @@
 {
-  "updatedAt": "2026-05-26T07:18:00.881Z",
+  "updatedAt": "2026-05-27T07:31:43.739Z",
   "notebooks": [
     {
       "slug": "foundry-agent-part-1",
-      "clicks": 16
+      "clicks": 19
+    },
+    {
+      "slug": "mai-voice-1-foundry",
+      "clicks": 2
+    },
+    {
+      "slug": "mai-image-2-foundry",
+      "clicks": 2
+    },
+    {
+      "slug": "mai-transcribe-1-foundry",
+      "clicks": 1
     }
   ]
 }
