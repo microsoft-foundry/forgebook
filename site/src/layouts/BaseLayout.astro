@@ -22,6 +22,7 @@ const { title, description = "Recipes for AI alchemists forging with Microsoft F
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href={withBase("/favicon.svg")} />
+    <meta name="base-url" content={import.meta.env.BASE_URL.replace(/\/$/, '')} />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -149,6 +150,185 @@ const { title, description = "Recipes for AI alchemists forging with Microsoft F
           });
         }
       });
+    </script>
+
+    <!-- WebMCP: expose Forgebook tools to browser agents (W3C spec) and legacy WebMCP widget -->
+    <script is:inline>
+      (function () {
+        var basePath = document.querySelector('meta[name="base-url"]')?.content || '/forgebook';
+
+        // --- Shared tool definitions ---
+        // Each tool works with both the W3C navigator.modelContext API and the
+        // jasonjmcghee/WebMCP widget library. The execute callback receives
+        // (input, client) per the W3C spec; the widget adapter maps accordingly.
+
+        var tools = [
+          {
+            name: 'list_recipes',
+            title: 'List Forgebook Recipes',
+            description: 'List all Forgebook recipes with title, description, tags, and URL. Works best from the homepage.',
+            inputSchema: { type: "object", properties: {} },
+            annotations: { readOnlyHint: true },
+            execute: function () {
+              var cards = document.querySelectorAll('[data-notebook-slug]');
+              if (cards.length === 0) {
+                return "No recipe cards found on this page. Navigate to the homepage first.";
+              }
+              var recipes = [];
+              cards.forEach(function (card) {
+                recipes.push({
+                  slug: card.getAttribute('data-notebook-slug'),
+                  title: card.getAttribute('data-notebook-title') || card.querySelector('h3, h2')?.textContent?.trim(),
+                  description: card.getAttribute('data-notebook-description') || '',
+                  tags: (card.getAttribute('data-notebook-tags') || '').split(',').filter(Boolean),
+                  url: window.location.origin + basePath + '/notebook/' + card.getAttribute('data-notebook-slug') + '/'
+                });
+              });
+              return JSON.stringify(recipes, null, 2);
+            }
+          },
+          {
+            name: 'search_recipes',
+            title: 'Search Forgebook Recipes',
+            description: 'Search Forgebook recipes by keyword (matches title, description, tags). Works best from the homepage.',
+            inputSchema: {
+              type: "object",
+              properties: {
+                query: { type: "string", description: "Search keyword" }
+              },
+              required: ["query"]
+            },
+            annotations: { readOnlyHint: true },
+            execute: function (input) {
+              var q = (input.query || '').toLowerCase();
+              var cards = document.querySelectorAll('[data-notebook-slug]');
+              var results = [];
+              cards.forEach(function (card) {
+                var title = (card.getAttribute('data-notebook-title') || card.querySelector('h3, h2')?.textContent || '').toLowerCase();
+                var desc = (card.getAttribute('data-notebook-description') || '').toLowerCase();
+                var tags = (card.getAttribute('data-notebook-tags') || '').toLowerCase();
+                if (title.includes(q) || desc.includes(q) || tags.includes(q)) {
+                  results.push({
+                    slug: card.getAttribute('data-notebook-slug'),
+                    title: card.getAttribute('data-notebook-title') || card.querySelector('h3, h2')?.textContent?.trim(),
+                    description: card.getAttribute('data-notebook-description') || '',
+                    tags: (card.getAttribute('data-notebook-tags') || '').split(',').filter(Boolean),
+                    url: window.location.origin + basePath + '/notebook/' + card.getAttribute('data-notebook-slug') + '/'
+                  });
+                }
+              });
+              return results.length > 0 ? JSON.stringify(results, null, 2) : 'No recipes matched "' + input.query + '".';
+            }
+          },
+          {
+            name: 'get_page_content',
+            title: 'Read Current Page',
+            description: 'Get the text content of the current Forgebook page (useful for reading a recipe).',
+            inputSchema: { type: "object", properties: {} },
+            annotations: { readOnlyHint: true },
+            execute: function () {
+              var article = document.querySelector('article') || document.querySelector('[data-pagefind-body]');
+              if (!article) return "No article content found on this page.";
+              var text = article.innerText || article.textContent || '';
+              if (text.length > 12000) {
+                text = text.substring(0, 12000) + '\n\n[... truncated — page has ' + text.length + ' characters total]';
+              }
+              return text;
+            }
+          },
+          {
+            name: 'navigate_to_recipe',
+            title: 'Go to Recipe',
+            description: 'Navigate the browser to a specific Forgebook recipe by slug.',
+            inputSchema: {
+              type: "object",
+              properties: {
+                slug: { type: "string", description: "The recipe slug, e.g. foundry-agent-part-1" }
+              },
+              required: ["slug"]
+            },
+            annotations: { readOnlyHint: false },
+            execute: function (input) {
+              var url = window.location.origin + basePath + '/notebook/' + input.slug + '/';
+              window.location.href = url;
+              return 'Navigating to ' + url;
+            }
+          },
+          {
+            name: 'get_current_page_info',
+            title: 'Current Page Info',
+            description: 'Get metadata about the current Forgebook page (URL, title, description, whether it is a recipe).',
+            inputSchema: { type: "object", properties: {} },
+            annotations: { readOnlyHint: true },
+            execute: function () {
+              return JSON.stringify({
+                url: window.location.href,
+                title: document.title,
+                description: document.querySelector('meta[name="description"]')?.content || '',
+                isRecipePage: !!document.querySelector('article .notebook-content'),
+                recipeTitle: document.querySelector('article h1, [data-pagefind-meta="title"]')?.textContent?.trim() || null
+              }, null, 2);
+            }
+          }
+        ];
+
+        // ---------------------------------------------------------------
+        // W3C WebMCP (navigator.modelContext) — native browser agent API
+        // Spec: https://webmachinelearning.github.io/webmcp/
+        // ---------------------------------------------------------------
+        if (typeof navigator !== 'undefined' && navigator.modelContext && typeof navigator.modelContext.registerTool === 'function') {
+          tools.forEach(function (t) {
+            try {
+              navigator.modelContext.registerTool({
+                name: t.name,
+                title: t.title,
+                description: t.description,
+                inputSchema: t.inputSchema,
+                annotations: t.annotations,
+                execute: function (input) {
+                  return Promise.resolve(t.execute(input || {}));
+                }
+              });
+            } catch (e) {
+              console.warn('[WebMCP/W3C] Failed to register tool "' + t.name + '":', e);
+            }
+          });
+        }
+
+        // ---------------------------------------------------------------
+        // Legacy WebMCP widget (jasonjmcghee/WebMCP) — fallback for
+        // environments without native browser agent support.
+        // Loaded async; tools registered on script load.
+        // ---------------------------------------------------------------
+        window.__forgebook_tools = tools;
+      })();
+    </script>
+    <script is:inline define:vars={{ webmcpSrc: withBase("/webmcp.js") }}>
+      (function () {
+        var s = document.createElement('script');
+        s.src = webmcpSrc;
+        s.onload = function () {
+          if (typeof WebMCP === 'undefined' || !window.__forgebook_tools) return;
+          var mcp = new WebMCP({
+            color: '#6366f1',
+            position: 'bottom-right',
+            size: '28px',
+            padding: '16px'
+          });
+          window.__forgebook_tools.forEach(function (t) {
+            mcp.registerTool(
+              t.name,
+              t.description,
+              t.inputSchema,
+              function (args) {
+                var result = t.execute(args || {});
+                return { content: [{ type: "text", text: typeof result === 'string' ? result : JSON.stringify(result) }] };
+              }
+            );
+          });
+        };
+        document.head.appendChild(s);
+      })();
     </script>
   </body>
 </html>
