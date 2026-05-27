@@ -1,4 +1,4 @@
-Build 2026 ships **Foundry IQ**, Microsoft's intelligence layer for agentic
+**Foundry IQ** is Microsoft's intelligence layer for agentic
 retrieval. A Foundry IQ *Knowledge Base* (KB) wraps one or more
 *Knowledge Sources* (KS) with an LLM that **plans subqueries**, executes
 them in parallel, **reranks** the results, and **synthesizes** a cited
@@ -6,8 +6,7 @@ answer.
 
 This notebook is the canonical recipe for the full surface. It walks you
 through every Knowledge Source supported on the
-**`2026-05-01-preview`** API surface (the one backing the upcoming Build
-2026 release), assembles **one** KB that fans out to all of them, and
+**`2026-05-01-preview`** API surface, assembles **one** KB that fans out to all of them, and
 plugs that KB into both a **Foundry Agent** (hero scenario) and a
 **Microsoft Agent Framework** agent.
 
@@ -57,14 +56,14 @@ Set its env vars to enable, leave them blank to skip cleanly — the KB at the
 bottom is assembled from whichever KS were created in this run.
 
 
-## 1 - Prerequisites
+## 1 · Prerequisites
 
 | | |
 |---|---|
-| Azure AI Search service | In a [Build 2026 preview region](https://learn.microsoft.com/azure/search/search-region-support) |
+| Azure AI Search service | In a [preview region](https://learn.microsoft.com/azure/search/search-region-support) |
 | Microsoft Foundry project | One chat deployment (e.g. `gpt-4.1-mini`, `gpt-5-mini`, `gpt-4o`) + one embedding deployment (e.g. `text-embedding-3-large`, `text-embedding-ada-002`) |
 
-Each Knowledge Source section below lists its own resource prerequisites. **None of them are required** to run this notebook end-to-end - any section whose env vars are blank is skipped cleanly.
+Each Knowledge Source section below lists its own resource prerequisites. **None of them are required** to run this notebook end-to-end — any section whose env vars are blank is skipped cleanly.
 
 ### Configure your environment
 
@@ -81,11 +80,11 @@ AOAI_GPT_DEPLOYMENT=gpt-4.1-mini          # or gpt-5-mini, gpt-4o, ...
 AOAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large
 ```
 
-**Optional** (each unlocks one Knowledge Source - leave blank to skip): `FOUNDRY_PROJECT_ENDPOINT`, `FOUNDRY_PROJECT_RESOURCE_ID`, `ZAVA_STORAGE_RID`, `ZAVA_BLOB_CONTAINER`, `ZAVA_FILE_UPLOAD_PATH`, `ZAVA_ONELAKE_*`, `ZAVA_FABRIC_*`, `ZAVA_SQL_*`, `ZAVA_SP_*`, `ZAVA_MCP_SERVER_*`, `ZAVA_WORKIQ_USER_TOKEN`. See the per-section prereq tables below for exact names.
+**Optional** (each unlocks one Knowledge Source — leave blank to skip): `FOUNDRY_PROJECT_ENDPOINT`, `FOUNDRY_PROJECT_RESOURCE_ID`, `ZAVA_STORAGE_RID`, `ZAVA_BLOB_CONTAINER`, `ZAVA_FILE_UPLOAD_PATH`, `ZAVA_ONELAKE_*`, `ZAVA_FABRIC_*`, `ZAVA_SQL_*`, `ZAVA_SP_*`, `ZAVA_MCP_SERVER_*`, `ZAVA_WORKIQ_USER_TOKEN`. See the per-section prereq tables below for exact names.
 
 ### Install dependencies
 
-Foundry IQ ships on the `2026-05-01-preview` Search API which is only exposed by the **alpha** `azure-search-documents` SDK from the [Azure SDK public feed](https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/). The next cell installs the pinned dependencies in-place; you do not need a separate `requirements.txt`.
+Foundry IQ ships on the `2026-05-01-preview` Search API exposed by the preview `azure-search-documents` SDK from the [Azure SDK public feed](https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/). The next cell installs the pinned dependencies in-place; you do not need a separate `requirements.txt`.
 
 
 ```python
@@ -185,7 +184,7 @@ print(f"Embedding deployment   : {EMBEDDING_DEPLOYMENT} ({EMBEDDING_MODEL}, {EMB
 
 ```
 
-A handful of REST helpers — most Build 2026 Knowledge Source kinds are
+A handful of REST helpers — most Knowledge Source kinds are
 not yet wrapped by the alpha SDK, so we hit `/knowledgesources(...)` over
 `requests` directly. The bodies mirror the validated `.http` templates in
 `../build2026/templates/`.
@@ -384,7 +383,6 @@ print(f"Uploaded {len(raw_docs)} documents to '{INDEX_NAME}'.")
 | **`kind`** | `searchIndex` |
 | **Auth model** | Same-service — Search admin api-key only. |
 | **Pipeline** | None — points at an existing index. Most flexible; you keep full control of the schema, vectorizer, and skillset. |
-| **Status** | Build 2026 preview (`2026-05-01-preview`) |
 | **Env vars** | _(none)_ |
 
 **Prereqs:** the index from §3 (already created above).
@@ -425,7 +423,6 @@ summarize_ks(KS_SEARCH_INDEX)
 | **`kind`** | `azureBlob` |
 | **Auth model** | System-assigned Managed Identity on the Search service. Grant it `Storage Blob Data Reader` on the storage account. |
 | **Pipeline** | Generates an indexer + skillset behind the scenes; ingestion may take 30-180 s for large containers. |
-| **Status** | Build 2026 preview (`2026-05-01-preview`) |
 | **Env vars** | `ZAVA_STORAGE_RID`, `ZAVA_BLOB_CONTAINER` |
 
 **Prereqs:** Azure Storage account, a container with at least one document, MI role grant.
@@ -465,14 +462,12 @@ else:
 
 ```
 
-## 6 · File Knowledge Source (Build 2026)
-
+## 6 · File Knowledge Source
 | | |
 |---|---|
 | **`kind`** | `file` |
 | **Auth model** | Search admin api-key. Files upload directly into the KS — no separate data source or storage account. |
 | **Pipeline** | Per-file ingestion. Files are POSTed individually after KS create. |
-| **Status** | Build 2026 preview (`2026-05-01-preview`) |
 | **Env vars** | `ZAVA_FILE_UPLOAD_PATH` |
 
 **Prereqs:** any local file (PDF, DOCX, HTML, TXT, etc.).
@@ -550,7 +545,6 @@ else:
 | **`kind`** | `indexedOneLake` |
 | **Auth model** | System-assigned Managed Identity on the Search service. Grant the MI **Contributor** on the Fabric workspace. |
 | **Pipeline** | Indexer + skillset over the OneLake `Files/` path you choose. |
-| **Status** | Build 2026 preview (`2026-05-01-preview`) |
 | **Env vars** | `ZAVA_ONELAKE_WORKSPACE_ID`, `ZAVA_ONELAKE_ID`, `ZAVA_ONELAKE_PATH` |
 
 **Prereqs:** Fabric workspace + lakehouse with files at the target path.
@@ -592,17 +586,16 @@ else:
 
 ```
 
-        ## 8 · Indexed SharePoint Knowledge Source
+## 8 · Indexed SharePoint Knowledge Source
 
-        | | |
-        |---|---|
-        | **`kind`** | `indexedSharePoint` |
-        | **Auth model** | App-only auth — Entra app with `Sites.Selected`. Connection string carries the app id + secret + tenant id. |
-        | **Pipeline** | Indexer + skillset over an SP document library. |
-        | **Status** | Build 2026 preview (`2026-05-01-preview`) |
-        | **Env vars** | `ZAVA_SP_TENANT_ID`, `ZAVA_SP_SITE_URL`, `ZAVA_SP_LIBRARY_NAME`, `ZAVA_SP_CLIENT_ID`, `ZAVA_SP_CLIENT_SECRET` |
+| | |
+|---|---|
+| **`kind`** | `indexedSharePoint` |
+| **Auth model** | App-only auth — Entra app with `Sites.Selected`. Connection string carries the app id + secret + tenant id. |
+| **Pipeline** | Indexer + skillset over an SP document library. |
+| **Env vars** | `ZAVA_SP_TENANT_ID`, `ZAVA_SP_SITE_URL`, `ZAVA_SP_LIBRARY_NAME`, `ZAVA_SP_CLIENT_ID`, `ZAVA_SP_CLIENT_SECRET` |
 
-        **Prereqs:** SP site, an Entra app with **Sites.Selected** granted on the site (admin consent required), and a client secret.
+**Prereqs:** SP site, an Entra app with **Sites.Selected** granted on the site (admin consent required), and a client secret.
 
 ```bash
 az ad sp create-for-rbac --name mfiq-sp-indexer --skip-assignment
@@ -611,9 +604,9 @@ az ad sp create-for-rbac --name mfiq-sp-indexer --skip-assignment
 ```
 
 
-        **Known issues / gotchas:** The connection string format is `SharePointOnlineEndpoint=...;ApplicationId=...;ApplicationSecret=...;TenantId=...`. Do NOT use account-key style strings.
+**Known issues / gotchas:** The connection string format is `SharePointOnlineEndpoint=...;ApplicationId=...;ApplicationSecret=...;TenantId=...`. Do NOT use account-key style strings.
 
-        [Docs](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-sharepoint-indexed)
+[Docs](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-sharepoint-indexed)
 
 
 ```python
@@ -662,7 +655,6 @@ else:
 | **`kind`** | `remoteSharePoint` |
 | **Auth model** | **Per-user OBO** — the *caller's* token is passed on every retrieve via `x-ms-query-source-authorization`. Nothing stored on the KS or the Foundry connection. |
 | **Pipeline** | None — federated. Real-time query into SharePoint Graph API. |
-| **Status** | Build 2026 preview (`2026-05-01-preview`) |
 | **Env vars** | `ZAVA_SP_TENANT_ID (only to confirm tenant; no creds stored)` |
 
 **Prereqs:** at query time, a user OBO token scoped to `https://search.azure.com/.default` from the **72f** Microsoft tenant.
@@ -698,17 +690,15 @@ except Exception as exc:
 
 ```
 
-        ## 10 · Indexed SQL Knowledge Source (Build 2026)
+## 10 · Indexed SQL Knowledge Source
+| | |
+|---|---|
+| **`kind`** | `indexedSql` |
+| **Auth model** | System-assigned MI on the Search service. The MI must exist as a SQL **EXTERNAL PROVIDER user** with `db_datareader`. |
+| **Pipeline** | Indexer + skillset over a table/view. Change-tracking via a high-water-mark column. |
+| **Env vars** | `ZAVA_SQL_SUBSCRIPTION`, `ZAVA_SQL_RESOURCE_GROUP`, `ZAVA_SQL_SERVER`, `ZAVA_SQL_DATABASE`, `ZAVA_SQL_TABLE`, `ZAVA_SQL_HWM_COLUMN` |
 
-        | | |
-        |---|---|
-        | **`kind`** | `indexedSql` |
-        | **Auth model** | System-assigned MI on the Search service. The MI must exist as a SQL **EXTERNAL PROVIDER user** with `db_datareader`. |
-        | **Pipeline** | Indexer + skillset over a table/view. Change-tracking via a high-water-mark column. |
-        | **Status** | Build 2026 preview (`2026-05-01-preview`) |
-        | **Env vars** | `ZAVA_SQL_SUBSCRIPTION`, `ZAVA_SQL_RESOURCE_GROUP`, `ZAVA_SQL_SERVER`, `ZAVA_SQL_DATABASE`, `ZAVA_SQL_TABLE`, `ZAVA_SQL_HWM_COLUMN` |
-
-        **Prereqs:** Azure SQL DB, a table/view with a monotonically-increasing column for HWM. In the DB, as Entra admin:
+**Prereqs:** Azure SQL DB, a table/view with a monotonically-increasing column for HWM. In the DB, as Entra admin:
 
 ```sql
 CREATE USER [<search-mi-name>] FROM EXTERNAL PROVIDER;
@@ -716,7 +706,7 @@ ALTER ROLE db_datareader ADD MEMBER [<search-mi-name>];
 ```
 
 
-        **Known issues / gotchas:** `connectionString` uses the `Database=...;ResourceId=...;` shape with the FULL ARM ID of the SQL DB. Vary `contentColumns` and `embeddingColumns` to fit your schema.
+**Known issues / gotchas:** `connectionString` uses the `Database=...;ResourceId=...;` shape with the FULL ARM ID of the SQL DB. Vary `contentColumns` and `embeddingColumns` to fit your schema.
 
 
 ```python
@@ -781,7 +771,6 @@ else:
 | **`kind`** | `web` |
 | **Auth model** | None — Foundry IQ brokers the search. No Bing key required from you. |
 | **Pipeline** | Federated — real-time web search at every retrieve. |
-| **Status** | Build 2026 preview (`2026-05-01-preview`) |
 | **Env vars** | _(none)_ |
 
 **Prereqs:** none. Just decide which domains the planner is allowed to query and which are off-limits.
@@ -823,14 +812,12 @@ summarize_ks(KS_WEB)
 
 ```
 
-## 12 · Fabric Data Agent Knowledge Source (Build 2026)
-
+## 12 · Fabric Data Agent Knowledge Source
 | | |
 |---|---|
 | **`kind`** | `fabricDataAgent` |
 | **Auth model** | System-assigned MI on the Search service. MI must be **Contributor** on the Fabric workspace hosting the Data Agent. |
 | **Pipeline** | Federated — every retrieve invokes the published Fabric Data Agent. |
-| **Status** | Build 2026 preview (`2026-05-01-preview`) |
 | **Env vars** | `ZAVA_FABRIC_DATA_AGENT_WORKSPACE`, `ZAVA_FABRIC_DATA_AGENT_ID` |
 
 **Prereqs:** a **published** Data Agent in Fabric, and the workspace + agent GUIDs.
@@ -870,14 +857,12 @@ else:
 
 ```
 
-## 13 · Fabric Ontology Knowledge Source (Build 2026)
-
+## 13 · Fabric Ontology Knowledge Source
 | | |
 |---|---|
 | **`kind`** | `fabricOntology` |
 | **Auth model** | Same MI pattern as Fabric Data Agent — workspace Contributor. |
 | **Pipeline** | Federated — KB queries are translated into ontology / semantic-model queries. |
-| **Status** | Build 2026 preview (`2026-05-01-preview`) |
 | **Env vars** | `ZAVA_FABRIC_ONTOLOGY_WORKSPACE`, `ZAVA_FABRIC_ONTOLOGY_ID` |
 
 **Prereqs:** a published Ontology in Fabric.
@@ -915,14 +900,12 @@ else:
 
 ```
 
-## 14 · WorkIQ Knowledge Source (Build 2026)
-
+## 14 · WorkIQ Knowledge Source
 | | |
 |---|---|
 | **`kind`** | `workIQ` |
 | **Auth model** | **Per-user OBO**, just like Remote SharePoint. The caller's token (Microsoft `72f` tenant, scoped to `https://search.azure.com/.default`) is passed on every retrieve. |
 | **Pipeline** | Federated — Microsoft 365 Graph search via the WorkIQ surface. |
-| **Status** | Build 2026 preview (`2026-05-01-preview`) |
 | **Env vars** | `ZAVA_WORKIQ_USER_TOKEN (only at retrieve time; KS create itself is unauthenticated)` |
 
 **Prereqs:** an account in the Microsoft `72f` tenant with WorkIQ entitlements.
@@ -949,14 +932,12 @@ except Exception as exc:
 
 ```
 
-## 15 · MCP Server Knowledge Source (Build 2026)
-
+## 15 · MCP Server Knowledge Source
 | | |
 |---|---|
 | **`kind`** | `mcpServer` |
 | **Auth model** | Either **none** (public MCP servers like Microsoft Learn) or via a **Foundry CustomKeys connection** (for servers that need an API key, e.g. Speedbird). |
 | **Pipeline** | Federated — every retrieve does `tools/call` on the upstream MCP server. |
-| **Status** | Build 2026 preview (`2026-05-01-preview`) |
 | **Env vars** | `ZAVA_MCP_SERVER_URL (optional override)`, `ZAVA_MCP_SERVER_API_KEY (optional — only if your server requires a key)` |
 
 **Prereqs:** the upstream MCP server URL + tool names it publishes.
@@ -1028,7 +1009,7 @@ this notebook then deliberately picks **three** of them to assemble a
 | KS in the demo KB | Why we picked it |
 |---|---|
 | `mfiq-ks-search-index` | The canonical KS — an existing Azure AI Search index you fully control. |
-| `mfiq-ks-file` | Build 2026's direct-upload KS — no storage account, no indexer, no skillset. |
+| `mfiq-ks-file` | The direct-upload File KS — no storage account, no indexer, no skillset. |
 | `mfiq-ks-mcp-learn` | A federated MCP KS — every retrieve calls a live external MCP server (Microsoft Learn). |
 
 > Why only three? The preview cap is 10 KS per KB, but more importantly,
@@ -1288,7 +1269,7 @@ also pass `x-ms-query-source-authorization: <user OBO token>`.
 ```python
 import json as _json
 
-KB_MCP_API_VERSION = "2025-11-01-preview"
+KB_MCP_API_VERSION = "2026-11-01-preview"
 MCP_URL = f"{SEARCH_ENDPOINT}/knowledgebases/{KB_NAME}/mcp?api-version={KB_MCP_API_VERSION}"
 MCP_HEADERS = {
     "api-key": SEARCH_API_KEY,
