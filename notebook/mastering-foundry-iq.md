@@ -1,3 +1,5 @@
+![Foundry IQ architecture diagram. Three columns flow left to right: Knowledge Sources (indexed types — Search Index, Azure Blob, OneLake, SharePoint, SQL, Files — plus federated types — Web, Remote SharePoint, Fabric Data Agent, Fabric Ontology, Work IQ, MCP Server) feed a Knowledge Base whose pipeline plans subqueries, retrieves in parallel, and synthesizes a grounded answer with citations, which is then exposed as the `knowledge_base_retrieve` MCP tool consumed by Foundry Agents, Microsoft Agent Framework agents, and any other MCP client.](media/mastering-foundry-iq/01-foundry-iq-architecture.png)
+
 **Foundry IQ** is Microsoft's intelligence layer for agentic
 retrieval. A Foundry IQ *Knowledge Base* (KB) wraps one or more
 *Knowledge Sources* (KS) with an LLM that **plans subqueries**, executes
@@ -28,28 +30,6 @@ By the end you will:
 8. Wire the same KB into a **Microsoft Agent Framework** agent via
    `MCPStreamableHTTPTool`
 9. Tear every resource down
-
-## Architecture
-
-```text
-            ┌───────────────────────────────────────────────────────────┐
-            │                    Foundry IQ Pipeline                    │
-            └───────────────────────────────────────────────────────────┘
-   query ─► Knowledge Base ─► LLM planner ─► parallel subqueries ─┐
-              │                                                    │
-              │                                                    ▼
-              │                          ┌──────── Knowledge Sources ────────┐
-              │                          │ Search Index │ Blob │ File │ SQL │
-              │                          │ OneLake │ SharePoint (Indexed +  │
-              │                          │ Remote) │ Web │ Fabric DA/Ont │  │
-              │                          │ WorkIQ │ MCP Server             │
-              │                          └────────────────────────────────────┘
-              ▼                                                    │
-        Answer synthesis ◄── reranked, deduped results ◄──────────┘
-              │
-              ▼
-          Cited answer + activity trace
-```
 
 Every section that creates a Knowledge Source is **independently skippable**.
 Set its env vars to enable, leave them blank to skip cleanly — the KB at the
