@@ -130,8 +130,28 @@ This file is in BETA. Please test and contribute to the discussion:
                 </a>
               </h3>
               <small class="text-gray">
-                Published: <xsl:value-of select="pubDate" />
+                <xsl:if test="author">
+                  By <xsl:value-of select="author" />
+                </xsl:if>
+                <xsl:if test="pubDate">
+                  <xsl:if test="author"> · </xsl:if>
+                  <xsl:value-of select="pubDate" />
+                </xsl:if>
               </small>
+              <xsl:if test="description != ''">
+                <p style="margin-top: 4px; margin-bottom: 4px; color: #586069;">
+                  <xsl:value-of select="description"/>
+                </p>
+              </xsl:if>
+              <xsl:if test="category">
+                <div style="margin-top: 4px;">
+                  <xsl:for-each select="category">
+                    <span style="display: inline-block; padding: 2px 8px; margin-right: 4px; font-size: 12px; border-radius: 12px; background: #f1f8ff; color: #0366d6;">
+                      <xsl:value-of select="."/>
+                    </span>
+                  </xsl:for-each>
+                </div>
+              </xsl:if>
             </div>
           </xsl:for-each>
         </div>
