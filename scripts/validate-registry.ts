@@ -97,6 +97,16 @@ function main(): void {
 
     if (!entry.title) {
       errors.push(`${prefix}: Missing required field 'title'`);
+    } else if (entry.title.length > 60) {
+      warnings.push(
+        `${prefix}: Title is ${entry.title.length} chars (max 60 recommended to avoid 3-line wrap on card grid)`
+      );
+    }
+
+    if (entry.description && entry.description.length > 200) {
+      warnings.push(
+        `${prefix}: Description is ${entry.description.length} chars (max 200 recommended to avoid overflow on card grid)`
+      );
     }
 
     if (!entry.authors || !Array.isArray(entry.authors)) {
