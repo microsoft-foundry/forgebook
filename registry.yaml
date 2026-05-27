@@ -86,3 +86,16 @@
     - models
     - inference
     - multimodal
+
+- slug: mastering-foundry-iq
+  path: notebooks/mastering-foundry-iq.ipynb
+  title: "Mastering Foundry IQ"
+  description: "End-to-end Foundry IQ walkthrough: every Knowledge Source type, one unified Knowledge Base, and integrations with Foundry Agent Service and Microsoft Agent Framework."
+  date: "2026-05-27"
+  authors:
+    - github: farzad528
+  tags:
+    - knowledge
+    - agents
+    - agent-framework
+    - mcp
