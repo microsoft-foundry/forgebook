@@ -29,54 +29,65 @@ function tagColor(tag: string): string {
 
 <a
   href={withBase(`/notebook/${notebook.slug}`)}
-  class="block p-6 bg-surface-elevated rounded-xl border border-subtle hover:border-accent hover:shadow-lg transition-all"
+  class="flex flex-col p-6 bg-surface-elevated rounded-xl border border-subtle hover:border-accent hover:shadow-lg transition-all h-full"
   data-track-click={`notebook-card:${notebook.slug}`}
+  data-notebook-slug={notebook.slug}
+  data-notebook-title={notebook.title}
+  data-notebook-description={notebook.description || ''}
+  data-notebook-tags={notebook.tags?.join(',') || ''}
 >
-  <h3 class="text-lg font-semibold text-primary mb-2">
+  <h3 class="text-lg font-semibold text-primary mb-2 line-clamp-2 min-h-[3.5rem]" title={notebook.title}>
     {notebook.title}
   </h3>
   {
     notebook.description && (
-      <p class="text-secondary text-sm mb-4">
+      <p class="text-secondary text-sm mb-4 line-clamp-4 min-h-[5rem]" title={notebook.description}>
         {notebook.description}
       </p>
     )
   }
-  <div class="flex items-center justify-between">
-    <div class="flex items-center gap-2">
+  <div class="mt-auto">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        {
+          notebook.authors.slice(0, 3).map((author) => (
+            <img
+              src={`https://github.com/${author.github}.png?size=40`}
+              alt={author.github}
+              class="w-6 h-6 rounded-full border border-subtle"
+              onerror={`this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(author.github)}&size=40&background=6366f1&color=fff&bold=true';`}
+            />
+          ))
+        }
+        {
+          notebook.authors.length > 3 && (
+            <span class="text-xs text-muted">
+              +{notebook.authors.length - 3}
+            </span>
+          )
+        }
+      </div>
       {
-        notebook.authors.slice(0, 3).map((author) => (
-          <img
-            src={`https://github.com/${author.github}.png?size=40`}
-            alt={author.github}
-            class="w-6 h-6 rounded-full border border-subtle"
-            onerror={`this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(author.github)}&size=40&background=6366f1&color=fff&bold=true';`}
-          />
-        ))
-      }
-      {
-        notebook.authors.length > 3 && (
-          <span class="text-xs text-muted">
-            +{notebook.authors.length - 3}
-          </span>
+        notebook.date && (
+          <span class="text-xs text-muted">{notebook.date}</span>
         )
       }
     </div>
     {
-      notebook.date && (
-        <span class="text-xs text-muted">{notebook.date}</span>
+      notebook.tags && notebook.tags.length > 0 && (
+        <div class="flex flex-wrap gap-2 mt-4 max-h-[3.5rem] overflow-hidden relative">
+          {notebook.tags.slice(0, 4).map((tag) => (
+                <span class={`px-2 py-1 text-xs rounded-full border font-medium ${tagColor(tag)}`}>
+                  {tag}
+                </span>
+              ))}
+          {notebook.tags.length > 4 && (
+            <span class="px-2 py-1 text-xs rounded-full border font-medium text-muted border-subtle" title={notebook.tags.slice(4).join(", ")}>
+              +{notebook.tags.length - 4}
+            </span>
+          )}
+        </div>
       )
     }
   </div>
-  {
-    notebook.tags && notebook.tags.length > 0 && (
-      <div class="flex flex-wrap gap-2 mt-4">
-        {notebook.tags.map((tag) => (
-              <span class={`px-2 py-1 text-xs rounded-full border font-medium ${tagColor(tag)}`}>
-                {tag}
-              </span>
-            ))}
-      </div>
-    )
-  }
 </a>
