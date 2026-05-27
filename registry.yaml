@@ -119,3 +119,42 @@
     - agents
     - agent-service
     - agent-framework
+
+- slug: mai-transcribe-1-5
+  path: notebooks/mai-transcribe-1-5.ipynb
+  title: "Build an Advanced Speech-to-Text Recipe with MAI-Transcribe-1.5"
+  description: "Speech API multipart cookbook for MAI-Transcribe-1.5 covering baseline transcription, verbatim mode, phrase-list entity biasing, and language identification."
+  date: "2026-05-28"
+  authors:
+    - github: anihitk07
+  tags:
+    - mai
+    - models
+    - inference
+    - multimodal
+
+- slug: mai-voice-2
+  path: notebooks/mai-voice-2.ipynb
+  title: "Build a Multilingual Text-to-Speech Recipe with MAI-Voice-2"
+  description: "MAI-Voice-2 notebook with key-auth REST calls, multilingual speakers, expressive SSML, and cost calculator patterns."
+  date: "2026-05-28"
+  authors:
+    - github: anihitk07
+  tags:
+    - mai
+    - models
+    - inference
+    - multimodal
+
+- slug: mai-image-2-5
+  path: notebooks/mai-image-2-5.ipynb
+  title: "Build a Production Editing Recipe with MAI-Image-2.5"
+  description: "Private-preview MAI-Image-2.5 notebook covering text-to-image generation, image edits, safety reminders, and troubleshooting."
+  date: "2026-05-28"
+  authors:
+    - github: anihitk07
+  tags:
+    - mai
+    - models
+    - inference
+    - multimodal
