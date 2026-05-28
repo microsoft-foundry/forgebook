@@ -43,7 +43,7 @@ jobs:
         run: npx tsx fetch-popular.ts
 
       - name: Create pull request for updated popular data
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           add-paths: site/src/data/popular.json
           branch: chore/update-popular-notebooks
