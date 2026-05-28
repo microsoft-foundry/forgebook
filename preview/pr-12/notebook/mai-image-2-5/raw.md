@@ -45,10 +45,8 @@ from IPython.display import Image as IPImage, display
 ENV_PATH = 'deployment.env' if os.path.exists('deployment.env') else os.path.join('..', 'deployment.env')
 load_dotenv(ENV_PATH, override=True)
 
-MAI_IMAGE_25_SUBSCRIPTION_ID = os.getenv('MAI_IMAGE_25_SUBSCRIPTION_ID', '5f237684-e1fd-4442-8359-6e202031c45b')
-MAI_IMAGE_25_ACCOUNT = os.getenv('MAI_IMAGE_25_ACCOUNT', 'maiimagefoundry5f237684a')
-MAI_IMAGE_25_ENDPOINT = os.getenv('MAI_IMAGE_25_ENDPOINT', 'https://westcentralus.api.cognitive.microsoft.com/')
-MAI_IMAGE_25_DEPLOYMENT_NAME = os.getenv('MAI_IMAGE_25_DEPLOYMENT_NAME', 'maiimage25')
+MAI_IMAGE_25_ENDPOINT = os.getenv('MAI_IMAGE_25_ENDPOINT')
+MAI_IMAGE_25_DEPLOYMENT_NAME = os.getenv('MAI_IMAGE_25_DEPLOYMENT_NAME')
 MAI_IMAGE_25_API_KEY = os.getenv('MAI_IMAGE_25_API_KEY')
 
 IMAGE_OUTPUT_DIR = Path(os.getenv('IMAGE_OUTPUT_DIR', r'..\images'))
@@ -77,7 +75,6 @@ def preflight_endpoint_dns(endpoint: str) -> None:
 
 preflight_endpoint_dns(MAI_IMAGE_25_ENDPOINT)
 
-print('Subscription:', MAI_IMAGE_25_SUBSCRIPTION_ID)
 print('Endpoint:', MAI_IMAGE_25_ENDPOINT)
 print('Deployment:', MAI_IMAGE_25_DEPLOYMENT_NAME)
 print('Auth mode: API key')
@@ -90,7 +87,7 @@ print('Default edit size:', DEFAULT_EDIT_SIZE)
 
 - **Image edit endpoint** (`/mai/v1/images/edits`) uses **`size`** (for example, `1024x1024`).
 - **Text-to-image generation endpoint** (`/mai/v1/images/generations`) uses **`width`** and **`height`**.
-- For both paths, keep total pixel budget <= **1,048,576**.
+- For both paths, keep total pixel budget <= **1024x1024**.
 
 
 ## 3. Text-to-Image Helper (`width` + `height`)
