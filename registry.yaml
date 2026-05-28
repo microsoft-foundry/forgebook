@@ -158,3 +158,19 @@
     - models
     - inference
     - multimodal
+
+- slug: sora-video-generation-rest-api
+  path: notebooks/sora-video-generation-rest-api.ipynb
+  title: "Guide Sora 2 with Images and Audio"
+  description: "Use Azure OpenAI REST calls to generate a Sora 2 clip, reuse a frame as an image reference, and add ambient audio."
+  date: "2026-05-27"
+  authors:
+    - github: nicholasdbrady
+  tags:
+    - azure-openai
+    - video
+    - video-generation
+    - audio
+    - audio-generation
+    - multimodal
+    - responsible-ai
