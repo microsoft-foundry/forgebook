@@ -1,7 +1,14 @@
 name: "\U0001F41B Bug Report"
-description: Report a problem with the Forgebook site
+description: Report a problem with an existing Forgebook recipe or the site
 labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for issues with existing Forgebook recipes or the site.
+
+        For general Microsoft Foundry usage questions, use the [Get Help discussions category](https://github.com/orgs/microsoft-foundry/discussions/categories/get-help). For product ideas or feedback beyond a specific Forgebook page, use [Product Feedback and Ideas](https://github.com/orgs/microsoft-foundry/discussions/categories/product-feedback-and-ideas).
+
   - type: input
     id: url
     attributes:

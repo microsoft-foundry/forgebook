@@ -1,8 +1,10 @@
 # Forgebook
 
-**Practical guides and notebooks for building AI applications with [Microsoft Foundry](https://learn.microsoft.com/azure/ai-foundry/what-is-azure-ai-foundry).**
+**Your cookbook for building AI with [Microsoft Foundry](https://learn.microsoft.com/azure/foundry).**
 
-> ✨ Browse recipes at **[microsoft-foundry.github.io/forgebook](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-foundry?view=foundry)**
+Forgebook is a curated collection of runnable Jupyter notebook recipes, hands-on guides, and examples for building agents, model inference workflows, and multimodal apps with Microsoft Foundry.
+
+> ✨ Browse recipes at **[microsoft-foundry.github.io/forgebook](https://microsoft-foundry.github.io/forgebook/)**
 
 [![Site](https://img.shields.io/badge/Site-Live-brightgreen?logo=github)](https://microsoft-foundry.github.io/forgebook)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -36,6 +38,10 @@ jupyter notebook
 Most notebooks walk you through setting up Azure resources as part of the tutorial. Follow the instructions in each notebook to configure your environment.
 
 ### Publish a New Recipe
+
+Forgebook is currently operating as a curated Microsoft-authored cookbook while the recipe format, content bar, and publishing workflow stabilize. Recipe publishing is focused on approved contributors from Foundry Developer Experience / Developer Marketing and the Foundry product group, including PM and engineering. Broader contribution paths may be added as the cookbook matures.
+
+Approved Microsoft authors should follow the internal authoring workflow, then submit the finished notebook, assets, and metadata here for review.
 
 1. Create your notebook in `notebooks/`
 2. Add an entry to `registry.yaml`:
@@ -71,12 +77,13 @@ Recipes cover a range of AI development topics:
 
 ## Resources
 
-- [Microsoft Foundry Documentation](https://learn.microsoft.com/azure/ai-foundry/what-is-azure-ai-foundry)
-- [Azure OpenAI in Foundry Models](https://learn.microsoft.com/en-us/azure/ai-foundry/foundry-models/concepts/models-sold-directly-by-azure?view=foundry&tabs=global-standard-aoai%2Cglobal-standard&pivots=azure-openai)
+- [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry)
+- [Foundry Models](https://learn.microsoft.com/en-us/azure/foundry/concepts/foundry-models-overview)
+- [Foundry Agent Service](https://learn.microsoft.com/en-us/azure/foundry/agents/overview)
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the current authoring workflow and review checklist.
 
 ## License
 

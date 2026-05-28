@@ -16,4 +16,5 @@ See [AGENTS.md](../AGENTS.md) at the repo root for full project documentation.
 2. `cd site && npm run build` — full build with type checking
 3. Keep notebook changes separate from site changes when possible
 4. New notebooks need entries in `registry.yaml` with all required fields
-5. New authors need entries in `authors.yaml` with `name` and `title`
+5. New authors need approved entries in `authors.yaml` with `name` and `title`
+6. Recipe PRs should be from approved Microsoft Forgebook authors or have maintainer approval while the cookbook stabilizes

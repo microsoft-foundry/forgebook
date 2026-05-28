@@ -3,7 +3,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import NotebookCard from "@/components/NotebookCard.astro";
 import Logo from "@/components/Logo.astro";
 import { getCollection } from "astro:content";
-import { REPO_URL } from "@/config";
+import { REPO_URL, SITE } from "@/config";
 import popularRaw from "@/data/popular.json";
 
 interface PopularData {
@@ -42,15 +42,15 @@ function tagColor(tag: string): string {
 }
 ---
 
-<BaseLayout title="Home">
+<BaseLayout title={SITE.defaultTitle} description={SITE.description} canonicalPath="/">
   <div class="space-y-8" data-pagefind-ignore>
     <section class="text-center py-12">
       <h1 class="text-4xl font-bold text-primary mb-4 flex items-center justify-center gap-3">
         <Logo size={48} />
-        Forgebook
+        {SITE.name}
       </h1>
       <p class="text-xl text-secondary max-w-2xl mx-auto">
-        Your cookbook for building AI in Foundry.
+        {SITE.tagline}
       </p>
     </section>
 

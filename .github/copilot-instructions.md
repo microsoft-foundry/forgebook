@@ -1,6 +1,6 @@
 # Copilot Instructions for Forgebook
 
-A notebook-first AI cookbook publishing platform. Jupyter notebooks are the source of truth; metadata lives in `registry.yaml`.
+A curated Microsoft Foundry cookbook publishing platform. Jupyter notebooks are the source of truth; metadata lives in `registry.yaml`.
 
 ## Code Review Focus Areas
 

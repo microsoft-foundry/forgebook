@@ -6,6 +6,8 @@
  * - Paths point to existing files
  * - Slugs are unique
  * - GitHub usernames are valid format
+ * - Authors exist in authors.yaml with required metadata
+ * - Tags are unique and come from tags.yaml
  */
 
 import fs from "node:fs";
@@ -29,10 +31,30 @@ interface NotebookEntry {
   tags?: string[];
 }
 
+interface AuthorProfile {
+  name?: string;
+  title?: string;
+}
+
 function loadRegistry(): NotebookEntry[] {
   const registryPath = path.join(REPO_ROOT, "registry.yaml");
   const content = fs.readFileSync(registryPath, "utf-8");
   return yaml.parse(content) as NotebookEntry[];
+}
+
+function findDuplicates(values: string[]): string[] {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+
+  for (const value of values) {
+    if (seen.has(value)) {
+      duplicates.add(value);
+    } else {
+      seen.add(value);
+    }
+  }
+
+  return [...duplicates];
 }
 
 function validateSlug(slug: string): boolean {
@@ -56,7 +78,51 @@ function main(): void {
 
   const tagsPath = path.join(REPO_ROOT, "tags.yaml");
   const tagsContent = fs.readFileSync(tagsPath, "utf-8");
-  const allowedTags = new Set<string>(yaml.parse(tagsContent) as string[]);
+  const tags = yaml.parse(tagsContent) as string[];
+  const allowedTags = new Set<string>();
+
+  const authorsPath = path.join(REPO_ROOT, "authors.yaml");
+  const authorsContent = fs.readFileSync(authorsPath, "utf-8");
+  const authors = yaml.parse(authorsContent) as Record<string, AuthorProfile>;
+
+  if (!Array.isArray(tags)) {
+    errors.push("tags.yaml must be an array of tag strings");
+  } else {
+    for (const tag of tags) {
+      allowedTags.add(tag);
+    }
+
+    const duplicateTags = findDuplicates(tags);
+    for (const tag of duplicateTags) {
+      errors.push(`tags.yaml: Duplicate tag '${tag}'`);
+    }
+
+    for (const tag of tags) {
+      if (!validateSlug(tag)) {
+        errors.push(
+          `tags.yaml: Tag '${tag}' must use lowercase letters, numbers, and hyphens`
+        );
+      }
+    }
+  }
+
+  if (!authors || Array.isArray(authors)) {
+    errors.push("authors.yaml must be an object keyed by GitHub username");
+  } else {
+    for (const [github, profile] of Object.entries(authors)) {
+      if (!validateGitHubUsername(github)) {
+        errors.push(`authors.yaml: Invalid GitHub username '${github}'`);
+      }
+
+      if (!profile?.name) {
+        errors.push(`authors.yaml: Author '${github}' missing required field 'name'`);
+      }
+
+      if (!profile?.title) {
+        errors.push(`authors.yaml: Author '${github}' missing required field 'title'`);
+      }
+    }
+  }
 
   if (!Array.isArray(entries)) {
     console.error("❌ Registry must be an array of entries");
@@ -121,6 +187,10 @@ function main(): void {
           errors.push(
             `${prefix}: Invalid GitHub username '${author.github}'`
           );
+        } else if (!authors?.[author.github]) {
+          errors.push(
+            `${prefix}: Author '${author.github}' must exist in authors.yaml`
+          );
         }
       }
     }
@@ -133,6 +203,11 @@ function main(): void {
     }
 
     if (entry.tags) {
+      const duplicateEntryTags = findDuplicates(entry.tags);
+      for (const tag of duplicateEntryTags) {
+        errors.push(`${prefix}: Duplicate tag '${tag}'`);
+      }
+
       for (const tag of entry.tags) {
         if (!validateSlug(tag)) {
           errors.push(

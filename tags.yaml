@@ -2,27 +2,104 @@
 # Tags are enforced by the registry validator and site build.
 # To add a new tag, add it here — PRs that introduce unknown tags will fail CI.
 
-# Core Capabilities
-- agents
-- multi-agent
-- inference
-- knowledge
-- evaluation
-- fine-tuning
-- memory
-- multimodal
-- safety
-- local
+# Platform surfaces
+- models
+- agent-service
 - tools
-- models
-- mai
+- iq
+- local
+- control-plane
 
-# Integrations
-- agent-framework
-- a2a
-- langchain
+# Agents and tools
+- agents
+- prompt-agents
+- workflow-agents
+- hosted-agents
+- multi-agent
+- agent-patterns
+- memory
 - mcp
+- toolbox
+- function-calling
+- code-interpreter
+- file-search
+- web-search
 
-# Microsoft Foundry models
+# Models and APIs
+- inference
+- model-router
+- responses
+- chat-completions
+- embeddings
+- structured-outputs
+- reasoning
+- fine-tuning
+- batch
+- open-models
+- gpt-oss
+
+# Knowledge and retrieval
+- rag
+- retrieval
+- indexes
+- azure-ai-search
+- grounding
+
+# Quality, safety, and operations
+- evaluation
+- continuous-evaluation
+- observability
+- tracing
+- monitoring
+- prompt-optimization
+- guardrails
+- safety
+- responsible-ai
+- content-safety
+- red-teaming
+- security
+- identity
+- governance
+
+# Modalities
+- multimodal
+- vision
+- images
+- image-generation
+- video
+- video-generation
+- audio
+- audio-generation
+- speech
+- transcription
+- text-to-speech
+
+# SDKs, frameworks, and integrations
+- sdk
+- python-sdk
+- javascript-sdk
+- agent-framework
+- langchain
+- langgraph
+- semantic-kernel
+- a2a
+- teams
+- microsoft-365-copilot
+
+# Model families and providers
+- azure-openai
+- anthropic
 - mai
-- models
+- phi
+- llama
+- mistral
+- deepseek
+- moonshot-ai
+- xai
+- cohere
+- black-forest-labs
+- alibaba
+- meta
+- huggingface
+- nvidia
+- fireworks
