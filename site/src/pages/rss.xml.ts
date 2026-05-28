@@ -35,7 +35,7 @@ export async function GET(context: APIContext) {
     items: sorted.map((notebook) => {
       // Resolve author display names from authors.yaml
       const authorNames = notebook.data.authors
-        .map((a) => authorsCache[a.github]?.name ?? a.github)
+        .map((a: { github: string }) => authorsCache[a.github]?.name ?? a.github)
         .join(", ");
 
       return {
