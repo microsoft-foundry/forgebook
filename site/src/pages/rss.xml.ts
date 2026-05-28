@@ -1,7 +1,7 @@
 import rss from "@astrojs/rss";
 import { getCollection } from "astro:content";
 import type { APIContext } from "astro";
-import { REPO_URL, withBase, BASE_URL } from "@/config";
+import { REPO_URL, SITE, withBase, BASE_URL } from "@/config";
 import { loadAuthorsCache } from "@/lib/registry";
 
 export async function GET(context: APIContext) {
@@ -26,9 +26,8 @@ export async function GET(context: APIContext) {
     : new Date().toUTCString();
 
   return rss({
-    title: "Forgebook",
-    description:
-      "A notebook-first AI cookbook. Jupyter notebook examples and tutorials.",
+    title: SITE.name,
+    description: SITE.description,
     site: siteWithBase,
     xmlns: {
       atom: "http://www.w3.org/2005/Atom",

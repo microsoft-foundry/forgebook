@@ -1,8 +1,9 @@
 # Forgebook CODEOWNERS
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 #
-# When the contributor base grows, replace individual handle with:
-#   @microsoft-foundry/forgebook-maintainers
+# Forgebook is curated while the publishing workflow stabilizes. Keep
+# maintainer review explicit for recipe content, publishing metadata, CI, and
+# site changes.
 
 # Default — catch-all for root config, CI, docs
 *                     @nicholasdbrady

@@ -1,11 +1,22 @@
-name: "\U0001F4D3 New Recipe Proposal"
-description: Propose a new notebook recipe for Forgebook
+name: "\U0001F4D3 Internal Recipe Proposal"
+description: Propose a new Microsoft Foundry notebook recipe for Forgebook
 labels: ["recipe"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for proposing a recipe! Please fill out the details below so we can align on scope before you start writing.
+        Thanks for proposing a recipe! Forgebook is currently curated while the cookbook format and publishing workflow stabilize. This proposal path is intended for approved Microsoft Forgebook authors from Foundry Developer Experience / Developer Marketing and the Foundry product group.
+
+        Please fill out the details below so maintainers can align on scope before you start writing. Broader proposal paths may be added as the cookbook matures.
+
+  - type: input
+    id: owner
+    attributes:
+      label: Microsoft owner
+      description: Who is accountable for the recipe and review follow-through?
+      placeholder: "e.g., @github-handle, alias, or owning team"
+    validations:
+      required: true
 
   - type: input
     id: title
@@ -22,6 +33,18 @@ body:
       label: Summary
       description: What does this recipe teach? What will the reader build or learn?
       placeholder: "Describe the goal, key concepts covered, and expected outcome."
+    validations:
+      required: true
+
+  - type: textarea
+    id: foundry-capabilities
+    attributes:
+      label: Microsoft Foundry capabilities demonstrated
+      description: Which Foundry capabilities, models, SDKs, tools, or portal flows does this recipe showcase?
+      placeholder: |
+        - Agents with tool use
+        - Foundry Models inference
+        - Evaluation workflow
     validations:
       required: true
 
@@ -44,25 +67,100 @@ body:
       description: Select all applicable tags (from tags.yaml).
       multiple: true
       options:
-        # Core Capabilities
-        - agents
-        - multi-agent
-        - inference
-        - knowledge
-        - evaluation
-        - fine-tuning
-        - memory
-        - multimodal
-        - safety
-        - local
-        - tools
+        # Platform surfaces
         - models
-        - mai
-        # Integrations
-        - agent-framework
-        - a2a
-        - langchain
+        - agent-service
+        - tools
+        - iq
+        - local
+        - control-plane
+        # Agents and tools
+        - agents
+        - prompt-agents
+        - workflow-agents
+        - hosted-agents
+        - multi-agent
+        - agent-patterns
+        - memory
         - mcp
+        - toolbox
+        - function-calling
+        - code-interpreter
+        - file-search
+        - web-search
+        # Models and APIs
+        - inference
+        - model-router
+        - responses
+        - chat-completions
+        - embeddings
+        - structured-outputs
+        - reasoning
+        - fine-tuning
+        - batch
+        - open-models
+        - gpt-oss
+        # Knowledge and retrieval
+        - rag
+        - retrieval
+        - indexes
+        - azure-ai-search
+        - grounding
+        # Quality, safety, and operations
+        - evaluation
+        - continuous-evaluation
+        - observability
+        - tracing
+        - monitoring
+        - prompt-optimization
+        - guardrails
+        - safety
+        - responsible-ai
+        - content-safety
+        - red-teaming
+        - security
+        - identity
+        - governance
+        # Modalities
+        - multimodal
+        - vision
+        - images
+        - image-generation
+        - video
+        - video-generation
+        - audio
+        - audio-generation
+        - speech
+        - transcription
+        - text-to-speech
+        # SDKs, frameworks, and integrations
+        - sdk
+        - python-sdk
+        - javascript-sdk
+        - agent-framework
+        - langchain
+        - langgraph
+        - semantic-kernel
+        - a2a
+        - teams
+        - m365-copilot
+        # Model families and providers
+        - azure-openai
+        - anthropic
+        - mai
+        - phi
+        - llama
+        - mistral
+        - deepseek
+        - moonshot-ai
+        - xai
+        - cohere
+        - black-forest-labs
+        - alibaba
+        - meta
+        - huggingface
+        - nvidia
+        - fireworks
     validations:
       required: true
 
@@ -72,6 +170,15 @@ body:
       label: Prerequisites & dependencies
       description: What does the reader need before starting? (Azure subscription, Python packages, API keys, etc.)
       placeholder: "e.g., Azure subscription, Python 3.10+, azure-ai-projects SDK"
+    validations:
+      required: false
+
+  - type: textarea
+    id: review-plan
+    attributes:
+      label: Review plan
+      description: Who should review product accuracy, DX quality, and publishing readiness?
+      placeholder: "List PM/engineering/DX reviewers or teams if known."
     validations:
       required: false
 

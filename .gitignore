@@ -46,6 +46,7 @@ test-results/
 *.local
 .cache/
 .github/skills/
-.agents/skills/
+.agents/skills/*
+!.agents/skills/cookbook-review/
+!.agents/skills/cookbook-review/**
 .mcp.json
-.github/agents/recipe-author.agent.md

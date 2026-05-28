@@ -23,6 +23,10 @@
     - github: nicholasdbrady
   tags:
     - agents
+    - agent-service
+    - prompt-agents
+    - tools
+    - web-search
 
 - slug: foundry-agent-part-2
   path: notebooks/foundry-agent-part-2.ipynb
@@ -33,11 +37,14 @@
     - github: nicholasdbrady
   tags:
     - agents
+    - agent-service
     - tools
+    - mcp
+    - sdk
 
 - slug: mai-transcribe-1-foundry
   path: notebooks/mai-transcribe-1-foundry.ipynb
-  title: "Build a Robust Speech-to-Text Recipe with MAI-Transcribe-1"
+  title: "Transcribe Audio with MAI-Transcribe-1"
   description: "Entra-first MAI-Transcribe-1 notebook with Foundry endpoint setup, local audio transcription, diarization, translation, and cost estimation."
   date: "2026-06-02"
   authors:
@@ -46,11 +53,13 @@
     - mai
     - models
     - inference
-    - multimodal
+    - speech
+    - transcription
+    - audio
 
 - slug: mai-voice-1-foundry
   path: notebooks/mai-voice-1-foundry.ipynb
-  title: "Build a Production-Ready Text-to-Speech Recipe with MAI-Voice-1"
+  title: "Generate Speech with MAI-Voice-1"
   description: "MAI-Voice-1 notebook using Foundry endpoint with REST and SDK patterns, long-form synthesis, and character-based cost estimation."
   date: "2026-06-02"
   authors:
@@ -59,11 +68,14 @@
     - mai
     - models
     - inference
-    - multimodal
+    - speech
+    - text-to-speech
+    - audio
+    - audio-generation
 
 - slug: mai-image-2
   path: notebooks/mai-image-2.ipynb
-  title: "Build a Production-Ready Text-to-Image Recipe with MAI-Image-2 and MAI-Image-2e"
+  title: "Generate Images with MAI-Image-2 and MAI-Image-2e"
   description: "MAI-Image-2 and MAI-Image-2e text-to-image notebook with prompt variations, parameter tuning, and token-based cost calculations."
   date: "2026-06-02"
   authors:
@@ -72,11 +84,13 @@
     - mai
     - models
     - inference
+    - images
+    - image-generation
     - multimodal
 
 - slug: mai-image-2-foundry
   path: notebooks/mai-image-2-foundry.ipynb
-  title: "Build a Direct Foundry Image Generation Recipe with MAI-Image-2"
+  title: "Call MAI-Image-2 from a Foundry Deployment"
   description: "Foundry-focused MAI-Image-2 notebook covering deployment-based calls, prompt variants, and cost breakdown."
   date: "2026-06-02"
   authors:
@@ -85,4 +99,23 @@
     - mai
     - models
     - inference
+    - images
+    - image-generation
     - multimodal
+
+- slug: mastering-foundry-iq
+  path: notebooks/mastering-foundry-iq.ipynb
+  title: "Mastering Foundry IQ"
+  description: "End-to-end Foundry IQ walkthrough: every Knowledge Source type, one unified Knowledge Base, and integrations with Foundry Agent Service and Microsoft Agent Framework."
+  date: "2026-05-27"
+  authors:
+    - github: farzad528
+  tags:
+    - iq
+    - retrieval
+    - grounding
+    - azure-ai-search
+    - mcp
+    - agents
+    - agent-service
+    - agent-framework

@@ -28,20 +28,8 @@ anihitk07:
   githubUrl: "https://github.com/anihitk07"
   linkedinUrl: "https://www.linkedin.com/in/anirban-ganguly-uk/"
 
-# Test authors for development
-jane-doe:
-  name: "Jane Doe"
-  title: "Software Engineer"
-  # No avatar - tests GitHub fallback
-  # No social links - tests missing icons
-
-long-name-author:
-  name: "Dr. Alexandria Montgomery-Worthington III"
-  title: "Principal Distinguished Research Scientist & AI Ethics Lead"
-  linkedinUrl: "https://www.linkedin.com/in/example"
-  # No avatar, no GitHub URL, no X - tests various missing fields
-
-minimal-author:
-  name: "Min"
-  title: "Intern"
-  # Minimal info - tests short content
+farzad528:
+  name: "Farzad Sunavala"
+  title: "Principal Product Manager"
+  avatar: "https://github.com/farzad528.png?size=200"
+  githubUrl: "https://github.com/farzad528"

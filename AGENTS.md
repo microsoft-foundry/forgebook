@@ -1,6 +1,6 @@
 # AGENTS.md
 
-An open-source cookbook where internal authors publish Jupyter notebook "recipes" and external users learn to build on Microsoft Foundry. Notebooks are the source of truth; all publishing metadata lives in `registry.yaml`.
+A curated Microsoft Foundry cookbook where approved Microsoft authors publish Jupyter notebook "recipes" and readers learn to build on Microsoft Foundry. Notebooks are the source of truth; all publishing metadata lives in `registry.yaml`.
 
 ## Project Structure
 
@@ -51,7 +51,7 @@ cd site && npm run build                      # Full build with type checking
 ## Content Pipeline
 
 ### How Notebooks Become Pages
-1. Author adds `.ipynb` to `notebooks/` and entry to `registry.yaml`
+1. Approved author drafts or validates the recipe through the internal authoring workflow, then adds `.ipynb` to `notebooks/` and an entry to `registry.yaml`
 2. Content loader ([site/src/lib/registry.ts](site/src/lib/registry.ts)) reads `registry.yaml`, resolves authors from `authors.yaml`
 3. Notebook renderer ([site/src/lib/notebook.ts](site/src/lib/notebook.ts)) converts cells to HTML:
    - `notebookjs` + JSDOM + DOMPurify (sanitization)
@@ -140,6 +140,7 @@ cd site && npm run build                      # Full build with type checking
 3. **Credit is intentional** — Authors listed explicitly, not inferred from git
 4. **Tags are curated** — Must exist in `tags.yaml`; propose new tags via PR
 5. **Automation removes toil** — CI handles conversion, deployment, and popularity tracking
+6. **Publishing is curated while stabilizing** — Recipe publishing is focused on approved Foundry DX / Developer Marketing and product group authors while broader contribution paths mature
 
 ## PR Guidelines
 

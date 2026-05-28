@@ -1,0 +1,42 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    labels:
+      - dependencies
+      - github-actions
+
+  - package-ecosystem: "npm"
+    directory: "/site"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    groups:
+      site-dependencies:
+        patterns:
+          - "*"
+    labels:
+      - dependencies
+      - site
+
+  - package-ecosystem: "npm"
+    directory: "/scripts"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    groups:
+      script-dependencies:
+        patterns:
+          - "*"
+    labels:
+      - dependencies
+      - scripts

@@ -1,5 +1,14 @@
 blank_issues_enabled: false
 contact_links:
-  - name: "\U0001F4AC Internal Discussions"
-    url: https://github.com/orgs/microsoft-foundry/teams/forgebook-maintainers
-    about: For topic prioritization, roadmap, and strategic discussions — reach out to the maintainers team.
+  - name: "\U0001F4AC Microsoft Foundry Developer Forum"
+    url: https://github.com/orgs/microsoft-foundry/discussions
+    about: Ask questions, share ideas, and join broader Microsoft Foundry community conversations.
+  - name: "\U0001F4A1 Product Feedback and Ideas"
+    url: https://github.com/orgs/microsoft-foundry/discussions/categories/product-feedback-and-ideas
+    about: Suggest Microsoft Foundry product ideas or discuss feedback that is broader than a Forgebook recipe/site issue.
+  - name: "\U0001F64B Get Help"
+    url: https://github.com/orgs/microsoft-foundry/discussions/categories/get-help
+    about: Ask Microsoft Foundry usage questions that are not bugs in a specific Forgebook recipe or page.
+  - name: "\U0001F4DA Microsoft Foundry Documentation"
+    url: https://learn.microsoft.com/azure/foundry/
+    about: For general Microsoft Foundry product documentation and learning resources.
