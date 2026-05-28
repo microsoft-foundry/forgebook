@@ -1,4 +1,4 @@
-## Build a Robust Speech-to-Text Recipe with MAI-Transcribe-1
+## Transcribe Audio with MAI-Transcribe-1
 
 **Problem this recipe solves:** You need a production-ready transcription pipeline that handles diarization, prompt-tuning, translation, and clear failure modes — without trial-and-error against an unfamiliar endpoint. The wrapper degrades gracefully when the endpoint rejects newer payload options.
 

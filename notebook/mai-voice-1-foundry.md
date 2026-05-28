@@ -1,4 +1,4 @@
-## Build a Production-Ready Text-to-Speech Recipe with MAI-Voice-1
+## Generate Speech with MAI-Voice-1
 
 **Problem this recipe solves:** You need expressive, low-latency TTS on Foundry that supports plain text, SSML emotion/prosody, batch long-form narration, and the Azure Speech SDK — all wired through a single endpoint and credential.
 

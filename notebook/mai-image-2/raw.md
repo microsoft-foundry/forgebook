@@ -1,4 +1,4 @@
-## Build a Production-Ready Text-to-Image Recipe with MAI-Image-2 and MAI-Image-2e
+## Generate Images with MAI-Image-2 and MAI-Image-2e
 
 **Problem this recipe solves:** You need a single endpoint + helper to generate, A/B compare, and batch images across MAI-Image-2 and MAI-Image-2e, with cost visibility and failure-mode awareness — before you wire it into a product.
 

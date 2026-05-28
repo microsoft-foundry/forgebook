@@ -1,4 +1,4 @@
-## Build a Direct Foundry Image Generation Recipe with MAI-Image-2
+## Call MAI-Image-2 from a Foundry Deployment
 
 **Problem this recipe solves:** You need the leanest possible MAI-Image-2 integration against the raw Foundry REST endpoint, with both single-shot and batch prompts demonstrated, plus saved evidence the technique works.
 
