@@ -46,7 +46,7 @@ whichever sources were created in this run.
 
 | | |
 |---|---|
-| Azure AI Search service | In a [preview region](https://learn.microsoft.com/azure/search/search-region-support) |
+| Azure AI Search service | [Any supported region](https://learn.microsoft.com/azure/search/search-region-support) |
 | Microsoft Foundry project | One chat deployment (e.g. `gpt-4.1-mini`, `gpt-5-mini`, `gpt-4o`) + one embedding deployment (e.g. `text-embedding-3-large`, `text-embedding-ada-002`) |
 
 Each Knowledge Source section below lists its own resource prerequisites. **None of them are required** to run this notebook end-to-end — any section whose env vars are blank is skipped cleanly.
