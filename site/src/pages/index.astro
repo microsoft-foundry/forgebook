@@ -119,24 +119,17 @@ function tagColor(tag: string): string {
       }
     </section>
 
-    <section class="bg-surface-elevated rounded-xl p-8 mt-12 border border-subtle">
+    <section class="mt-12">
       <h2
-        class="text-xl font-semibold text-primary mb-4"
+        class="text-2xl font-semibold text-primary mb-4"
       >
-        Quick Start
+        Start forging
       </h2>
-      <div class="space-y-4">
-        <div>
-          <h3 class="font-medium text-secondary mb-2">
-            Clone and run locally:
-          </h3>
-          <pre
-            class="bg-code text-code p-4 rounded-lg overflow-x-auto text-sm font-mono"><code>{`git clone ${REPO_URL}.git
+      <pre
+        class="bg-code text-code p-4 rounded-lg overflow-x-auto text-sm font-mono"><code>{`git clone ${REPO_URL}.git
 cd forgebook
 pip install -r requirements.txt
 jupyter notebook`}</code></pre>
-        </div>
-      </div>
     </section>
   </div>
 </BaseLayout>

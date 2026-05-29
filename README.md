@@ -85,6 +85,8 @@ Recipes cover a range of AI development topics:
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the current authoring workflow and review checklist.
 
+This project follows the [Microsoft Open Source Code of Conduct](CODE_OF_CONDUCT.md). For support options, see [SUPPORT.md](SUPPORT.md). To report security vulnerabilities, see [SECURITY.md](SECURITY.md).
+
 ## License
 
 [MIT](LICENSE)
