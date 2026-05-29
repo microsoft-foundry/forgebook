@@ -6,6 +6,8 @@ import TableOfContents from "@/components/TableOfContents.astro";
 import { getCollection } from "astro:content";
 import { renderNotebook } from "@/lib/notebook";
 import { resolveAuthors } from "@/lib/registry";
+import { absoluteSiteUrl, SITE } from "@/config";
+import { buildTechArticleSchema } from "@/lib/schema";
 
 export async function getStaticPaths() {
   const notebooks = await getCollection("notebooks");
@@ -20,6 +22,18 @@ const renderedHtml = renderNotebook(notebook.data.notebook, notebook.data.path, 
 const authors = await resolveAuthors(notebook.data.authors);
 const notebookTags = notebook.data.tags ?? [];
 const publishedTime = notebook.data.date ? new Date(notebook.data.date).toISOString() : undefined;
+const canonicalPath = `/notebook/${notebook.data.slug}/`;
+const articleSchema = buildTechArticleSchema({
+  canonicalUrl: absoluteSiteUrl(canonicalPath, Astro.site!),
+  siteUrl: absoluteSiteUrl("/", Astro.site!),
+  socialImageUrl: absoluteSiteUrl(SITE.socialImage.path, Astro.site!),
+  title: notebook.data.title,
+  description: notebook.data.description,
+  publishedTime,
+  tags: notebookTags,
+  authors,
+  notebookPath: notebook.data.path,
+});
 
 function tagColor(tag: string): string {
   const hash = [...tag].reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
@@ -31,9 +45,10 @@ function tagColor(tag: string): string {
   title={notebook.data.title}
   description={notebook.data.description}
   type="article"
-  canonicalPath={`/notebook/${notebook.data.slug}/`}
+  canonicalPath={canonicalPath}
   publishedTime={publishedTime}
   tags={notebookTags}
+  structuredData={articleSchema}
 >
   <!-- Header -->
   <header class="max-w-4xl mx-auto mb-8 lg:max-w-none lg:pr-[252px]">
