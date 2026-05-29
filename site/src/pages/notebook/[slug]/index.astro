@@ -98,13 +98,27 @@ function tagColor(tag: string): string {
 
 <style is:global>
   .notebook-content pre {
-    background-color: rgb(15 23 42);
-    color: rgb(241 245 249);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--code-bg) 96%, #ffffff 4%), var(--code-bg));
+    color: var(--code-fg);
+    border: 1px solid var(--code-border);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 60%, transparent);
     padding: 1rem;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     overflow-x: auto;
     font-size: 0.875rem;
+    line-height: 1.65;
     margin: 1rem 0;
+  }
+
+  .dark .notebook-content pre {
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 8%, transparent);
+  }
+
+  .notebook-content pre code {
+    color: inherit;
+    background: transparent;
+    text-shadow: none;
   }
 
   .notebook-content .code-block-wrapper pre {
@@ -133,6 +147,73 @@ function tagColor(tag: string): string {
       "Liberation Mono", monospace;
   }
 
+  .notebook-content :not(pre) > code {
+    background-color: var(--inline-code-bg);
+    color: var(--inline-code-fg);
+    border: 1px solid var(--inline-code-border);
+    border-radius: 0.35rem;
+    padding: 0.075rem 0.3rem;
+    font-size: 0.9em;
+  }
+
+  .notebook-content :not(pre) > code::before,
+  .notebook-content :not(pre) > code::after {
+    content: none;
+  }
+
+  .notebook-content .token.comment,
+  .notebook-content .token.prolog,
+  .notebook-content .token.doctype,
+  .notebook-content .token.cdata {
+    color: var(--code-token-comment);
+    font-style: italic;
+  }
+
+  .notebook-content .token.punctuation,
+  .notebook-content .token.operator {
+    color: var(--code-token-punctuation);
+  }
+
+  .notebook-content .token.property,
+  .notebook-content .token.tag,
+  .notebook-content .token.constant,
+  .notebook-content .token.symbol,
+  .notebook-content .token.deleted {
+    color: var(--code-token-property);
+  }
+
+  .notebook-content .token.boolean,
+  .notebook-content .token.number {
+    color: var(--code-token-number);
+  }
+
+  .notebook-content .token.selector,
+  .notebook-content .token.attr-name,
+  .notebook-content .token.string,
+  .notebook-content .token.char,
+  .notebook-content .token.builtin,
+  .notebook-content .token.inserted {
+    color: var(--code-token-string);
+  }
+
+  .notebook-content .token.keyword,
+  .notebook-content .token.atrule,
+  .notebook-content .token.attr-value {
+    color: var(--code-token-keyword);
+    font-weight: 600;
+  }
+
+  .notebook-content .token.function,
+  .notebook-content .token.class-name {
+    color: var(--code-token-function);
+  }
+
+  .notebook-content .token.regex,
+  .notebook-content .token.important,
+  .notebook-content .token.variable {
+    color: var(--code-token-variable);
+  }
+
   .notebook-content h1,
   .notebook-content h2,
   .notebook-content h3 {
@@ -159,6 +240,121 @@ function tagColor(tag: string): string {
   .notebook-content p {
     margin: 1rem 0;
     color: var(--neutral-fg-2);
+  }
+
+  .notebook-content blockquote.notebook-callout {
+    --callout-bg: #f7f7fb;
+    --callout-border: #8b8ca7;
+    --callout-title: #44445f;
+    --callout-text: var(--neutral-fg-1);
+    background-color: var(--callout-bg);
+    border: 1px solid color-mix(in srgb, var(--callout-border) 55%, transparent);
+    border-left: 0.25rem solid var(--callout-border);
+    border-radius: 0.75rem;
+    color: var(--callout-text);
+    font-style: normal;
+    font-weight: 400;
+    margin: 1.5rem 0;
+    padding: 1rem 1.15rem;
+    quotes: none;
+  }
+
+  .notebook-content blockquote.notebook-callout[data-callout="note"] {
+    --callout-bg: #f4ebff;
+    --callout-border: #7c3aed;
+    --callout-title: #5b21b6;
+  }
+
+  .notebook-content blockquote.notebook-callout[data-callout="tip"] {
+    --callout-bg: #eef8ef;
+    --callout-border: #1f9d3a;
+    --callout-title: #12722a;
+  }
+
+  .notebook-content blockquote.notebook-callout[data-callout="important"] {
+    --callout-bg: #eaf3ff;
+    --callout-border: #2563eb;
+    --callout-title: #1d4ed8;
+  }
+
+  .notebook-content blockquote.notebook-callout[data-callout="caution"] {
+    --callout-bg: #fff1f2;
+    --callout-border: #dc2626;
+    --callout-title: #b91c1c;
+  }
+
+  .notebook-content blockquote.notebook-callout[data-callout="warning"] {
+    --callout-bg: #fff7ed;
+    --callout-border: #ea580c;
+    --callout-title: #c2410c;
+  }
+
+  .dark .notebook-content blockquote.notebook-callout[data-callout="note"] {
+    --callout-bg: #2b2142;
+    --callout-border: #a78bfa;
+    --callout-title: #ddd6fe;
+  }
+
+  .dark .notebook-content blockquote.notebook-callout[data-callout="tip"] {
+    --callout-bg: #132d1a;
+    --callout-border: #4ade80;
+    --callout-title: #bbf7d0;
+  }
+
+  .dark .notebook-content blockquote.notebook-callout[data-callout="important"] {
+    --callout-bg: #14253f;
+    --callout-border: #60a5fa;
+    --callout-title: #bfdbfe;
+  }
+
+  .dark .notebook-content blockquote.notebook-callout[data-callout="caution"] {
+    --callout-bg: #3a1719;
+    --callout-border: #f87171;
+    --callout-title: #fecaca;
+  }
+
+  .dark .notebook-content blockquote.notebook-callout[data-callout="warning"] {
+    --callout-bg: #341f10;
+    --callout-border: #fb923c;
+    --callout-title: #fed7aa;
+  }
+
+  .notebook-content .notebook-callout-title {
+    align-items: center;
+    color: var(--callout-title);
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0.65rem;
+  }
+
+  .notebook-content .notebook-callout-icon {
+    align-items: center;
+    display: inline-flex;
+    height: 1.25rem;
+    justify-content: center;
+    width: 1.25rem;
+  }
+
+  .notebook-content .notebook-callout-icon svg {
+    display: block;
+    height: 1.25rem;
+    width: 1.25rem;
+  }
+
+  .notebook-content blockquote.notebook-callout p {
+    color: var(--callout-text);
+    margin: 0.65rem 0 0;
+  }
+
+  .notebook-content blockquote.notebook-callout p:first-of-type {
+    margin-top: 0;
+  }
+
+  .notebook-content blockquote.notebook-callout code {
+    font-style: normal;
   }
 
   @media (max-width: 640px) {

@@ -17,6 +17,7 @@ export const SITE = {
   tagline: "Your cookbook for building AI with Microsoft Foundry.",
   description:
     "Forgebook is a Microsoft Foundry cookbook of runnable Jupyter notebook recipes, hands-on AI guides, and examples for building agents, model inference, and multimodal apps.",
+  repositoryUrl: REPO_URL,
   keywords: [
     "Microsoft Foundry",
     "Foundry cookbook",

@@ -75,19 +75,101 @@ function tagColor(tag: string): string {
     </div>
     {
       notebook.tags && notebook.tags.length > 0 && (
-        <div class="flex flex-wrap gap-2 mt-4 max-h-[3.5rem] overflow-hidden relative">
-          {notebook.tags.slice(0, 4).map((tag) => (
-                <span class={`px-2 py-1 text-xs rounded-full border font-medium ${tagColor(tag)}`}>
+        <div class="notebook-tags-row" aria-label="Recipe tags">
+          {notebook.tags.map((tag) => (
+                <span class={`notebook-tag-chip px-2 py-1 text-xs rounded-full border font-medium ${tagColor(tag)}`} data-tag-chip title={tag}>
                   {tag}
                 </span>
               ))}
-          {notebook.tags.length > 4 && (
-            <span class="px-2 py-1 text-xs rounded-full border font-medium text-muted border-subtle" title={notebook.tags.slice(4).join(", ")}>
-              +{notebook.tags.length - 4}
-            </span>
-          )}
+          <span class="notebook-tags-overflow px-2 py-1 text-xs rounded-full border font-medium text-muted border-subtle" data-tag-overflow hidden>
+            +0
+          </span>
         </div>
       )
     }
   </div>
 </a>
+
+<style>
+  .notebook-tags-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    min-height: 1.75rem;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .notebook-tag-chip,
+  .notebook-tags-overflow {
+    flex: 0 0 auto;
+    max-width: 11rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .notebook-tag-chip[hidden],
+  .notebook-tags-overflow[hidden] {
+    display: none !important;
+  }
+</style>
+
+<script>
+  function fitNotebookCardTags() {
+    document.querySelectorAll<HTMLElement>(".notebook-tags-row").forEach((row) => {
+      const tags = Array.from(row.querySelectorAll<HTMLElement>("[data-tag-chip]"));
+      const overflow = row.querySelector<HTMLElement>("[data-tag-overflow]");
+      if (!overflow || tags.length === 0) return;
+
+      tags.forEach((tag) => { tag.hidden = false; });
+      overflow.hidden = false;
+      overflow.textContent = `+${tags.length}`;
+
+      const rowStyles = getComputedStyle(row);
+      const gap = Number.parseFloat(rowStyles.columnGap || rowStyles.gap || "0") || 0;
+      const availableWidth = row.clientWidth;
+      const overflowWidth = overflow.getBoundingClientRect().width;
+      const tagWidths = tags.map((tag) => tag.getBoundingClientRect().width);
+
+      let visibleCount = 0;
+      let usedWidth = 0;
+
+      for (let index = 0; index < tags.length; index += 1) {
+        const nextWidth = usedWidth + (visibleCount > 0 ? gap : 0) + tagWidths[index];
+        const remainingAfterThisTag = tags.length - index - 1;
+        const overflowReserve = remainingAfterThisTag > 0 ? gap + overflowWidth : 0;
+
+        if (nextWidth + overflowReserve > availableWidth) break;
+
+        visibleCount += 1;
+        usedWidth = nextWidth;
+      }
+
+      const hiddenTags = tags.slice(visibleCount);
+      tags.forEach((tag, index) => { tag.hidden = index >= visibleCount; });
+
+      if (hiddenTags.length > 0) {
+        overflow.textContent = `+${hiddenTags.length}`;
+        overflow.title = hiddenTags.map((tag) => tag.textContent?.trim()).filter(Boolean).join(", ");
+        overflow.hidden = false;
+      } else {
+        overflow.hidden = true;
+        overflow.removeAttribute("title");
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", fitNotebookCardTags, { once: true });
+  } else {
+    fitNotebookCardTags();
+  }
+
+  const tagRows = document.querySelectorAll<HTMLElement>(".notebook-tags-row");
+  if ("ResizeObserver" in window && tagRows.length > 0) {
+    const resizeObserver = new ResizeObserver(() => fitNotebookCardTags());
+    tagRows.forEach((row) => resizeObserver.observe(row));
+  }
+</script>

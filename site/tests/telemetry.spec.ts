@@ -301,7 +301,7 @@ test.describe("Telemetry", () => {
     const captured = await setupCapture(page);
     await page.goto(NOTEBOOK);
 
-    await page.getByRole("button", { name: "Copy Markdown" }).click();
+    await page.getByRole("button", { name: "Copy page" }).click();
     await page.waitForTimeout(1000); // Wait for fetch + clipboard write
     await flush(page);
 
@@ -313,13 +313,32 @@ test.describe("Telemetry", () => {
   // --------------------------------------------------
   // 11. Share — copy link
   // --------------------------------------------------
+  test("primary share button copies link and fires ShareAction event", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const captured = await setupCapture(page);
+    await page.goto(NOTEBOOK);
+
+    await page.getByRole("button", { name: "Share", exact: true }).click();
+    await expect(page.locator("#share-btn-text")).toHaveText("Copied!");
+    await expect(page.locator("#share-dropdown")).toHaveClass(/hidden/);
+    await page.waitForTimeout(1000);
+    await flush(page);
+
+    const events = findEvents(captured, "ShareAction");
+    const copyEvent = events.find((e) =>
+      e.data?.baseData?.properties?.method === "CopyLink" &&
+      e.data?.baseData?.properties?.source === "button"
+    );
+    expect(copyEvent).toBeTruthy();
+  });
+
   test("share copy-link fires ShareAction event", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     const captured = await setupCapture(page);
     await page.goto(NOTEBOOK);
 
     // Open share dropdown
-    await page.locator("#share-btn").click();
+    await page.locator("#share-dropdown-btn").click();
     await page.waitForSelector("#share-dropdown:not(.hidden)", { timeout: 2000 });
 
     // Click "Copy Link" and wait for async clipboard operation
@@ -340,7 +359,7 @@ test.describe("Telemetry", () => {
     await page.goto(NOTEBOOK);
 
     // Open share dropdown
-    await page.locator("#share-btn").click();
+    await page.locator("#share-dropdown-btn").click();
     await page.waitForSelector("#share-dropdown:not(.hidden)", { timeout: 2000 });
 
     // Prevent navigation to X
