@@ -6,6 +6,7 @@ import SearchButton from "@/components/SearchButton.astro";
 import SearchModal from "@/components/SearchModal.astro";
 import Logo from "@/components/Logo.astro";
 import GitHubButton from "@/components/GitHubButton.astro";
+import { serializeJsonLd } from "@/lib/schema";
 
 interface Props {
   title?: string;
@@ -16,6 +17,7 @@ interface Props {
   imageAlt?: string;
   publishedTime?: string;
   tags?: string[];
+  structuredData?: Record<string, unknown>;
 }
 
 const {
@@ -27,6 +29,7 @@ const {
   imageAlt = SITE.socialImage.alt,
   publishedTime,
   tags = [],
+  structuredData,
 } = Astro.props;
 
 const pageTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
@@ -62,6 +65,7 @@ const keywords = [...SITE.keywords, ...tags].join(", ");
     <meta name="twitter:image:alt" content={imageAlt} />
     {publishedTime && <meta property="article:published_time" content={publishedTime} />}
     {tags.map((tag) => <meta property="article:tag" content={tag} />)}
+    {structuredData && <script type="application/ld+json" set:html={serializeJsonLd(structuredData)} />}
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -164,7 +168,6 @@ const keywords = [...SITE.keywords, ...tags].join(", ");
             await navigator.clipboard.writeText(code);
             trackEvent("CopyCodeBlock", {
               codeLength: code.length,
-              codePreview: code.slice(0, 80),
             });
             btn.setAttribute('aria-label', 'Copied');
             btn.textContent = 'Copied!';

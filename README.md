@@ -81,6 +81,10 @@ Recipes cover a range of AI development topics:
 - [Foundry Models](https://learn.microsoft.com/en-us/azure/foundry/concepts/foundry-models-overview)
 - [Foundry Agent Service](https://learn.microsoft.com/en-us/azure/foundry/agents/overview)
 
+## Data Collection
+
+The Forgebook public site uses standard pseudonymous web telemetry. Microsoft uses these insights only to improve Forgebook content, recipe planning, and site performance. By choosing to use the public site, you consent to this telemetry.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the current authoring workflow and review checklist.

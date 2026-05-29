@@ -150,7 +150,7 @@ test.describe("Telemetry", () => {
       link?.addEventListener("click", (e) => e.preventDefault(), { once: true });
     });
 
-    await page.getByRole("link", { name: "GitHub" }).click();
+    await page.locator('a[href="https://github.com/microsoft-foundry/forgebook"]').first().click();
     await flush(page);
 
     const outbound = findEvents(captured, "OutboundClick");
@@ -211,9 +211,14 @@ test.describe("Telemetry", () => {
     await page.waitForTimeout(2000);
     await flush(page);
 
+    const opens = findEvents(captured, "SearchOpen");
+    expect(opens.length).toBeGreaterThanOrEqual(1);
+    expect(opens[0].data?.baseData?.properties?.source).toBe("keyboard-shortcut");
+
     const events = findEvents(captured, "Search");
     expect(events.length).toBeGreaterThanOrEqual(1);
     expect(events[0].data?.baseData?.properties?.query).toBe("agent");
+    expect(events[0].data?.baseData?.properties?.queryLength).toBe("5");
     expect(events[0].data?.baseData?.properties).toHaveProperty("resultCount");
     expect(events[0].data?.baseData?.properties).toHaveProperty("hasResults");
   });
@@ -247,8 +252,32 @@ test.describe("Telemetry", () => {
       const events = findEvents(captured, "SearchResultClick");
       expect(events.length).toBeGreaterThanOrEqual(1);
       expect(events[0].data?.baseData?.properties?.query).toBe("agent");
+      expect(events[0].data?.baseData?.properties?.queryLength).toBe("5");
       expect(events[0].data?.baseData?.properties).toHaveProperty("resultUrl");
     }
+  });
+
+  test("closing search after a query without clicking a result fires SearchAbandon event", async ({ page }) => {
+    const captured = await setupCapture(page);
+    await page.goto(HOME);
+
+    await page.keyboard.press("Control+k");
+    await page.waitForSelector("#search-modal:not([style*='none'])", { timeout: 3000 });
+
+    await page.fill("#search-input", "zzzzzzzzzzzzzzzzzzzz");
+    await page.waitForTimeout(2000);
+    await page.keyboard.press("Escape");
+    await flush(page);
+
+    const events = findEvents(captured, "SearchAbandon");
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    expect(events[0].data?.baseData?.properties).toMatchObject({
+      query: "zzzzzzzzzzzzzzzzzzzz",
+      queryLength: "20",
+      source: "escape",
+    });
+    expect(events[0].data?.baseData?.properties).toHaveProperty("hasResults");
+    expect(events[0].data?.baseData?.properties).toHaveProperty("resultCount");
   });
 
   // --------------------------------------------------
@@ -289,7 +318,7 @@ test.describe("Telemetry", () => {
       const events = findEvents(captured, "CopyCodeBlock");
       expect(events.length).toBeGreaterThanOrEqual(1);
       expect(events[0].data?.baseData?.properties).toHaveProperty("codeLength");
-      expect(events[0].data?.baseData?.properties).toHaveProperty("codePreview");
+      expect(events[0].data?.baseData?.properties).not.toHaveProperty("codePreview");
     }
   });
 

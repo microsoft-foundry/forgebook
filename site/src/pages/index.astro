@@ -3,7 +3,8 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import NotebookCard from "@/components/NotebookCard.astro";
 import Logo from "@/components/Logo.astro";
 import { getCollection } from "astro:content";
-import { REPO_URL, SITE } from "@/config";
+import { absoluteSiteUrl, REPO_URL, SITE } from "@/config";
+import { buildHomeSchema } from "@/lib/schema";
 import popularRaw from "@/data/popular.json";
 
 interface PopularData {
@@ -35,6 +36,11 @@ for (const n of notebooks) {
   for (const t of n.tags ?? []) usedTagsSet.add(t);
 }
 const usedTags = [...usedTagsSet];
+const homeSchema = buildHomeSchema({
+  canonicalUrl: absoluteSiteUrl("/", Astro.site!),
+  siteUrl: absoluteSiteUrl("/", Astro.site!),
+  socialImageUrl: absoluteSiteUrl(SITE.socialImage.path, Astro.site!),
+});
 
 function tagColor(tag: string): string {
   const hash = [...tag].reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
@@ -42,7 +48,7 @@ function tagColor(tag: string): string {
 }
 ---
 
-<BaseLayout title={SITE.defaultTitle} description={SITE.description} canonicalPath="/">
+<BaseLayout title={SITE.defaultTitle} description={SITE.description} canonicalPath="/" structuredData={homeSchema}>
   <div class="space-y-8" data-pagefind-ignore>
     <section class="text-center py-12">
       <h1 class="text-4xl font-bold text-primary mb-4 flex items-center justify-center gap-3">
