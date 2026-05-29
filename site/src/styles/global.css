@@ -48,8 +48,20 @@
   --accent-brand-pressed: #444791; /* Fluent brand purple - pressed */
   
   /* Code block colors */
-  --code-bg: #1e293b;           /* Dark slate for code */
-  --code-fg: #f1f5f9;           /* Light text for code */
+  --code-bg: #f6f7f9;           /* Light greyscale code surface */
+  --code-fg: #1f2937;           /* Dark text for code */
+  --code-border: #d9dee7;
+  --inline-code-bg: #f3f4f6;
+  --inline-code-fg: #374151;
+  --inline-code-border: #e5e7eb;
+  --code-token-comment: #6b7280;
+  --code-token-punctuation: #4b5563;
+  --code-token-property: #9f1239;
+  --code-token-number: #9a3412;
+  --code-token-string: #166534;
+  --code-token-keyword: #1d4ed8;
+  --code-token-function: #7c3aed;
+  --code-token-variable: #0f766e;
   
   /* Font stacks as CSS variables for body */
   --font-stack-sans: "Segoe UI", "Segoe UI Variable", -apple-system, BlinkMacSystemFont,
@@ -77,6 +89,18 @@
   /* Code block colors - slightly different in dark mode */
   --code-bg: #0f172a;           /* Darker slate for code */
   --code-fg: #f1f5f9;           /* Light text for code */
+  --code-border: #243044;
+  --inline-code-bg: #1f2937;
+  --inline-code-fg: #e5e7eb;
+  --inline-code-border: #374151;
+  --code-token-comment: #94a3b8;
+  --code-token-punctuation: #cbd5e1;
+  --code-token-property: #fda4af;
+  --code-token-number: #fdba74;
+  --code-token-string: #86efac;
+  --code-token-keyword: #93c5fd;
+  --code-token-function: #c4b5fd;
+  --code-token-variable: #5eead4;
 }
 
 /* ============================================

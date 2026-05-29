@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 const NOTEBOOK = "/forgebook/notebook/foundry-agent-part-1";
+const VIDEO_NOTEBOOK = "/forgebook/notebook/sora-video-generation-rest-api";
 
 test.describe("Notebook Images", () => {
   test("all images on notebook page have absolute src paths", async ({ page }) => {
@@ -41,6 +42,45 @@ test.describe("Notebook Images", () => {
     for (const url of urls) {
       const response = await page.request.get(url);
       expect(response.status(), `Broken image: ${url}`).toBe(200);
+    }
+  });
+
+  test("notebook media sources use absolute paths", async ({ page }) => {
+    await page.goto(VIDEO_NOTEBOOK);
+
+    const media = page.locator(".notebook-content video, .notebook-content audio, .notebook-content source, .notebook-content track");
+    const count = await media.count();
+    expect(count).toBeGreaterThan(0);
+
+    for (let i = 0; i < count; i++) {
+      const src = await media.nth(i).getAttribute("src");
+      if (!src) continue;
+
+      expect(
+        src.startsWith("/") || src.startsWith("data:") || src.startsWith("http"),
+        `Media ${i} has relative src: ${src}`,
+      ).toBe(true);
+    }
+  });
+
+  test("notebook media sources return 200", async ({ page }) => {
+    await page.goto(VIDEO_NOTEBOOK);
+
+    const media = page.locator(".notebook-content video, .notebook-content audio, .notebook-content source, .notebook-content track");
+    const count = await media.count();
+    expect(count).toBeGreaterThan(0);
+
+    const urls = new Set<string>();
+    for (let i = 0; i < count; i++) {
+      const src = await media.nth(i).getAttribute("src");
+      if (src && !src.startsWith("data:")) {
+        urls.add(new URL(src, page.url()).href);
+      }
+    }
+
+    for (const url of urls) {
+      const response = await page.request.get(url);
+      expect(response.status(), `Broken media: ${url}`).toBe(200);
     }
   });
 });
