@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Forgebook is a Microsoft Foundry cookbook of runnable Jupyter notebook recipes, hands-on AI guides, and examples for building agents, model inference, and multimodal apps."><meta name="keywords" content="Microsoft Foundry, Foundry cookbook, AI cookbook, Jupyter notebook recipes, AI recipes, agent recipes, model inference, multimodal AI, hands-on AI guides, developer tutorials"><meta name="author" content="Microsoft Foundry"><link rel="canonical" href="https://microsoft-foundry.github.io/forgebook/"><link rel="icon" type="image/svg+xml" href="/forgebook/favicon.svg"><meta name="base-url" content="/forgebook"><meta property="og:site_name" content="Microsoft Foundry Forgebook"><meta property="og:type" content="website"><meta property="og:title" content="Forgebook | Microsoft Foundry notebook recipes"><meta property="og:description" content="Forgebook is a Microsoft Foundry cookbook of runnable Jupyter notebook recipes, hands-on AI guides, and examples for building agents, model inference, and multimodal apps."><meta property="og:url" content="https://microsoft-foundry.github.io/forgebook/"><meta property="og:image" content="https://microsoft-foundry.github.io/forgebook/images/og/forgebook.png"><meta property="og:image:alt" content="Forgebook logo with the text: Your cookbook for building AI with Microsoft Foundry."><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Forgebook | Microsoft Foundry notebook recipes"><meta name="twitter:description" content="Forgebook is a Microsoft Foundry cookbook of runnable Jupyter notebook recipes, hands-on AI guides, and examples for building agents, model inference, and multimodal apps."><meta name="twitter:image" content="https://microsoft-foundry.github.io/forgebook/images/og/forgebook.png"><meta name="twitter:image:alt" content="Forgebook logo with the text: Your cookbook for building AI with Microsoft Foundry."><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer"><!-- Theme initialization script - runs before page renders to prevent flicker --><script>
+<!DOCTYPE html><html lang="en" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Forgebook is a Microsoft Foundry cookbook of runnable Jupyter notebook recipes, hands-on AI guides, and examples for building agents, model inference, and multimodal apps."><meta name="keywords" content="Microsoft Foundry, Foundry cookbook, AI cookbook, Jupyter notebook recipes, AI recipes, agent recipes, model inference, multimodal AI, hands-on AI guides, developer tutorials"><meta name="author" content="Microsoft Foundry"><link rel="canonical" href="https://microsoft-foundry.github.io/forgebook/"><link rel="icon" type="image/svg+xml" href="/forgebook/favicon.svg"><meta name="base-url" content="/forgebook"><meta property="og:site_name" content="Microsoft Foundry Forgebook"><meta property="og:type" content="website"><meta property="og:title" content="Forgebook | Microsoft Foundry notebook recipes"><meta property="og:description" content="Forgebook is a Microsoft Foundry cookbook of runnable Jupyter notebook recipes, hands-on AI guides, and examples for building agents, model inference, and multimodal apps."><meta property="og:url" content="https://microsoft-foundry.github.io/forgebook/"><meta property="og:image" content="https://microsoft-foundry.github.io/forgebook/images/og/forgebook.png"><meta property="og:image:alt" content="Forgebook logo with the text: Your cookbook for building AI with Microsoft Foundry."><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Forgebook | Microsoft Foundry notebook recipes"><meta name="twitter:description" content="Forgebook is a Microsoft Foundry cookbook of runnable Jupyter notebook recipes, hands-on AI guides, and examples for building agents, model inference, and multimodal apps."><meta name="twitter:image" content="https://microsoft-foundry.github.io/forgebook/images/og/forgebook.png"><meta name="twitter:image:alt" content="Forgebook logo with the text: Your cookbook for building AI with Microsoft Foundry."><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://microsoft-foundry.github.io/forgebook/#organization","name":"Microsoft Foundry Forgebook","url":"https://microsoft-foundry.github.io/forgebook/","logo":{"@type":"ImageObject","url":"https://microsoft-foundry.github.io/forgebook/images/og/forgebook.png","width":1200,"height":630},"sameAs":["https://github.com/microsoft-foundry/forgebook","https://learn.microsoft.com/azure/foundry"]},{"@type":"WebSite","@id":"https://microsoft-foundry.github.io/forgebook/#website","name":"Forgebook","alternateName":"Microsoft Foundry Forgebook","url":"https://microsoft-foundry.github.io/forgebook/","description":"Forgebook is a Microsoft Foundry cookbook of runnable Jupyter notebook recipes, hands-on AI guides, and examples for building agents, model inference, and multimodal apps.","inLanguage":"en-US","publisher":{"@id":"https://microsoft-foundry.github.io/forgebook/#organization"},"mainEntityOfPage":"https://microsoft-foundry.github.io/forgebook/"}]}</script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer"><!-- Theme initialization script - runs before page renders to prevent flicker --><script>
       (function() {
         const theme = localStorage.getItem('theme');
         if (theme === 'dark') {
@@ -47,19 +47,41 @@ jupyter notebook</code></pre> </section> </div>  </main> <footer data-pagefind-i
   var pagefindInstance = null;
   var activeIndex = -1;
   var debounceTimer = null;
+  var lastSearch = null;
+  var searchResultClicked = false;
 
-  function openSearch() {
+  function trackSearchModal(action, source) {
+    if (window.__telemetry) {
+      window.__telemetry.trackEvent(action, { source: source || 'unknown' });
+    }
+  }
+
+  function openSearch(source) {
     modal.style.display = 'flex';
     input.value = '';
     resultsContainer.innerHTML = '<div class="search-empty">Type to search notebooks</div>';
     activeIndex = -1;
     requestAnimationFrame(function() { input.focus(); });
     document.body.style.overflow = 'hidden';
+    trackSearchModal('SearchOpen', source);
   }
 
-  function closeSearch() {
+  function closeSearch(source) {
+    if (modal.style.display === 'none') return;
+    if (lastSearch && !searchResultClicked && window.__telemetry) {
+      window.__telemetry.trackEvent('SearchAbandon', {
+        source: source || 'unknown',
+        query: lastSearch.query,
+        queryLength: lastSearch.queryLength,
+        resultCount: lastSearch.resultCount,
+        hasResults: lastSearch.hasResults,
+      });
+    }
     modal.style.display = 'none';
     document.body.style.overflow = '';
+    trackSearchModal('SearchClose', source);
+    lastSearch = null;
+    searchResultClicked = false;
   }
 
   async function loadPagefind() {
@@ -88,11 +110,20 @@ jupyter notebook</code></pre> </section> </div>  </main> <footer data-pagefind-i
     }
 
     var search = await pf.search(query);
+    lastSearch = {
+      query: query,
+      queryLength: query.length,
+      resultCount: search.results.length,
+      hasResults: search.results.length > 0,
+    };
+    searchResultClicked = false;
 
-    // Track the search query, result count, and whether results were found
+    // Track search behavior. The raw query is an intentional recipe-demand
+    // signal used to identify net-new cookbook topics; see docs/analytics.md.
     if (window.__telemetry) {
       window.__telemetry.trackEvent('Search', {
         query: query,
+        queryLength: query.length,
         resultCount: search.results.length,
         hasResults: search.results.length > 0,
       });
@@ -145,27 +176,29 @@ jupyter notebook</code></pre> </section> </div>  </main> <footer data-pagefind-i
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
       if (modal.style.display === 'none') {
-        openSearch();
+        openSearch('keyboard-shortcut');
       } else {
-        closeSearch();
+        closeSearch('keyboard-shortcut');
       }
     }
     if (e.key === 'Escape' && modal.style.display !== 'none') {
       e.preventDefault();
-      closeSearch();
+      closeSearch('escape');
     }
   });
 
   // Search button trigger
   var btn = document.getElementById('search-button');
-  if (btn) btn.addEventListener('click', openSearch);
+  if (btn) btn.addEventListener('click', function() { openSearch('button'); });
 
   // Track search result link clicks (mouse)
   resultsContainer.addEventListener('click', function(e) {
     var link = e.target.closest && e.target.closest('.search-result-item');
     if (link && window.__telemetry) {
+      searchResultClicked = true;
       window.__telemetry.trackEvent('SearchResultClick', {
         query: input.value,
+        queryLength: input.value.length,
         resultIndex: parseInt(link.getAttribute('data-index') || '0', 10),
         resultUrl: link.getAttribute('href'),
       });
@@ -174,7 +207,7 @@ jupyter notebook</code></pre> </section> </div>  </main> <footer data-pagefind-i
 
   // Close on backdrop click
   modal.addEventListener('click', function(e) {
-    if (e.target === modal) closeSearch();
+    if (e.target === modal) closeSearch('backdrop');
   });
 
   // Input handling with debounce
@@ -205,8 +238,10 @@ jupyter notebook</code></pre> </section> </div>  </main> <footer data-pagefind-i
         var resultUrl = items[activeIndex].getAttribute('href');
         // Track which search result was clicked and its position
         if (window.__telemetry) {
+          searchResultClicked = true;
           window.__telemetry.trackEvent('SearchResultClick', {
             query: input.value,
+            queryLength: input.value.length,
             resultIndex: activeIndex,
             resultUrl: resultUrl,
           });
@@ -216,7 +251,7 @@ jupyter notebook</code></pre> </section> </div>  </main> <footer data-pagefind-i
     }
   });
 })();
-})();</script> <script type="module" src="/forgebook/_astro/BaseLayout.astro_astro_type_script_index_0_lang.CMQXOmFp.js"></script> <!-- Application Insights telemetry --> <script type="module" src="/forgebook/_astro/BaseLayout.astro_astro_type_script_index_1_lang.BRqpmPf9.js"></script> <!-- Twemoji for consistent emoji rendering across platforms --> <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script> <script>
+})();</script> <script type="module" src="/forgebook/_astro/BaseLayout.astro_astro_type_script_index_0_lang.BmqVpgrl.js"></script> <!-- Application Insights telemetry --> <script type="module" src="/forgebook/_astro/BaseLayout.astro_astro_type_script_index_1_lang.BRqpmPf9.js"></script> <!-- Twemoji for consistent emoji rendering across platforms --> <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script> <script>
       // Parse emojis after page load
       document.addEventListener('DOMContentLoaded', function() {
         if (typeof twemoji !== 'undefined') {
