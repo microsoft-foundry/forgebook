@@ -18,13 +18,15 @@ const base = withBase("/");
         id="search-input"
         class="search-input"
         type="text"
+        aria-label="Search notebooks"
+        aria-controls="search-results"
         placeholder="Search notebooks..."
         autocomplete="off"
         autocorrect="off"
         spellcheck="false"
       />
     </div>
-    <div id="search-results" class="search-results">
+    <div id="search-results" class="search-results" aria-live="polite">
       <div class="search-empty">Type to search notebooks</div>
     </div>
     <div class="search-footer search-footer-hints">
@@ -169,7 +171,7 @@ const base = withBase("/");
 
   // Global keyboard shortcut: Cmd+K / Ctrl+K
   document.addEventListener('keydown', function(e) {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       if (modal.style.display === 'none') {
         openSearch('keyboard-shortcut');
