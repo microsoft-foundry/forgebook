@@ -147,6 +147,9 @@ const keywords = [...SITE.keywords, ...tags].join(", ");
 
       // Add copy buttons to all code blocks
       document.querySelectorAll('pre').forEach((pre) => {
+        // Scrollable code blocks must be reachable by keyboard, especially in Safari.
+        pre.setAttribute('tabindex', '0');
+
         // Skip if already has a copy button
         if (pre.querySelector('.copy-btn')) return;
         

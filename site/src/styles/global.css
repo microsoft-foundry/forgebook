@@ -42,7 +42,7 @@
   --neutral-bg-4: #f0f0f0;      /* Borders, dividers */
   --neutral-fg-1: #242424;      /* Primary text */
   --neutral-fg-2: #616161;      /* Secondary text */
-  --neutral-fg-3: #9e9e9e;      /* Tertiary/disabled text */
+  --neutral-fg-3: #6b6b6b;      /* Tertiary text with WCAG AA contrast on white */
   --accent-brand: #5b5fc7;      /* Fluent brand purple - rest */
   --accent-brand-hover: #4f52b2; /* Fluent brand purple - hover */
   --accent-brand-pressed: #444791; /* Fluent brand purple - pressed */
@@ -115,6 +115,16 @@ body {
   font-family: var(--font-stack-sans);
   background-color: var(--neutral-bg-1);
   color: var(--neutral-fg-1);
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--accent-brand);
+  outline-offset: 3px;
+}
+
+.high-contrast :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--hc-link) !important;
+  outline-offset: 3px;
 }
 
 /* ============================================
@@ -227,14 +237,14 @@ code[class*="language-"] {
    Each tag-color-N uses a tinted bg + darker fg
    ============================================ */
 :root {
-  --tag-0-bg: #ede5fb; --tag-0-fg: #5b2db0; --tag-0-border: #d4c4f3;
-  --tag-1-bg: #e2e7fc; --tag-1-fg: #3b4ec2; --tag-1-border: #c5ceee;
-  --tag-2-bg: #fce5f9; --tag-2-fg: #b03a9e; --tag-2-border: #f0c4ea;
-  --tag-3-bg: #ddf5ef; --tag-3-fg: #267a65; --tag-3-border: #b6e6d8;
-  --tag-4-bg: #ddf0fc; --tag-4-fg: #1a6fa3; --tag-4-border: #b3daf5;
-  --tag-5-bg: #dbf0f0; --tag-5-fg: #1a7578; --tag-5-border: #b0dfe0;
-  --tag-6-bg: #fde9e1; --tag-6-fg: #a84e2a; --tag-6-border: #f5cebb;
-  --tag-7-bg: #ebe4f3; --tag-7-fg: #5e3f8a; --tag-7-border: #d4c4e3;
+  --tag-0-bg: #ede5fb; --tag-0-fg: #4c1d95; --tag-0-border: #d4c4f3;
+  --tag-1-bg: #e2e7fc; --tag-1-fg: #303f9f; --tag-1-border: #c5ceee;
+  --tag-2-bg: #fce5f9; --tag-2-fg: #8a1c7c; --tag-2-border: #f0c4ea;
+  --tag-3-bg: #ddf5ef; --tag-3-fg: #1b5e4f; --tag-3-border: #b6e6d8;
+  --tag-4-bg: #ddf0fc; --tag-4-fg: #155f8a; --tag-4-border: #b3daf5;
+  --tag-5-bg: #dbf0f0; --tag-5-fg: #135f63; --tag-5-border: #b0dfe0;
+  --tag-6-bg: #fde9e1; --tag-6-fg: #843a1e; --tag-6-border: #f5cebb;
+  --tag-7-bg: #ebe4f3; --tag-7-fg: #4c2f73; --tag-7-border: #d4c4e3;
 }
 
 .dark {
@@ -622,6 +632,7 @@ img.emoji {
   font-size: 0.8125rem;
   color: var(--neutral-fg-2);
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
@@ -673,6 +684,7 @@ img.emoji {
     padding: 0;
   }
   .search-result-excerpt {
+    line-clamp: 2;
     -webkit-line-clamp: 2;
   }
   .search-footer {
@@ -686,6 +698,7 @@ img.emoji {
     padding: 15vh 1rem 1rem;
   }
   .search-result-excerpt {
+    line-clamp: 3;
     -webkit-line-clamp: 3;
   }
 }
