@@ -174,3 +174,19 @@
     - audio-generation
     - multimodal
     - responsible-ai
+
+- slug: microsoft-iq-in-foundry
+  path: notebooks/microsoft-iq-in-foundry.ipynb
+  title: "Microsoft IQ in Foundry"
+  description: "Build a Microsoft IQ knowledge layer in Foundry IQ — federate Work IQ, Fabric IQ (airline ontology), and Web IQ into one Knowledge Base, then query each IQ plus a cross-source question."
+  date: "2026-05-29"
+  authors:
+    - github: farzad528
+  tags:
+    - iq
+    - retrieval
+    - grounding
+    - azure-ai-search
+    - mcp
+    - agents
+    - agent-service
