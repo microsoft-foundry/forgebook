@@ -79,6 +79,7 @@ print('Output target: 24kHz MP3')
 - High-fidelity natural voice synthesis with expressive control.
 - Generate speech from short audio prompts (5-60 seconds).
 - Multilingual support across **15 languages and 18 locales**.
+- Supported languages: Arabic, Chinese, English, French, German, Hindi, Indonesian, Italian, Japanese, Korean, Portuguese, Russian, Spanish, Thai, and Vietnamese.
 - Supports long-form content generation via chunking with context carryover.
 - Output format is 24kHz mono audio.
 - Served globally via East US, Sweden Central, and Southeast Asia.
