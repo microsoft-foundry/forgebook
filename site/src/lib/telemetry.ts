@@ -27,6 +27,15 @@ let appInsights: ApplicationInsights | null = null;
 /** Track a named custom event with optional properties. */
 export function trackEvent(name: string, properties?: Record<string, unknown>): void {
   appInsights?.trackEvent({ name, properties: { page: location.pathname, ...properties } });
+  recordTestTelemetry({
+    data: {
+      baseType: "EventData",
+      baseData: {
+        name,
+        properties: { page: location.pathname, ...properties },
+      },
+    },
+  });
 }
 
 /** Track an exception with optional context properties. */
@@ -42,6 +51,15 @@ export function trackError(error: unknown, properties?: Record<string, string>):
 /** Track a numeric metric (e.g. Core Web Vitals). */
 export function trackMetric(name: string, average: number, properties?: Record<string, string>): void {
   appInsights?.trackMetric({ name, average, properties: { page: location.pathname, ...properties } });
+  recordTestTelemetry({
+    data: {
+      baseType: "MetricData",
+      baseData: {
+        metrics: [{ name, value: average }],
+        properties: { page: location.pathname, ...properties },
+      },
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -66,11 +84,20 @@ export function initTelemetry(): ApplicationInsights | null {
       enableCorsCorrelation: false,    // Avoid CORS issues on static sites
       disableAjaxTracking: false,      // Track XMLHttpRequests
       autoTrackPageVisitTime: true,    // Track time spent on pages
+      disableCookiesUsage: true,       // Avoid setting Forgebook-specific browser cookies
     },
   });
 
   appInsights.loadAppInsights();
   appInsights.trackPageView();
+  recordTestTelemetry({
+    data: {
+      baseType: "PageviewData",
+      baseData: {
+        properties: { page: location.pathname },
+      },
+    },
+  });
 
   trackClicks(appInsights);
   trackScrollDepth(appInsights);
@@ -97,7 +124,13 @@ declare global {
       /** Flush the SDK buffer — useful for testing and devtools debugging. */
       flush: () => void;
     };
+    /** Test-only hook populated by Playwright before page scripts run. */
+    __forgebookTelemetryTestCapture?: Array<Record<string, unknown>>;
   }
+}
+
+function recordTestTelemetry(envelope: Record<string, unknown>): void {
+  window.__forgebookTelemetryTestCapture?.push(envelope);
 }
 
 function exposeGlobalBridge(): void {
@@ -133,14 +166,20 @@ function trackClicks(ai: ApplicationInsights): void {
     // Distinguish outbound (external) links from internal clicks
     const isOutbound = href ? new URL(href, location.origin).origin !== location.origin : false;
 
-    ai.trackEvent({
-      name: isOutbound ? "OutboundClick" : "Click",
-      properties: {
-        label,
-        tag,
-        href,
-        page: location.pathname,
-        ...(isOutbound && { destination: new URL(href!, location.origin).hostname }),
+    const name = isOutbound ? "OutboundClick" : "Click";
+    const properties = {
+      label,
+      tag,
+      href,
+      page: location.pathname,
+      ...(isOutbound && { destination: new URL(href!, location.origin).hostname }),
+    };
+
+    ai.trackEvent({ name, properties });
+    recordTestTelemetry({
+      data: {
+        baseType: "EventData",
+        baseData: { name, properties },
       },
     });
   });
@@ -171,6 +210,18 @@ function trackScrollDepth(ai: ApplicationInsights): void {
           properties: {
             threshold: t,
             page: location.pathname,
+          },
+        });
+        recordTestTelemetry({
+          data: {
+            baseType: "EventData",
+            baseData: {
+              name: "ScrollDepth",
+              properties: {
+                threshold: t,
+                page: location.pathname,
+              },
+            },
           },
         });
       }

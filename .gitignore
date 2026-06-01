@@ -45,8 +45,12 @@ test-results/
 # Misc
 *.local
 .cache/
+skills-lock.json
+.github/agents/
 .github/skills/
-.agents/skills/*
+.agents/
 !.agents/skills/cookbook-review/
 !.agents/skills/cookbook-review/**
 .mcp.json
+AGENTS.md
+docs/

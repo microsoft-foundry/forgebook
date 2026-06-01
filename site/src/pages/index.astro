@@ -3,7 +3,8 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import NotebookCard from "@/components/NotebookCard.astro";
 import Logo from "@/components/Logo.astro";
 import { getCollection } from "astro:content";
-import { REPO_URL, SITE } from "@/config";
+import { absoluteSiteUrl, REPO_URL, SITE } from "@/config";
+import { buildHomeSchema } from "@/lib/schema";
 import popularRaw from "@/data/popular.json";
 
 interface PopularData {
@@ -35,6 +36,11 @@ for (const n of notebooks) {
   for (const t of n.tags ?? []) usedTagsSet.add(t);
 }
 const usedTags = [...usedTagsSet];
+const homeSchema = buildHomeSchema({
+  canonicalUrl: absoluteSiteUrl("/", Astro.site!),
+  siteUrl: absoluteSiteUrl("/", Astro.site!),
+  socialImageUrl: absoluteSiteUrl(SITE.socialImage.path, Astro.site!),
+});
 
 function tagColor(tag: string): string {
   const hash = [...tag].reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
@@ -42,7 +48,7 @@ function tagColor(tag: string): string {
 }
 ---
 
-<BaseLayout title={SITE.defaultTitle} description={SITE.description} canonicalPath="/">
+<BaseLayout title={SITE.defaultTitle} description={SITE.description} canonicalPath="/" structuredData={homeSchema}>
   <div class="space-y-8" data-pagefind-ignore>
     <section class="text-center py-12">
       <h1 class="text-4xl font-bold text-primary mb-4 flex items-center justify-center gap-3">
@@ -119,24 +125,17 @@ function tagColor(tag: string): string {
       }
     </section>
 
-    <section class="bg-surface-elevated rounded-xl p-8 mt-12 border border-subtle">
+    <section class="mt-12">
       <h2
-        class="text-xl font-semibold text-primary mb-4"
+        class="text-2xl font-semibold text-primary mb-4"
       >
-        Quick Start
+        Start forging
       </h2>
-      <div class="space-y-4">
-        <div>
-          <h3 class="font-medium text-secondary mb-2">
-            Clone and run locally:
-          </h3>
-          <pre
-            class="bg-code text-code p-4 rounded-lg overflow-x-auto text-sm font-mono"><code>{`git clone ${REPO_URL}.git
+      <pre
+        class="bg-code text-code p-4 rounded-lg overflow-x-auto text-sm font-mono"><code>{`git clone ${REPO_URL}.git
 cd forgebook
 pip install -r requirements.txt
 jupyter notebook`}</code></pre>
-        </div>
-      </div>
     </section>
   </div>
 </BaseLayout>
