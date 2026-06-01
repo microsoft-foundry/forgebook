@@ -174,3 +174,19 @@
     - audio-generation
     - multimodal
     - responsible-ai
+
+- slug: microsoft-iq-in-foundry
+  path: notebooks/microsoft-iq-in-foundry.ipynb
+  title: "Microsoft IQ in Foundry"
+  description: "Federate Microsoft's IQ knowledge sources — Work IQ, Fabric IQ (airline ontology), and Web IQ (Speedbird MCP) — into one Foundry IQ Knowledge Base, then ground a Foundry Agent and GitHub Copilot."
+  date: "2026-05-29"
+  authors:
+    - github: farzad528
+  tags:
+    - iq
+    - retrieval
+    - grounding
+    - azure-ai-search
+    - mcp
+    - agents
+    - agent-service
