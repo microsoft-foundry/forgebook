@@ -74,7 +74,7 @@ print('Output target: 24kHz MP3')
 ## 2. Model Card Highlights
 
 - High-fidelity natural voice synthesis with expressive control.
-- Prompted TTS with **voice prompting from 5-60 second clips**.
+- Generate speech from short audio prompts (5-60 seconds).
 - Multilingual support across **15 languages and 18 locales**.
 - Supports long-form content generation via chunking with context carryover.
 - Output format is 24kHz mono audio.
