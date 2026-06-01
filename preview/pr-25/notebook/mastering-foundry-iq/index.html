@@ -105,6 +105,7 @@ AOAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large
     <span class="token operator">%</span>pip install <span class="token operator">-</span><span class="token operator">-</span>quiet \
         <span class="token string">"azure-search-documents==12.1.0b1"</span> \
         <span class="token string">"azure-ai-projects==2.1.0"</span> \
+        <span class="token string">"azure-mgmt-cognitiveservices==15.0.0b2"</span> \
         <span class="token string">"azure-identity&gt;=1.19.0"</span> \
         <span class="token string">"azure-core&gt;=1.32.0"</span> \
         <span class="token string">"openai&gt;=1.50.0"</span> \
@@ -178,10 +179,12 @@ created_resources<span class="token punctuation">:</span> <span class="token bui
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Foundry endpoint       : </span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_ENDPOINT<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Chat deployment        : </span><span class="token interpolation"><span class="token punctuation">{</span>GPT_DEPLOYMENT<span class="token punctuation">}</span></span><span class="token string"> (</span><span class="token interpolation"><span class="token punctuation">{</span>GPT_MODEL<span class="token punctuation">}</span></span><span class="token string">)"</span></span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Embedding deployment   : </span><span class="token interpolation"><span class="token punctuation">{</span>EMBEDDING_DEPLOYMENT<span class="token punctuation">}</span></span><span class="token string"> (</span><span class="token interpolation"><span class="token punctuation">{</span>EMBEDDING_MODEL<span class="token punctuation">}</span></span><span class="token string">, </span><span class="token interpolation"><span class="token punctuation">{</span>EMBEDDING_DIMENSIONS<span class="token punctuation">}</span></span><span class="token string"> dims)"</span></span><span class="token punctuation">)</span>
-</code></pre></div></div><div class="nb-cell nb-markdown-cell"><p>The typed SDK wraps every Knowledge Source kind (the three demoed below and the rest in §7). Two endpoints aren't
-surfaced by the SDK yet — the direct MCP JSON-RPC route on the Knowledge Base
-(§11) and the ARM project-connection <code>PUT</code> that wires the KB into a Foundry
-agent (§12) — so we call those with <code>httpx</code>. No <code>requests</code> dependency.</p>
+</code></pre></div></div><div class="nb-cell nb-markdown-cell"><p>The typed SDK wraps every Knowledge Source kind (the three demoed below and the rest in §7). One endpoint isn't
+surfaced by the typed SDKs — the direct MCP JSON-RPC route on the Knowledge
+Base (§11) — so we call it with <code>httpx</code> (also used to fetch the sample
+dataset in §4). The ARM project-connection that wires the KB into a Foundry
+agent (§12) now uses the typed <code>azure-mgmt-cognitiveservices</code> SDK. No
+<code>requests</code> dependency.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">import</span> httpx
 <span class="token keyword">from</span> azure<span class="token punctuation">.</span>core<span class="token punctuation">.</span>exceptions <span class="token keyword">import</span> ResourceNotFoundError
 <span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
@@ -272,9 +275,8 @@ agent (§12) — so we call those with <code>httpx</code>. No <code>requests</co
     <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"[skipped] </span><span class="token interpolation"><span class="token punctuation">{</span>section<span class="token punctuation">}</span></span><span class="token string">: </span><span class="token interpolation"><span class="token punctuation">{</span>reason<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 
 
-<span class="token comment"># Shared httpx client for the two endpoints the typed SDK doesn't yet</span>
-<span class="token comment"># expose: the direct MCP JSON-RPC route on the KB, and the ARM project</span>
-<span class="token comment"># connection PUT used to wire the KB into a Foundry agent.</span>
+<span class="token comment"># Shared httpx client for the one endpoint the typed SDKs don't expose -- the</span>
+<span class="token comment"># direct MCP JSON-RPC route on the KB (§11) -- plus the sample-data fetch (§4).</span>
 http <span class="token operator">=</span> httpx<span class="token punctuation">.</span>Client<span class="token punctuation">(</span>timeout<span class="token operator">=</span>httpx<span class="token punctuation">.</span>Timeout<span class="token punctuation">(</span><span class="token number">180.0</span><span class="token punctuation">,</span> connect<span class="token operator">=</span><span class="token number">30.0</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
 </code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>3 · Provision the backing Search index</h2>
 <p>The <strong>Search Index KS</strong> in §4 needs an existing index to point at. We
@@ -962,7 +964,8 @@ call_payload <span class="token operator">=</span> _parse_mcp<span class="token 
 <p>The Foundry Agent Service hosts the agent loop, the conversation store,
 and the MCP runtime for you. To attach a Foundry IQ KB:</p>
 <ol>
-<li><strong>Create a <code>RemoteTool</code> project connection</strong> pointing at the KB's MCP URL.
+<li><strong>Create a <code>RemoteTool</code> project connection</strong> pointing at the KB's MCP URL
+with the typed <code>azure-mgmt-cognitiveservices</code> management SDK.
 <code>authType=ProjectManagedIdentity</code> lets the project assume its own
 identity when calling Search — no per-user tokens stored on the connection.</li>
 <li><strong>Create an agent</strong> that declares an <code>mcp</code> tool referencing the
@@ -974,15 +977,21 @@ and returns a grounded answer.</li>
 <blockquote>
 <p><strong>Auth:</strong> <code>DefaultAzureCredential</code>. Run <code>az login</code> first. Roles needed:
 <em>Cognitive Services Contributor</em> (agent), <em>Azure AI User</em> (project
-endpoint), and write access on the project's resource group (connection PUT).</p>
+endpoint), and write access on the project's resource group (connection create).</p>
 </blockquote>
 <blockquote>
 <p><strong>Skip:</strong> if <code>FOUNDRY_PROJECT_ENDPOINT</code> is blank, this cell prints a
 skip message and the rest of the notebook still runs.</p>
 </blockquote>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>identity <span class="token keyword">import</span> DefaultAzureCredential<span class="token punctuation">,</span> get_bearer_token_provider
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">import</span> re
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>identity <span class="token keyword">import</span> DefaultAzureCredential
 <span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects <span class="token keyword">import</span> AIProjectClient
 <span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> MCPTool<span class="token punctuation">,</span> PromptAgentDefinition
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>mgmt<span class="token punctuation">.</span>cognitiveservices <span class="token keyword">import</span> CognitiveServicesManagementClient
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>mgmt<span class="token punctuation">.</span>cognitiveservices<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    ConnectionPropertiesV2<span class="token punctuation">,</span>
+    ConnectionPropertiesV2BasicResource<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
 
 project_endpoint <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"FOUNDRY_PROJECT_ENDPOINT"</span><span class="token punctuation">,</span> required<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
 project_rid <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"FOUNDRY_PROJECT_RESOURCE_ID"</span><span class="token punctuation">,</span> required<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
@@ -993,34 +1002,40 @@ connection_name <span class="token operator">=</span> <span class="token string"
     skip<span class="token punctuation">(</span><span class="token string">"Foundry Agent"</span><span class="token punctuation">,</span> <span class="token string">"set FOUNDRY_PROJECT_ENDPOINT and FOUNDRY_PROJECT_RESOURCE_ID to enable"</span><span class="token punctuation">)</span>
 <span class="token keyword">else</span><span class="token punctuation">:</span>
     credential_aad <span class="token operator">=</span> DefaultAzureCredential<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    arm_bearer <span class="token operator">=</span> get_bearer_token_provider<span class="token punctuation">(</span>credential_aad<span class="token punctuation">,</span> <span class="token string">"https://management.azure.com/.default"</span><span class="token punctuation">)</span>
 
     <span class="token comment"># 1) Create the RemoteTool project connection that targets the KB MCP</span>
-    <span class="token comment">#    endpoint. The ARM PUT isn't surfaced by the typed SDK yet, so we use</span>
-    <span class="token comment">#    httpx directly (no `requests` dependency).</span>
-    conn_url <span class="token operator">=</span> <span class="token punctuation">(</span>
-        <span class="token string-interpolation"><span class="token string">f"https://management.azure.com</span><span class="token interpolation"><span class="token punctuation">{</span>project_rid<span class="token punctuation">}</span></span><span class="token string">/connections/</span><span class="token interpolation"><span class="token punctuation">{</span>connection_name<span class="token punctuation">}</span></span><span class="token string">"</span></span>
-        <span class="token string-interpolation"><span class="token string">f"?api-version=2025-10-01-preview"</span></span>
+    <span class="token comment">#    endpoint, using the typed azure-mgmt-cognitiveservices management SDK.</span>
+    <span class="token comment">#    Parse the project's ARM id for the subscription, resource group,</span>
+    <span class="token comment">#    Foundry account, and project names the SDK addresses by.</span>
+    rid <span class="token operator">=</span> re<span class="token punctuation">.</span>search<span class="token punctuation">(</span>
+        <span class="token string">r"/subscriptions/(?P&lt;sub&gt;[^/]+)/resourceGroups/(?P&lt;rg&gt;[^/]+)/providers/"</span>
+        <span class="token string">r"Microsoft\.CognitiveServices/accounts/(?P&lt;account&gt;[^/]+)/projects/(?P&lt;project&gt;[^/]+)"</span><span class="token punctuation">,</span>
+        project_rid<span class="token punctuation">,</span> re<span class="token punctuation">.</span>IGNORECASE<span class="token punctuation">,</span>
     <span class="token punctuation">)</span>
-    conn_body <span class="token operator">=</span> <span class="token punctuation">{</span>
-        <span class="token string">"name"</span><span class="token punctuation">:</span> connection_name<span class="token punctuation">,</span>
-        <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"Microsoft.MachineLearningServices/workspaces/connections"</span><span class="token punctuation">,</span>
-        <span class="token string">"properties"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span>
-            <span class="token string">"authType"</span><span class="token punctuation">:</span> <span class="token string">"ProjectManagedIdentity"</span><span class="token punctuation">,</span>
-            <span class="token string">"category"</span><span class="token punctuation">:</span> <span class="token string">"RemoteTool"</span><span class="token punctuation">,</span>
-            <span class="token string">"target"</span><span class="token punctuation">:</span> MCP_URL<span class="token punctuation">,</span>
-            <span class="token string">"isSharedToAll"</span><span class="token punctuation">:</span> <span class="token boolean">True</span><span class="token punctuation">,</span>
-            <span class="token string">"audience"</span><span class="token punctuation">:</span> <span class="token string">"https://search.azure.com/"</span><span class="token punctuation">,</span>
-            <span class="token string">"metadata"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token string">"ApiType"</span><span class="token punctuation">:</span> <span class="token string">"Azure"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
-        <span class="token punctuation">}</span><span class="token punctuation">,</span>
-    <span class="token punctuation">}</span>
-    conn_resp <span class="token operator">=</span> http<span class="token punctuation">.</span>put<span class="token punctuation">(</span>
-        conn_url<span class="token punctuation">,</span>
-        headers<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">"Authorization"</span><span class="token punctuation">:</span> <span class="token string-interpolation"><span class="token string">f"Bearer </span><span class="token interpolation"><span class="token punctuation">{</span>arm_bearer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">,</span> <span class="token string">"Content-Type"</span><span class="token punctuation">:</span> <span class="token string">"application/json"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
-        json<span class="token operator">=</span>conn_body<span class="token punctuation">,</span>
+    <span class="token keyword">if</span> <span class="token keyword">not</span> rid<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span>
+            <span class="token string">"FOUNDRY_PROJECT_RESOURCE_ID must be a Microsoft.CognitiveServices "</span>
+            <span class="token string">"account/project ARM id (.../accounts/&lt;account&gt;/projects/&lt;project&gt;)."</span>
+        <span class="token punctuation">)</span>
+    conn_ref <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token operator">**</span>rid<span class="token punctuation">.</span>groupdict<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"connection"</span><span class="token punctuation">:</span> connection_name<span class="token punctuation">}</span>
+    cogsvc_client <span class="token operator">=</span> CognitiveServicesManagementClient<span class="token punctuation">(</span>credential_aad<span class="token punctuation">,</span> conn_ref<span class="token punctuation">[</span><span class="token string">"sub"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    conn_props <span class="token operator">=</span> ConnectionPropertiesV2<span class="token punctuation">(</span>
+        auth_type<span class="token operator">=</span><span class="token string">"ProjectManagedIdentity"</span><span class="token punctuation">,</span>
+        category<span class="token operator">=</span><span class="token string">"RemoteTool"</span><span class="token punctuation">,</span>
+        target<span class="token operator">=</span>MCP_URL<span class="token punctuation">,</span>
+        is_shared_to_all<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+        metadata<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">"ApiType"</span><span class="token punctuation">:</span> <span class="token string">"Azure"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
     <span class="token punctuation">)</span>
-    conn_resp<span class="token punctuation">.</span>raise_for_status<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    created_resources<span class="token punctuation">[</span><span class="token string">"foundry_connection_url"</span><span class="token punctuation">]</span> <span class="token operator">=</span> conn_url
+    conn_props<span class="token punctuation">[</span><span class="token string">"audience"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"https://search.azure.com/"</span>  <span class="token comment"># token audience for Search</span>
+    cogsvc_client<span class="token punctuation">.</span>project_connections<span class="token punctuation">.</span>create<span class="token punctuation">(</span>
+        resource_group_name<span class="token operator">=</span>conn_ref<span class="token punctuation">[</span><span class="token string">"rg"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        account_name<span class="token operator">=</span>conn_ref<span class="token punctuation">[</span><span class="token string">"account"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        project_name<span class="token operator">=</span>conn_ref<span class="token punctuation">[</span><span class="token string">"project"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        connection_name<span class="token operator">=</span>connection_name<span class="token punctuation">,</span>
+        connection<span class="token operator">=</span>ConnectionPropertiesV2BasicResource<span class="token punctuation">(</span>properties<span class="token operator">=</span>conn_props<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+    created_resources<span class="token punctuation">[</span><span class="token string">"foundry_connection"</span><span class="token punctuation">]</span> <span class="token operator">=</span> conn_ref
     <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Project connection ready: </span><span class="token interpolation"><span class="token punctuation">{</span>connection_name<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 
     <span class="token comment"># 2) Create the Foundry Agent with the typed azure-ai-projects 2.1.0 SDK.</span>
@@ -1148,7 +1163,7 @@ maf_answer <span class="token operator">=</span> <span class="token keyword">awa
 project connection are all chargeable. We delete them in dependency order
 so a re-run starts from a blank slate.</p>
 <p>Comment this cell out if you want to keep the KB for further experimentation.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># 1) Delete the Foundry agent + project connection (best-effort, typed SDK + httpx).</span>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># 1) Delete the Foundry agent + project connection (best-effort, typed SDKs).</span>
 <span class="token keyword">if</span> created_resources<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"foundry_agent"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
     <span class="token keyword">try</span><span class="token punctuation">:</span>
         project_client<span class="token punctuation">.</span>agents<span class="token punctuation">.</span>delete<span class="token punctuation">(</span>created_resources<span class="token punctuation">[</span><span class="token string">"foundry_agent"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
@@ -1156,14 +1171,17 @@ so a re-run starts from a blank slate.</p>
     <span class="token keyword">except</span> Exception <span class="token keyword">as</span> exc<span class="token punctuation">:</span>
         <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Foundry agent delete: </span><span class="token interpolation"><span class="token punctuation">{</span>exc<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
     <span class="token keyword">try</span><span class="token punctuation">:</span>
-        credential_aad <span class="token operator">=</span> DefaultAzureCredential<span class="token punctuation">(</span><span class="token punctuation">)</span>
-        arm_bearer <span class="token operator">=</span> get_bearer_token_provider<span class="token punctuation">(</span>credential_aad<span class="token punctuation">,</span> <span class="token string">"https://management.azure.com/.default"</span><span class="token punctuation">)</span>
-        del_resp <span class="token operator">=</span> http<span class="token punctuation">.</span>delete<span class="token punctuation">(</span>
-            created_resources<span class="token punctuation">[</span><span class="token string">"foundry_connection_url"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-            headers<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">"Authorization"</span><span class="token punctuation">:</span> <span class="token string-interpolation"><span class="token string">f"Bearer </span><span class="token interpolation"><span class="token punctuation">{</span>arm_bearer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">}</span><span class="token punctuation">,</span>
-        <span class="token punctuation">)</span>
-        del_resp<span class="token punctuation">.</span>raise_for_status<span class="token punctuation">(</span><span class="token punctuation">)</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Deleted Foundry project connection."</span><span class="token punctuation">)</span>
+        ref <span class="token operator">=</span> created_resources<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"foundry_connection"</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> ref<span class="token punctuation">:</span>
+            CognitiveServicesManagementClient<span class="token punctuation">(</span>
+                DefaultAzureCredential<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> ref<span class="token punctuation">[</span><span class="token string">"sub"</span><span class="token punctuation">]</span>
+            <span class="token punctuation">)</span><span class="token punctuation">.</span>project_connections<span class="token punctuation">.</span>delete<span class="token punctuation">(</span>
+                resource_group_name<span class="token operator">=</span>ref<span class="token punctuation">[</span><span class="token string">"rg"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                account_name<span class="token operator">=</span>ref<span class="token punctuation">[</span><span class="token string">"account"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                project_name<span class="token operator">=</span>ref<span class="token punctuation">[</span><span class="token string">"project"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                connection_name<span class="token operator">=</span>ref<span class="token punctuation">[</span><span class="token string">"connection"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token punctuation">)</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Deleted Foundry project connection."</span><span class="token punctuation">)</span>
     <span class="token keyword">except</span> Exception <span class="token keyword">as</span> exc<span class="token punctuation">:</span>
         <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Foundry connection delete: </span><span class="token interpolation"><span class="token punctuation">{</span>exc<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 

@@ -90,6 +90,7 @@ if not _ok:
     %pip install --quiet \
         "azure-search-documents==12.1.0b1" \
         "azure-ai-projects==2.1.0" \
+        "azure-mgmt-cognitiveservices==15.0.0b2" \
         "azure-identity>=1.19.0" \
         "azure-core>=1.32.0" \
         "openai>=1.50.0" \
@@ -172,10 +173,12 @@ print(f"Embedding deployment   : {EMBEDDING_DEPLOYMENT} ({EMBEDDING_MODEL}, {EMB
 
 ```
 
-The typed SDK wraps every Knowledge Source kind (the three demoed below and the rest in §7). Two endpoints aren't
-surfaced by the SDK yet — the direct MCP JSON-RPC route on the Knowledge Base
-(§11) and the ARM project-connection `PUT` that wires the KB into a Foundry
-agent (§12) — so we call those with `httpx`. No `requests` dependency.
+The typed SDK wraps every Knowledge Source kind (the three demoed below and the rest in §7). One endpoint isn't
+surfaced by the typed SDKs — the direct MCP JSON-RPC route on the Knowledge
+Base (§11) — so we call it with `httpx` (also used to fetch the sample
+dataset in §4). The ARM project-connection that wires the KB into a Foundry
+agent (§12) now uses the typed `azure-mgmt-cognitiveservices` SDK. No
+`requests` dependency.
 
 
 ```python
@@ -269,9 +272,8 @@ def skip(section: str, reason: str) -> None:
     print(f"[skipped] {section}: {reason}")
 
 
-# Shared httpx client for the two endpoints the typed SDK doesn't yet
-# expose: the direct MCP JSON-RPC route on the KB, and the ARM project
-# connection PUT used to wire the KB into a Foundry agent.
+# Shared httpx client for the one endpoint the typed SDKs don't expose -- the
+# direct MCP JSON-RPC route on the KB (§11) -- plus the sample-data fetch (§4).
 http = httpx.Client(timeout=httpx.Timeout(180.0, connect=30.0))
 
 ```
@@ -913,7 +915,8 @@ for block in call_payload["result"].get("content", []):
 The Foundry Agent Service hosts the agent loop, the conversation store,
 and the MCP runtime for you. To attach a Foundry IQ KB:
 
-1. **Create a `RemoteTool` project connection** pointing at the KB's MCP URL.
+1. **Create a `RemoteTool` project connection** pointing at the KB's MCP URL
+   with the typed `azure-mgmt-cognitiveservices` management SDK.
    `authType=ProjectManagedIdentity` lets the project assume its own
    identity when calling Search — no per-user tokens stored on the connection.
 2. **Create an agent** that declares an `mcp` tool referencing the
@@ -924,16 +927,22 @@ and the MCP runtime for you. To attach a Foundry IQ KB:
 
 > **Auth:** `DefaultAzureCredential`. Run `az login` first. Roles needed:
 > *Cognitive Services Contributor* (agent), *Azure AI User* (project
-> endpoint), and write access on the project's resource group (connection PUT).
+> endpoint), and write access on the project's resource group (connection create).
 
 > **Skip:** if `FOUNDRY_PROJECT_ENDPOINT` is blank, this cell prints a
 > skip message and the rest of the notebook still runs.
 
 
 ```python
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+import re
+from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import MCPTool, PromptAgentDefinition
+from azure.mgmt.cognitiveservices import CognitiveServicesManagementClient
+from azure.mgmt.cognitiveservices.models import (
+    ConnectionPropertiesV2,
+    ConnectionPropertiesV2BasicResource,
+)
 
 project_endpoint = env("FOUNDRY_PROJECT_ENDPOINT", required=False)
 project_rid = env("FOUNDRY_PROJECT_RESOURCE_ID", required=False)
@@ -944,34 +953,40 @@ if not (project_endpoint and project_rid):
     skip("Foundry Agent", "set FOUNDRY_PROJECT_ENDPOINT and FOUNDRY_PROJECT_RESOURCE_ID to enable")
 else:
     credential_aad = DefaultAzureCredential()
-    arm_bearer = get_bearer_token_provider(credential_aad, "https://management.azure.com/.default")
 
     # 1) Create the RemoteTool project connection that targets the KB MCP
-    #    endpoint. The ARM PUT isn't surfaced by the typed SDK yet, so we use
-    #    httpx directly (no `requests` dependency).
-    conn_url = (
-        f"https://management.azure.com{project_rid}/connections/{connection_name}"
-        f"?api-version=2025-10-01-preview"
+    #    endpoint, using the typed azure-mgmt-cognitiveservices management SDK.
+    #    Parse the project's ARM id for the subscription, resource group,
+    #    Foundry account, and project names the SDK addresses by.
+    rid = re.search(
+        r"/subscriptions/(?P<sub>[^/]+)/resourceGroups/(?P<rg>[^/]+)/providers/"
+        r"Microsoft\.CognitiveServices/accounts/(?P<account>[^/]+)/projects/(?P<project>[^/]+)",
+        project_rid, re.IGNORECASE,
     )
-    conn_body = {
-        "name": connection_name,
-        "type": "Microsoft.MachineLearningServices/workspaces/connections",
-        "properties": {
-            "authType": "ProjectManagedIdentity",
-            "category": "RemoteTool",
-            "target": MCP_URL,
-            "isSharedToAll": True,
-            "audience": "https://search.azure.com/",
-            "metadata": {"ApiType": "Azure"},
-        },
-    }
-    conn_resp = http.put(
-        conn_url,
-        headers={"Authorization": f"Bearer {arm_bearer()}", "Content-Type": "application/json"},
-        json=conn_body,
+    if not rid:
+        raise ValueError(
+            "FOUNDRY_PROJECT_RESOURCE_ID must be a Microsoft.CognitiveServices "
+            "account/project ARM id (.../accounts/<account>/projects/<project>)."
+        )
+    conn_ref = {**rid.groupdict(), "connection": connection_name}
+    cogsvc_client = CognitiveServicesManagementClient(credential_aad, conn_ref["sub"])
+
+    conn_props = ConnectionPropertiesV2(
+        auth_type="ProjectManagedIdentity",
+        category="RemoteTool",
+        target=MCP_URL,
+        is_shared_to_all=True,
+        metadata={"ApiType": "Azure"},
     )
-    conn_resp.raise_for_status()
-    created_resources["foundry_connection_url"] = conn_url
+    conn_props["audience"] = "https://search.azure.com/"  # token audience for Search
+    cogsvc_client.project_connections.create(
+        resource_group_name=conn_ref["rg"],
+        account_name=conn_ref["account"],
+        project_name=conn_ref["project"],
+        connection_name=connection_name,
+        connection=ConnectionPropertiesV2BasicResource(properties=conn_props),
+    )
+    created_resources["foundry_connection"] = conn_ref
     print(f"Project connection ready: {connection_name}")
 
     # 2) Create the Foundry Agent with the typed azure-ai-projects 2.1.0 SDK.
@@ -1100,7 +1115,7 @@ Comment this cell out if you want to keep the KB for further experimentation.
 
 
 ```python
-# 1) Delete the Foundry agent + project connection (best-effort, typed SDK + httpx).
+# 1) Delete the Foundry agent + project connection (best-effort, typed SDKs).
 if created_resources.get("foundry_agent"):
     try:
         project_client.agents.delete(created_resources["foundry_agent"])
@@ -1108,14 +1123,17 @@ if created_resources.get("foundry_agent"):
     except Exception as exc:
         print(f"Foundry agent delete: {exc}")
     try:
-        credential_aad = DefaultAzureCredential()
-        arm_bearer = get_bearer_token_provider(credential_aad, "https://management.azure.com/.default")
-        del_resp = http.delete(
-            created_resources["foundry_connection_url"],
-            headers={"Authorization": f"Bearer {arm_bearer()}"},
-        )
-        del_resp.raise_for_status()
-        print("Deleted Foundry project connection.")
+        ref = created_resources.get("foundry_connection")
+        if ref:
+            CognitiveServicesManagementClient(
+                DefaultAzureCredential(), ref["sub"]
+            ).project_connections.delete(
+                resource_group_name=ref["rg"],
+                account_name=ref["account"],
+                project_name=ref["project"],
+                connection_name=ref["connection"],
+            )
+            print("Deleted Foundry project connection.")
     except Exception as exc:
         print(f"Foundry connection delete: {exc}")
 
