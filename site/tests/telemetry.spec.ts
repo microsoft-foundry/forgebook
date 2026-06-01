@@ -34,6 +34,8 @@ interface Envelope {
   };
 }
 
+const bridgeOffsets = new WeakMap<Envelope[], number>();
+
 /** Parse an App Insights POST body (JSON array or NDJSON). */
 function parsePayload(body: string | null): Envelope[] {
   if (!body) return [];
@@ -66,6 +68,18 @@ function parsePayload(body: string | null): Envelope[] {
 async function setupCapture(page: Page): Promise<Envelope[]> {
   const captured: Envelope[] = [];
 
+  await page.addInitScript(() => {
+    (window as any).__forgebookTelemetryTestCapture = [];
+
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        readText: async () => "",
+        writeText: async () => undefined,
+      },
+    });
+  });
+
   await page.route(/fake-ai\.test/, async (route) => {
     const body = route.request().postData();
     if (body) captured.push(...parsePayload(body));
@@ -76,10 +90,15 @@ async function setupCapture(page: Page): Promise<Envelope[]> {
 }
 
 /** Flush the SDK buffer and wait for the network request to be intercepted. */
-async function flush(page: Page): Promise<void> {
+async function flush(page: Page, captured: Envelope[]): Promise<void> {
   await page.evaluate(() => (window as any).__telemetry?.flush?.());
   // Give the browser time to complete the network send and the route handler to process
   await page.waitForTimeout(1500);
+
+  const bridgeEvents = await page.evaluate(() => (window as any).__forgebookTelemetryTestCapture ?? []);
+  const offset = bridgeOffsets.get(captured) ?? 0;
+  captured.push(...bridgeEvents.slice(offset));
+  bridgeOffsets.set(captured, bridgeEvents.length);
 }
 
 /** Filter captured envelopes to custom events with a given name. */
@@ -108,7 +127,7 @@ test.describe("Telemetry", () => {
   test("page view is tracked on load", async ({ page }) => {
     const captured = await setupCapture(page);
     await page.goto(HOME);
-    await flush(page);
+    await flush(page, captured);
 
     const pvs = findPageViews(captured);
     expect(pvs.length).toBeGreaterThanOrEqual(1);
@@ -128,7 +147,7 @@ test.describe("Telemetry", () => {
     });
 
     await page.locator("[data-track-click]").first().click();
-    await flush(page);
+    await flush(page, captured);
 
     const clicks = findEvents(captured, "Click");
     const cardClick = clicks.find((e) =>
@@ -150,8 +169,8 @@ test.describe("Telemetry", () => {
       link?.addEventListener("click", (e) => e.preventDefault(), { once: true });
     });
 
-    await page.getByRole("link", { name: "GitHub" }).click();
-    await flush(page);
+    await page.locator('a[href="https://github.com/microsoft-foundry/forgebook"]').first().click();
+    await flush(page, captured);
 
     const outbound = findEvents(captured, "OutboundClick");
     expect(outbound.length).toBeGreaterThanOrEqual(1);
@@ -166,7 +185,7 @@ test.describe("Telemetry", () => {
     await page.goto(HOME);
 
     await page.getByRole("button", { name: /light mode/i }).click();
-    await flush(page);
+    await flush(page, captured);
 
     const events = findEvents(captured, "ThemeChange");
     expect(events.length).toBeGreaterThanOrEqual(1);
@@ -186,7 +205,7 @@ test.describe("Telemetry", () => {
     const tagBtn = page.locator(".tag-filter-btn:not(.tag-clear-btn)").first();
     if (await tagBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await tagBtn.click();
-      await flush(page);
+      await flush(page, captured);
 
       const events = findEvents(captured, "TagFilter");
       expect(events.length).toBeGreaterThanOrEqual(1);
@@ -209,11 +228,16 @@ test.describe("Telemetry", () => {
     // Type a query (debounce is 200ms + pagefind load time)
     await page.fill("#search-input", "agent");
     await page.waitForTimeout(2000);
-    await flush(page);
+    await flush(page, captured);
+
+    const opens = findEvents(captured, "SearchOpen");
+    expect(opens.length).toBeGreaterThanOrEqual(1);
+    expect(opens[0].data?.baseData?.properties?.source).toBe("keyboard-shortcut");
 
     const events = findEvents(captured, "Search");
     expect(events.length).toBeGreaterThanOrEqual(1);
     expect(events[0].data?.baseData?.properties?.query).toBe("agent");
+    expect(Number(events[0].data?.baseData?.properties?.queryLength)).toBe(5);
     expect(events[0].data?.baseData?.properties).toHaveProperty("resultCount");
     expect(events[0].data?.baseData?.properties).toHaveProperty("hasResults");
   });
@@ -242,13 +266,37 @@ test.describe("Telemetry", () => {
 
       // Click the first result
       await page.locator(".search-result-item").first().click();
-      await flush(page);
+      await flush(page, captured);
 
       const events = findEvents(captured, "SearchResultClick");
       expect(events.length).toBeGreaterThanOrEqual(1);
       expect(events[0].data?.baseData?.properties?.query).toBe("agent");
+      expect(Number(events[0].data?.baseData?.properties?.queryLength)).toBe(5);
       expect(events[0].data?.baseData?.properties).toHaveProperty("resultUrl");
     }
+  });
+
+  test("closing search after a query without clicking a result fires SearchAbandon event", async ({ page }) => {
+    const captured = await setupCapture(page);
+    await page.goto(HOME);
+
+    await page.keyboard.press("Control+k");
+    await page.waitForSelector("#search-modal:not([style*='none'])", { timeout: 3000 });
+
+    await page.fill("#search-input", "zzzzzzzzzzzzzzzzzzzz");
+    await page.waitForTimeout(2000);
+    await page.keyboard.press("Escape");
+    await flush(page, captured);
+
+    const events = findEvents(captured, "SearchAbandon");
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    expect(events[0].data?.baseData?.properties).toMatchObject({
+      query: "zzzzzzzzzzzzzzzzzzzz",
+      source: "escape",
+    });
+    expect(Number(events[0].data?.baseData?.properties?.queryLength)).toBe(20);
+    expect(events[0].data?.baseData?.properties).toHaveProperty("hasResults");
+    expect(events[0].data?.baseData?.properties).toHaveProperty("resultCount");
   });
 
   // --------------------------------------------------
@@ -262,8 +310,9 @@ test.describe("Telemetry", () => {
     await page.evaluate(() =>
       window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }),
     );
+    await page.evaluate(() => window.dispatchEvent(new Event("scroll")));
     await page.waitForTimeout(500);
-    await flush(page);
+    await flush(page, captured);
 
     const events = findEvents(captured, "ScrollDepth");
     expect(events.length).toBeGreaterThanOrEqual(1);
@@ -276,34 +325,32 @@ test.describe("Telemetry", () => {
   // --------------------------------------------------
   // 9. Copy code block
   // --------------------------------------------------
-  test("copying a code block fires CopyCodeBlock event", async ({ page, context }) => {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  test("copying a code block fires CopyCodeBlock event", async ({ page }) => {
     const captured = await setupCapture(page);
     await page.goto(NOTEBOOK);
 
     const copyBtn = page.locator(".copy-btn").first();
     if (await copyBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await copyBtn.click();
-      await flush(page);
+      await flush(page, captured);
 
       const events = findEvents(captured, "CopyCodeBlock");
       expect(events.length).toBeGreaterThanOrEqual(1);
       expect(events[0].data?.baseData?.properties).toHaveProperty("codeLength");
-      expect(events[0].data?.baseData?.properties).toHaveProperty("codePreview");
+      expect(events[0].data?.baseData?.properties).not.toHaveProperty("codePreview");
     }
   });
 
   // --------------------------------------------------
   // 10. Copy Markdown
   // --------------------------------------------------
-  test("copying markdown fires CopyMarkdown event", async ({ page, context }) => {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  test("copying markdown fires CopyMarkdown event", async ({ page }) => {
     const captured = await setupCapture(page);
     await page.goto(NOTEBOOK);
 
-    await page.getByRole("button", { name: "Copy Markdown" }).click();
+    await page.getByRole("button", { name: "Copy page" }).click();
     await page.waitForTimeout(1000); // Wait for fetch + clipboard write
-    await flush(page);
+    await flush(page, captured);
 
     const events = findEvents(captured, "CopyMarkdown");
     expect(events.length).toBeGreaterThanOrEqual(1);
@@ -313,19 +360,36 @@ test.describe("Telemetry", () => {
   // --------------------------------------------------
   // 11. Share — copy link
   // --------------------------------------------------
-  test("share copy-link fires ShareAction event", async ({ page, context }) => {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  test("primary share button copies link and fires ShareAction event", async ({ page }) => {
+    const captured = await setupCapture(page);
+    await page.goto(NOTEBOOK);
+
+    await page.getByRole("button", { name: "Share", exact: true }).click();
+    await expect(page.locator("#share-btn-text")).toHaveText("Copied!");
+    await expect(page.locator("#share-dropdown")).toHaveClass(/hidden/);
+    await page.waitForTimeout(1000);
+    await flush(page, captured);
+
+    const events = findEvents(captured, "ShareAction");
+    const copyEvent = events.find((e) =>
+      e.data?.baseData?.properties?.method === "CopyLink" &&
+      e.data?.baseData?.properties?.source === "button"
+    );
+    expect(copyEvent).toBeTruthy();
+  });
+
+  test("share copy-link fires ShareAction event", async ({ page }) => {
     const captured = await setupCapture(page);
     await page.goto(NOTEBOOK);
 
     // Open share dropdown
-    await page.locator("#share-btn").click();
+    await page.locator("#share-dropdown-btn").click();
     await page.waitForSelector("#share-dropdown:not(.hidden)", { timeout: 2000 });
 
     // Click "Copy Link" and wait for async clipboard operation
     await page.locator("#copy-link-btn").click();
     await page.waitForTimeout(1000);
-    await flush(page);
+    await flush(page, captured);
 
     const events = findEvents(captured, "ShareAction");
     expect(events.length).toBeGreaterThanOrEqual(1);
@@ -340,7 +404,7 @@ test.describe("Telemetry", () => {
     await page.goto(NOTEBOOK);
 
     // Open share dropdown
-    await page.locator("#share-btn").click();
+    await page.locator("#share-dropdown-btn").click();
     await page.waitForSelector("#share-dropdown:not(.hidden)", { timeout: 2000 });
 
     // Prevent navigation to X
@@ -349,7 +413,7 @@ test.describe("Telemetry", () => {
     });
 
     await page.locator("#share-x").click();
-    await flush(page);
+    await flush(page, captured);
 
     const events = findEvents(captured, "ShareAction");
     const xEvent = events.find((e) => e.data?.baseData?.properties?.method === "X");
@@ -372,7 +436,7 @@ test.describe("Telemetry", () => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
     await page.waitForTimeout(1000);
-    await flush(page);
+    await flush(page, captured);
 
     const metrics = captured.filter((e) => e.data?.baseType === "MetricData");
     // Web vitals are environment-dependent; just verify no crash.

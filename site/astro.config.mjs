@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 import fs from "node:fs";
@@ -30,6 +31,11 @@ function pagefindDevPlugin() {
 export default defineConfig({
   site: "https://microsoft-foundry.github.io",
   base: process.env.ASTRO_BASE || "/forgebook",
+  integrations: [
+    sitemap({
+      filter: (page) => !page.endsWith(".md"),
+    }),
+  ],
   vite: {
     plugins: [tailwindcss(), pagefindDevPlugin()],
   },

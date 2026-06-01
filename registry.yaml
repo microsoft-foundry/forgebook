@@ -123,7 +123,7 @@
 - slug: mai-transcribe-1-5
   path: notebooks/mai-transcribe-1-5.ipynb
   title: "Build Speech-to-Text with MAI-Transcribe-1.5"
-  description: "Speech API multipart cookbook for MAI-Transcribe-1.5 v2 covering verbatim mode, language ID, and entity biasing with model-card-aligned limits."
+  description: "Speech API multipart cookbook for MAI-Transcribe-1.5 covering baseline transcription, verbatim mode, phrase-list entity biasing, and language identification."
   date: "2026-05-28"
   authors:
     - github: anihitk07

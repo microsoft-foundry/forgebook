@@ -58,7 +58,7 @@ cd site && npm run build                      # Full build with type checking
    - Prism.js highlighting (Python, JS, TS, bash, JSON, YAML)
    - KaTeX for math (`$inline$` and `$$block$$`)
    - `marked` with GFM + footnotes for markdown cells
-4. Each notebook gets three routes: `/notebook/<slug>/` (rendered), `<slug>.md` and `<slug>/raw.md` (raw markdown)
+4. Each notebook gets two routes: `/notebook/<slug>/` (rendered) and `/notebook/<slug>.md` (raw markdown)
 
 ### Image and Data Organization
 - Organize per-recipe: `notebooks/media/<slug>/` and `notebooks/data/<slug>/`
