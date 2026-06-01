@@ -61,7 +61,8 @@ This notebook demonstrates REST call patterns, multilingual synthesis, expressiv
 </tbody></table>
 <p>* Required when <code>USE_ENTRA_AUTH=false</code>.</p>
 <p>Do not commit <code>.env</code> or <code>deployment.env</code> files with secrets.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># %pip install -q requests python-dotenv azure-identity</span></code></pre></div></div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">import</span> os
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># %pip install -q requests python-dotenv azure-identity</span>
+</code></pre></div></div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">import</span> os
 <span class="token keyword">from</span> pathlib <span class="token keyword">import</span> Path
 <span class="token keyword">import</span> requests
 <span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
@@ -100,7 +101,7 @@ token_provider <span class="token operator">=</span> <span class="token boolean"
 
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f'Endpoint: </span><span class="token interpolation"><span class="token punctuation">{</span>VOICE2_ENDPOINT<span class="token punctuation">}</span></span><span class="token string">'</span></span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f'Auth mode: {'</span></span>Entra ID<span class="token string">' if USE_ENTRA_AUTH else '</span>API key<span class="token string">'}'</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Default sample voice: en-US-Harper:MAI-Voice-2'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Default sample voice: en-US-Harper:MAI-Voice-2-Preview'</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Output target: 24kHz MP3'</span><span class="token punctuation">)</span>
 </code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>2. Model Card Highlights</h2>
 </div><div class="nb-cell nb-markdown-cell"><ul>
@@ -115,7 +116,7 @@ token_provider <span class="token operator">=</span> <span class="token boolean"
 </ul>
 </div><div class="nb-cell nb-markdown-cell"><h2>3. Reference HTTP Pattern</h2>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">reference_ssml <span class="token operator">=</span> <span class="token triple-quoted-string string">'''&lt;speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US"&gt;
-  &lt;voice name="en-US-Harper:MAI-Voice-2"&gt;
+  &lt;voice name="en-US-Harper:MAI-Voice-2-Preview"&gt;
     Hello, this is test text-to-speech model
   &lt;/voice&gt;
 &lt;/speak&gt;'''</span>
@@ -181,10 +182,10 @@ RUN_REFERENCE_CALL <span class="token operator">=</span> <span class="token bool
 </ul>
 <p>Audio style and prosody can vary between runs and model updates.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">samples <span class="token operator">=</span> <span class="token punctuation">[</span>
-    <span class="token punctuation">{</span><span class="token string">'lang'</span><span class="token punctuation">:</span> <span class="token string">'en-US'</span><span class="token punctuation">,</span> <span class="token string">'voice'</span><span class="token punctuation">:</span> <span class="token string">'en-US-Harper:MAI-Voice-2'</span><span class="token punctuation">,</span> <span class="token string">'text'</span><span class="token punctuation">:</span> <span class="token string">'Hello from MAI Voice 2 in English.'</span><span class="token punctuation">,</span> <span class="token string">'out'</span><span class="token punctuation">:</span> <span class="token string">'mai_voice2_en.mp3'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
-    <span class="token punctuation">{</span><span class="token string">'lang'</span><span class="token punctuation">:</span> <span class="token string">'es-MX'</span><span class="token punctuation">,</span> <span class="token string">'voice'</span><span class="token punctuation">:</span> <span class="token string">'es-MX-Valeria:MAI-Voice-2'</span><span class="token punctuation">,</span> <span class="token string">'text'</span><span class="token punctuation">:</span> <span class="token string">'Hola, esta es una muestra de MAI Voice 2.'</span><span class="token punctuation">,</span> <span class="token string">'out'</span><span class="token punctuation">:</span> <span class="token string">'mai_voice2_es.mp3'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
-    <span class="token punctuation">{</span><span class="token string">'lang'</span><span class="token punctuation">:</span> <span class="token string">'fr-FR'</span><span class="token punctuation">,</span> <span class="token string">'voice'</span><span class="token punctuation">:</span> <span class="token string">'fr-FR-Soleil:MAI-Voice-2'</span><span class="token punctuation">,</span> <span class="token string">'text'</span><span class="token punctuation">:</span> <span class="token string">'Bonjour, ceci est un exemple MAI Voice 2.'</span><span class="token punctuation">,</span> <span class="token string">'out'</span><span class="token punctuation">:</span> <span class="token string">'mai_voice2_fr.mp3'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
-    <span class="token punctuation">{</span><span class="token string">'lang'</span><span class="token punctuation">:</span> <span class="token string">'de-DE'</span><span class="token punctuation">,</span> <span class="token string">'voice'</span><span class="token punctuation">:</span> <span class="token string">'de-DE-Klaus:MAI-Voice-2'</span><span class="token punctuation">,</span> <span class="token string">'text'</span><span class="token punctuation">:</span> <span class="token string">'Hallo, dies ist eine MAI Voice 2 Probe.'</span><span class="token punctuation">,</span> <span class="token string">'out'</span><span class="token punctuation">:</span> <span class="token string">'mai_voice2_de.mp3'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span><span class="token string">'lang'</span><span class="token punctuation">:</span> <span class="token string">'en-US'</span><span class="token punctuation">,</span> <span class="token string">'voice'</span><span class="token punctuation">:</span> <span class="token string">'en-US-Harper:MAI-Voice-2-Preview'</span><span class="token punctuation">,</span> <span class="token string">'text'</span><span class="token punctuation">:</span> <span class="token string">'Hello from MAI Voice 2 in English.'</span><span class="token punctuation">,</span> <span class="token string">'out'</span><span class="token punctuation">:</span> <span class="token string">'mai_voice2_en.mp3'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span><span class="token string">'lang'</span><span class="token punctuation">:</span> <span class="token string">'es-MX'</span><span class="token punctuation">,</span> <span class="token string">'voice'</span><span class="token punctuation">:</span> <span class="token string">'es-MX-Valeria:MAI-Voice-2-Preview'</span><span class="token punctuation">,</span> <span class="token string">'text'</span><span class="token punctuation">:</span> <span class="token string">'Hola, esta es una muestra de MAI Voice 2.'</span><span class="token punctuation">,</span> <span class="token string">'out'</span><span class="token punctuation">:</span> <span class="token string">'mai_voice2_es.mp3'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span><span class="token string">'lang'</span><span class="token punctuation">:</span> <span class="token string">'fr-FR'</span><span class="token punctuation">,</span> <span class="token string">'voice'</span><span class="token punctuation">:</span> <span class="token string">'fr-FR-Soleil:MAI-Voice-2-Preview'</span><span class="token punctuation">,</span> <span class="token string">'text'</span><span class="token punctuation">:</span> <span class="token string">'Bonjour, ceci est un exemple MAI Voice 2.'</span><span class="token punctuation">,</span> <span class="token string">'out'</span><span class="token punctuation">:</span> <span class="token string">'mai_voice2_fr.mp3'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span><span class="token string">'lang'</span><span class="token punctuation">:</span> <span class="token string">'de-DE'</span><span class="token punctuation">,</span> <span class="token string">'voice'</span><span class="token punctuation">:</span> <span class="token string">'de-DE-Klaus:MAI-Voice-2-Preview'</span><span class="token punctuation">,</span> <span class="token string">'text'</span><span class="token punctuation">:</span> <span class="token string">'Hallo, dies ist eine MAI Voice 2 Probe.'</span><span class="token punctuation">,</span> <span class="token string">'out'</span><span class="token punctuation">:</span> <span class="token string">'mai_voice2_de.mp3'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
 <span class="token punctuation">]</span>
 
 <span class="token keyword">for</span> s <span class="token keyword">in</span> samples<span class="token punctuation">:</span>
@@ -195,20 +196,7 @@ RUN_REFERENCE_CALL <span class="token operator">=</span> <span class="token bool
         synthesize_to_file<span class="token punctuation">(</span>ssml<span class="token punctuation">,</span> s<span class="token punctuation">[</span><span class="token string">'out'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
     <span class="token keyword">except</span> Exception <span class="token keyword">as</span> ex<span class="token punctuation">:</span>
         <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"</span><span class="token interpolation"><span class="token punctuation">{</span>s<span class="token punctuation">[</span><span class="token string">'voice'</span><span class="token punctuation">]</span><span class="token punctuation">}</span></span><span class="token string"> failed: </span><span class="token interpolation"><span class="token punctuation">{</span>ex<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-</code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>6. Expressive Control with SSML</h2>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">STYLE_SSML <span class="token operator">=</span> <span class="token triple-quoted-string string">'''&lt;speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US"&gt;
-  &lt;voice name="en-US-Harper:MAI-Voice-2"&gt;
-    &lt;mstts:express-as style="happiness" styledegree="1.2"&gt;
-      Welcome to Microsoft Build. MAI Voice 2 supports multilingual expressive synthesis.
-    &lt;/mstts:express-as&gt;
-  &lt;/voice&gt;
-&lt;/speak&gt;'''</span>
-
-<span class="token keyword">try</span><span class="token punctuation">:</span>
-    synthesize_to_file<span class="token punctuation">(</span>STYLE_SSML<span class="token punctuation">,</span> <span class="token string">'mai_voice2_style.mp3'</span><span class="token punctuation">)</span>
-<span class="token keyword">except</span> Exception <span class="token keyword">as</span> ex<span class="token punctuation">:</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f'Styled synthesis failed: </span><span class="token interpolation"><span class="token punctuation">{</span>ex<span class="token punctuation">}</span></span><span class="token string">'</span></span><span class="token punctuation">)</span>
-</code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>7. Voice Prompting Note (Gated Access)</h2>
+</code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>6. Voice Prompting Note (Gated Access)</h2>
 </div><div class="nb-cell nb-markdown-cell"><p>Voice prompting (personal voice cloning) is gated and requires Microsoft approval plus consent safeguards.</p>
 <p>Implementation reminders from the model card:</p>
 <ol>
@@ -217,7 +205,7 @@ RUN_REFERENCE_CALL <span class="token operator">=</span> <span class="token bool
 <li>Use Personal Voice APIs to create voice profile.</li>
 <li>Synthesize with approved voice profile.</li>
 </ol>
-</div><div class="nb-cell nb-markdown-cell"><h2>8. Next Steps</h2>
+</div><div class="nb-cell nb-markdown-cell"><h2>7. Next Steps</h2>
 <ol>
 <li>Set MAI_VOICE_2_PRICE_PER_1M_CHAR after MAI-Voice-2 pricing is published.</li>
 <li>Replace sample voices with the final published MAI-Voice-2 voice list.</li>
