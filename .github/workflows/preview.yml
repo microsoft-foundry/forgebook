@@ -53,6 +53,7 @@ jobs:
       - name: Run accessibility checks
         working-directory: ./site
         env:
+          ASTRO_BASE: /forgebook/preview/pr-${{ github.event.pull_request.number }}
           PLAYWRIGHT_BASE_URL: http://localhost:4321/forgebook/preview/pr-${{ github.event.pull_request.number }}
           FORGEBOOK_TEST_BASE_PATH: /forgebook/preview/pr-${{ github.event.pull_request.number }}
         run: npm run test:a11y
