@@ -1161,9 +1161,13 @@ Foundry Agent + Microsoft Agent Framework consumers. From here:
   For federated KS (Remote SharePoint, WorkIQ) wire **per-user OBO** by
   passing `x-ms-query-source-authorization` via `structured_inputs`.
   See: [Connect a knowledge base to a Foundry agent](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect).
-- **Add Purview ACL trim** to your indexed KS (Blob, OneLake, SP, SQL) by
-  setting `ingestionPermissionOptions=["userIds","groupIds"]` and passing the
-  same OBO header at retrieve time.
+- **Add Purview and ACL trim** to your indexed KS that support full ACLs
+  (**ADLS Gen2**, **SharePoint**) by setting
+  `ingestionPermissionOptions=["sensitivityLabel", "groupIds", "userIds"]`.
+- **Add Purview sensitivity-label support** to your indexed KS that support
+  labels only (**Blob**, **OneLake**) by setting
+  `ingestionPermissionOptions=["sensitivityLabel"]`.
+  In both cases, pass the same OBO header at retrieve time.
 - **Move to Managed Identity end-to-end** — swap `AzureKeyCredential` for
   `DefaultAzureCredential` and assign *Search Service Contributor*,
   *Search Index Data Contributor*, *Cognitive Services User*.
