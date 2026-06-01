@@ -123,7 +123,7 @@
 - slug: mai-transcribe-1-5
   path: notebooks/mai-transcribe-1-5.ipynb
   title: "Build Speech-to-Text with MAI-Transcribe-1.5"
-  description: "Speech API multipart cookbook for MAI-Transcribe-1.5 covering baseline transcription, verbatim mode, phrase-list entity biasing, and language identification."
+  description: "Speech API multipart cookbook for MAI-Transcribe-1.5 v2 covering verbatim mode, language ID, and entity biasing with model-card-aligned limits."
   date: "2026-05-28"
   authors:
     - github: anihitk07
@@ -135,8 +135,8 @@
 
 - slug: mai-voice-2
   path: notebooks/mai-voice-2.ipynb
-  title: "Build a Multilingual Text-to-Speech Recipe with MAI-Voice-2"
-  description: "MAI-Voice-2 notebook with key-auth REST calls, multilingual speakers, expressive SSML, and cost calculator patterns."
+  title: "Build Multilingual TTS with MAI-Voice-2-Preview"
+  description: "MAI-Voice-2-Preview notebook with key-auth REST calls, multilingual speakers, expressive SSML, and model-card-aligned preview guidance."
   date: "2026-05-28"
   authors:
     - github: anihitk07
