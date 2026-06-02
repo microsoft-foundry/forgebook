@@ -8,7 +8,6 @@ MAI-Image-2.5 is a next-generation image model for both:
 - precise, controllable **image-to-image editing**.
 
 Model-card highlights reflected in this notebook:
-- Model behavior: supports text-to-image generation and image-to-image editing
 - Inputs: text, plus image input for editing
 - Context length: 32K tokens
 - Output limit: total pixels must be <= 1,048,576 (equivalent to 1024x1024). Either dimension may exceed 1024 if total stays within budget.
