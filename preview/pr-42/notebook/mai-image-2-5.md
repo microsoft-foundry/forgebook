@@ -13,7 +13,7 @@ Model-card highlights reflected in this notebook:
 - Context length: 32K tokens
 - Output limit: total pixels must be <= 1,048,576 (equivalent to 1024x1024). Either dimension may exceed 1024 if total stays within budget.
 - Strong focus areas: surgical edits, layout preservation, text updates, artifact cleanup, portrait/product quality
-- Quality signal: see the MAI-Image-2.5 model page for current quality information.
+- Quality signal: see the [MAI-Image-2.5 model page](https://microsoft.ai/models/mai-image-2-5/) for the latest evaluation details.
 
 ## Private Preview Terms (must follow)
 - Internal-only use; no external end-user access.
