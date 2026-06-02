@@ -19,8 +19,8 @@
     "@microsoft/applicationinsights-web": "^3.4.1",
     "@tailwindcss/typography": "^0.5.19",
     "@types/jsdom": "^28.0.3",
-    "@types/marked": "^5.0.2",
-    "astro": "^6.3.8",
+    "@types/marked": "^6.0.0",
+    "astro": "^6.4.2",
     "dompurify": "^3.4.7",
     "jsdom": "^29.1.1",
     "katex": "^0.17.0",
@@ -30,7 +30,7 @@
     "notebookjs": "^0.8.3",
     "prismjs": "^1.30.0",
     "typescript": "^6.0.3",
-    "web-vitals": "^5.2.0",
+    "web-vitals": "^5.3.0",
     "yaml": "^2.8.2"
   },
   "devDependencies": {
