@@ -227,10 +227,16 @@ Example response shape:
 ```
 
 
-## 6. Notes from model card
+## 6. Notes from model card (v2)
 
-- Keep fallback behavior enabled for environments where `enhancedMode` or model-scoped enhanced mode is not yet available.
-- Supported input formats: WAV, MP3, FLAC.
+- **Language coverage expanded to 43 languages** (25 from MAI-Transcribe-1 + 18 additional languages in v2).
+- **Faster long-form inference**: up to **5.7x** faster than MAI-Transcribe-1 on long audio.
+- **Entity/keyword biasing** supported (up to **200 keywords**) via `phraseList.phrases`.
+- **Automatic language identification** is supported.
+- **Current limitation**: diarization is not supported yet (planned for an upcoming release).
+- **Input formats**: WAV, MP3, FLAC.
+- **Input limits**: up to **300 MB** and **2 hours** of audio.
+- **Serving regions (global routing)**: Central US, Sweden Central, and Southeast Asia.
 
 
 ## 7. Troubleshooting

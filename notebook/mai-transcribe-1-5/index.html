@@ -216,10 +216,16 @@ lid_result <span class="token operator">=</span> transcribe_with_definition<span
   ]
 }
 </code></pre>
-</div><div class="nb-cell nb-markdown-cell"><h2>6. Notes from model card</h2>
+</div><div class="nb-cell nb-markdown-cell"><h2>6. Notes from model card (v2)</h2>
 <ul>
-<li>Keep fallback behavior enabled for environments where <code>enhancedMode</code> or model-scoped enhanced mode is not yet available.</li>
-<li>Supported input formats: WAV, MP3, FLAC.</li>
+<li><strong>Language coverage expanded to 43 languages</strong> (25 from MAI-Transcribe-1 + 18 additional languages in v2).</li>
+<li><strong>Faster long-form inference</strong>: up to <strong>5.7x</strong> faster than MAI-Transcribe-1 on long audio.</li>
+<li><strong>Entity/keyword biasing</strong> supported (up to <strong>200 keywords</strong>) via <code>phraseList.phrases</code>.</li>
+<li><strong>Automatic language identification</strong> is supported.</li>
+<li><strong>Current limitation</strong>: diarization is not supported yet (planned for an upcoming release).</li>
+<li><strong>Input formats</strong>: WAV, MP3, FLAC.</li>
+<li><strong>Input limits</strong>: up to <strong>300 MB</strong> and <strong>2 hours</strong> of audio.</li>
+<li><strong>Serving regions (global routing)</strong>: Central US, Sweden Central, and Southeast Asia.</li>
 </ul>
 </div><div class="nb-cell nb-markdown-cell"><h2>7. Troubleshooting</h2>
 <table>
