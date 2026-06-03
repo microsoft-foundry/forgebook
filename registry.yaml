@@ -45,7 +45,7 @@
 - slug: mai-transcribe-1-foundry
   path: notebooks/mai-transcribe-1-foundry.ipynb
   title: "Transcribe Audio with MAI-Transcribe-1"
-  description: "Entra-first MAI-Transcribe-1 notebook with Foundry endpoint setup, local audio transcription, diarization, translation, and cost estimation."
+  description: "Entra-first MAI-Transcribe-1 notebook with Foundry endpoint setup, local audio transcription, translation, diarization fallback guidance, and cost estimation."
   date: "2026-06-02"
   authors:
     - github: anihitk07
@@ -136,7 +136,7 @@
 - slug: mai-voice-2
   path: notebooks/mai-voice-2.ipynb
   title: "Build Multilingual TTS with MAI-Voice-2-Preview"
-  description: "MAI-Voice-2-Preview notebook with key-auth REST calls, multilingual speakers, expressive SSML, and model-card-aligned preview guidance."
+  description: "MAI-Voice-2-Preview notebook with REST calls, multilingual prebuilt voices, gated voice-prompting guidance, and model-card-aligned preview notes."
   date: "2026-05-28"
   authors:
     - github: anihitk07
