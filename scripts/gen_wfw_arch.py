@@ -23,7 +23,7 @@ CON_FILL = "#f5f3ff"
 CON_EDGE = "#8b5cf6"
 
 fig, ax = plt.subplots(figsize=(13, 7.2), dpi=150)
-ax.set_xlim(0, 130)
+ax.set_xlim(0, 142)
 ax.set_ylim(0, 72)
 ax.axis("off")
 
@@ -50,26 +50,26 @@ def arrow(x1, y1, x2, y2, color=MUTED, lw=1.8, style="-|>"):
 
 
 # Column headers
-ax.text(16, 70, "3 Federated Knowledge Sources", ha="center", fontsize=12.5,
+ax.text(16, 70, "3 Microsoft IQ layers", ha="center", fontsize=12.5,
         fontweight="bold", color=KS_EDGE)
-ax.text(56, 70, "Unified Knowledge Base", ha="center", fontsize=12.5,
+ax.text(56, 70, "Foundry IQ Knowledge Base", ha="center", fontsize=12.5,
         fontweight="bold", color=KB_EDGE)
-ax.text(110, 70, "Consumers", ha="center", fontsize=12.5,
+ax.text(120, 70, "Any agent (via MCP)", ha="center", fontsize=12.5,
         fontweight="bold", color=CON_EDGE)
 
 # --- Knowledge Sources (left column) ---
 box(2, 45, 28, 17, KS_FILL, KS_EDGE, "Work IQ",
-    ["Tenant work content:", "mail, chats, files,", "meetings (kind=workIQ)"])
+    ["How your people work:", "mail, chats, files,", "meetings (kind=workIQ)"])
 box(2, 25, 28, 17, KS_FILL, KS_EDGE, "Fabric IQ",
-    ["Airline ontology in", "Microsoft Fabric", "(fabricOntology)"])
+    ["Live state of business:", "airline ontology in", "Fabric (fabricOntology)"])
 box(2, 5, 28, 17, MCP_FILL, MCP_EDGE, "Web IQ",
-    ["Grounding 'Speedbird'", "MCP: web, news,", "videos, browse"])
+    ["Fresh web intelligence:", "remote Grounding MCP", "web, news, videos"])
 
 # --- Knowledge Base (center) ---
-box(40, 16, 34, 36, KB_FILL, KB_EDGE, "Knowledge Base",
+box(40, 16, 34, 36, KB_FILL, KB_EDGE, "Foundry IQ KB",
     ["1. Plan subqueries",
      "2. Retrieve in parallel",
-     "   across all 3 sources",
+     "   across all 3 IQs",
      "3. Rerank candidates",
      "4. Synthesize ONE",
      "   cited answer",
@@ -77,31 +77,34 @@ box(40, 16, 34, 36, KB_FILL, KB_EDGE, "Knowledge Base",
      "outputMode =",
      "answerSynthesis"], line_size=9.2)
 
-# --- MCP tool (center-right bridge) ---
-box(82, 30, 26, 12, MCP_FILL, MCP_EDGE, "MCP tool",
+# --- MCP endpoint (center-right bridge) ---
+box(80, 30, 22, 12, MCP_FILL, MCP_EDGE, "MCP endpoint",
     ["knowledge_base", "_retrieve"], title_size=11, line_size=9)
 
 # --- Consumers (right column) ---
-box(96, 47, 30, 13, CON_FILL, CON_EDGE, "Foundry Agent",
-    ["RemoteTool connection", "(ProjectManagedIdentity)"], title_size=11)
-box(96, 11, 30, 13, CON_FILL, CON_EDGE, "GitHub Copilot",
-    [".vscode/mcp.json", "(+ Copilot CLI / hosts)"], title_size=11)
+box(108, 50, 30, 11, CON_FILL, CON_EDGE, "Foundry Agent Service",
+    ["RemoteTool connection"], title_size=10)
+box(108, 30.5, 30, 11, CON_FILL, CON_EDGE, "Microsoft Agent Framework",
+    ["MCP tool binding"], title_size=9.5)
+box(108, 11, 30, 11, CON_FILL, CON_EDGE, "GitHub Copilot",
+    [".vscode/mcp.json / CLI"], title_size=10)
 
 # --- Arrows: KS -> KB ---
 arrow(30, 53.5, 40, 45, color=KS_EDGE)
 arrow(30, 33.5, 40, 33, color=KS_EDGE)
 arrow(30, 13.5, 40, 22, color=MCP_EDGE)
 
-# KB -> MCP tool
-arrow(74, 36, 82, 36, color=KB_EDGE, lw=2.2)
+# KB -> MCP endpoint
+arrow(74, 36, 80, 36, color=KB_EDGE, lw=2.2)
 
-# MCP tool -> consumers
-arrow(105, 42, 108, 50, color=CON_EDGE)
-arrow(105, 30, 108, 20, color=CON_EDGE)
+# MCP endpoint -> consumers
+arrow(102, 39, 108, 52, color=CON_EDGE)
+arrow(102, 36, 108, 36, color=CON_EDGE)
+arrow(102, 33, 108, 18, color=CON_EDGE)
 
 # Footer caption
 ax.text(65, 1.5,
-        "Federated retrieval: three live sources, one grounded + cited answer, exposed once over MCP.",
+        "Microsoft IQ layers federated by Foundry IQ: three live sources, one grounded + cited answer, exposed once over MCP.",
         ha="center", fontsize=9.5, color=MUTED, style="italic")
 
 plt.tight_layout()
