@@ -1,4 +1,4 @@
-![Microsoft IQ knowledge layers federated by Foundry IQ. On the left, three Microsoft IQ knowledge layers — Work IQ (live understanding of how people work: mail, chats, files, meetings), Fabric IQ (the live state of the business as an airline ontology in Microsoft Fabric), and Web IQ (fresh real-world intelligence from the web via the Microsoft Grounding MCP server) — each become a federated Knowledge Source. In the center, Foundry IQ federates all three into one Knowledge Base that plans subqueries, retrieves across every source in parallel, reranks the candidates, and synthesizes one grounded answer with citations. On the right, that same Knowledge Base is exposed once as an MCP endpoint that any agent — Foundry Agent Service, Microsoft Agent Framework, or GitHub Copilot — can consume.](media/microsoft-iq-in-foundry/01-architecture.png)
+![The Microsoft IQ platform — unified intelligence for enterprise AI. Four knowledge layers shown side by side: Work IQ (“how your employees work”) grounds on context about people, collaboration, and workflows; Fabric IQ (“how your business operates”) grounds on business entities, systems of record, and actions; Foundry IQ (“how your agents unlock knowledge”) grounds on policies, authoritative documents, and knowledge bases; and Web IQ (“how you connect to web intelligence”) grounds on context from the web, news, images, and video.](media/microsoft-iq-in-foundry/01-architecture.png)
 
 # Build a Microsoft IQ knowledge layer in Foundry IQ
 
@@ -53,7 +53,7 @@ gates below.
 | **Microsoft Foundry project** | One chat model deployment (e.g. `gpt-4.1`, `gpt-4.1-mini`, `gpt-4o`) — the KB planner/synthesizer. |
 | **Work IQ access** *(gated + licensed)* | Work IQ retrieval is **off by default**. Register the `EnableFoundryIQWithWorkIQ` feature flag, re-register the `Microsoft.Search` provider, and have a tenant admin submit the [Work IQ access request form](https://aka.ms/foundry-iq-work-iq-admin-consent-form). Each querying user needs a **Microsoft 365 Copilot license**, and the search service + Work IQ + users must share **one Entra tenant**. How-to: [Work IQ knowledge source](https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-work-iq?pivots=python). |
 | **Fabric IQ ontology** | A Fabric workspace with the [ontology tenant settings](https://learn.microsoft.com/fabric/iq/ontology/overview-tenant-settings) enabled and an [ontology item](https://learn.microsoft.com/fabric/iq/ontology/tutorial-1-create-ontology) — in the **same Entra tenant** as the search service. How-to: [Fabric ontology knowledge source](https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python). |
-| **Web IQ access** *(waitlist)* | Web IQ is available through a **waitlist** — [join here](https://aka.ms/webiq-waitlist) ([learn more](https://aka.ms/WebIQLearn)). Once approved you get an API key for the **remote Microsoft Grounding MCP server** at `https://api.microsoft.ai/v3/mcp`. **Secret** — never commit it. |
+| **Web IQ access** *(waitlist)* | Web IQ is available through a **waitlist** — [join here](https://aka.ms/webiq-waitlist) ([learn more](https://aka.ms/WebIQLearn)). Once approved you get an API key for the **remote Microsoft Grounding MCP server** at `https://api.microsoft.ai/v3/mcp`. |
 
 > **One token, two per-user IQs.** Both Work IQ and Fabric IQ enforce
 > permissions at query time via an **on-behalf-of (OBO)** token — you pass the
@@ -288,29 +288,30 @@ from azure.search.documents.indexes.models import (
     FabricOntologyKnowledgeSourceParameters,
 )
 
-# IDs come from the Fabric ontology item URL (the airline ontology used here).
-FABRIC_WORKSPACE_ID = env(
-    "FABRIC_WORKSPACE_ID", required=False, default="d1836af9-9280-46c0-98d6-6c4736a9943b"
-)
-FABRIC_ONTOLOGY_ID = env(
-    "FABRIC_ONTOLOGY_ID", required=False, default="337db531-62fe-413c-b6fa-7c211b633401"
-)
+# Point this at YOUR ontology. Both IDs are in the Fabric ontology item URL:
+#   https://app.fabric.microsoft.com/groups/<workspace-id>/ontologies/<ontology-id>
+# This recipe uses an airline ontology as the running example; substitute your own.
+FABRIC_WORKSPACE_ID = env("FABRIC_WORKSPACE_ID", required=False)
+FABRIC_ONTOLOGY_ID = env("FABRIC_ONTOLOGY_ID", required=False)
 
-ks = FabricOntologyKnowledgeSource(
-    name=KS_FABRIC_IQ,
-    description="Fabric IQ -- airline ontology (flights, routes, aircraft, crews) in Microsoft Fabric.",
-    fabric_ontology_parameters=FabricOntologyKnowledgeSourceParameters(
-        workspace_id=FABRIC_WORKSPACE_ID,
-        ontology_id=FABRIC_ONTOLOGY_ID,
-    ),
-)
-try:
-    index_client.create_or_update_knowledge_source(ks)
-    created_ks.append(KS_FABRIC_IQ)
-    print(f"Created {KS_FABRIC_IQ} (workspace={FABRIC_WORKSPACE_ID}, ontology={FABRIC_ONTOLOGY_ID})")
-    summarize_ks(KS_FABRIC_IQ)
-except Exception as exc:
-    skip(KS_FABRIC_IQ, f"create failed (check Search MI access to the Fabric workspace): {exc}")
+if not (FABRIC_WORKSPACE_ID and FABRIC_ONTOLOGY_ID):
+    skip(KS_FABRIC_IQ, "set FABRIC_WORKSPACE_ID and FABRIC_ONTOLOGY_ID to your own ontology to enable Fabric IQ")
+else:
+    ks = FabricOntologyKnowledgeSource(
+        name=KS_FABRIC_IQ,
+        description="Fabric IQ -- a business ontology (here, an airline ontology: flights, routes, aircraft, crews) in Microsoft Fabric.",
+        fabric_ontology_parameters=FabricOntologyKnowledgeSourceParameters(
+            workspace_id=FABRIC_WORKSPACE_ID,
+            ontology_id=FABRIC_ONTOLOGY_ID,
+        ),
+    )
+    try:
+        index_client.create_or_update_knowledge_source(ks)
+        created_ks.append(KS_FABRIC_IQ)
+        print(f"Created {KS_FABRIC_IQ} (workspace={FABRIC_WORKSPACE_ID}, ontology={FABRIC_ONTOLOGY_ID})")
+        summarize_ks(KS_FABRIC_IQ)
+    except Exception as exc:
+        skip(KS_FABRIC_IQ, f"create failed (check Search MI access to the Fabric workspace): {exc}")
 
 ```
 
@@ -467,8 +468,7 @@ This is the payoff. We run **four** retrievals against the one Foundry IQ KB:
    scope.
 
 Each cell prints the synthesized answer, the **reference count per source**, and
-a sample extract — so you can *see* each Microsoft IQ grounding the answer. §7e
-asserts every IQ returned and the cross-source query touched ≥2.
+a sample extract — so you can *see* each Microsoft IQ grounding the answer.
 
 > **Per-user IQs need a caller token.** Both **Work IQ** and **Fabric IQ** are
 > identity-scoped: each retrieve must carry a user token via
@@ -714,39 +714,6 @@ activity = [a.as_dict() if hasattr(a, "as_dict") else dict(a) for a in (res_cros
 print("PLANNER ACTIVITY (truncated)")
 print("----------------------------")
 print(_json.dumps(activity, indent=2)[:2500])
-
-```
-
-### 7e · Verify every IQ answered
-
-A compact scorecard: each enabled IQ should have returned **≥1 reference** in its
-scoped query, and the cross-source query should have touched **≥2 distinct IQ
-types**. This is the success criterion for the recipe.
-
-
-```python
-def count_for(result) -> int:
-    return len(result.references or []) if result is not None else 0
-
-
-scoped = {
-    "Work IQ (7a)": (KS_WORK_IQ, res_work),
-    "Fabric IQ (7b)": (KS_FABRIC_IQ, res_fabric),
-    "Web IQ (7c)": (KS_WEB_IQ, res_web),
-}
-
-print("Per-IQ scorecard")
-print("----------------")
-for label, (ks_name, res) in scoped.items():
-    if ks_name not in kb_sources:
-        print(f"  {label:18} : n/a (source not enabled this run)")
-        continue
-    n = count_for(res)
-    print(f"  {label:18} : {n} reference(s)  {'OK' if n > 0 else 'NO RESULTS'}")
-
-cross_types = set(refs_by_type(res_cross)) if res_cross is not None else set()
-print(f"\nCross-source (7d) distinct IQ types: {sorted(t for t in cross_types if t)} "
-      f"({len(cross_types)} >= 2 ? {'OK' if len(cross_types) >= 2 else 'NEEDS >=2'})")
 
 ```
 
