@@ -8,7 +8,7 @@ Publishing is explicit. Notebook source files live in `notebooks/`, public metad
 
 ## Recipes
 
-- [Build a Multilingual Text-to-Speech Recipe with MAI-Voice-2](https://microsoft-foundry.github.io/forgebook/notebook/mai-voice-2.md): MAI-Voice-2 notebook with key-auth REST calls, multilingual speakers, expressive SSML, and cost calculator patterns. Tags: mai, models, inference, multimodal.
+- [Build Multilingual TTS with MAI-Voice-2-Preview](https://microsoft-foundry.github.io/forgebook/notebook/mai-voice-2.md): MAI-Voice-2-Preview notebook with REST calls, multilingual prebuilt voices, gated voice-prompting guidance, and model-card-aligned preview notes. Tags: mai, models, inference, multimodal.
 - [Build a Production Editing Recipe with MAI-Image-2.5](https://microsoft-foundry.github.io/forgebook/notebook/mai-image-2-5.md): Private-preview MAI-Image-2.5 notebook covering text-to-image generation, image edits, safety reminders, and troubleshooting. Tags: mai, models, inference, multimodal.
 - [Build Speech-to-Text with MAI-Transcribe-1.5](https://microsoft-foundry.github.io/forgebook/notebook/mai-transcribe-1-5.md): Speech API multipart cookbook for MAI-Transcribe-1.5 covering baseline transcription, verbatim mode, phrase-list entity biasing, and language identification. Tags: mai, models, inference, multimodal.
 - [Call MAI-Image-2 from a Foundry Deployment](https://microsoft-foundry.github.io/forgebook/notebook/mai-image-2-foundry.md): Foundry-focused MAI-Image-2 notebook covering deployment-based calls, prompt variants, and cost breakdown. Tags: mai, models, inference, images, image-generation, multimodal.
@@ -18,7 +18,7 @@ Publishing is explicit. Notebook source files live in `notebooks/`, public metad
 - [Guide Sora 2 with Images and Audio](https://microsoft-foundry.github.io/forgebook/notebook/sora-video-generation-rest-api.md): Use Azure OpenAI REST calls to generate a Sora 2 clip, reuse a frame as an image reference, and add ambient audio. Tags: azure-openai, video, video-generation, audio, audio-generation, multimodal, responsible-ai.
 - [Mastering Foundry IQ](https://microsoft-foundry.github.io/forgebook/notebook/mastering-foundry-iq.md): End-to-end Foundry IQ walkthrough covering Knowledge Source types, a unified Knowledge Base, and integrations with Foundry Agent Service and Microsoft Agent Framework. Tags: iq, retrieval, grounding, azure-ai-search, mcp, agents, agent-service, agent-framework.
 - [Tools and Your First Code (Part 2)](https://microsoft-foundry.github.io/forgebook/notebook/foundry-agent-part-2.md): Connect your agent to Microsoft Learn and GitHub MCP servers, handle MCP approval requests, explore the tool catalog, and see your agent defined in YAML and Python. Tags: agents, agent-service, tools, mcp, sdk.
-- [Transcribe Audio with MAI-Transcribe-1](https://microsoft-foundry.github.io/forgebook/notebook/mai-transcribe-1-foundry.md): Entra-first MAI-Transcribe-1 notebook with Foundry endpoint setup, local audio transcription, diarization, translation, and cost estimation. Tags: mai, models, inference, speech, transcription, audio.
+- [Transcribe Audio with MAI-Transcribe-1](https://microsoft-foundry.github.io/forgebook/notebook/mai-transcribe-1-foundry.md): Entra-first MAI-Transcribe-1 notebook with Foundry endpoint setup, local audio transcription, translation, diarization fallback guidance, and cost estimation. Tags: mai, models, inference, speech, transcription, audio.
 
 ## Optional
 

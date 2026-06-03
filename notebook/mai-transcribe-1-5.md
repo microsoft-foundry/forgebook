@@ -121,7 +121,7 @@ Example response shape:
     {"text": "..."}
   ],
   "phrases": [
-    {"speaker": 0, "offsetMilliseconds": 0, "text": "..."}
+    {"offsetMilliseconds": 0, "text": "..."}
   ]
 }
 ```
@@ -152,15 +152,15 @@ Example response shape:
     {"text": "..."}
   ],
   "phrases": [
-    {"speaker": 0, "offsetMilliseconds": 0, "text": "..."}
+    {"offsetMilliseconds": 0, "text": "..."}
   ]
 }
 ```
 
 
-## 4. Entity biasing example (phrase list)
+## 4. Entity biasing example (PhraseList)
 
-This is the entity biasing pattern: pass important names/terms via `phraseList.phrases` to improve recognition.
+`PhraseList` can increase accuracy in specialized domains by passing important names and terms via `phraseList.phrases`. This implements entity biasing.
 
 
 ```python
@@ -188,7 +188,7 @@ Example response shape:
     {"text": "..."}
   ],
   "phrases": [
-    {"speaker": 0, "offsetMilliseconds": 0, "text": "..."}
+    {"offsetMilliseconds": 0, "text": "..."}
   ]
 }
 ```
@@ -221,7 +221,7 @@ Example response shape:
     {"text": "..."}
   ],
   "phrases": [
-    {"speaker": 0, "offsetMilliseconds": 0, "text": "..."}
+    {"offsetMilliseconds": 0, "text": "..."}
   ]
 }
 ```
@@ -229,9 +229,10 @@ Example response shape:
 
 ## 6. Notes from model card (v2)
 
-- **Language coverage expanded to 43 languages** (25 from MAI-Transcribe-1 + 18 additional languages in v2).
+- **Language coverage expanded**: MAI-Transcribe-1.5 supports the current Learn language table, including additions such as Assamese, Bulgarian, Bengali, Catalan, Greek, Estonian, Gujarati, Kannada, Lithuanian, Malayalam, Marathi, Odia, Punjabi (Gurmukhi script), Slovak, Slovenian, Tamil, Telugu, and Ukrainian. See [MAI-Transcribe language support](https://learn.microsoft.com/azure/ai-services/speech-service/mai-transcribe#language-support).
 - **Faster long-form inference**: up to **5.7x** faster than MAI-Transcribe-1 on long audio.
-- **Entity/keyword biasing** supported (up to **200 keywords**) via `phraseList.phrases`.
+- **PhraseList/entity biasing** can increase accuracy in specialized domains (up to **200 keywords**) via `phraseList.phrases`.
+- **Transcribe style** is supported through `enhancedMode.transcribeStyle`; use `verbatim` to preserve filler words and disfluencies.
 - **Automatic language identification** is supported.
 - **Current limitation**: diarization is not supported yet (planned for an upcoming release).
 - **Input formats**: WAV, MP3, FLAC.

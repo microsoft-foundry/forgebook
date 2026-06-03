@@ -2,8 +2,8 @@
 
 **Model card reference:** MAI-Voice-2 (Foundry) latest update
 
-MAI-Voice-2-Preview is a high-fidelity, expressive, prompted TTS model across 15 languages and 18 locales.
-This notebook demonstrates REST call patterns, multilingual synthesis, expressive SSML, and practical implementation notes.
+MAI-Voice-2-Preview is a high-fidelity, expressive, prompted TTS model in public preview across 15 languages and 18 locales.
+This notebook demonstrates REST call patterns, multilingual synthesis with currently published prebuilt voices, voice prompting guidance, and practical implementation notes.
 
 
 ## 1. Setup
@@ -76,8 +76,9 @@ print('Output target: 24kHz MP3')
 ## 2. Model Card Highlights
 
 
-- High-fidelity natural voice synthesis with expressive control.
-- Generate speech from short audio prompts (5-60 seconds).
+- **Preview status:** MAI-Voice-2 is currently in public preview and is not recommended for production workloads.
+- High-fidelity natural voice synthesis with expressive, conversational output.
+- Generate speech from short audio prompts (5-60 seconds). Voice prompting is gated and requires Microsoft approval plus consent safeguards.
 - Multilingual support across **15 languages and 18 locales**.
 - Supported languages: Arabic, Chinese, English, French, German, Hindi, Indonesian, Italian, Japanese, Korean, Portuguese, Russian, Spanish, Thai, and Vietnamese.
 - Supports long-form content generation via chunking with context carryover.
@@ -85,6 +86,31 @@ print('Output target: 24kHz MP3')
 - Served globally via East US, Sweden Central, and Southeast Asia.
 - Pricing reference: **$22 per 1M characters**.
 - Out-of-scope note: optimized for naturalness/expressivity over ultra-low-latency scenarios.
+
+
+### Available prebuilt voices
+
+The currently published MAI-Voice-2-Preview prebuilt voices are:
+
+| Voice ID | Locale | Language | Gender | Recommended use case |
+|---|---|---|---|---|
+| `en-US-Harper:MAI-Voice-2-Preview` | `en-US` | English (United States) | Female | General conversation, expressive long-form |
+| `es-MX-Valeria:MAI-Voice-2-Preview` | `es-MX` | Spanish (Mexico) | Female | General conversation, multilingual narration |
+| `fr-FR-Soleil:MAI-Voice-2-Preview` | `fr-FR` | French (France) | Female | General conversation, multilingual narration |
+| `de-DE-Klaus:MAI-Voice-2-Preview` | `de-DE` | German (Germany) | Male | General conversation, multilingual narration |
+
+Microsoft may add more locales and voices during preview; check the public MAI-Voice documentation before hard-coding a voice list in production code.
+
+
+### Choosing MAI-Voice-1 vs. MAI-Voice-2
+
+| If you need... | Use | Practical guidance |
+|---|---|---|
+| English-only TTS with mature SSML style-control examples | MAI-Voice-1 | Keep MAI-Voice-1 for existing English flows that already depend on a specific voice/style combination. |
+| Multilingual narration or localized conversational UX | MAI-Voice-2-Preview | Run the same script through the closest MAI-Voice-2 locale, then compare pronunciation, naturalness, and persona consistency side by side. |
+| A voice that resembles an approved short reference clip | MAI-Voice-2-Preview voice prompting | Use only approved prompt audio, keep clips in the 5-60 second range, document consent, and review generated output before downstream use. |
+
+For recipe validation, save one MAI-Voice-1 baseline and one MAI-Voice-2 sample for the same sentence. Listen for pronunciation, pacing, emotional fit, and whether the localized voice preserves the intent without over-tuning the prompt.
 
 
 ## 3. Reference HTTP Pattern
@@ -190,14 +216,18 @@ for s in samples:
 
 ```
 
-## 6. Voice Prompting Note (Gated Access)
+## 6. Voice Prompting and Access Requests
 
 
 Voice prompting (personal voice cloning) is gated and requires Microsoft approval plus consent safeguards.
 
+Generate speech from short audio prompts (5-60 seconds). Use only prompt audio you are authorized to use, retain consent records, and review generated audio before downstream use.
+
+If MAI-Voice-2 or voice prompting is not visible in your subscription, treat it as gated preview access: request access through your Microsoft account team or the [Azure AI Custom Neural Voice and Custom Avatar Limited Access Review](https://aka.ms/customneural), then wait for approval before building with customer data.
+
 Implementation reminders from the model card:
 1. Apply for limited access approval.
-2. Upload consent audio + prompt.
+2. Upload consent audio and a 5-60 second prompt.
 3. Use Personal Voice APIs to create voice profile.
 4. Synthesize with approved voice profile.
 
@@ -205,5 +235,5 @@ Implementation reminders from the model card:
 ## 7. Next Steps
 
 1. Set MAI_VOICE_2_PRICE_PER_1M_CHAR after MAI-Voice-2 pricing is published.
-2. Replace sample voices with the final published MAI-Voice-2 voice list.
+2. Re-check the public MAI-Voice docs for newly published voices and locales before shipping.
 3. Add latency benchmarking if your scenario is latency-sensitive.
