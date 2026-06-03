@@ -1,10 +1,10 @@
 ## Transcribe Audio with MAI-Transcribe-1
 
-**Problem this recipe solves:** You need a production-ready transcription pipeline that handles diarization, prompt-tuning, translation, and clear failure modes — without trial-and-error against an unfamiliar endpoint. The wrapper degrades gracefully when the endpoint rejects newer payload options.
+**Problem this recipe solves:** You need a production-ready transcription pipeline that handles transcription, capability fallbacks, translation, and clear failure modes — without trial-and-error against an unfamiliar endpoint. The wrapper degrades gracefully when the endpoint rejects newer payload options.
 
 **Who this is for:** Developers shipping voice-of-customer, contact-center, or media-indexing workloads on Microsoft Foundry.
 
-**Reusable pattern:** Wrap the Foundry `speechtotext/transcriptions:transcribe` REST call once with progressive `enhancedMode` fallback, then layer on diarization, lexical mode, domain prompting, and translation by injecting `extra_definition` overrides.
+**Reusable pattern:** Wrap the Foundry `speechtotext/transcriptions:transcribe` REST call once with progressive `enhancedMode` fallback, then layer on segment details, lexical mode, domain prompting, translation, and explicit diarization fallback guidance by injecting `extra_definition` overrides.
 
 **You will produce:**
 - a `transcribe_audio(...)` helper that survives endpoint capability differences across `enhancedMode.model`, `enhancedMode`, and plain mode payloads
@@ -17,7 +17,7 @@
 1. Run setup + auth (cells in §1). Confirm `Auth mode` printout and that token claims show your `oid` / `tid`.
 2. Pick a local audio file (§2). The recipe expects 16 kHz mono WAV/MP3/FLAC under ~70 MB.
 3. Run §3 (basic transcript) first — this validates endpoint, auth, file format, and capability fallbacks before you spend time on advanced options.
-4. Layer §4 (segments + timestamps), §5 (diarization), §6 (prompt-tuning), §7 (translation). Each section is independent; you can pick and choose.
+4. Layer §4 (segments + timestamps), §5 (diarization fallback guidance), §6 (prompt-tuning), §7 (translation). Each section is independent; you can pick and choose.
 5. Run §8 (Entra auth), §9 (cost), §10 (evidence) before opening a PR or sharing results.
 
 **Watch for:**
@@ -304,9 +304,9 @@ for i, phrase in enumerate(phrases, 1):
         print(f"  ... and {len(words) - 5} more words")
 ```
 
-## 5. Speaker Diarization
+## 5. Speaker Diarization Fallback (not MAI-Transcribe-1)
 
-Identify who is speaking. Enable `diarization` in the request definition.
+Diarization is not shipped for MAI-Transcribe-1. If you need speaker labels, omit the MAI model key and use standard LLM Speech mode where your endpoint supports diarization.
 
 **Watch for:** diarization is **not** supported with `mai-transcribe-1` directly. Omit the `model` key (defaults to LLM speech) when you need speaker labels.
 
@@ -464,7 +464,7 @@ for label, hours in scenarios.items():
 |---|---|
 | Basic transcription | ✅ |
 | Word-level timestamps | ✅ |
-| Speaker diarization | ✅ (LLM speech mode) |
+| Speaker diarization | Not supported by MAI-Transcribe-1; use standard LLM Speech mode if your endpoint supports speaker labels |
 | Prompt-tuning | ✅ |
 | Translation | ✅ |
 | Real-time transcription | 🔜 Coming soon |
