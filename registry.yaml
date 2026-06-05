@@ -190,3 +190,18 @@
     - mcp
     - agents
     - agent-service
+
+- slug: azure-ai-search-custom-schema-citations
+  path: notebooks/azure-ai-search-custom-schema-citations.ipynb
+  title: "Fix Agent Citations for Custom Azure AI Search Schemas"
+  description: "Get real url/title citations from the Azure AI Search tool when your index fields aren't named url/title/content — register the index as an asset with a FieldMapping and use index_asset_id."
+  date: "2026-06-05"
+  authors:
+    - github: farzad528
+  tags:
+    - azure-ai-search
+    - agents
+    - agent-service
+    - tools
+    - grounding
+    - retrieval
