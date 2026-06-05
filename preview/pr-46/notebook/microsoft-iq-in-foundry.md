@@ -459,298 +459,47 @@ print(f"\nFoundry IQ Knowledge Base '{KB_NAME}' is ready.")
 
 ## 7 · Query the knowledge layer
 
-This is the payoff. We run **five** retrievals against the one Foundry IQ KB:
+That's the whole build. Querying is a single call: send a question to the
+Knowledge Base and Foundry IQ plans subqueries, routes them across Work IQ,
+Fabric IQ, and Web IQ (steered by the `retrieval_instructions` from §6),
+reranks, and returns one cited answer.
 
-1. **7a Work IQ** — a work question, scoped to Work IQ.
-2. **7b Fabric IQ** — an airline-ontology question, scoped to Fabric IQ.
-3. **7c Web IQ** — a fresh-web question, scoped to Web IQ.
-4. **7d Cross-source** — one question that **joins ≥2 IQs**, with all sources in
-   scope.
-5. **7e One question, auto-routed** — one question with **no scoping**; the KB
-   routes it across the IQs for you.
-
-Each cell prints the synthesized answer, the **reference count per source**, and
-a sample extract — so you can *see* each Microsoft IQ grounding the answer.
-
-> **Per-user IQs need a caller token.** Both **Work IQ** and **Fabric IQ** are
-> identity-scoped: each retrieve must carry a user token via
-> `query_source_authorization` (audience `https://search.azure.com`). **Web IQ**
-> authenticates with its own stored `x-apikey`, so it grounds with or without
-> the token. The setup cell below mints the signed-in user's token with
-> `DefaultAzureCredential`. See
-> [Retrieve from a knowledge base (Python)](https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-how-to-retrieve?pivots=python).
+> Work IQ and Fabric IQ are per-user: pass the signed-in user's token via
+> `query_source_authorization` (audience `https://search.azure.com`). Web IQ
+> grounds with its own stored key.
 
 
 ```python
-import json as _json
-
 from azure.identity import DefaultAzureCredential
 from azure.search.documents.knowledgebases import KnowledgeBaseRetrievalClient
 from azure.search.documents.knowledgebases.models import (
-    FabricOntologyKnowledgeSourceParams,
     KnowledgeBaseMessage,
     KnowledgeBaseMessageTextContent,
     KnowledgeBaseRetrievalRequest,
-    McpServerKnowledgeSourceParams,
-    WorkIQKnowledgeSourceParams,
 )
 
-retrieval_client = KnowledgeBaseRetrievalClient(
+kb_client = KnowledgeBaseRetrievalClient(
     endpoint=SEARCH_ENDPOINT,
-    credential=credential,
     knowledge_base_name=KB_NAME,
+    credential=DefaultAzureCredential(),
 )
 
-
-def user_query_authorization() -> Optional[str]:
-    """Mint the signed-in user's token for the per-user IQs (Work IQ, Fabric IQ)."""
-    try:
-        token = DefaultAzureCredential().get_token("https://search.azure.com/.default").token
-        print("query_source_authorization : acquired user token")
-        return token
-    except Exception as exc:  # noqa: BLE001 -- best-effort; Web IQ still works
-        print(f"query_source_authorization : unavailable ({exc}); Work IQ + Fabric IQ will return no references")
-        return None
-
-
-query_auth = user_query_authorization()
-
-
-def ks_params_for(name: str, reranker_threshold: Optional[float] = None):
-    """Per-kind retrieve params for the federated IQ wired into the KB."""
-    common = dict(
-        knowledge_source_name=name,
-        include_references=True,
-        include_reference_source_data=True,
-    )
-    if reranker_threshold is not None:
-        common["reranker_threshold"] = reranker_threshold
-    if name == KS_WORK_IQ:
-        return WorkIQKnowledgeSourceParams(**common)
-    if name == KS_FABRIC_IQ:
-        return FabricOntologyKnowledgeSourceParams(**common)
-    if name == KS_WEB_IQ:
-        return McpServerKnowledgeSourceParams(**common)
-    return None
-
-
-def retrieve(question: str, sources: list[str], *, reranker_threshold=None, max_runtime_seconds: int = 180):
-    """Run one KB retrieval, scoped to `sources` (a subset of the KB's IQs)."""
-    params = [ks_params_for(n, reranker_threshold) for n in sources]
-    request = KnowledgeBaseRetrievalRequest(
-        messages=[
-            KnowledgeBaseMessage(
-                role="user",
-                content=[KnowledgeBaseMessageTextContent(text=question)],
-            )
-        ],
-        knowledge_source_params=[p for p in params if p],
-        include_activity=True,
-        max_runtime_in_seconds=max_runtime_seconds,
-    )
-    # query_source_authorization auths the per-user IQs (Work IQ, Fabric IQ).
-    return retrieval_client.retrieve(request, query_source_authorization=query_auth)
-
-
-def answer_text(result) -> str:
-    parts = []
-    for message in (result.response or []):
-        for content in (message.content or []):
-            text = getattr(content, "text", None)
-            if text:
-                parts.append(text)
-    return "\n\n".join(parts)
-
-
-def describe_reference(ref) -> str:
-    """Pull a human-readable snippet out of a reference, per IQ type."""
-    rtype = getattr(ref, "type", None)
-    src = ref.source_data or {}
-    if not isinstance(src, dict):
-        return str(src)[:240]
-    if rtype == "fabricOntology":                              # Fabric IQ
-        bits = []
-        if src.get("fabricAnswer"):
-            bits.append(str(src["fabricAnswer"]))
-        if src.get("fabricRawData"):
-            bits.append("data: " + str(src["fabricRawData"])[:160])
-        return "  |  ".join(bits) or _json.dumps(src)[:240]
-    if rtype == "workIQ":                                      # Work IQ
-        texts = [e.get("text") for e in (src.get("extracts") or []) if e.get("text")]
-        more = [a.get("seeMoreWebUrl") for a in (src.get("attributions") or []) if a.get("seeMoreWebUrl")]
-        out = (" ".join(texts) or src.get("content") or src.get("text") or "")[:200]
-        if more:
-            out += f"  (see more: {more[0]})"
-        return out or _json.dumps(src)[:240]
-    return (src.get("title") or "") + " " + (src.get("content") or src.get("text") or _json.dumps(src))[:200]
-
-
-def refs_by_type(result) -> dict:
-    counts: dict = {}
-    for r in (result.references or []):
-        t = getattr(r, "type", None)
-        counts[t] = counts.get(t, 0) + 1
-    return counts
-
-
-def report(label: str, result, *, max_answer: int = 600, max_refs: int = 3) -> None:
-    if result is None:
-        print(f"=== {label} ===\n[skipped] source not created this run\n")
-        return
-    refs = result.references or []
-    print(f"=== {label} ===")
-    print(f"references: {len(refs)}   by_type: {refs_by_type(result)}")
-    ans = answer_text(result).strip()
-    if ans:
-        print(f"\nANSWER\n------\n{ans[:max_answer]}{'...' if len(ans) > max_answer else ''}")
-    for ref in refs[:max_refs]:
-        snippet = describe_reference(ref).strip().replace("\n", " ")
-        print(f"  [ref_id:{ref.id}] type={getattr(ref, 'type', None)!r} :: {snippet[:200]}")
-    print()
-
-```
-
-### 7a · Work IQ — a work question
-
-Scope the retrieve to Work IQ alone and ask about internal work content. A
-non-empty `references` list (type `workIQ`) proves Work IQ grounded the answer.
-
-
-```python
-work_question = (
-    "Summarize what we've discussed internally about transatlantic route "
-    "planning, long-haul fleet decisions, or premium-cabin strategy."
+request = KnowledgeBaseRetrievalRequest(
+    messages=[
+        KnowledgeBaseMessage(
+            role="user",
+            content=[KnowledgeBaseMessageTextContent(
+                text="What should I know before our transatlantic route-planning review?"
+            )],
+        ),
+    ],
 )
 
-if KS_WORK_IQ in kb_sources:
-    res_work = retrieve(work_question, [KS_WORK_IQ])
-else:
-    res_work = None
-    skip("7a Work IQ", "Work IQ source not created -- enable it in §3")
+# Work IQ + Fabric IQ are per-user; pass the caller's token. Web IQ uses its own key.
+user_token = DefaultAzureCredential().get_token("https://search.azure.com/.default").token
+result = kb_client.retrieve(request, query_source_authorization=user_token)
 
-report("7a · Work IQ", res_work)
-
-```
-
-### 7b · Fabric IQ — an airline-ontology question
-
-Scope to Fabric IQ and ask a **narrow, aggregate** question the ontology can
-answer in business terms. We pass `reranker_threshold=0.0` so on-topic ontology
-rows aren't filtered out.
-
-> **Keep Fabric questions narrow.** A broad ontology question ("list every
-> aircraft *and* its routes") can trip a **"data is too large to process in a
-> single request"** response — Fabric tries to pull a whole entity table.
-> Aggregate or scoped questions ("how many aircraft *by manufacturer*?") return
-> clean `fabricAnswer` + `fabricRawData`.
-
-
-```python
-fabric_question = (
-    "Using our airline ontology, how many aircraft are in the fleet, grouped by "
-    "manufacturer?"
-)
-
-if KS_FABRIC_IQ in kb_sources:
-    # reranker_threshold=0.0 keeps on-ontology rows that a higher bar would drop.
-    # A narrow, aggregate question avoids the "data too large" Fabric error you
-    # get when a broad query tries to pull an entire entity table at once.
-    res_fabric = retrieve(fabric_question, [KS_FABRIC_IQ], reranker_threshold=0.0)
-else:
-    res_fabric = None
-    skip("7b Fabric IQ", "Fabric IQ source not created -- enable it in §4")
-
-report("7b · Fabric IQ", res_fabric)
-
-```
-
-### 7c · Web IQ — a fresh-web question
-
-Scope to Web IQ and ask something only the live web can answer. References of
-type `web` / `mcpServer` prove Web IQ grounded the answer. (Web IQ needs no user
-token — it uses its stored `x-apikey`.)
-
-
-```python
-web_question = (
-    "What's the latest public news on long-haul, transatlantic aircraft and "
-    "route announcements from major carriers?"
-)
-
-if KS_WEB_IQ in kb_sources:
-    res_web = retrieve(web_question, [KS_WEB_IQ])
-else:
-    res_web = None
-    skip("7c Web IQ", "Web IQ source not created -- set WEB_IQ_MCP_API_KEY in §5 (waitlist: https://aka.ms/webiq-waitlist)")
-
-report("7c · Web IQ", res_web)
-
-```
-
-### 7d · Cross-source — join the IQs
-
-Now the hero query. One question that **no single IQ can answer alone**: it pairs
-our **fleet composition by manufacturer** (Fabric IQ) with the **latest public
-news** on new long-haul aircraft and transatlantic routes (Web IQ), and folds in
-any **internal context** (Work IQ). All sources are in scope; the planner fans
-out, reranks, and synthesizes one cited answer. The activity trace shows how the
-turn was decomposed.
-
-
-```python
-cross_question = (
-    "I'm prepping a transatlantic route-planning review. Using our airline "
-    "ontology, what is our fleet composition by manufacturer? Then combine that "
-    "with the latest public news on new long-haul aircraft and transatlantic "
-    "routes — which manufacturers in the news do we already operate? Add "
-    "anything we've discussed internally."
-)
-
-# reranker_threshold=0.0 lets each IQ's top row survive the shared rerank so the
-# answer is grounded across sources, not dominated by one.
-res_cross = retrieve(cross_question, kb_sources, reranker_threshold=0.0)
-report("7d · Cross-source", res_cross, max_answer=900, max_refs=6)
-
-# The planner activity trace: how the one turn was decomposed across the IQs.
-activity = [a.as_dict() if hasattr(a, "as_dict") else dict(a) for a in (res_cross.activity or [])]
-print("PLANNER ACTIVITY (truncated)")
-print("----------------------------")
-print(_json.dumps(activity, indent=2)[:2500])
-
-```
-
-### 7e · One question, auto-routed
-
-*You don't have to scope every call to a single IQ. Hand Foundry IQ one
-natural-language question with no per-source params and its planner inspects
-every Microsoft IQ in the Knowledge Base, decomposes the request, and routes
-each subquery to the sources most likely to answer — Work IQ, Fabric IQ, Web
-IQ, or several at once — then reranks and synthesizes one cited answer. Steer
-that routing with the Knowledge Base's `retrieval_instructions` (set in §6):
-plain-language rules like "use Fabric IQ for fleet and operational facts, Web
-IQ for current events, Work IQ for internal context" that the planner reads
-when deciding which IQ to call.*
-
-
-```python
-# One question, no per-source scoping -- Foundry IQ routes it for you.
-simple = retrieval_client.retrieve(
-    KnowledgeBaseRetrievalRequest(
-        messages=[
-            KnowledgeBaseMessage(
-                role="user",
-                content=[KnowledgeBaseMessageTextContent(
-                    text="What should I know before our transatlantic route-planning review?"
-                )],
-            )
-        ],
-        include_activity=True,
-    ),
-    query_source_authorization=query_auth,
-)
-
-print(answer_text(simple).strip()[:900])
-print("\nrouted to:", refs_by_type(simple))
+print(result.response[0].content[0].text)
 
 ```
 
@@ -833,8 +582,8 @@ for ks_name in created_ks:
 ## 10 · Next steps
 
 You built a **Microsoft IQ knowledge layer** — Work IQ, Fabric IQ, and Web IQ
-federated by **Foundry IQ** into one Knowledge Base, proven to answer from each
-IQ and across them. From here:
+federated by **Foundry IQ** into one Knowledge Base you query with a single
+call. From here:
 
 - **Tour every KS type.** The companion recipe
   [Mastering Foundry IQ](mastering-foundry-iq) walks indexed, uploaded, and
