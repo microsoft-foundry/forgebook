@@ -2,6 +2,10 @@
 
 # Build your own knowledge layer with Microsoft IQ
 
+[![Deploy Foundry IQ — create an Azure AI Search service](https://img.shields.io/badge/Deploy%20Foundry%20IQ-Create%20Azure%20AI%20Search-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://portal.azure.com/#create/Microsoft.Search)
+
+*No Foundry IQ yet? Click the button to create an Azure AI Search service — the resource Foundry IQ runs on — then come back and run §1.*
+
 > **Preview.** Microsoft IQ knowledge sources in Foundry IQ are in preview. They run on the `2026-05-01-preview` Search API and work in **any** Azure AI Search region — there is no preview-region requirement. Cells ship with outputs cleared and call live services; run them against your own resources.
 
 [**Microsoft IQ**](https://learn.microsoft.com/microsoft-iq/) is an enterprise intelligence layer that unifies your data, business knowledge, and work context into one shared context for AI — so agents make faster, better-grounded decisions. Each IQ grounds a different slice of that context:
