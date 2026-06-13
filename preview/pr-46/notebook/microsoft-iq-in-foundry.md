@@ -2,7 +2,18 @@
 
 # Build your own knowledge layer with Microsoft IQ
 
-[**Microsoft IQ**](https://learn.microsoft.com/en-us/microsoft-iq/) is a family of knowledge layers that ground AI agents in your reality — your files, your people's work, your business, and the live web. [**Foundry IQ**](https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-overview) is the layer that federates them: one **Knowledge Base** that fans a single question across every source, then plans, retrieves, reranks, and returns one cited answer. It runs on Azure AI Search agentic retrieval.
+> **Preview.** Microsoft IQ knowledge sources in Foundry IQ are in preview. They run on the `2026-05-01-preview` Search API and work in **any** Azure AI Search region — there is no preview-region requirement. Cells ship with outputs cleared and call live services; run them against your own resources.
+
+[**Microsoft IQ**](https://learn.microsoft.com/microsoft-iq/) is an enterprise intelligence layer that unifies your data, business knowledge, and work context into one shared context for AI — so agents make faster, better-grounded decisions. Each IQ grounds a different slice of that context:
+
+| Microsoft IQ | What it grounds on |
+|---|---|
+| **Fabric IQ** | Unified data, semantic models, and ontologies in [Microsoft Fabric](https://learn.microsoft.com/fabric) — the live state of your business. |
+| **Foundry IQ** | Enterprise knowledge and retrieval — **the federation layer you build here**. |
+| **Work IQ** | Work context across Microsoft 365 — mail, chats, files, and meetings. |
+| **Web IQ** | Fresh, real-world intelligence from the open web — web and news. |
+
+[**Foundry IQ**](https://learn.microsoft.com/azure/search/agentic-retrieval-overview) is the layer that federates them: one **Knowledge Base** that fans a single question across every source, then plans, retrieves, reranks, and returns one cited answer. It runs on Azure AI Search agentic retrieval.
 
 **You'll build it one layer at a time — each layer makes your agent smarter:**
 
@@ -11,30 +22,37 @@
 | 📁 **Your files** *(start here)* | Documents you upload straight into Foundry IQ | **None** — runs out of the box |
 | 🌐 **Web IQ** | The live web — web + news | Waitlist |
 | 👥 **Work IQ** | Microsoft 365 mail, chats, files, meetings | Gated + licensed |
-| 📊 **Fabric IQ** | Your business as an ontology in Microsoft Fabric | An ontology item |
+| 📊 **Fabric IQ** | Your business as an ontology in Microsoft Fabric | An ontology or data agent |
 
 Start with the file hero — it works with **zero setup**. Then add the optional layers you have access to; each one re-queries the Knowledge Base so you can *see* the new intelligence. Every optional layer **skips cleanly** if you're not set up for it, so the notebook always runs top to bottom.
 
-> **Preview.** These Knowledge Base / Knowledge Source types are **preview** on the `2026-05-01-preview` Search API. Your Search service must be in a [preview region](https://learn.microsoft.com/azure/search/search-region-support) (e.g. **West Central US**). Cells ship with outputs cleared and call live services — run them against your own resources.
+> For a full, deployable reference that combines Work IQ, Foundry IQ, and Fabric IQ end to end, see the [Microsoft IQ Solution Accelerator](https://github.com/microsoft/microsoft-iq-solution-accelerator).
 
 
 ## 1 · Setup
 
-You need an **Azure AI Search** service (in a preview region) and a **Microsoft Foundry** project with one **chat** deployment and one **embedding** deployment (the embedding powers the file hero). Set these, or drop them in a local `.env` next to this notebook — **secrets are read from the environment, never written into the notebook**:
+You need an **Azure AI Search** service and a **Microsoft Foundry** project with two deployments:
+
+- a **chat** model (e.g. `gpt-4.1`) — for **query planning** and answer synthesis, and
+- an **embedding** model (e.g. `text-embedding-3-large`) — for **vectorizing your file content**.
+
+Set these in your shell, or drop them in a local `.env` next to this notebook — **secrets are read from the environment, never written into the notebook**:
 
 ```bash
 SEARCH_ENDPOINT=https://<your-search-service>.search.windows.net
-SEARCH_API_KEY=<your-search-admin-key>
+SEARCH_API_KEY=<your-search-admin-key>            # omit to go keyless (see below)
 AOAI_ENDPOINT=https://<your-foundry-resource>.openai.azure.com
-AOAI_API_KEY=<your-azure-openai-key>
-AOAI_GPT_DEPLOYMENT=gpt-4.1                       # chat / synthesis
-AOAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large  # powers the file hero
+AOAI_API_KEY=<your-azure-openai-key>              # omit to go keyless (see below)
+AOAI_GPT_DEPLOYMENT=gpt-4.1                        # chat — query planning + synthesis
+AOAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large  # embeddings — vectorize file content
 
 # Optional — each unlocks one extra layer (leave blank to skip):
 WEB_IQ_MCP_API_KEY=<your-web-iq-mcp-key>          # Web IQ
 FABRIC_WORKSPACE_ID=<your-fabric-workspace-id>    # Fabric IQ
 FABRIC_ONTOLOGY_ID=<your-fabric-ontology-id>      # Fabric IQ
 ```
+
+> **Prefer keyless?** Assign your identity **Search Service Contributor** on the search service and **Cognitive Services User** on the Foundry resource, then leave `SEARCH_API_KEY` and `AOAI_API_KEY` blank — the next cell falls back to `DefaultAzureCredential`. (Web IQ has no managed identity, so its MCP source always authenticates with the `x-apikey` key.)
 
 
 ```python
@@ -49,7 +67,7 @@ except _md.PackageNotFoundError:
 
 if not _ok:
     %pip install --quiet --pre "azure-search-documents==12.1.0b1" \
-        "azure-identity>=1.17.1" "openai>=1.40.0" "python-dotenv>=1.0.1"
+        "azure-identity>=1.17.1" "openai>=1.40.0" "python-dotenv>=1.0.1" "tenacity>=8.2.0"
 
 ```
 
@@ -57,7 +75,7 @@ The next cell is the whole engine: it reads your config, then defines two helper
 
 
 ```python
-import os, time
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -87,6 +105,7 @@ from azure.search.documents.knowledgebases.models import (
     WorkIQKnowledgeSourceParams,
 )
 from dotenv import load_dotenv
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 load_dotenv(override=True)
 
@@ -104,9 +123,9 @@ def skip(layer: str, reason: str) -> None:
 
 # ---- Config --------------------------------------------------------------
 SEARCH_ENDPOINT = env("SEARCH_ENDPOINT")
-SEARCH_API_KEY = env("SEARCH_API_KEY")
+SEARCH_API_KEY = env("SEARCH_API_KEY", required=False)  # blank -> managed identity
 AOAI_ENDPOINT = env("AOAI_ENDPOINT").split("/openai/", 1)[0].rstrip("/")
-AOAI_API_KEY = env("AOAI_API_KEY")
+AOAI_API_KEY = env("AOAI_API_KEY", required=False)      # blank -> managed identity
 GPT_DEPLOYMENT = env("AOAI_GPT_DEPLOYMENT", required=False, default="gpt-4.1")
 EMBEDDING_DEPLOYMENT = env("AOAI_EMBEDDING_DEPLOYMENT", required=False, default="text-embedding-3-large")
 
@@ -116,7 +135,8 @@ KS_WORK_IQ = "miq-ks-work-iq"
 KS_FABRIC_IQ = "miq-ks-fabric-iq"
 KB_NAME = "miq-foundry-iq-kb"
 
-credential = AzureKeyCredential(SEARCH_API_KEY)
+# Key if provided, else keyless via Microsoft Entra (DefaultAzureCredential).
+credential = AzureKeyCredential(SEARCH_API_KEY) if SEARCH_API_KEY else DefaultAzureCredential()
 index_client = SearchIndexClient(endpoint=SEARCH_ENDPOINT, credential=credential)
 kb_client = KnowledgeBaseRetrievalClient(
     endpoint=SEARCH_ENDPOINT, credential=credential, knowledge_base_name=KB_NAME,
@@ -126,6 +146,7 @@ kb_sources: list[str] = []  # grows as you add layers; drives the KB and cleanup
 
 
 def _aoai(deployment: str) -> AzureOpenAIVectorizerParameters:
+    # api_key=None -> the search service uses its managed identity for Azure OpenAI.
     return AzureOpenAIVectorizerParameters(
         resource_url=AOAI_ENDPOINT, deployment_name=deployment,
         api_key=AOAI_API_KEY, model_name=deployment,
@@ -183,28 +204,28 @@ def _ks_params(name: str):
     return None
 
 
-def ask(question: str, *, max_runtime_seconds: int = 180) -> None:
-    """Send one question to the KB; print the cited answer and grounding sources.
+# A KB update takes a few seconds to reach the retrieve path, so a query fired
+# immediately after build_kb() can transiently 400 with "must match a Knowledge
+# Base Knowledge Source name". tenacity retries just that case while it propagates.
+@retry(
+    retry=retry_if_exception(lambda e: "must match" in str(e)),
+    wait=wait_exponential(multiplier=1, min=3, max=20),
+    stop=stop_after_attempt(5),
+    reraise=True,
+)
+def _retrieve(request):
+    return kb_client.retrieve(request, query_source_authorization=USER_TOKEN)
 
-    A KB update takes a few seconds to reach the retrieve path, so a query fired
-    immediately after build_kb() can transiently 400 with "must match a Knowledge
-    Base Knowledge Source name" -- retry briefly to let the update propagate.
-    """
+
+def ask(question: str, *, max_runtime_seconds: int = 180) -> None:
+    """Send one question to the KB; print the cited answer and grounding sources."""
     request = KnowledgeBaseRetrievalRequest(
         messages=[KnowledgeBaseMessage(role="user", content=[KnowledgeBaseMessageTextContent(text=question)])],
         knowledge_source_params=[p for p in (_ks_params(n) for n in kb_sources) if p],
         include_activity=True,
         max_runtime_in_seconds=max_runtime_seconds,
     )
-    for attempt in range(1, 6):
-        try:
-            result = kb_client.retrieve(request, query_source_authorization=USER_TOKEN)
-            break
-        except Exception as exc:  # noqa: BLE001
-            if "must match" in str(exc) and attempt < 5:
-                time.sleep(4)
-                continue
-            raise
+    result = _retrieve(request)
     answer = "\n\n".join(
         c.text for m in (result.response or []) for c in (m.content or []) if getattr(c, "text", None)
     ).strip()
@@ -229,7 +250,8 @@ def enable(ks_name: str, question: str, *, max_runtime_seconds: int = 180) -> No
         skip(ks_name, f"created the source but the query failed: {str(exc)[:140]}")
 
 
-print(f"azure-search-documents {sdk_version}  |  search: {SEARCH_ENDPOINT}")
+auth_mode = "api key" if SEARCH_API_KEY else "managed identity (keyless)"
+print(f"azure-search-documents {sdk_version}  |  search: {SEARCH_ENDPOINT}  |  auth: {auth_mode}")
 print(f"chat: {GPT_DEPLOYMENT}  |  embedding: {EMBEDDING_DEPLOYMENT}")
 
 ```
@@ -239,6 +261,8 @@ print(f"chat: {GPT_DEPLOYMENT}  |  embedding: {EMBEDDING_DEPLOYMENT}")
 The fastest knowledge layer: **upload files straight into Foundry IQ** — no storage account, no indexer, no data source. Foundry IQ extracts and embeds each file for you (`kind="file"`). To run with **zero setup**, the cell below writes a tiny built-in company brief and uploads that; point `ZAVA_FILE` at your own PDF / DOCX / HTML / TXT to use real documents.
 
 Create the Knowledge Source, upload, **`build_kb()`**, and **`ask()`** — your agent can already answer from your files.
+
+> **Learn more:** [Knowledge sources in Foundry IQ](https://learn.microsoft.com/azure/search/agentic-knowledge-source-overview)
 
 
 ```python
@@ -273,19 +297,22 @@ index_client.create_or_update_knowledge_source(
     )
 )
 
+
 # 2) Upload the file (pass filename so Foundry can label the blob). The upload
 #    triggers a synchronous embed pass, which can transiently 429 on shared
-#    embedding deployments -- retry with backoff.
-for attempt in range(1, 6):
-    try:
-        with file_path.open("rb") as fh:
-            uploaded = index_client.upload_knowledge_source_file(KS_FILES, fh.read(), filename=file_path.name)
-        break
-    except Exception as exc:  # noqa: BLE001
-        if "429" in str(exc) and attempt < 5:
-            time.sleep(2 ** attempt)
-            continue
-        raise
+#    embedding deployments -- tenacity retries that with exponential backoff.
+@retry(
+    retry=retry_if_exception(lambda e: "429" in str(e)),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    stop=stop_after_attempt(5),
+    reraise=True,
+)
+def upload_file():
+    with file_path.open("rb") as fh:
+        return index_client.upload_knowledge_source_file(KS_FILES, fh.read(), filename=file_path.name)
+
+
+uploaded = upload_file()
 print(f"Uploaded {file_path.name} ({uploaded.file_size_bytes:,} bytes)")
 
 # 3) Build the KB over just your files, and ask.
@@ -297,9 +324,11 @@ ask("What does Zava Air do, and what is its fleet strategy?")
 
 ## 3 · Add Web IQ 🌐
 
-[**Web IQ**](https://aka.ms/WebIQLearn) grounds your agent in the **live web** — web and news — through the remote Microsoft Grounding MCP server, with **nothing to index**. It authenticates with a stored `x-apikey` header.
+[**Web IQ**](https://www.microsoft.com/en-us/webiq) grounds your agent in the **live web** — web and news — through the remote Microsoft Grounding MCP server, with **nothing to index**. It authenticates with a stored `x-apikey` header.
 
 > **Get access:** Web IQ is **waitlisted** — [**join the waitlist**](https://aka.ms/webiq-waitlist). Once approved, set `WEB_IQ_MCP_API_KEY` and re-run. No key yet? This layer skips and the notebook keeps going.
+
+> **Learn more:** [Web IQ](https://www.microsoft.com/en-us/webiq)
 
 
 ```python
@@ -338,9 +367,11 @@ else:
 
 ## 4 · Add Work IQ 👥
 
-[**Work IQ**](https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-work-iq?pivots=python) grounds your agent in *how your people work* — Microsoft 365 mail, chats, files, and meetings — enforcing each user's permissions at query time. The typed model is tiny: just a name and description.
+[**Work IQ**](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-work-iq) grounds your agent in *how your people work* — Microsoft 365 mail, chats, files, and meetings — enforcing each user's permissions at query time. The typed model is tiny: just a name and description.
 
 > **Get access:** Work IQ is **gated + licensed**. Register the `EnableFoundryIQWithWorkIQ` flag, re-register `Microsoft.Search`, have a tenant admin complete the [access request form](https://aka.ms/foundry-iq-work-iq-admin-consent-form), and give each user a **Microsoft 365 Copilot license**. Not entitled yet? This layer skips. *(Work IQ can take 40–60s to answer.)*
+
+> **Learn more:** [Work IQ knowledge source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-work-iq)
 
 
 ```python
@@ -359,9 +390,11 @@ else:
 
 ## 5 · Add Fabric IQ 📊
 
-[**Fabric IQ**](https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python) grounds your agent in the live state of *your business* — a semantic **ontology** in Microsoft Fabric (entities, relationships, rules). This recipe uses an **airline ontology** as the example; point it at your own.
+[**Fabric IQ**](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python) grounds your agent in the live state of *your business* in Microsoft Fabric. You can bring **either** a Fabric **ontology** (entities, relationships, rules) **or** a Fabric **data agent** as a knowledge source. This recipe uses an ontology as the example; point it at your own.
 
-> **Get access:** you need a Fabric **ontology item** in the same Entra tenant as your Search service. Both IDs are in the ontology item URL — `.../groups/<workspace-id>/ontologies/<ontology-id>` — set them as `FABRIC_WORKSPACE_ID` / `FABRIC_ONTOLOGY_ID`. Not set? This layer skips.
+> **Get access:** you need a Fabric **ontology item** (or data agent) in the same Entra tenant as your Search service. Both IDs are in the ontology item URL — `.../groups/<workspace-id>/ontologies/<ontology-id>` — set them as `FABRIC_WORKSPACE_ID` / `FABRIC_ONTOLOGY_ID`. Not set? This layer skips.
+
+> **Learn more:** [Fabric ontology knowledge source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python) · [Fabric data agent knowledge source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-data-agent?pivots=python)
 
 
 ```python
@@ -402,18 +435,18 @@ ask(
 
 ```
 
-## 7 · Take it further — point any agent at the layer
+## 7 · Take it further — ground a Foundry agent
 
-Your Knowledge Base also exposes a **Model Context Protocol (MCP) endpoint**, so the same layer grounds *any* MCP-compatible agent — no re-plumbing:
+Your Knowledge Base also exposes a **Model Context Protocol (MCP) endpoint**, so the same Microsoft IQ layer grounds *any* MCP-compatible agent — no re-plumbing:
 
 ```
 {SEARCH_ENDPOINT}/knowledgebases/{KB_NAME}/mcp?api-version=2026-05-01-preview
 ```
 
-It exposes one `knowledge_base_retrieve` tool. Point any consumer at it:
+It exposes one `knowledge_base_retrieve` tool. The most direct next step is to connect this Knowledge Base — with all your IQs — to a **Foundry agent**:
 
-- **Foundry Agent Service** — add it as a `RemoteTool` MCP connection (`authType=ProjectManagedIdentity`). See [Build an agentic retrieval solution](https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-how-to-create-pipeline).
-- **Microsoft Agent Framework** — register the endpoint as a tool on your agent.
+- **Foundry Agent Service** — connect the Knowledge Base to an agent in a few clicks or with the SDK. See [Connect Foundry IQ to an agent](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect?view=foundry).
+- **Microsoft Agent Framework** — register the MCP endpoint as a tool on your agent.
 - **GitHub Copilot** (VS Code) — add the URL to `.vscode/mcp.json` with an `api-key` header, then use **Agent** mode.
 
 
@@ -446,14 +479,16 @@ for ks_name in (KS_FILES, KS_WEB_IQ, KS_WORK_IQ, KS_FABRIC_IQ):
 
 You built a **Microsoft IQ knowledge layer** — starting from your own files, then layering in Web IQ, Work IQ, and Fabric IQ, all federated by **Foundry IQ** into one Knowledge Base you query with a single `ask()`. From here:
 
+- **Ground a Foundry agent.** Connect this Knowledge Base — with all your IQs — to an agent: [Connect Foundry IQ to an agent](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect?view=foundry).
 - **Tour every Knowledge Source type.** The companion recipe [Mastering Foundry IQ](mastering-foundry-iq) walks indexed, uploaded, and federated sources end to end.
-- **Ground an agent.** Wire the KB's MCP endpoint into Foundry Agent Service, the Microsoft Agent Framework, or GitHub Copilot (§7).
+- **Go end to end.** The [Microsoft IQ Solution Accelerator](https://github.com/microsoft/microsoft-iq-solution-accelerator) combines Work IQ, Foundry IQ, and Fabric IQ into a deployable disruption-response solution.
 
 ### Reference docs
 
-- [Microsoft IQ](https://learn.microsoft.com/en-us/microsoft-iq/)
-- [Work IQ knowledge source](https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-work-iq?pivots=python)
-- [Fabric ontology knowledge source](https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python)
-- [Web IQ](https://aka.ms/WebIQLearn) · [waitlist](https://aka.ms/webiq-waitlist)
-- [Retrieve from a knowledge base](https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-how-to-retrieve?pivots=python)
+- [Microsoft IQ](https://learn.microsoft.com/microsoft-iq/)
+- [Work IQ knowledge source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-work-iq)
+- [Fabric ontology knowledge source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python) · [Fabric data agent knowledge source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-data-agent?pivots=python)
+- [Web IQ](https://www.microsoft.com/en-us/webiq) · [waitlist](https://aka.ms/webiq-waitlist)
+- [Connect Foundry IQ to an agent](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect?view=foundry)
+- [Retrieve from a knowledge base](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve?pivots=python)
 - [Create a Knowledge Base](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base)

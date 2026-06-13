@@ -21,7 +21,35 @@ Share on LinkedIn
 More options...
 </button> </div> </div> </div> <script type="module" src="/forgebook/preview/pr-46/_astro/NotebookActions.astro_astro_type_script_index_0_lang.BUk7pEee.js"></script> </div> </header>  <section class="max-w-5xl mx-auto mb-8 lg:max-w-none lg:pr-[252px]"> <div class="lg:max-w-5xl"> <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3"> Author </h2> <div class="flex flex-wrap gap-2"> <div class="w-full sm:w-80 flex items-start justify-between gap-3 p-2 rounded-lg hover:bg-surface-elevated transition-colors overflow-hidden"> <div class="flex items-center gap-3 min-w-0 overflow-hidden"> <a href="https://github.com/farzad528" target="_blank" rel="noopener noreferrer" class="shrink-0" aria-label="Farzad Sunavala on GitHub"> <img src="https://github.com/farzad528.png?size=200" alt="Farzad Sunavala's avatar" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=Farzad%20Sunavala&amp;size=200&amp;background=6366f1&amp;color=fff&amp;bold=true';" class="w-14 h-14 rounded-full border-2 border-subtle bg-surface-elevated" loading="lazy"> </a> <div class="min-w-0 overflow-hidden"> <div class="font-medium text-primary truncate">Farzad Sunavala</div> <div class="text-sm text-muted truncate">Principal Product Manager</div> <div class="text-sm text-muted truncate">@farzad528</div> </div> </div> <div class="flex flex-col items-center gap-0.5 text-muted"> <a href="https://github.com/farzad528" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md p-1 hover:bg-surface-elevated hover:text-primary transition-colors" aria-label="GitHub"> <svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path> </svg> </a>   </div> </div> </div> </div> </section>  <div class="flex justify-center"> <article class="max-w-4xl w-full"> <!-- Notebook Content --> <section class="prose prose-slate dark:prose-invert max-w-none"> <div class="notebook-content"><div class="nb-notebook"><div class="nb-worksheet"><div class="nb-cell nb-markdown-cell"><p><img src="/forgebook/preview/pr-46/notebook/media/microsoft-iq-in-foundry/01-architecture.png" alt="The Microsoft IQ platform — unified intelligence for enterprise AI. Four knowledge layers shown side by side: Work IQ (“how your employees work”) grounds on context about people, collaboration, and workflows; Fabric IQ (“how your business operates”) grounds on business entities, systems of record, and actions; Foundry IQ (“how your agents unlock knowledge”) grounds on policies, authoritative documents, and knowledge bases; and Web IQ (“how you connect to web intelligence”) grounds on context from the web, news, images, and video."></p>
 <h1>Build your own knowledge layer with Microsoft IQ</h1>
-<p><a href="https://learn.microsoft.com/en-us/microsoft-iq/"><strong>Microsoft IQ</strong></a> is a family of knowledge layers that ground AI agents in your reality — your files, your people's work, your business, and the live web. <a href="https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-overview"><strong>Foundry IQ</strong></a> is the layer that federates them: one <strong>Knowledge Base</strong> that fans a single question across every source, then plans, retrieves, reranks, and returns one cited answer. It runs on Azure AI Search agentic retrieval.</p>
+<blockquote>
+<p><strong>Preview.</strong> Microsoft IQ knowledge sources in Foundry IQ are in preview. They run on the <code>2026-05-01-preview</code> Search API and work in <strong>any</strong> Azure AI Search region — there is no preview-region requirement. Cells ship with outputs cleared and call live services; run them against your own resources.</p>
+</blockquote>
+<p><a href="https://learn.microsoft.com/microsoft-iq/"><strong>Microsoft IQ</strong></a> is an enterprise intelligence layer that unifies your data, business knowledge, and work context into one shared context for AI — so agents make faster, better-grounded decisions. Each IQ grounds a different slice of that context:</p>
+<table>
+<thead>
+<tr>
+<th>Microsoft IQ</th>
+<th>What it grounds on</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Fabric IQ</strong></td>
+<td>Unified data, semantic models, and ontologies in <a href="https://learn.microsoft.com/fabric">Microsoft Fabric</a> — the live state of your business.</td>
+</tr>
+<tr>
+<td><strong>Foundry IQ</strong></td>
+<td>Enterprise knowledge and retrieval — <strong>the federation layer you build here</strong>.</td>
+</tr>
+<tr>
+<td><strong>Work IQ</strong></td>
+<td>Work context across Microsoft 365 — mail, chats, files, and meetings.</td>
+</tr>
+<tr>
+<td><strong>Web IQ</strong></td>
+<td>Fresh, real-world intelligence from the open web — web and news.</td>
+</tr>
+</tbody></table>
+<p><a href="https://learn.microsoft.com/azure/search/agentic-retrieval-overview"><strong>Foundry IQ</strong></a> is the layer that federates them: one <strong>Knowledge Base</strong> that fans a single question across every source, then plans, retrieves, reranks, and returns one cited answer. It runs on Azure AI Search agentic retrieval.</p>
 <p><strong>You'll build it one layer at a time — each layer makes your agent smarter:</strong></p>
 <table>
 <thead>
@@ -49,27 +77,35 @@ More options...
 <tr>
 <td>📊 <strong>Fabric IQ</strong></td>
 <td>Your business as an ontology in Microsoft Fabric</td>
-<td>An ontology item</td>
+<td>An ontology or data agent</td>
 </tr>
 </tbody></table>
 <p>Start with the file hero — it works with <strong>zero setup</strong>. Then add the optional layers you have access to; each one re-queries the Knowledge Base so you can <em>see</em> the new intelligence. Every optional layer <strong>skips cleanly</strong> if you're not set up for it, so the notebook always runs top to bottom.</p>
 <blockquote>
-<p><strong>Preview.</strong> These Knowledge Base / Knowledge Source types are <strong>preview</strong> on the <code>2026-05-01-preview</code> Search API. Your Search service must be in a <a href="https://learn.microsoft.com/azure/search/search-region-support">preview region</a> (e.g. <strong>West Central US</strong>). Cells ship with outputs cleared and call live services — run them against your own resources.</p>
+<p>For a full, deployable reference that combines Work IQ, Foundry IQ, and Fabric IQ end to end, see the <a href="https://github.com/microsoft/microsoft-iq-solution-accelerator">Microsoft IQ Solution Accelerator</a>.</p>
 </blockquote>
 </div><div class="nb-cell nb-markdown-cell"><h2>1 · Setup</h2>
-<p>You need an <strong>Azure AI Search</strong> service (in a preview region) and a <strong>Microsoft Foundry</strong> project with one <strong>chat</strong> deployment and one <strong>embedding</strong> deployment (the embedding powers the file hero). Set these, or drop them in a local <code>.env</code> next to this notebook — <strong>secrets are read from the environment, never written into the notebook</strong>:</p>
+<p>You need an <strong>Azure AI Search</strong> service and a <strong>Microsoft Foundry</strong> project with two deployments:</p>
+<ul>
+<li>a <strong>chat</strong> model (e.g. <code>gpt-4.1</code>) — for <strong>query planning</strong> and answer synthesis, and</li>
+<li>an <strong>embedding</strong> model (e.g. <code>text-embedding-3-large</code>) — for <strong>vectorizing your file content</strong>.</li>
+</ul>
+<p>Set these in your shell, or drop them in a local <code>.env</code> next to this notebook — <strong>secrets are read from the environment, never written into the notebook</strong>:</p>
 <pre><code class="language-bash">SEARCH_ENDPOINT=https://&lt;your-search-service&gt;.search.windows.net
-SEARCH_API_KEY=&lt;your-search-admin-key&gt;
+SEARCH_API_KEY=&lt;your-search-admin-key&gt;            # omit to go keyless (see below)
 AOAI_ENDPOINT=https://&lt;your-foundry-resource&gt;.openai.azure.com
-AOAI_API_KEY=&lt;your-azure-openai-key&gt;
-AOAI_GPT_DEPLOYMENT=gpt-4.1                       # chat / synthesis
-AOAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large  # powers the file hero
+AOAI_API_KEY=&lt;your-azure-openai-key&gt;              # omit to go keyless (see below)
+AOAI_GPT_DEPLOYMENT=gpt-4.1                        # chat — query planning + synthesis
+AOAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large  # embeddings — vectorize file content
 
 # Optional — each unlocks one extra layer (leave blank to skip):
 WEB_IQ_MCP_API_KEY=&lt;your-web-iq-mcp-key&gt;          # Web IQ
 FABRIC_WORKSPACE_ID=&lt;your-fabric-workspace-id&gt;    # Fabric IQ
 FABRIC_ONTOLOGY_ID=&lt;your-fabric-ontology-id&gt;      # Fabric IQ
 </code></pre>
+<blockquote>
+<p><strong>Prefer keyless?</strong> Assign your identity <strong>Search Service Contributor</strong> on the search service and <strong>Cognitive Services User</strong> on the Foundry resource, then leave <code>SEARCH_API_KEY</code> and <code>AOAI_API_KEY</code> blank — the next cell falls back to <code>DefaultAzureCredential</code>. (Web IQ has no managed identity, so its MCP source always authenticates with the <code>x-apikey</code> key.)</p>
+</blockquote>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token operator">%</span><span class="token operator">%</span>capture
 <span class="token comment"># Foundry IQ rides on the public-preview azure-search-documents SDK (ships on PyPI).</span>
 <span class="token keyword">import</span> importlib<span class="token punctuation">.</span>metadata <span class="token keyword">as</span> _md
@@ -81,9 +117,9 @@ FABRIC_ONTOLOGY_ID=&lt;your-fabric-ontology-id&gt;      # Fabric IQ
 
 <span class="token keyword">if</span> <span class="token keyword">not</span> _ok<span class="token punctuation">:</span>
     <span class="token operator">%</span>pip install <span class="token operator">-</span><span class="token operator">-</span>quiet <span class="token operator">-</span><span class="token operator">-</span>pre <span class="token string">"azure-search-documents==12.1.0b1"</span> \
-        <span class="token string">"azure-identity&gt;=1.17.1"</span> <span class="token string">"openai&gt;=1.40.0"</span> <span class="token string">"python-dotenv&gt;=1.0.1"</span>
+        <span class="token string">"azure-identity&gt;=1.17.1"</span> <span class="token string">"openai&gt;=1.40.0"</span> <span class="token string">"python-dotenv&gt;=1.0.1"</span> <span class="token string">"tenacity&gt;=8.2.0"</span>
 </code></pre></div></div><div class="nb-cell nb-markdown-cell"><p>The next cell is the whole engine: it reads your config, then defines two helpers you'll use for the rest of the notebook — <strong><code>build_kb(sources)</code></strong> (create/update the Foundry IQ Knowledge Base over a set of sources) and <strong><code>ask(question)</code></strong> (send one natural-language question and print the cited answer plus which sources grounded it). Each layer below just creates a Knowledge Source, appends it, and calls these two.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">import</span> os<span class="token punctuation">,</span> time
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">import</span> os
 <span class="token keyword">from</span> pathlib <span class="token keyword">import</span> Path
 <span class="token keyword">from</span> typing <span class="token keyword">import</span> Optional
 
@@ -113,6 +149,7 @@ FABRIC_ONTOLOGY_ID=&lt;your-fabric-ontology-id&gt;      # Fabric IQ
     WorkIQKnowledgeSourceParams<span class="token punctuation">,</span>
 <span class="token punctuation">)</span>
 <span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
+<span class="token keyword">from</span> tenacity <span class="token keyword">import</span> retry<span class="token punctuation">,</span> retry_if_exception<span class="token punctuation">,</span> stop_after_attempt<span class="token punctuation">,</span> wait_exponential
 
 load_dotenv<span class="token punctuation">(</span>override<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
 
@@ -130,9 +167,9 @@ load_dotenv<span class="token punctuation">(</span>override<span class="token op
 
 <span class="token comment"># ---- Config --------------------------------------------------------------</span>
 SEARCH_ENDPOINT <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"SEARCH_ENDPOINT"</span><span class="token punctuation">)</span>
-SEARCH_API_KEY <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"SEARCH_API_KEY"</span><span class="token punctuation">)</span>
+SEARCH_API_KEY <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"SEARCH_API_KEY"</span><span class="token punctuation">,</span> required<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>  <span class="token comment"># blank -&gt; managed identity</span>
 AOAI_ENDPOINT <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_ENDPOINT"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">"/openai/"</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>rstrip<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">)</span>
-AOAI_API_KEY <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_API_KEY"</span><span class="token punctuation">)</span>
+AOAI_API_KEY <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_API_KEY"</span><span class="token punctuation">,</span> required<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>      <span class="token comment"># blank -&gt; managed identity</span>
 GPT_DEPLOYMENT <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_GPT_DEPLOYMENT"</span><span class="token punctuation">,</span> required<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> default<span class="token operator">=</span><span class="token string">"gpt-4.1"</span><span class="token punctuation">)</span>
 EMBEDDING_DEPLOYMENT <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_EMBEDDING_DEPLOYMENT"</span><span class="token punctuation">,</span> required<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> default<span class="token operator">=</span><span class="token string">"text-embedding-3-large"</span><span class="token punctuation">)</span>
 
@@ -142,7 +179,8 @@ KS_WORK_IQ <span class="token operator">=</span> <span class="token string">"miq
 KS_FABRIC_IQ <span class="token operator">=</span> <span class="token string">"miq-ks-fabric-iq"</span>
 KB_NAME <span class="token operator">=</span> <span class="token string">"miq-foundry-iq-kb"</span>
 
-credential <span class="token operator">=</span> AzureKeyCredential<span class="token punctuation">(</span>SEARCH_API_KEY<span class="token punctuation">)</span>
+<span class="token comment"># Key if provided, else keyless via Microsoft Entra (DefaultAzureCredential).</span>
+credential <span class="token operator">=</span> AzureKeyCredential<span class="token punctuation">(</span>SEARCH_API_KEY<span class="token punctuation">)</span> <span class="token keyword">if</span> SEARCH_API_KEY <span class="token keyword">else</span> DefaultAzureCredential<span class="token punctuation">(</span><span class="token punctuation">)</span>
 index_client <span class="token operator">=</span> SearchIndexClient<span class="token punctuation">(</span>endpoint<span class="token operator">=</span>SEARCH_ENDPOINT<span class="token punctuation">,</span> credential<span class="token operator">=</span>credential<span class="token punctuation">)</span>
 kb_client <span class="token operator">=</span> KnowledgeBaseRetrievalClient<span class="token punctuation">(</span>
     endpoint<span class="token operator">=</span>SEARCH_ENDPOINT<span class="token punctuation">,</span> credential<span class="token operator">=</span>credential<span class="token punctuation">,</span> knowledge_base_name<span class="token operator">=</span>KB_NAME<span class="token punctuation">,</span>
@@ -152,6 +190,7 @@ kb_sources<span class="token punctuation">:</span> <span class="token builtin">l
 
 
 <span class="token keyword">def</span> <span class="token function">_aoai</span><span class="token punctuation">(</span>deployment<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> AzureOpenAIVectorizerParameters<span class="token punctuation">:</span>
+    <span class="token comment"># api_key=None -&gt; the search service uses its managed identity for Azure OpenAI.</span>
     <span class="token keyword">return</span> AzureOpenAIVectorizerParameters<span class="token punctuation">(</span>
         resource_url<span class="token operator">=</span>AOAI_ENDPOINT<span class="token punctuation">,</span> deployment_name<span class="token operator">=</span>deployment<span class="token punctuation">,</span>
         api_key<span class="token operator">=</span>AOAI_API_KEY<span class="token punctuation">,</span> model_name<span class="token operator">=</span>deployment<span class="token punctuation">,</span>
@@ -209,28 +248,28 @@ kb_sources<span class="token punctuation">:</span> <span class="token builtin">l
     <span class="token keyword">return</span> <span class="token boolean">None</span>
 
 
-<span class="token keyword">def</span> <span class="token function">ask</span><span class="token punctuation">(</span>question<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span> <span class="token operator">*</span><span class="token punctuation">,</span> max_runtime_seconds<span class="token punctuation">:</span> <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token number">180</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> <span class="token boolean">None</span><span class="token punctuation">:</span>
-    <span class="token triple-quoted-string string">"""Send one question to the KB; print the cited answer and grounding sources.
+<span class="token comment"># A KB update takes a few seconds to reach the retrieve path, so a query fired</span>
+<span class="token comment"># immediately after build_kb() can transiently 400 with "must match a Knowledge</span>
+<span class="token comment"># Base Knowledge Source name". tenacity retries just that case while it propagates.</span>
+<span class="token decorator annotation punctuation">@retry</span><span class="token punctuation">(</span>
+    retry<span class="token operator">=</span>retry_if_exception<span class="token punctuation">(</span><span class="token keyword">lambda</span> e<span class="token punctuation">:</span> <span class="token string">"must match"</span> <span class="token keyword">in</span> <span class="token builtin">str</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    wait<span class="token operator">=</span>wait_exponential<span class="token punctuation">(</span>multiplier<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token builtin">min</span><span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token builtin">max</span><span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    stop<span class="token operator">=</span>stop_after_attempt<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    reraise<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">def</span> <span class="token function">_retrieve</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> kb_client<span class="token punctuation">.</span>retrieve<span class="token punctuation">(</span>request<span class="token punctuation">,</span> query_source_authorization<span class="token operator">=</span>USER_TOKEN<span class="token punctuation">)</span>
 
-    A KB update takes a few seconds to reach the retrieve path, so a query fired
-    immediately after build_kb() can transiently 400 with "must match a Knowledge
-    Base Knowledge Source name" -- retry briefly to let the update propagate.
-    """</span>
+
+<span class="token keyword">def</span> <span class="token function">ask</span><span class="token punctuation">(</span>question<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span> <span class="token operator">*</span><span class="token punctuation">,</span> max_runtime_seconds<span class="token punctuation">:</span> <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token number">180</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> <span class="token boolean">None</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""Send one question to the KB; print the cited answer and grounding sources."""</span>
     request <span class="token operator">=</span> KnowledgeBaseRetrievalRequest<span class="token punctuation">(</span>
         messages<span class="token operator">=</span><span class="token punctuation">[</span>KnowledgeBaseMessage<span class="token punctuation">(</span>role<span class="token operator">=</span><span class="token string">"user"</span><span class="token punctuation">,</span> content<span class="token operator">=</span><span class="token punctuation">[</span>KnowledgeBaseMessageTextContent<span class="token punctuation">(</span>text<span class="token operator">=</span>question<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
         knowledge_source_params<span class="token operator">=</span><span class="token punctuation">[</span>p <span class="token keyword">for</span> p <span class="token keyword">in</span> <span class="token punctuation">(</span>_ks_params<span class="token punctuation">(</span>n<span class="token punctuation">)</span> <span class="token keyword">for</span> n <span class="token keyword">in</span> kb_sources<span class="token punctuation">)</span> <span class="token keyword">if</span> p<span class="token punctuation">]</span><span class="token punctuation">,</span>
         include_activity<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
         max_runtime_in_seconds<span class="token operator">=</span>max_runtime_seconds<span class="token punctuation">,</span>
     <span class="token punctuation">)</span>
-    <span class="token keyword">for</span> attempt <span class="token keyword">in</span> <span class="token builtin">range</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-        <span class="token keyword">try</span><span class="token punctuation">:</span>
-            result <span class="token operator">=</span> kb_client<span class="token punctuation">.</span>retrieve<span class="token punctuation">(</span>request<span class="token punctuation">,</span> query_source_authorization<span class="token operator">=</span>USER_TOKEN<span class="token punctuation">)</span>
-            <span class="token keyword">break</span>
-        <span class="token keyword">except</span> Exception <span class="token keyword">as</span> exc<span class="token punctuation">:</span>  <span class="token comment"># noqa: BLE001</span>
-            <span class="token keyword">if</span> <span class="token string">"must match"</span> <span class="token keyword">in</span> <span class="token builtin">str</span><span class="token punctuation">(</span>exc<span class="token punctuation">)</span> <span class="token keyword">and</span> attempt <span class="token operator">&amp;</span>lt<span class="token punctuation">;</span> <span class="token number">5</span><span class="token punctuation">:</span>
-                time<span class="token punctuation">.</span>sleep<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span>
-                <span class="token keyword">continue</span>
-            <span class="token keyword">raise</span>
+    result <span class="token operator">=</span> _retrieve<span class="token punctuation">(</span>request<span class="token punctuation">)</span>
     answer <span class="token operator">=</span> <span class="token string">"\n\n"</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span>
         c<span class="token punctuation">.</span>text <span class="token keyword">for</span> m <span class="token keyword">in</span> <span class="token punctuation">(</span>result<span class="token punctuation">.</span>response <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token keyword">for</span> c <span class="token keyword">in</span> <span class="token punctuation">(</span>m<span class="token punctuation">.</span>content <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token keyword">if</span> <span class="token builtin">getattr</span><span class="token punctuation">(</span>c<span class="token punctuation">,</span> <span class="token string">"text"</span><span class="token punctuation">,</span> <span class="token boolean">None</span><span class="token punctuation">)</span>
     <span class="token punctuation">)</span><span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -255,11 +294,15 @@ kb_sources<span class="token punctuation">:</span> <span class="token builtin">l
         skip<span class="token punctuation">(</span>ks_name<span class="token punctuation">,</span> <span class="token string-interpolation"><span class="token string">f"created the source but the query failed: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">str</span><span class="token punctuation">(</span>exc<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token format-spec">140]</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 
 
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"azure-search-documents </span><span class="token interpolation"><span class="token punctuation">{</span>sdk_version<span class="token punctuation">}</span></span><span class="token string">  |  search: </span><span class="token interpolation"><span class="token punctuation">{</span>SEARCH_ENDPOINT<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+auth_mode <span class="token operator">=</span> <span class="token string">"api key"</span> <span class="token keyword">if</span> SEARCH_API_KEY <span class="token keyword">else</span> <span class="token string">"managed identity (keyless)"</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"azure-search-documents </span><span class="token interpolation"><span class="token punctuation">{</span>sdk_version<span class="token punctuation">}</span></span><span class="token string">  |  search: </span><span class="token interpolation"><span class="token punctuation">{</span>SEARCH_ENDPOINT<span class="token punctuation">}</span></span><span class="token string">  |  auth: </span><span class="token interpolation"><span class="token punctuation">{</span>auth_mode<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"chat: </span><span class="token interpolation"><span class="token punctuation">{</span>GPT_DEPLOYMENT<span class="token punctuation">}</span></span><span class="token string">  |  embedding: </span><span class="token interpolation"><span class="token punctuation">{</span>EMBEDDING_DEPLOYMENT<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 </code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>2 · Start with your files 📁</h2>
 <p>The fastest knowledge layer: <strong>upload files straight into Foundry IQ</strong> — no storage account, no indexer, no data source. Foundry IQ extracts and embeds each file for you (<code>kind="file"</code>). To run with <strong>zero setup</strong>, the cell below writes a tiny built-in company brief and uploads that; point <code>ZAVA_FILE</code> at your own PDF / DOCX / HTML / TXT to use real documents.</p>
 <p>Create the Knowledge Source, upload, <strong><code>build_kb()</code></strong>, and <strong><code>ask()</code></strong> — your agent can already answer from your files.</p>
+<blockquote>
+<p><strong>Learn more:</strong> <a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-overview">Knowledge sources in Foundry IQ</a></p>
+</blockquote>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes<span class="token punctuation">.</span>models <span class="token keyword">import</span> FileKnowledgeSource<span class="token punctuation">,</span> FileKnowledgeSourceParameters
 
 <span class="token comment"># Built-in sample so the hero runs with zero setup. Replace with your own files</span>
@@ -291,19 +334,22 @@ index_client<span class="token punctuation">.</span>create_or_update_knowledge_s
     <span class="token punctuation">)</span>
 <span class="token punctuation">)</span>
 
+
 <span class="token comment"># 2) Upload the file (pass filename so Foundry can label the blob). The upload</span>
 <span class="token comment">#    triggers a synchronous embed pass, which can transiently 429 on shared</span>
-<span class="token comment">#    embedding deployments -- retry with backoff.</span>
-<span class="token keyword">for</span> attempt <span class="token keyword">in</span> <span class="token builtin">range</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">try</span><span class="token punctuation">:</span>
-        <span class="token keyword">with</span> file_path<span class="token punctuation">.</span><span class="token builtin">open</span><span class="token punctuation">(</span><span class="token string">"rb"</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fh<span class="token punctuation">:</span>
-            uploaded <span class="token operator">=</span> index_client<span class="token punctuation">.</span>upload_knowledge_source_file<span class="token punctuation">(</span>KS_FILES<span class="token punctuation">,</span> fh<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> filename<span class="token operator">=</span>file_path<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
-        <span class="token keyword">break</span>
-    <span class="token keyword">except</span> Exception <span class="token keyword">as</span> exc<span class="token punctuation">:</span>  <span class="token comment"># noqa: BLE001</span>
-        <span class="token keyword">if</span> <span class="token string">"429"</span> <span class="token keyword">in</span> <span class="token builtin">str</span><span class="token punctuation">(</span>exc<span class="token punctuation">)</span> <span class="token keyword">and</span> attempt <span class="token operator">&amp;</span>lt<span class="token punctuation">;</span> <span class="token number">5</span><span class="token punctuation">:</span>
-            time<span class="token punctuation">.</span>sleep<span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">**</span> attempt<span class="token punctuation">)</span>
-            <span class="token keyword">continue</span>
-        <span class="token keyword">raise</span>
+<span class="token comment">#    embedding deployments -- tenacity retries that with exponential backoff.</span>
+<span class="token decorator annotation punctuation">@retry</span><span class="token punctuation">(</span>
+    retry<span class="token operator">=</span>retry_if_exception<span class="token punctuation">(</span><span class="token keyword">lambda</span> e<span class="token punctuation">:</span> <span class="token string">"429"</span> <span class="token keyword">in</span> <span class="token builtin">str</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    wait<span class="token operator">=</span>wait_exponential<span class="token punctuation">(</span>multiplier<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token builtin">min</span><span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token builtin">max</span><span class="token operator">=</span><span class="token number">30</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    stop<span class="token operator">=</span>stop_after_attempt<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    reraise<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">def</span> <span class="token function">upload_file</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">with</span> file_path<span class="token punctuation">.</span><span class="token builtin">open</span><span class="token punctuation">(</span><span class="token string">"rb"</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fh<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> index_client<span class="token punctuation">.</span>upload_knowledge_source_file<span class="token punctuation">(</span>KS_FILES<span class="token punctuation">,</span> fh<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> filename<span class="token operator">=</span>file_path<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+
+
+uploaded <span class="token operator">=</span> upload_file<span class="token punctuation">(</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Uploaded </span><span class="token interpolation"><span class="token punctuation">{</span>file_path<span class="token punctuation">.</span>name<span class="token punctuation">}</span></span><span class="token string"> (</span><span class="token interpolation"><span class="token punctuation">{</span>uploaded<span class="token punctuation">.</span>file_size_bytes<span class="token punctuation">:</span><span class="token format-spec">,</span><span class="token punctuation">}</span></span><span class="token string"> bytes)"</span></span><span class="token punctuation">)</span>
 
 <span class="token comment"># 3) Build the KB over just your files, and ask.</span>
@@ -311,9 +357,12 @@ kb_sources<span class="token punctuation">.</span>append<span class="token punct
 build_kb<span class="token punctuation">(</span>kb_sources<span class="token punctuation">)</span>
 ask<span class="token punctuation">(</span><span class="token string">"What does Zava Air do, and what is its fleet strategy?"</span><span class="token punctuation">)</span>
 </code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>3 · Add Web IQ 🌐</h2>
-<p><a href="https://aka.ms/WebIQLearn"><strong>Web IQ</strong></a> grounds your agent in the <strong>live web</strong> — web and news — through the remote Microsoft Grounding MCP server, with <strong>nothing to index</strong>. It authenticates with a stored <code>x-apikey</code> header.</p>
+<p><a href="https://www.microsoft.com/en-us/webiq"><strong>Web IQ</strong></a> grounds your agent in the <strong>live web</strong> — web and news — through the remote Microsoft Grounding MCP server, with <strong>nothing to index</strong>. It authenticates with a stored <code>x-apikey</code> header.</p>
 <blockquote>
 <p><strong>Get access:</strong> Web IQ is <strong>waitlisted</strong> — <a href="https://aka.ms/webiq-waitlist"><strong>join the waitlist</strong></a>. Once approved, set <code>WEB_IQ_MCP_API_KEY</code> and re-run. No key yet? This layer skips and the notebook keeps going.</p>
+</blockquote>
+<blockquote>
+<p><strong>Learn more:</strong> <a href="https://www.microsoft.com/en-us/webiq">Web IQ</a></p>
 </blockquote>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
     McpServerKnowledgeSource<span class="token punctuation">,</span>
@@ -346,9 +395,12 @@ web_key <span class="token operator">=</span> env<span class="token punctuation"
     <span class="token punctuation">)</span>
     enable<span class="token punctuation">(</span>KS_WEB_IQ<span class="token punctuation">,</span> <span class="token string">"What's the latest public news on transatlantic routes and long-haul aircraft?"</span><span class="token punctuation">)</span>
 </code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>4 · Add Work IQ 👥</h2>
-<p><a href="https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-work-iq?pivots=python"><strong>Work IQ</strong></a> grounds your agent in <em>how your people work</em> — Microsoft 365 mail, chats, files, and meetings — enforcing each user's permissions at query time. The typed model is tiny: just a name and description.</p>
+<p><a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-work-iq"><strong>Work IQ</strong></a> grounds your agent in <em>how your people work</em> — Microsoft 365 mail, chats, files, and meetings — enforcing each user's permissions at query time. The typed model is tiny: just a name and description.</p>
 <blockquote>
 <p><strong>Get access:</strong> Work IQ is <strong>gated + licensed</strong>. Register the <code>EnableFoundryIQWithWorkIQ</code> flag, re-register <code>Microsoft.Search</code>, have a tenant admin complete the <a href="https://aka.ms/foundry-iq-work-iq-admin-consent-form">access request form</a>, and give each user a <strong>Microsoft 365 Copilot license</strong>. Not entitled yet? This layer skips. <em>(Work IQ can take 40–60s to answer.)</em></p>
+</blockquote>
+<blockquote>
+<p><strong>Learn more:</strong> <a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-work-iq">Work IQ knowledge source</a></p>
 </blockquote>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes<span class="token punctuation">.</span>models <span class="token keyword">import</span> WorkIQKnowledgeSource
 
@@ -361,9 +413,12 @@ web_key <span class="token operator">=</span> env<span class="token punctuation"
 <span class="token keyword">else</span><span class="token punctuation">:</span>
     enable<span class="token punctuation">(</span>KS_WORK_IQ<span class="token punctuation">,</span> <span class="token string">"Summarize what we've discussed internally about transatlantic route planning."</span><span class="token punctuation">)</span>
 </code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>5 · Add Fabric IQ 📊</h2>
-<p><a href="https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python"><strong>Fabric IQ</strong></a> grounds your agent in the live state of <em>your business</em> — a semantic <strong>ontology</strong> in Microsoft Fabric (entities, relationships, rules). This recipe uses an <strong>airline ontology</strong> as the example; point it at your own.</p>
+<p><a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python"><strong>Fabric IQ</strong></a> grounds your agent in the live state of <em>your business</em> in Microsoft Fabric. You can bring <strong>either</strong> a Fabric <strong>ontology</strong> (entities, relationships, rules) <strong>or</strong> a Fabric <strong>data agent</strong> as a knowledge source. This recipe uses an ontology as the example; point it at your own.</p>
 <blockquote>
-<p><strong>Get access:</strong> you need a Fabric <strong>ontology item</strong> in the same Entra tenant as your Search service. Both IDs are in the ontology item URL — <code>.../groups/&lt;workspace-id&gt;/ontologies/&lt;ontology-id&gt;</code> — set them as <code>FABRIC_WORKSPACE_ID</code> / <code>FABRIC_ONTOLOGY_ID</code>. Not set? This layer skips.</p>
+<p><strong>Get access:</strong> you need a Fabric <strong>ontology item</strong> (or data agent) in the same Entra tenant as your Search service. Both IDs are in the ontology item URL — <code>.../groups/&lt;workspace-id&gt;/ontologies/&lt;ontology-id&gt;</code> — set them as <code>FABRIC_WORKSPACE_ID</code> / <code>FABRIC_ONTOLOGY_ID</code>. Not set? This layer skips.</p>
+</blockquote>
+<blockquote>
+<p><strong>Learn more:</strong> <a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python">Fabric ontology knowledge source</a> · <a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-data-agent?pivots=python">Fabric data agent knowledge source</a></p>
 </blockquote>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
     FabricOntologyKnowledgeSource<span class="token punctuation">,</span>
@@ -392,14 +447,14 @@ ontology_id <span class="token operator">=</span> env<span class="token punctuat
     <span class="token string">"and composition (from our files and our ontology), the latest public news on "</span>
     <span class="token string">"long-haul aircraft, and anything we've discussed internally?"</span>
 <span class="token punctuation">)</span>
-</code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>7 · Take it further — point any agent at the layer</h2>
-<p>Your Knowledge Base also exposes a <strong>Model Context Protocol (MCP) endpoint</strong>, so the same layer grounds <em>any</em> MCP-compatible agent — no re-plumbing:</p>
+</code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>7 · Take it further — ground a Foundry agent</h2>
+<p>Your Knowledge Base also exposes a <strong>Model Context Protocol (MCP) endpoint</strong>, so the same Microsoft IQ layer grounds <em>any</em> MCP-compatible agent — no re-plumbing:</p>
 <pre><code>{SEARCH_ENDPOINT}/knowledgebases/{KB_NAME}/mcp?api-version=2026-05-01-preview
 </code></pre>
-<p>It exposes one <code>knowledge_base_retrieve</code> tool. Point any consumer at it:</p>
+<p>It exposes one <code>knowledge_base_retrieve</code> tool. The most direct next step is to connect this Knowledge Base — with all your IQs — to a <strong>Foundry agent</strong>:</p>
 <ul>
-<li><strong>Foundry Agent Service</strong> — add it as a <code>RemoteTool</code> MCP connection (<code>authType=ProjectManagedIdentity</code>). See <a href="https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-how-to-create-pipeline">Build an agentic retrieval solution</a>.</li>
-<li><strong>Microsoft Agent Framework</strong> — register the endpoint as a tool on your agent.</li>
+<li><strong>Foundry Agent Service</strong> — connect the Knowledge Base to an agent in a few clicks or with the SDK. See <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect?view=foundry">Connect Foundry IQ to an agent</a>.</li>
+<li><strong>Microsoft Agent Framework</strong> — register the MCP endpoint as a tool on your agent.</li>
 <li><strong>GitHub Copilot</strong> (VS Code) — add the URL to <code>.vscode/mcp.json</code> with an <code>api-key</code> header, then use <strong>Agent</strong> mode.</li>
 </ul>
 </div><div class="nb-cell nb-markdown-cell"><h2>8 · Clean up</h2>
@@ -423,16 +478,18 @@ ontology_id <span class="token operator">=</span> env<span class="token punctuat
 </code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>9 · Next steps</h2>
 <p>You built a <strong>Microsoft IQ knowledge layer</strong> — starting from your own files, then layering in Web IQ, Work IQ, and Fabric IQ, all federated by <strong>Foundry IQ</strong> into one Knowledge Base you query with a single <code>ask()</code>. From here:</p>
 <ul>
+<li><strong>Ground a Foundry agent.</strong> Connect this Knowledge Base — with all your IQs — to an agent: <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect?view=foundry">Connect Foundry IQ to an agent</a>.</li>
 <li><strong>Tour every Knowledge Source type.</strong> The companion recipe <a href="mastering-foundry-iq">Mastering Foundry IQ</a> walks indexed, uploaded, and federated sources end to end.</li>
-<li><strong>Ground an agent.</strong> Wire the KB's MCP endpoint into Foundry Agent Service, the Microsoft Agent Framework, or GitHub Copilot (§7).</li>
+<li><strong>Go end to end.</strong> The <a href="https://github.com/microsoft/microsoft-iq-solution-accelerator">Microsoft IQ Solution Accelerator</a> combines Work IQ, Foundry IQ, and Fabric IQ into a deployable disruption-response solution.</li>
 </ul>
 <h3>Reference docs</h3>
 <ul>
-<li><a href="https://learn.microsoft.com/en-us/microsoft-iq/">Microsoft IQ</a></li>
-<li><a href="https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-work-iq?pivots=python">Work IQ knowledge source</a></li>
-<li><a href="https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python">Fabric ontology knowledge source</a></li>
-<li><a href="https://aka.ms/WebIQLearn">Web IQ</a> · <a href="https://aka.ms/webiq-waitlist">waitlist</a></li>
-<li><a href="https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-how-to-retrieve?pivots=python">Retrieve from a knowledge base</a></li>
+<li><a href="https://learn.microsoft.com/microsoft-iq/">Microsoft IQ</a></li>
+<li><a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-work-iq">Work IQ knowledge source</a></li>
+<li><a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-ontology?pivots=python">Fabric ontology knowledge source</a> · <a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-data-agent?pivots=python">Fabric data agent knowledge source</a></li>
+<li><a href="https://www.microsoft.com/en-us/webiq">Web IQ</a> · <a href="https://aka.ms/webiq-waitlist">waitlist</a></li>
+<li><a href="https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect?view=foundry">Connect Foundry IQ to an agent</a></li>
+<li><a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve?pivots=python">Retrieve from a knowledge base</a></li>
 <li><a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base">Create a Knowledge Base</a></li>
 </ul>
 </div></div></div></div> </section> <!-- Tags --> <section class="mt-12 pt-8 border-t border-subtle"> <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
