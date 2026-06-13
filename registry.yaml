@@ -177,7 +177,7 @@
 - slug: microsoft-iq-in-foundry
   path: notebooks/microsoft-iq-in-foundry.ipynb
   title: "Microsoft IQ in Foundry"
-  description: "Build a Microsoft IQ knowledge layer in Foundry IQ — federate Work IQ, Fabric IQ, and Web IQ into one Knowledge Base, then query each IQ plus a cross-source question."
+  description: "Build your own knowledge layer in Foundry IQ: start with your own files (zero setup), then layer in Web IQ, Work IQ, and Fabric IQ, and query every source with one call."
   date: "2026-05-29"
   authors:
     - github: farzad528
