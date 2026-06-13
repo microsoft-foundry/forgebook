@@ -184,14 +184,27 @@ def _ks_params(name: str):
 
 
 def ask(question: str, *, max_runtime_seconds: int = 180) -> None:
-    """Send one question to the KB; print the cited answer and grounding sources."""
+    """Send one question to the KB; print the cited answer and grounding sources.
+
+    A KB update takes a few seconds to reach the retrieve path, so a query fired
+    immediately after build_kb() can transiently 400 with "must match a Knowledge
+    Base Knowledge Source name" -- retry briefly to let the update propagate.
+    """
     request = KnowledgeBaseRetrievalRequest(
         messages=[KnowledgeBaseMessage(role="user", content=[KnowledgeBaseMessageTextContent(text=question)])],
         knowledge_source_params=[p for p in (_ks_params(n) for n in kb_sources) if p],
         include_activity=True,
         max_runtime_in_seconds=max_runtime_seconds,
     )
-    result = kb_client.retrieve(request, query_source_authorization=USER_TOKEN)
+    for attempt in range(1, 6):
+        try:
+            result = kb_client.retrieve(request, query_source_authorization=USER_TOKEN)
+            break
+        except Exception as exc:  # noqa: BLE001
+            if "must match" in str(exc) and attempt < 5:
+                time.sleep(4)
+                continue
+            raise
     answer = "\n\n".join(
         c.text for m in (result.response or []) for c in (m.content or []) if getattr(c, "text", None)
     ).strip()
@@ -200,6 +213,20 @@ def ask(question: str, *, max_runtime_seconds: int = 180) -> None:
         t = getattr(r, "type", None)
         grounded[t] = grounded.get(t, 0) + 1
     print(f"Q: {question}\n\n{answer or '(no answer)'}\n\ngrounded by: {grounded}")
+
+
+def enable(ks_name: str, question: str, *, max_runtime_seconds: int = 180) -> None:
+    """Add a just-created Knowledge Source to the KB, re-query, and (if the query
+    fails) roll the source back out so later layers stay clean."""
+    kb_sources.append(ks_name)
+    try:
+        build_kb(kb_sources)
+        ask(question, max_runtime_seconds=max_runtime_seconds)
+    except Exception as exc:  # noqa: BLE001
+        kb_sources.remove(ks_name)
+        if kb_sources:
+            build_kb(kb_sources)
+        skip(ks_name, f"created the source but the query failed: {str(exc)[:140]}")
 
 
 print(f"azure-search-documents {sdk_version}  |  search: {SEARCH_ENDPOINT}")
@@ -246,12 +273,13 @@ index_client.create_or_update_knowledge_source(
     )
 )
 
-# 2) Upload the file. The upload triggers a synchronous embed pass, which can
-#    transiently 429 on shared embedding deployments -- retry with backoff.
+# 2) Upload the file (pass filename so Foundry can label the blob). The upload
+#    triggers a synchronous embed pass, which can transiently 429 on shared
+#    embedding deployments -- retry with backoff.
 for attempt in range(1, 6):
     try:
         with file_path.open("rb") as fh:
-            uploaded = index_client.upload_knowledge_source_file(KS_FILES, fh.read())
+            uploaded = index_client.upload_knowledge_source_file(KS_FILES, fh.read(), filename=file_path.name)
         break
     except Exception as exc:  # noqa: BLE001
         if "429" in str(exc) and attempt < 5:
@@ -304,9 +332,7 @@ else:
             ),
         )
     )
-    kb_sources.append(KS_WEB_IQ)
-    build_kb(kb_sources)
-    ask("What's the latest public news on transatlantic routes and long-haul aircraft?")
+    enable(KS_WEB_IQ, "What's the latest public news on transatlantic routes and long-haul aircraft?")
 
 ```
 
@@ -324,11 +350,10 @@ try:
     index_client.create_or_update_knowledge_source(
         WorkIQKnowledgeSource(name=KS_WORK_IQ, description="Work IQ -- M365 mail, chats, files, meetings.")
     )
-    kb_sources.append(KS_WORK_IQ)
-    build_kb(kb_sources)
-    ask("Summarize what we've discussed internally about transatlantic route planning.")
 except Exception as exc:  # noqa: BLE001
     skip("Work IQ", f"tenant not entitled yet ({exc}) -- request access: https://aka.ms/foundry-iq-work-iq-admin-consent-form")
+else:
+    enable(KS_WORK_IQ, "Summarize what we've discussed internally about transatlantic route planning.")
 
 ```
 
@@ -359,9 +384,7 @@ else:
             ),
         )
     )
-    kb_sources.append(KS_FABRIC_IQ)
-    build_kb(kb_sources)
-    ask("From our ontology, how many aircraft are in the fleet, grouped by manufacturer?")
+    enable(KS_FABRIC_IQ, "From our ontology, how many aircraft are in the fleet, grouped by manufacturer?")
 
 ```
 
@@ -408,7 +431,7 @@ except ResourceNotFoundError:
 except Exception as exc:  # noqa: BLE001
     print(f"KB delete: {exc}")
 
-for ks_name in kb_sources:
+for ks_name in (KS_FILES, KS_WEB_IQ, KS_WORK_IQ, KS_FABRIC_IQ):
     try:
         index_client.delete_knowledge_source(ks_name)
         print(f"Deleted KS {ks_name}")
