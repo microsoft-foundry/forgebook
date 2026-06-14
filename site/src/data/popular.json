@@ -1,21 +1,29 @@
 {
-  "updatedAt": "2026-05-27T07:31:43.739Z",
+  "updatedAt": "2026-06-14T07:40:02.310Z",
   "notebooks": [
     {
       "slug": "foundry-agent-part-1",
+      "clicks": 30
+    },
+    {
+      "slug": "mastering-foundry-iq",
       "clicks": 19
     },
     {
-      "slug": "mai-voice-1-foundry",
-      "clicks": 2
+      "slug": "foundry-agent-part-2",
+      "clicks": 11
+    },
+    {
+      "slug": "mai-transcribe-1-5",
+      "clicks": 10
     },
     {
       "slug": "mai-image-2-foundry",
-      "clicks": 2
+      "clicks": 8
     },
     {
-      "slug": "mai-transcribe-1-foundry",
-      "clicks": 1
+      "slug": "microsoft-iq-in-foundry",
+      "clicks": 8
     }
   ]
 }
