@@ -1,1 +1,0 @@
-function a(e,t){n({data:{baseType:"EventData",baseData:{name:e,properties:{page:location.pathname,...t}}}})}function i(){return console.warn("[telemetry] PUBLIC_APP_INSIGHTS_CONNECTION_STRING not set — skipping App Insights initialization."),null}function n(e){window.__forgebookTelemetryTestCapture?.push(e)}export{i as initTelemetry,a as trackEvent};
