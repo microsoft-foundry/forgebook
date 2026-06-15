@@ -7,16 +7,6 @@ name: Validate Popular Fetch
 
 on:
   workflow_dispatch:
-  # TEMPORARY: lets this PR exercise the workflow before it lands on main
-  # (workflow_dispatch isn't dispatchable from a non-default branch). Remove
-  # this trigger before merging.
-  pull_request:
-    branches: [main]
-    paths:
-      - .github/workflows/validate-popular-fetch.yml
-      - .github/workflows/deploy.yml
-      - scripts/fetch-popular.ts
-      - scripts/package-lock.json
 
 permissions:
   contents: read
