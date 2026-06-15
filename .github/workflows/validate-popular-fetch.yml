@@ -1,0 +1,50 @@
+name: Validate Popular Fetch
+
+# Manual-only diagnostic that exercises Azure OIDC login and the
+# App Insights query used by deploy.yml to refresh popular.json.
+# Does not build the site, does not deploy, and does not write to the
+# repository — it just proves the credentials and query work end to end.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # Required for Azure OIDC federated credential
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: scripts/package-lock.json
+
+      - name: Install script dependencies
+        working-directory: ./scripts
+        run: npm ci
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Fetch popular notebooks from App Insights
+        working-directory: ./scripts
+        env:
+          APP_INSIGHTS_RESOURCE_ID: ${{ vars.APP_INSIGHTS_RESOURCE_ID }}
+        run: npx tsx fetch-popular.ts
+
+      - name: Show fetched popular.json
+        run: |
+          echo "::group::site/src/data/popular.json"
+          cat site/src/data/popular.json
+          echo "::endgroup::"
