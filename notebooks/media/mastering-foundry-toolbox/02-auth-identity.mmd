@@ -1,0 +1,33 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Segoe UI, Helvetica, Arial, sans-serif","primaryColor":"#eef4ff","primaryBorderColor":"#3b6fd6","primaryTextColor":"#102a54","lineColor":"#5b6b86","clusterBkg":"#f7f9fc","clusterBorder":"#c7d2e3"}}}%%
+flowchart TB
+    USER["End user"] --> AGENT
+    AGENT["Hosted agent<br/>(agent managed identity)"]:::agent -->|"STEP 1: agent identity needs<br/>Foundry user role on the project"| TBX
+
+    subgraph TBX["Toolbox MCP endpoint"]
+        direction TB
+        CONN["STEP 2: project connection<br/>(authType decides the flow)"]:::conn
+    end
+
+    TBX --> TOOL["Downstream tool / MCP server / REST API"]:::tool
+
+    subgraph AUTHTYPES["Connection auth types (MCP & A2A)"]
+        direction TB
+        A1["none — public endpoint"]
+        A2["custom-keys — header/API key in connection"]
+        A3["oauth2 — managed or BYO app reg<br/>1st call returns CONSENT_REQUIRED (-32006)"]:::hot
+        A4["user-entra-token<br/>Foundry managed identity passthrough"]:::hot
+        A5["project-managed-identity — project's MI"]
+        A6["agentic-identity — agent's per-project identity"]
+    end
+
+    CONN -. configured as .-> AUTHTYPES
+
+    TOKEN["For oauth2 + user-entra-token:<br/>agent emits the caller / end-user token →<br/>toolbox uses THAT token to reach the tool<br/>(not the agent identity)"]:::note
+    A3 -.-> TOKEN
+    A4 -.-> TOKEN
+
+    classDef agent fill:#dbe9ff,stroke:#3b6fd6,color:#102a54,font-weight:bold;
+    classDef conn fill:#fff4e6,stroke:#e8910c,color:#5c3b00;
+    classDef tool fill:#eef7ee,stroke:#3a9d4a,color:#13431d;
+    classDef hot fill:#fde8ef,stroke:#c0397a,color:#5c1338,font-weight:bold;
+    classDef note fill:#f3eefc,stroke:#7d57c2,color:#33215c;
