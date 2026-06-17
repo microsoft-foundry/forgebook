@@ -12,7 +12,7 @@ test.describe("Site Navigation", () => {
 
   test("notebook card links to notebook page", async ({ page }) => {
     await page.goto(HOME);
-    await page.getByRole("link", { name: /Create Your First Agent/ }).click();
+    await page.locator("#notebooks-grid").getByRole("link", { name: /Create Your First Agent/ }).click();
     await expect(page).toHaveURL(/\/notebook\/foundry-agent-part-1/);
     await expect(page.getByRole("heading", { name: "Create Your First Agent (Part 1)", level: 1 })).toBeVisible();
   });
@@ -41,6 +41,57 @@ test.describe("Site Navigation", () => {
     );
 
     expect(wrappedRows).toEqual([]);
+  });
+
+  test("popular recipes render as a single-row capped carousel", async ({ page }) => {
+    await page.goto(HOME);
+
+    const popular = page.getByRole("region", { name: "Popular" });
+    await expect(popular).toBeVisible();
+
+    const cards = popular.locator(".popular-card-wrapper");
+    const cardCount = await cards.count();
+    expect(cardCount).toBeGreaterThan(0);
+    expect(cardCount).toBeLessThanOrEqual(6);
+
+    const rowTops = await cards.evaluateAll((elements) =>
+      [...new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top)))],
+    );
+    expect(rowTops).toHaveLength(1);
+  });
+
+  test("catalog controls sort, switch views, and filter opt-in", async ({ page }) => {
+    await page.goto(HOME);
+
+    const catalog = page.getByRole("region", { name: /All/ });
+    const collection = page.locator("#notebooks-grid");
+
+    await expect(collection).toHaveAttribute("data-view", "grid");
+    await catalog.getByRole("button", { name: "List view" }).click();
+    await expect(collection).toHaveAttribute("data-view", "list");
+
+    await catalog.getByRole("button", { name: "Sort by views" }).click();
+    await expect(catalog.getByRole("button", { name: "Sort by views" })).toHaveAttribute("aria-pressed", "true");
+    await expect(collection.locator(".notebook-card-wrapper").first()).toHaveAttribute("data-views", "19");
+
+    await catalog.locator("summary[aria-label='Filter tags']").click();
+    const tagCheckboxes = catalog.locator("[data-tag-checkbox]");
+    await expect(tagCheckboxes.first()).not.toBeChecked();
+
+    await catalog.getByLabel("agent-framework").check();
+    await expect(page).toHaveURL(/#tag=agent-framework/);
+    await expect(page.locator("#recipe-count")).toHaveText("(1)");
+
+    await catalog.getByRole("button", { name: "Clear tag filters" }).click();
+    await expect(page.locator("#recipe-count")).toHaveText("(13)");
+    await expect(catalog.getByRole("button", { name: "Clear tag filters" })).toBeHidden();
+  });
+
+  test("homepage avoids page-level horizontal overflow", async ({ page }) => {
+    await page.goto(HOME);
+
+    const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+    expect(hasHorizontalOverflow).toBe(false);
   });
 
   test("notebook page has action buttons", async ({ page }) => {

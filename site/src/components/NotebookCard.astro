@@ -17,38 +17,68 @@ interface NotebookEntry {
 
 interface Props {
   notebook: NotebookEntry;
+  popularityCount?: number;
 }
 
-const { notebook } = Astro.props;
+const { notebook, popularityCount } = Astro.props;
+const hasPopularityCount = typeof popularityCount === "number";
 
 function tagColor(tag: string): string {
   const hash = [...tag].reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
   return `tag-color-${((hash % 8) + 8) % 8}`;
 }
+
+function formatCount(count: number): string {
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  }
+
+  return count.toString();
+}
+
+const formattedPopularity = hasPopularityCount ? formatCount(popularityCount) : "";
 ---
 
 <a
   href={withBase(`/notebook/${notebook.slug}`)}
-  class="flex flex-col p-6 bg-surface-elevated rounded-xl border border-subtle hover:border-accent hover:shadow-lg transition-all h-full"
+  class="notebook-card flex flex-col p-6 bg-surface-elevated rounded-xl border border-subtle hover:border-accent hover:shadow-lg transition-all h-full"
   data-track-click={`notebook-card:${notebook.slug}`}
   data-notebook-slug={notebook.slug}
   data-notebook-title={notebook.title}
   data-notebook-description={notebook.description || ''}
   data-notebook-tags={notebook.tags?.join(',') || ''}
 >
-  <h3 class="text-lg font-semibold text-primary mb-2 line-clamp-2 min-h-[3.5rem]" title={notebook.title}>
-    {notebook.title}
-  </h3>
-  {
-    notebook.description && (
-      <p class="text-secondary text-sm mb-4 line-clamp-4 min-h-[5rem]" title={notebook.description}>
-        {notebook.description}
-      </p>
-    )
-  }
-  <div class="mt-auto">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
+  <div class="notebook-card-main">
+    <div class="notebook-card-heading">
+      <h3 class="notebook-card-title text-lg font-semibold text-primary mb-2 line-clamp-2 min-h-[3.5rem]" title={notebook.title}>
+        {notebook.title}
+      </h3>
+      {
+        hasPopularityCount && (
+          <span
+            class="notebook-popularity"
+            aria-label={`${formattedPopularity} popularity clicks`}
+            title={`${formattedPopularity} popularity clicks`}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5.25c5.1 0 8.3 4.25 9.36 6.04a1.4 1.4 0 0 1 0 1.42c-1.06 1.79-4.26 6.04-9.36 6.04s-8.3-4.25-9.36-6.04a1.4 1.4 0 0 1 0-1.42c1.06-1.79 4.26-6.04 9.36-6.04Zm0 2c-4 0-6.67 3.2-7.64 4.75.97 1.55 3.64 4.75 7.64 4.75s6.67-3.2 7.64-4.75C18.67 10.45 16 7.25 12 7.25Zm0 1.5a3.25 3.25 0 1 1 0 6.5 3.25 3.25 0 0 1 0-6.5Zm0 2a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5Z" fill="currentColor" />
+            </svg>
+            <span>{formattedPopularity}</span>
+          </span>
+        )
+      }
+    </div>
+    {
+      notebook.description && (
+        <p class="notebook-card-description text-secondary text-sm mb-4 line-clamp-4 min-h-[5rem]" title={notebook.description}>
+          {notebook.description}
+        </p>
+      )
+    }
+  </div>
+  <div class="notebook-card-footer mt-auto">
+    <div class="notebook-card-meta flex items-center justify-between">
+      <div class="notebook-card-authors flex items-center gap-2">
         {
           notebook.authors.slice(0, 3).map((author) => (
             <img
@@ -69,7 +99,7 @@ function tagColor(tag: string): string {
       </div>
       {
         notebook.date && (
-          <span class="text-xs text-muted">{notebook.date}</span>
+          <span class="notebook-card-date text-xs text-muted">{notebook.date}</span>
         )
       }
     </div>
@@ -114,6 +144,56 @@ function tagColor(tag: string): string {
   .notebook-tags-overflow[hidden] {
     display: none !important;
   }
+
+  .notebook-card {
+    min-width: 0;
+  }
+
+  .notebook-card-main {
+    min-width: 0;
+  }
+
+  .notebook-card-heading {
+    align-items: flex-start;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .notebook-card-title {
+    min-width: 0;
+  }
+
+  .notebook-popularity {
+    align-items: center;
+    background: color-mix(in srgb, var(--neutral-bg-1) 82%, transparent);
+    border: 1px solid var(--neutral-bg-4);
+    border-radius: 9999px;
+    color: var(--neutral-fg-2);
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    font-weight: 600;
+    gap: 0.25rem;
+    line-height: 1;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .notebook-popularity svg {
+    height: 0.875rem;
+    width: 0.875rem;
+  }
+
+  :global(.dark) .notebook-popularity {
+    background: color-mix(in srgb, var(--neutral-bg-3) 78%, #ffffff 6%);
+  }
+
+  :global(.high-contrast) .notebook-popularity {
+    background: var(--hc-bg) !important;
+    border-color: var(--hc-border) !important;
+    color: var(--hc-text) !important;
+  }
 </style>
 
 <script>
@@ -126,6 +206,22 @@ function tagColor(tag: string): string {
       tags.forEach((tag) => { tag.hidden = false; });
       overflow.hidden = false;
       overflow.textContent = `+${tags.length}`;
+
+      if (row.closest(".notebooks-collection.list-view")) {
+        const visibleCount = Math.min(2, tags.length);
+        const hiddenTags = tags.slice(visibleCount);
+        tags.forEach((tag, index) => { tag.hidden = index >= visibleCount; });
+
+        if (hiddenTags.length > 0) {
+          overflow.textContent = `+${hiddenTags.length}`;
+          overflow.title = hiddenTags.map((tag) => tag.textContent?.trim()).filter(Boolean).join(", ");
+          overflow.hidden = false;
+        } else {
+          overflow.hidden = true;
+          overflow.removeAttribute("title");
+        }
+        return;
+      }
 
       const rowStyles = getComputedStyle(row);
       const gap = Number.parseFloat(rowStyles.columnGap || rowStyles.gap || "0") || 0;
@@ -166,6 +262,8 @@ function tagColor(tag: string): string {
   } else {
     fitNotebookCardTags();
   }
+
+  document.addEventListener("forgebook:cards-resized", fitNotebookCardTags);
 
   const tagRows = document.querySelectorAll<HTMLElement>(".notebook-tags-row");
   if ("ResizeObserver" in window && tagRows.length > 0) {
