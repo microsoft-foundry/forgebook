@@ -93,9 +93,9 @@ const homeSchema = buildHomeSchema({
 
       <section class="all-recipes-section" aria-labelledby="all-recipes-heading">
         <div class="recipes-heading-row">
-          <div>
+          <div class="recipes-heading-title">
             <h2 id="all-recipes-heading" class="text-2xl font-semibold text-primary">
-              All <span id="recipe-count" class="text-secondary font-normal">({notebooks.length})</span>
+              All <span id="recipe-count" class="recipe-count text-secondary font-normal">({notebooks.length})</span>
             </h2>
           </div>
 
@@ -337,6 +337,15 @@ jupyter notebook`}</code></pre>
     min-height: 2.5rem;
   }
 
+  .recipes-heading-title {
+    flex: 0 0 auto;
+  }
+
+  .recipes-heading-title h2 {
+    text-wrap: balance;
+    white-space: nowrap;
+  }
+
   .icon-control {
     position: relative;
   }
@@ -408,11 +417,6 @@ jupyter notebook`}</code></pre>
     width: 1rem;
   }
 
-  .sort-toggle-btn:hover,
-  .sort-direction-btn:hover {
-    color: var(--neutral-fg-1);
-  }
-
   .sort-toggle-btn.active {
     background: var(--accent-brand);
     box-shadow: 0 1px 2px color-mix(in srgb, #000000 12%, transparent);
@@ -441,6 +445,14 @@ jupyter notebook`}</code></pre>
 
   .sort-direction-btn[data-sort-direction="asc"] svg {
     transform: rotate(180deg);
+  }
+
+  .sort-toggle-btn:not(.active):hover,
+  .sort-toggle-btn:not(.active):focus-visible,
+  .sort-direction-btn:hover,
+  .sort-direction-btn:focus-visible {
+    background-color: var(--neutral-bg-1);
+    color: var(--neutral-fg-1);
   }
 
   .view-toggle {
@@ -479,14 +491,16 @@ jupyter notebook`}</code></pre>
     width: 1rem;
   }
 
-  .view-toggle-btn:hover {
-    color: var(--neutral-fg-1);
-  }
-
   .view-toggle-btn.active {
     background: var(--accent-brand);
     box-shadow: 0 1px 2px color-mix(in srgb, #000000 12%, transparent);
     color: #fff;
+  }
+
+  .view-toggle-btn:not(.active):hover,
+  .view-toggle-btn:not(.active):focus-visible {
+    background-color: var(--neutral-bg-1);
+    color: var(--neutral-fg-1);
   }
 
   .notebooks-collection.grid-view {
@@ -675,7 +689,7 @@ jupyter notebook`}</code></pre>
     border: 0;
     border-radius: 9999px;
     box-sizing: border-box;
-    color: var(--neutral-fg-1);
+    color: var(--neutral-fg-2);
     cursor: pointer;
     display: inline-flex;
     gap: 0.25rem;
@@ -684,11 +698,8 @@ jupyter notebook`}</code></pre>
     list-style: none;
     min-height: 2rem;
     padding: 0;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     width: 2rem;
-  }
-
-  .tag-filter-summary:hover {
-    background: var(--neutral-bg-1);
   }
 
   .tag-filter-summary::-webkit-details-marker {
@@ -698,6 +709,12 @@ jupyter notebook`}</code></pre>
   .tag-filter-summary svg {
     height: 1rem;
     width: 1rem;
+  }
+
+  .tag-filter-summary:hover,
+  .tag-filter-summary:focus-visible {
+    background-color: var(--neutral-bg-1);
+    color: var(--neutral-fg-1);
   }
 
   .tag-filter-inline-clear {
@@ -886,18 +903,95 @@ jupyter notebook`}</code></pre>
 
     .popular-section-header,
     .recipes-heading-row {
-      align-items: stretch;
+      align-items: center;
       flex-direction: column;
+    }
+
+    .recipes-heading-row {
+      flex-direction: row;
+      gap: 0.375rem;
+    }
+
+    .recipes-heading-row.has-active-filter {
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .recipes-heading-row.has-active-filter .recipes-heading-title {
+      flex-basis: 100%;
+    }
+
+    .recipes-heading-row.has-active-filter .catalog-controls {
+      flex-basis: 100%;
+      width: 100%;
+    }
+
+    .recipe-count {
+      font-size: 1rem;
+      line-height: 1;
     }
 
     .catalog-controls {
       align-items: center;
+      flex: 1 1 auto;
       flex-direction: row;
-      width: 100%;
+      flex-wrap: nowrap;
+      gap: 0.25rem;
+      justify-content: flex-end;
+      min-width: 0;
+      width: auto;
+    }
+
+    .sort-controls,
+    .view-toggle,
+    .tag-filter-controls {
+      height: 2.375rem;
+      padding: 0.1875rem;
+    }
+
+    .sort-controls,
+    .sort-field-toggle,
+    .view-toggle {
+      gap: 0.125rem;
+    }
+
+    .sort-direction-btn {
+      margin-left: 0.125rem;
+      padding-left: 0;
+      width: 2rem;
+    }
+
+    .sort-direction-btn::before {
+      left: 0.125rem;
     }
 
     .view-toggle-btn {
       justify-content: center;
+    }
+
+    .tag-filter-summary {
+      position: relative;
+    }
+
+    .tag-filter-controls.filtering .tag-filter-summary {
+      gap: 0.25rem;
+      padding: 0 0.45rem;
+      width: auto;
+    }
+
+    .tag-filter-controls.filtering .tag-filter-inline-clear {
+      padding-left: 0;
+      width: 1.875rem;
+    }
+
+    .tag-filter-summary-count {
+      font-size: 0.55rem;
+      height: 1rem;
+      line-height: 1;
+      min-width: 1rem;
+      padding: 0 0.225rem;
+      position: static;
     }
 
     .notebooks-collection.list-view :global(.notebook-card) {
@@ -944,6 +1038,7 @@ jupyter notebook`}</code></pre>
   :global(.high-contrast) .view-toggle {
     background: var(--hc-bg) !important;
     border-color: var(--hc-border) !important;
+    box-shadow: none !important;
   }
 
   :global(.high-contrast) .sort-field-toggle {
@@ -953,20 +1048,140 @@ jupyter notebook`}</code></pre>
 
   :global(.high-contrast) .sort-controls,
   :global(.high-contrast) .tag-filter-summary,
+  :global(.high-contrast) .tag-filter-controls,
   :global(.high-contrast) .tag-filter-menu {
     background: var(--hc-bg) !important;
     border-color: var(--hc-border) !important;
+    box-shadow: none !important;
+  }
+
+  :global(.high-contrast) .sort-controls {
+    border-color: transparent !important;
+    gap: 0.25rem;
+    isolation: isolate;
+    position: relative;
+  }
+
+  :global(.high-contrast) .sort-controls::after {
+    border: 1px solid var(--hc-border);
+    border-radius: inherit;
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 2;
+  }
+
+  :global(.high-contrast) .sort-field-toggle,
+  :global(.high-contrast) .sort-direction-btn {
+    position: relative;
+    z-index: 1;
   }
 
   :global(.high-contrast) .view-toggle-btn,
   :global(.high-contrast) .sort-toggle-btn,
-  :global(.high-contrast) .sort-direction-btn {
+  :global(.high-contrast) .sort-direction-btn,
+  :global(.high-contrast) .tag-filter-summary,
+  :global(.high-contrast) .tag-filter-inline-clear {
     color: var(--hc-text) !important;
   }
 
   :global(.high-contrast) .view-toggle-btn.active,
-  :global(.high-contrast) .sort-toggle-btn.active,
+  :global(.high-contrast) .sort-toggle-btn.active {
+    background: var(--hc-text) !important;
+    box-shadow: none !important;
+    color: var(--hc-bg) !important;
+  }
+
+  :global(.high-contrast) .view-toggle-btn.active,
+  :global(.high-contrast) .sort-toggle-btn.active {
+    border-radius: 9999px !important;
+    box-shadow: inset 0 0 0 1px var(--hc-bg) !important;
+    height: 2rem;
+    width: 2rem;
+  }
+
   :global(.high-contrast) .sort-direction-btn {
+    background: var(--hc-bg) !important;
+    border-left: 0 !important;
+    border-radius: 9999px !important;
+    color: var(--hc-text) !important;
+    margin-left: 0;
+    padding-left: 0;
+    width: 2rem;
+  }
+
+  :global(.high-contrast) .sort-direction-btn::before {
+    display: none;
+  }
+
+  :global(.high-contrast) .view-toggle-btn:not(.active):hover,
+  :global(.high-contrast) .view-toggle-btn:not(.active):focus-visible,
+  :global(.high-contrast) .sort-toggle-btn:not(.active):hover,
+  :global(.high-contrast) .sort-toggle-btn:not(.active):focus-visible,
+  :global(.high-contrast) .sort-direction-btn:hover,
+  :global(.high-contrast) .sort-direction-btn:focus-visible,
+  :global(.high-contrast) .tag-filter-summary:hover,
+  :global(.high-contrast) .tag-filter-summary:focus-visible,
+  :global(.high-contrast) .tag-filter-dropdown[open] .tag-filter-summary {
+    background: var(--hc-bg) !important;
+    box-shadow: inset 0 0 0 2px var(--hc-border) !important;
+    color: var(--hc-text) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-controls.filtering .tag-filter-summary,
+  :global(.high-contrast) .tag-filter-controls.filtering .tag-filter-inline-clear {
+    background: var(--hc-text) !important;
+    color: var(--hc-bg) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-controls.filtering .tag-filter-summary-count {
+    background: var(--hc-bg) !important;
+    border: 1px solid var(--hc-bg) !important;
+    color: var(--hc-text) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-menu-header {
+    background: var(--hc-bg) !important;
+    border-bottom: 1px solid var(--hc-border);
+  }
+
+  :global(.high-contrast) .tag-filter-menu-title,
+  :global(.high-contrast) .tag-filter-menu-status,
+  :global(.high-contrast) .tag-filter-option {
+    color: var(--hc-text) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-option {
+    background: var(--hc-bg) !important;
+    border: 1px solid transparent;
+    box-sizing: border-box;
+  }
+
+  :global(.high-contrast) .tag-filter-option:hover,
+  :global(.high-contrast) .tag-filter-option:focus-within {
+    background: var(--hc-bg) !important;
+    border-color: var(--hc-border);
+  }
+
+  :global(.high-contrast) .tag-filter-option:has(input:checked) {
+    background: var(--hc-bg) !important;
+    border-color: var(--hc-link);
+    color: var(--hc-text) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-option input {
+    accent-color: var(--hc-text);
+  }
+
+  :global(.high-contrast) .tag-filter-reset {
+    background: var(--hc-bg) !important;
+    border: 1px solid var(--hc-border);
+    color: var(--hc-link) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-reset:hover,
+  :global(.high-contrast) .tag-filter-reset:focus-visible {
     background: var(--hc-text) !important;
     color: var(--hc-bg) !important;
   }
@@ -1121,6 +1336,7 @@ jupyter notebook`}</code></pre>
     const filterBar = document.querySelector<HTMLElement>(".tag-filter-bar");
     const dropdown = document.querySelector<HTMLDetailsElement>(".tag-filter-dropdown");
     const filterControls = document.querySelector<HTMLElement>("[data-tag-filter-controls]");
+    const recipesHeadingRow = document.querySelector<HTMLElement>(".recipes-heading-row");
 
     if (!buttons.length && !checkboxes.length) return;
 
@@ -1152,6 +1368,7 @@ jupyter notebook`}</code></pre>
 
       if (filterBar) filterBar.classList.toggle("filtering", filtering);
       if (filterControls) filterControls.classList.toggle("filtering", filtering);
+      if (recipesHeadingRow) recipesHeadingRow.classList.toggle("has-active-filter", filtering);
       if (clearBtn) clearBtn.classList.toggle("hidden", !filtering);
       if (mobileClearBtn) mobileClearBtn.classList.toggle("hidden", !filtering);
       if (inlineClearBtn) inlineClearBtn.classList.toggle("hidden", !filtering);

@@ -312,6 +312,21 @@ img.emoji {
   border-color: var(--hc-border) !important;
 }
 
+@media (max-width: 639px) {
+  .site-nav {
+    gap: 0.25rem;
+    padding-inline: 0.5rem;
+  }
+
+  .site-nav-actions {
+    gap: 0.25rem;
+  }
+
+  .site-nav-actions .hc-hover {
+    padding-inline: 0.375rem;
+  }
+}
+
 .high-contrast footer {
   border-color: var(--hc-border) !important;
 }
