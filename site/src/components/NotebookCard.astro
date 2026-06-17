@@ -207,7 +207,10 @@ const formattedPopularity = hasPopularityCount ? formatCount(popularityCount) : 
       overflow.hidden = false;
       overflow.textContent = `+${tags.length}`;
 
-      if (row.closest(".notebooks-collection.list-view")) {
+      const isListView = row.closest(".notebooks-collection.list-view");
+      const isMobileListView = isListView && window.matchMedia("(max-width: 639px)").matches;
+
+      if (isListView && !isMobileListView) {
         const visibleCount = Math.min(2, tags.length);
         const hiddenTags = tags.slice(visibleCount);
         tags.forEach((tag, index) => { tag.hidden = index >= visibleCount; });

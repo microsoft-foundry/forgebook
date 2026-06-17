@@ -549,6 +549,7 @@ jupyter notebook`}</code></pre>
 
   .notebooks-collection.list-view :global(.notebook-card-meta) {
     display: block;
+    justify-self: start;
   }
 
   .notebooks-collection.list-view :global(.notebook-tags-row) {
@@ -900,12 +901,28 @@ jupyter notebook`}</code></pre>
     }
 
     .notebooks-collection.list-view :global(.notebook-card) {
-      gap: 0.75rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+    }
+
+    .notebooks-collection.list-view :global(.notebook-card-main) {
+      flex-basis: 100%;
+    }
+
+    .notebooks-collection.list-view :global(.notebook-card-title) {
+      display: -webkit-box;
+      overflow: hidden;
+      text-overflow: clip;
+      white-space: normal;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
     }
 
     .notebooks-collection.list-view :global(.notebook-card-footer) {
-      flex-basis: min(18rem, 45vw);
-      grid-template-columns: 5.5rem minmax(0, 1fr);
+      flex: 1 1 100%;
+      grid-template-columns: auto minmax(0, 1fr);
+      width: 100%;
     }
   }
 
