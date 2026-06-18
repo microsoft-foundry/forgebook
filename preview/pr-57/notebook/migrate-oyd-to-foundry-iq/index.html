@@ -20,18 +20,29 @@ Share on LinkedIn
 </a> <button id="native-share-btn" class="share-menu-item dropdown-item hidden w-full items-center gap-3 px-4 py-2 text-sm transition-colors text-left border-t border-subtle mt-1 pt-2" role="menuitem"> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path> </svg>
 More options...
 </button> </div> </div> </div> <script type="module" src="/forgebook/preview/pr-57/_astro/NotebookActions.astro_astro_type_script_index_0_lang.Blx1Q7Br.js"></script> </div> </header>  <section class="max-w-5xl mx-auto mb-8 lg:max-w-none lg:pr-[252px]"> <div class="lg:max-w-5xl"> <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3"> Author </h2> <div class="flex flex-wrap gap-2"> <div class="w-full sm:w-80 flex items-start justify-between gap-3 p-2 rounded-lg hover:bg-surface-elevated transition-colors overflow-hidden"> <div class="flex items-center gap-3 min-w-0 overflow-hidden"> <a href="https://github.com/farzad528" target="_blank" rel="noopener noreferrer" class="shrink-0" aria-label="Farzad Sunavala on GitHub"> <img src="https://github.com/farzad528.png?size=200" alt="Farzad Sunavala's avatar" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=Farzad%20Sunavala&amp;size=200&amp;background=6366f1&amp;color=fff&amp;bold=true';" class="w-14 h-14 rounded-full border-2 border-subtle bg-surface-elevated" loading="lazy"> </a> <div class="min-w-0 overflow-hidden"> <div class="font-medium text-primary truncate">Farzad Sunavala</div> <div class="text-sm text-muted truncate">Principal Product Manager</div> <div class="text-sm text-muted truncate">@farzad528</div> </div> </div> <div class="flex flex-col items-center gap-0.5 text-muted"> <a href="https://github.com/farzad528" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md p-1 hover:bg-surface-elevated hover:text-primary transition-colors" aria-label="GitHub"> <svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path> </svg> </a>   </div> </div> </div> </div> </section>  <div class="flex justify-center"> <article class="max-w-4xl w-full"> <!-- Notebook Content --> <section class="prose prose-slate dark:prose-invert max-w-none"> <div class="notebook-content"><div class="nb-notebook"><div class="nb-worksheet"><div class="nb-cell nb-markdown-cell"><blockquote>
-<p><strong>Azure OpenAI On Your Data retires October 14, 2026.</strong> It does not support GPT-5 and
-is no longer being developed. If you call On Your Data today against an Azure AI Search
-index, you need a replacement before that date.</p>
+<p><strong><a href="https://learn.microsoft.com/azure/ai-foundry/openai/concepts/use-your-data">Azure OpenAI On Your Data is deprecated and retires October 14, 2026.</a></strong>
+Microsoft has stopped onboarding new models to it (it supports only the GPT‑4o / GPT‑4o‑mini
+family). If your app calls On Your Data against an Azure AI Search index, now is the time
+to migrate.</p>
 </blockquote>
-<p>This recipe is the shortest path off On Your Data (OYD) for the most common setup: <strong>one
-call, one Azure AI Search index, one Azure OpenAI model.</strong> You keep both of those
-resources exactly as they are. You swap a single API call — and here you do it entirely
-through the Python SDKs you already use.</p>
-<p>The replacement is a <strong>Foundry IQ Knowledge Base</strong> in <strong>answer synthesis</strong> mode. Like
-OYD, it takes a question and returns a grounded, cited answer in one call — but it runs on
-the actively developed agentic-retrieval stack (query planning, parallel retrieval,
-semantic reranking, synthesis) and works with current models including GPT-5.</p>
+<p>This recipe is the shortest complete path off On Your Data (OYD) for the most common
+setup: <strong>one call, one Azure AI Search index, one Azure OpenAI model.</strong> You keep your index
+and, if you want, your existing model. You swap a single API call — and here you do it
+entirely through the Python SDKs you already use.</p>
+<p>The replacement is a <strong>Foundry IQ Knowledge Base</strong> in <strong>answer synthesis</strong> mode. Like OYD,
+it takes a question and returns a grounded, cited answer in one call — but it runs on the
+actively developed agentic-retrieval stack (query planning, parallel retrieval, semantic
+reranking, synthesis), so it is the forward-looking path and supports newer model families.</p>
+<p><strong>The whole migration in one diff:</strong></p>
+<pre><code class="language-text">Before:  openai → chat.completions.create(
+             model=&lt;your gpt-4o deployment&gt;,
+             extra_body={"data_sources": [{"azure_search": &lt;your index&gt;}]})
+         → answer + citations
+
+After:   azure-search-documents → KnowledgeBaseRetrievalClient.retrieve(...)
+             over a Knowledge Base that wraps the SAME index + SAME (or newer) model
+         → answer + citations + activity trace
+</code></pre>
 <table>
 <thead>
 <tr>
@@ -47,8 +58,8 @@ semantic reranking, synthesis) and works with current models including GPT-5.</p
 </tr>
 <tr>
 <td>Your Azure OpenAI model</td>
-<td>unchanged</td>
-<td>unchanged — same deployment for synthesis</td>
+<td>GPT‑4o / GPT‑4o‑mini only</td>
+<td>keep it, or upgrade to a newer family (e.g. GPT‑4.1, GPT‑5)</td>
 </tr>
 <tr>
 <td>The SDK</td>
@@ -66,10 +77,46 @@ semantic reranking, synthesis) and works with current models including GPT-5.</p
 <td>answer + citations + activity trace</td>
 </tr>
 </tbody></table>
-<p><strong>What this recipe does not do:</strong> re-index your data, add new source types (Blob,
-SharePoint, OneLake, Web), or wire up an agent. Those are all possible later — see
-<a href="/forgebook/preview/pr-57/notebook/mastering-foundry-iq/">Mastering Foundry IQ</a>. Here we stay strictly on the migration.</p>
-</div><div class="nb-cell nb-markdown-cell"><h2>What you need</h2>
+<p>This recipe does <strong>not</strong>:</p>
+<ul>
+<li>re-index or copy your data,</li>
+<li>change your Azure AI Search index,</li>
+<li>add Blob, SharePoint, OneLake, or Web sources,</li>
+<li>create an agent.</li>
+</ul>
+<p>It only migrates the OYD retrieval-and-answer call to a Foundry IQ Knowledge Base. Those
+other moves are all possible later — see <a href="/forgebook/preview/pr-57/notebook/mastering-foundry-iq/">Mastering Foundry IQ</a>.</p>
+</div><div class="nb-cell nb-markdown-cell"><h2>Why bother — one real run</h2>
+<p>Same index, same question, both engines (the public <code>hotels-sample-index</code>, asking <em>"Which
+hotels are luxury resorts with free wifi, and what amenities make them stand out?"</em>):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>On Your Data</th>
+<th>Foundry IQ Knowledge Base</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Retrieval</td>
+<td>one hidden lookup</td>
+<td><strong>planned subqueries</strong> run in parallel</td>
+</tr>
+<tr>
+<td>Grounding</td>
+<td>5 citations</td>
+<td><strong>19 references</strong></td>
+</tr>
+<tr>
+<td>Visibility</td>
+<td>none</td>
+<td>full <strong>activity trace</strong> (planning → search → synthesis)</td>
+</tr>
+</tbody></table>
+<p>You see the <em>why</em> in the activity trace under §5. The point up front: you keep everything
+you already have and get a broader, inspectable answer — and your call still works after
+Oct 14, 2026.</p>
+</div><div class="nb-cell nb-markdown-cell"><h2>Prerequisites</h2>
 <p>You almost certainly already have all of this — it is the same setup On Your Data uses.</p>
 <table>
 <thead>
@@ -88,7 +135,7 @@ SharePoint, OneLake, Web), or wire up an agent. Those are all possible later —
 </tr>
 <tr>
 <td><strong>Azure OpenAI / Foundry resource</strong></td>
-<td>The same chat deployment your OYD call uses (e.g. <code>gpt-4.1-mini</code>, <code>gpt-4o</code>, or now <code>gpt-5-mini</code>).</td>
+<td>Your existing OYD chat deployment (GPT‑4o or GPT‑4o‑mini). You can reuse it as-is for the Knowledge Base, or point the KB at a newer deployment (e.g. <code>gpt-4.1-mini</code>, <code>gpt-5-mini</code>) — only the deployment name in §4 changes.</td>
 </tr>
 </tbody></table>
 <p>This recipe uses <strong>API-key auth</strong> so it runs with copy-paste. For production, switch to
@@ -105,13 +152,19 @@ SEARCH_SEMANTIC_CONFIG=&lt;your-semantic-config-name&gt;   # optional; omit if y
 
 AOAI_ENDPOINT=https://&lt;your-foundry-resource&gt;.openai.azure.com
 AOAI_API_KEY=&lt;your-azure-openai-key&gt;
-AOAI_GPT_DEPLOYMENT=gpt-4.1-mini                      # the SAME deployment OYD uses
+AOAI_GPT_DEPLOYMENT=gpt-4o-mini                       # your OYD deployment, or a newer one
 </code></pre>
 </div><div class="nb-cell nb-markdown-cell"><h3>Install</h3>
 <p>The Knowledge Base SDK surface (<code>2026-05-01-preview</code>) ships in the preview
 <code>azure-search-documents</code> package on the
 <a href="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/">Azure SDK public feed</a>,
 not PyPI. The <code>openai</code> SDK (for the On Your Data call) installs from PyPI as usual.</p>
+<blockquote>
+<p><strong>Preview surface.</strong> The Knowledge Base SDK classes and <code>2026-05-01-preview</code> API are in
+preview and may change. Pin the package version (as below) and check the
+<a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-migrate">agentic retrieval migration guide</a>
+before a production rollout.</p>
+</blockquote>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token operator">%</span><span class="token operator">%</span>capture
 <span class="token operator">%</span>pip install <span class="token operator">-</span><span class="token operator">-</span>quiet \
     <span class="token string">"azure-search-documents==12.1.0a20260520003"</span> \
@@ -295,6 +348,12 @@ per-call <strong>retrieve</strong> request. Here is every OYD parameter and wher
 with hybrid search, and reranks — so the best strategy is the default. If your index has
 a vector field and an embedding vectorizer, the KB uses them automatically.</p>
 </blockquote>
+<blockquote>
+<p><strong>About <code>top_n_documents</code>.</strong> In OYD this set how many documents were sent to the model.
+In a Knowledge Base, query planning and synthesis assemble context for you, so there is
+no 1:1 replacement. Use <code>max_output_documents</code> only to <em>widen the candidate pool</em>
+(allowed range 50–200) — not to cap the answer the way <code>top_n_documents</code> did.</p>
+</blockquote>
 </div><div class="nb-cell nb-markdown-cell"><h2>3 · Create the Knowledge Source over your existing index</h2>
 <p>A Knowledge Source of kind <code>searchIndex</code> is a thin wrapper that points at an index you
 already have. <strong>Nothing is re-indexed, copied, or moved</strong> — it references your index in
@@ -429,32 +488,18 @@ kb <span class="token operator">=</span> kb_answer<span class="token punctuation
 <p>On Your Data was a black box. The Knowledge Base returns an <code>activity</code> trace: the
 subqueries it planned, which source it hit, and token counts for planning vs. synthesis.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">activity <span class="token operator">=</span> <span class="token punctuation">[</span>a<span class="token punctuation">.</span>as_dict<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">if</span> <span class="token builtin">hasattr</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> <span class="token string">"as_dict"</span><span class="token punctuation">)</span> <span class="token keyword">else</span> a <span class="token keyword">for</span> a <span class="token keyword">in</span> <span class="token punctuation">(</span>kb<span class="token punctuation">.</span>activity <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>activity<span class="token punctuation">,</span> indent<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">2000</span><span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h3>What a real run looks like</h3>
-<p>Here is a representative run against the public <strong><code>hotels-sample-index</code></strong> (create it in
-seconds from the Azure portal's <em>Import data → hotels-sample</em>), asking <em>"Which hotels are
-luxury resorts with free wifi, and what amenities make them stand out?"</em></p>
-<p><strong>On Your Data (before)</strong> — one model call, retrieval hidden, <code>[doc1]</code>-style citations:</p>
-<pre><code class="language-text">1. Double Sanctuary Resort: 5-star luxury hotel ... fitness center, and Nespresso
-   machines in the rooms [doc1].
-2. Marquis Plaza &amp; Suites: free Wi-Fi, a full kitchen, and a free breakfast buffet [doc2].
-Citations: 5
+<span class="token keyword">print</span><span class="token punctuation">(</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>activity<span class="token punctuation">,</span> indent<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">2000</span><span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h3>Reading the trace</h3>
+<p>The trace above is the payoff over OYD's black box. For the hotels example, the planner
+decomposed one question into <strong>two</strong> subqueries and ran them in parallel before
+synthesizing:</p>
+<pre><code class="language-text">modelQueryPlanning     &lt;your model&gt;   plans subqueries
+searchIndex            "luxury resorts with free wifi"     -&gt; hits
+searchIndex            "amenities of luxury resorts"       -&gt; hits
+modelAnswerSynthesis   &lt;your model&gt;   writes the cited answer
+agenticReasoning       (low effort)
 </code></pre>
-<p><strong>Foundry IQ (after)</strong> — the planner fans out, then synthesizes with <code>[ref_id:N]</code> citations:</p>
-<pre><code class="language-text">1. Sapphire Resort — downtown; free WiFi, continental breakfast, air conditioning [ref_id:0].
-2. Double Sanctuary Resort — 5-star, ranked #1 by Conde Nast Traveler; free WiFi,
-   fitness center, Nespresso in room [ref_id:2].
-...
-References: 19   Activity steps: 5
-</code></pre>
-<p>The <code>activity</code> trace shows <em>why</em> the second answer is broader — it ran two planned
-subqueries instead of one lookup:</p>
-<pre><code class="language-text">modelQueryPlanning     gpt-4.1-mini  (~1.3s)
-searchIndex            "luxury resorts with free wifi"     -&gt; 19 hits
-searchIndex            "amenities of luxury resorts"       -&gt; 38 hits
-modelAnswerSynthesis   gpt-4.1-mini
-</code></pre>
-<p>Same index, same model, one call each — but only the Foundry IQ path keeps working after
-Oct 14, 2026, and it grounds the answer in a wider candidate set.</p>
+<p>That fan-out is why the KB answer cites a wider set of documents than the single hidden
+lookup OYD did — same index, same model, one call each.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>6 · Side by side</h2>
 <p>Same question, both engines. The answers should be comparable — same index, same model —
 but only the Foundry IQ call still runs after Oct 14, 2026.</p>

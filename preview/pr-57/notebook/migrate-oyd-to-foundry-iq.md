@@ -1,30 +1,65 @@
-> **Azure OpenAI On Your Data retires October 14, 2026.** It does not support GPT-5 and
-> is no longer being developed. If you call On Your Data today against an Azure AI Search
-> index, you need a replacement before that date.
+> **[Azure OpenAI On Your Data is deprecated and retires October 14, 2026.](https://learn.microsoft.com/azure/ai-foundry/openai/concepts/use-your-data)**
+> Microsoft has stopped onboarding new models to it (it supports only the GPT‑4o / GPT‑4o‑mini
+> family). If your app calls On Your Data against an Azure AI Search index, now is the time
+> to migrate.
 
-This recipe is the shortest path off On Your Data (OYD) for the most common setup: **one
-call, one Azure AI Search index, one Azure OpenAI model.** You keep both of those
-resources exactly as they are. You swap a single API call — and here you do it entirely
-through the Python SDKs you already use.
+This recipe is the shortest complete path off On Your Data (OYD) for the most common
+setup: **one call, one Azure AI Search index, one Azure OpenAI model.** You keep your index
+and, if you want, your existing model. You swap a single API call — and here you do it
+entirely through the Python SDKs you already use.
 
-The replacement is a **Foundry IQ Knowledge Base** in **answer synthesis** mode. Like
-OYD, it takes a question and returns a grounded, cited answer in one call — but it runs on
-the actively developed agentic-retrieval stack (query planning, parallel retrieval,
-semantic reranking, synthesis) and works with current models including GPT-5.
+The replacement is a **Foundry IQ Knowledge Base** in **answer synthesis** mode. Like OYD,
+it takes a question and returns a grounded, cited answer in one call — but it runs on the
+actively developed agentic-retrieval stack (query planning, parallel retrieval, semantic
+reranking, synthesis), so it is the forward-looking path and supports newer model families.
+
+**The whole migration in one diff:**
+
+```text
+Before:  openai → chat.completions.create(
+             model=<your gpt-4o deployment>,
+             extra_body={"data_sources": [{"azure_search": <your index>}]})
+         → answer + citations
+
+After:   azure-search-documents → KnowledgeBaseRetrievalClient.retrieve(...)
+             over a Knowledge Base that wraps the SAME index + SAME (or newer) model
+         → answer + citations + activity trace
+```
 
 | | On Your Data (today) | Foundry IQ Knowledge Base (after) |
 |---|---|---|
 | Your Search index | unchanged | unchanged — wrapped, not copied |
-| Your Azure OpenAI model | unchanged | unchanged — same deployment for synthesis |
+| Your Azure OpenAI model | GPT‑4o / GPT‑4o‑mini only | keep it, or upgrade to a newer family (e.g. GPT‑4.1, GPT‑5) |
 | The SDK | `openai` — `chat.completions.create(extra_body=...)` | `azure-search-documents` — `KnowledgeBaseRetrievalClient.retrieve(...)` |
 | Status | retires **Oct 14, 2026** | preview (`2026-05-01-preview`), actively developed |
 | Output | answer + citations | answer + citations + activity trace |
 
-**What this recipe does not do:** re-index your data, add new source types (Blob,
-SharePoint, OneLake, Web), or wire up an agent. Those are all possible later — see
-[Mastering Foundry IQ](mastering-foundry-iq.ipynb). Here we stay strictly on the migration.
+This recipe does **not**:
 
-## What you need
+- re-index or copy your data,
+- change your Azure AI Search index,
+- add Blob, SharePoint, OneLake, or Web sources,
+- create an agent.
+
+It only migrates the OYD retrieval-and-answer call to a Foundry IQ Knowledge Base. Those
+other moves are all possible later — see [Mastering Foundry IQ](mastering-foundry-iq.ipynb).
+
+## Why bother — one real run
+
+Same index, same question, both engines (the public `hotels-sample-index`, asking *"Which
+hotels are luxury resorts with free wifi, and what amenities make them stand out?"*):
+
+| | On Your Data | Foundry IQ Knowledge Base |
+|---|---|---|
+| Retrieval | one hidden lookup | **planned subqueries** run in parallel |
+| Grounding | 5 citations | **19 references** |
+| Visibility | none | full **activity trace** (planning → search → synthesis) |
+
+You see the *why* in the activity trace under §5. The point up front: you keep everything
+you already have and get a broader, inspectable answer — and your call still works after
+Oct 14, 2026.
+
+## Prerequisites
 
 You almost certainly already have all of this — it is the same setup On Your Data uses.
 
@@ -32,7 +67,7 @@ You almost certainly already have all of this — it is the same setup On Your D
 |---|---|
 | **Azure AI Search service** | The one your OYD `data_sources` block points at, with your existing index. The service must be in a [preview region](https://learn.microsoft.com/azure/search/search-region-support) for Knowledge Bases. |
 | **An existing index** | With a semantic configuration (OYD's `query_type: semantic` already requires one). |
-| **Azure OpenAI / Foundry resource** | The same chat deployment your OYD call uses (e.g. `gpt-4.1-mini`, `gpt-4o`, or now `gpt-5-mini`). |
+| **Azure OpenAI / Foundry resource** | Your existing OYD chat deployment (GPT‑4o or GPT‑4o‑mini). You can reuse it as-is for the Knowledge Base, or point the KB at a newer deployment (e.g. `gpt-4.1-mini`, `gpt-5-mini`) — only the deployment name in §4 changes. |
 
 This recipe uses **API-key auth** so it runs with copy-paste. For production, switch to
 Microsoft Entra ID — see [Best practices](#best-practices) at the end.
@@ -52,7 +87,7 @@ SEARCH_SEMANTIC_CONFIG=<your-semantic-config-name>   # optional; omit if your in
 
 AOAI_ENDPOINT=https://<your-foundry-resource>.openai.azure.com
 AOAI_API_KEY=<your-azure-openai-key>
-AOAI_GPT_DEPLOYMENT=gpt-4.1-mini                      # the SAME deployment OYD uses
+AOAI_GPT_DEPLOYMENT=gpt-4o-mini                       # your OYD deployment, or a newer one
 ```
 
 ### Install
@@ -61,6 +96,11 @@ The Knowledge Base SDK surface (`2026-05-01-preview`) ships in the preview
 `azure-search-documents` package on the
 [Azure SDK public feed](https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/),
 not PyPI. The `openai` SDK (for the On Your Data call) installs from PyPI as usual.
+
+> **Preview surface.** The Knowledge Base SDK classes and `2026-05-01-preview` API are in
+> preview and may change. Pin the package version (as below) and check the
+> [agentic retrieval migration guide](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-migrate)
+> before a production rollout.
 
 ```python
 %%capture
@@ -215,6 +255,11 @@ per-call **retrieve** request. Here is every OYD parameter and where it goes.
 > `semantic`, `vector`, or a hybrid. A Knowledge Base always plans subqueries, retrieves
 > with hybrid search, and reranks — so the best strategy is the default. If your index has
 > a vector field and an embedding vectorizer, the KB uses them automatically.
+
+> **About `top_n_documents`.** In OYD this set how many documents were sent to the model.
+> In a Knowledge Base, query planning and synthesis assemble context for you, so there is
+> no 1:1 replacement. Use `max_output_documents` only to *widen the candidate pool*
+> (allowed range 50–200) — not to cap the answer the way `top_n_documents` did.
 
 ## 3 · Create the Knowledge Source over your existing index
 
@@ -374,43 +419,22 @@ activity = [a.as_dict() if hasattr(a, "as_dict") else a for a in (kb.activity or
 print(json.dumps(activity, indent=2)[:2000])
 ```
 
-### What a real run looks like
+### Reading the trace
 
-Here is a representative run against the public **`hotels-sample-index`** (create it in
-seconds from the Azure portal's *Import data → hotels-sample*), asking *"Which hotels are
-luxury resorts with free wifi, and what amenities make them stand out?"*
-
-**On Your Data (before)** — one model call, retrieval hidden, `[doc1]`-style citations:
+The trace above is the payoff over OYD's black box. For the hotels example, the planner
+decomposed one question into **two** subqueries and ran them in parallel before
+synthesizing:
 
 ```text
-1. Double Sanctuary Resort: 5-star luxury hotel ... fitness center, and Nespresso
-   machines in the rooms [doc1].
-2. Marquis Plaza & Suites: free Wi-Fi, a full kitchen, and a free breakfast buffet [doc2].
-Citations: 5
+modelQueryPlanning     <your model>   plans subqueries
+searchIndex            "luxury resorts with free wifi"     -> hits
+searchIndex            "amenities of luxury resorts"       -> hits
+modelAnswerSynthesis   <your model>   writes the cited answer
+agenticReasoning       (low effort)
 ```
 
-**Foundry IQ (after)** — the planner fans out, then synthesizes with `[ref_id:N]` citations:
-
-```text
-1. Sapphire Resort — downtown; free WiFi, continental breakfast, air conditioning [ref_id:0].
-2. Double Sanctuary Resort — 5-star, ranked #1 by Conde Nast Traveler; free WiFi,
-   fitness center, Nespresso in room [ref_id:2].
-...
-References: 19   Activity steps: 5
-```
-
-The `activity` trace shows *why* the second answer is broader — it ran two planned
-subqueries instead of one lookup:
-
-```text
-modelQueryPlanning     gpt-4.1-mini  (~1.3s)
-searchIndex            "luxury resorts with free wifi"     -> 19 hits
-searchIndex            "amenities of luxury resorts"       -> 38 hits
-modelAnswerSynthesis   gpt-4.1-mini
-```
-
-Same index, same model, one call each — but only the Foundry IQ path keeps working after
-Oct 14, 2026, and it grounds the answer in a wider candidate set.
+That fan-out is why the KB answer cites a wider set of documents than the single hidden
+lookup OYD did — same index, same model, one call each.
 
 ## 6 · Side by side
 
