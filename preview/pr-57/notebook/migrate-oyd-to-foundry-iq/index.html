@@ -25,12 +25,13 @@ is no longer being developed. If you call On Your Data today against an Azure AI
 index, you need a replacement before that date.</p>
 </blockquote>
 <p>This recipe is the shortest path off On Your Data (OYD) for the most common setup: <strong>one
-REST call, one Azure AI Search index, one Azure OpenAI model.</strong> You keep both of those
-resources exactly as they are. You swap a single API call.</p>
+call, one Azure AI Search index, one Azure OpenAI model.</strong> You keep both of those
+resources exactly as they are. You swap a single API call — and here you do it entirely
+through the Python SDKs you already use.</p>
 <p>The replacement is a <strong>Foundry IQ Knowledge Base</strong> in <strong>answer synthesis</strong> mode. Like
-OYD, it takes a question and returns a grounded, cited answer in one REST call — but it
-runs on the actively developed agentic-retrieval stack (query planning, parallel
-retrieval, semantic reranking, synthesis) and works with current models including GPT-5.</p>
+OYD, it takes a question and returns a grounded, cited answer in one call — but it runs on
+the actively developed agentic-retrieval stack (query planning, parallel retrieval,
+semantic reranking, synthesis) and works with current models including GPT-5.</p>
 <table>
 <thead>
 <tr>
@@ -50,9 +51,9 @@ retrieval, semantic reranking, synthesis) and works with current models includin
 <td>unchanged — same deployment for synthesis</td>
 </tr>
 <tr>
-<td>The call</td>
-<td><code>POST .../chat/completions</code> with a <code>data_sources</code> block</td>
-<td><code>POST .../knowledgebases/{kb}/retrieve</code></td>
+<td>The SDK</td>
+<td><code>openai</code> — <code>chat.completions.create(extra_body=...)</code></td>
+<td><code>azure-search-documents</code> — <code>KnowledgeBaseRetrievalClient.retrieve(...)</code></td>
 </tr>
 <tr>
 <td>Status</td>
@@ -106,15 +107,29 @@ AOAI_ENDPOINT=https://&lt;your-foundry-resource&gt;.openai.azure.com
 AOAI_API_KEY=&lt;your-azure-openai-key&gt;
 AOAI_GPT_DEPLOYMENT=gpt-4.1-mini                      # the SAME deployment OYD uses
 </code></pre>
+</div><div class="nb-cell nb-markdown-cell"><h3>Install</h3>
+<p>The Knowledge Base SDK surface (<code>2026-05-01-preview</code>) ships in the preview
+<code>azure-search-documents</code> package on the
+<a href="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/">Azure SDK public feed</a>,
+not PyPI. The <code>openai</code> SDK (for the On Your Data call) installs from PyPI as usual.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token operator">%</span><span class="token operator">%</span>capture
-<span class="token operator">%</span>pip install <span class="token operator">-</span><span class="token operator">-</span>quiet <span class="token string">"requests&gt;=2.31"</span> <span class="token string">"python-dotenv&gt;=1.0.1"</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>Configure</h2>
-<p>One config cell. Everything above the line is what you already have for On Your Data;
-everything below is the two names this recipe will create on your Search service.</p>
+<span class="token operator">%</span>pip install <span class="token operator">-</span><span class="token operator">-</span>quiet \
+    <span class="token string">"azure-search-documents==12.1.0a20260520003"</span> \
+    <span class="token string">"azure-identity&gt;=1.19.0"</span> \
+    <span class="token string">"azure-core&gt;=1.32.0"</span> \
+    <span class="token string">"openai&gt;=1.50.0"</span> \
+    <span class="token string">"python-dotenv&gt;=1.0.1"</span> \
+    <span class="token operator">-</span><span class="token operator">-</span>extra<span class="token operator">-</span>index<span class="token operator">-</span>url https<span class="token punctuation">:</span><span class="token operator">//</span>pkgs<span class="token punctuation">.</span>dev<span class="token punctuation">.</span>azure<span class="token punctuation">.</span>com<span class="token operator">/</span>azure<span class="token operator">-</span>sdk<span class="token operator">/</span>public<span class="token operator">/</span>_packaging<span class="token operator">/</span>azure<span class="token operator">-</span>sdk<span class="token operator">-</span><span class="token keyword">for</span><span class="token operator">-</span>python<span class="token operator">/</span>pypi<span class="token operator">/</span>simple<span class="token operator">/</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>Configure</h2>
+<p>One config cell builds the two clients and reads your settings. Everything above the line
+is what you already have for On Your Data; everything below is the two names this recipe
+will create on your Search service.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">import</span> json
 <span class="token keyword">import</span> os
 
-<span class="token keyword">import</span> requests
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>core<span class="token punctuation">.</span>credentials <span class="token keyword">import</span> AzureKeyCredential
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes <span class="token keyword">import</span> SearchIndexClient
 <span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
+<span class="token keyword">from</span> openai <span class="token keyword">import</span> AzureOpenAI
 
 load_dotenv<span class="token punctuation">(</span>override<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
 
@@ -137,9 +152,7 @@ AOAI_API_KEY <span class="token operator">=</span> env<span class="token punctua
 AOAI_DEPLOYMENT <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_GPT_DEPLOYMENT"</span><span class="token punctuation">)</span>
 AOAI_MODEL <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_GPT_MODEL"</span><span class="token punctuation">,</span> required<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> default<span class="token operator">=</span>AOAI_DEPLOYMENT<span class="token punctuation">)</span>
 
-<span class="token comment"># ---- API versions --------------------------------------------------------</span>
-OYD_API_VERSION <span class="token operator">=</span> <span class="token string">"2024-10-21"</span>          <span class="token comment"># GA Azure OpenAI chat completions (On Your Data)</span>
-KB_API_VERSION <span class="token operator">=</span> <span class="token string">"2026-05-01-preview"</span>   <span class="token comment"># Foundry IQ Knowledge Base (preview)</span>
+OYD_API_VERSION <span class="token operator">=</span> <span class="token string">"2024-10-21"</span>   <span class="token comment"># GA Azure OpenAI data plane (On Your Data)</span>
 
 <span class="token comment"># ---- The two resources this recipe creates -------------------------------</span>
 KS_NAME <span class="token operator">=</span> <span class="token string">"oyd-migrated-ks"</span>   <span class="token comment"># Knowledge Source that wraps your existing index</span>
@@ -155,29 +168,33 @@ SYSTEM_MESSAGE <span class="token operator">=</span> <span class="token punctuat
 <span class="token comment"># A real question your index can answer. Replace this.</span>
 QUESTION <span class="token operator">=</span> <span class="token string">"What is our return policy?"</span>
 
+<span class="token comment"># ---- Clients -------------------------------------------------------------</span>
+<span class="token comment"># OYD runs through the openai SDK; the Knowledge Base runs through azure-search-documents.</span>
+aoai_client <span class="token operator">=</span> AzureOpenAI<span class="token punctuation">(</span>
+    azure_endpoint<span class="token operator">=</span>AOAI_ENDPOINT<span class="token punctuation">,</span> api_key<span class="token operator">=</span>AOAI_API_KEY<span class="token punctuation">,</span> api_version<span class="token operator">=</span>OYD_API_VERSION
+<span class="token punctuation">)</span>
+search_credential <span class="token operator">=</span> AzureKeyCredential<span class="token punctuation">(</span>SEARCH_API_KEY<span class="token punctuation">)</span>
+index_client <span class="token operator">=</span> SearchIndexClient<span class="token punctuation">(</span>endpoint<span class="token operator">=</span>SEARCH_ENDPOINT<span class="token punctuation">,</span> credential<span class="token operator">=</span>search_credential<span class="token punctuation">)</span>
+
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Search : </span><span class="token interpolation"><span class="token punctuation">{</span>SEARCH_ENDPOINT<span class="token punctuation">}</span></span><span class="token string">  (index: </span><span class="token interpolation"><span class="token punctuation">{</span>SEARCH_INDEX<span class="token punctuation">}</span></span><span class="token string">)"</span></span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Model  : </span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_DEPLOYMENT<span class="token punctuation">}</span></span><span class="token string">  @ </span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_ENDPOINT<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"KB API : </span><span class="token interpolation"><span class="token punctuation">{</span>KB_API_VERSION<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>1 · The call you make today (On Your Data)</h2>
-<p>This is the On Your Data pattern: a normal chat-completions request with a <code>data_sources</code>
-block that points at your Search index. Azure OpenAI does the retrieval for you and folds
-citations into <code>context.citations</code>. <strong>This is the call that stops working on Oct 14, 2026.</strong></p>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Model  : </span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_DEPLOYMENT<span class="token punctuation">}</span></span><span class="token string">  @ </span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_ENDPOINT<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>1 · The call you make today (On Your Data)</h2>
+<p>This is the On Your Data pattern through the <code>openai</code> SDK: a normal
+<code>chat.completions.create</code> call with a <code>data_sources</code> block (passed via <code>extra_body</code>) that
+points at your Search index. Azure OpenAI does the retrieval for you and folds citations
+into <code>message.context</code>. <strong>This is the call that stops working on Oct 14, 2026.</strong></p>
 <p>The cell below sends it and prints the answer plus its citations. Note the parameters
-inside <code>data_sources[0].parameters</code> — <code>query_type</code>, <code>semantic_configuration</code>,
+inside <code>data_sources[0]["parameters"]</code> — <code>query_type</code>, <code>semantic_configuration</code>,
 <code>strictness</code>, <code>top_n_documents</code>, <code>in_scope</code> — and the <code>system</code> message that carries your
 instructions. Those are exactly what we map over in the next section.</p>
 <blockquote>
 <p><strong>Heads-up on the system message.</strong> The current GA API (<code>2024-10-21</code>) takes your
-instructions as a normal <code>system</code> message in <code>messages</code>. Older On Your Data code passed
-a <code>role_information</code> field <em>inside</em> <code>data_sources[0].parameters</code> — that field is rejected
-today (<code>"Extra inputs are not permitted"</code>). If your code still sends <code>role_information</code>,
-move it to a <code>system</code> message as shown here.</p>
+instructions as a normal <code>system</code> message. Older On Your Data code passed a
+<code>role_information</code> field <em>inside</em> <code>data_sources[0]["parameters"]</code> — that field is
+rejected today (<code>"Extra inputs are not permitted"</code>). If your code still sends
+<code>role_information</code>, move it to a <code>system</code> message as shown here.</p>
 </blockquote>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">def</span> <span class="token function">oyd_answer</span><span class="token punctuation">(</span>question<span class="token punctuation">,</span> <span class="token operator">*</span><span class="token punctuation">,</span> strictness<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> top_n<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">,</span> query_type<span class="token operator">=</span><span class="token string">"semantic"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token triple-quoted-string string">"""The Azure OpenAI On Your Data call. Retires Oct 14, 2026."""</span>
-    url <span class="token operator">=</span> <span class="token punctuation">(</span>
-        <span class="token string-interpolation"><span class="token string">f"</span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_ENDPOINT<span class="token punctuation">}</span></span><span class="token string">/openai/deployments/</span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_DEPLOYMENT<span class="token punctuation">}</span></span><span class="token string">"</span></span>
-        <span class="token string-interpolation"><span class="token string">f"/chat/completions?api-version=</span><span class="token interpolation"><span class="token punctuation">{</span>OYD_API_VERSION<span class="token punctuation">}</span></span><span class="token string">"</span></span>
-    <span class="token punctuation">)</span>
+    <span class="token triple-quoted-string string">"""The Azure OpenAI On Your Data call via the openai SDK. Retires Oct 14, 2026."""</span>
     parameters <span class="token operator">=</span> <span class="token punctuation">{</span>
         <span class="token string">"endpoint"</span><span class="token punctuation">:</span> SEARCH_ENDPOINT<span class="token punctuation">,</span>
         <span class="token string">"index_name"</span><span class="token punctuation">:</span> SEARCH_INDEX<span class="token punctuation">,</span>
@@ -190,97 +207,86 @@ move it to a <code>system</code> message as shown here.</p>
     <span class="token keyword">if</span> SEMANTIC_CONFIG<span class="token punctuation">:</span>
         parameters<span class="token punctuation">[</span><span class="token string">"semantic_configuration"</span><span class="token punctuation">]</span> <span class="token operator">=</span> SEMANTIC_CONFIG
 
-    body <span class="token operator">=</span> <span class="token punctuation">{</span>
-        <span class="token string">"messages"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+    <span class="token keyword">return</span> aoai_client<span class="token punctuation">.</span>chat<span class="token punctuation">.</span>completions<span class="token punctuation">.</span>create<span class="token punctuation">(</span>
+        model<span class="token operator">=</span>AOAI_DEPLOYMENT<span class="token punctuation">,</span>
+        messages<span class="token operator">=</span><span class="token punctuation">[</span>
             <span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"system"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> SYSTEM_MESSAGE<span class="token punctuation">}</span><span class="token punctuation">,</span>
             <span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> question<span class="token punctuation">}</span><span class="token punctuation">,</span>
         <span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token string">"data_sources"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"azure_search"</span><span class="token punctuation">,</span> <span class="token string">"parameters"</span><span class="token punctuation">:</span> parameters<span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-    <span class="token punctuation">}</span>
-    resp <span class="token operator">=</span> requests<span class="token punctuation">.</span>post<span class="token punctuation">(</span>
-        url<span class="token punctuation">,</span>
-        headers<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">"api-key"</span><span class="token punctuation">:</span> AOAI_API_KEY<span class="token punctuation">,</span> <span class="token string">"Content-Type"</span><span class="token punctuation">:</span> <span class="token string">"application/json"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
-        json<span class="token operator">=</span>body<span class="token punctuation">,</span>
-        timeout<span class="token operator">=</span><span class="token number">60</span><span class="token punctuation">,</span>
+        extra_body<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">"data_sources"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"azure_search"</span><span class="token punctuation">,</span> <span class="token string">"parameters"</span><span class="token punctuation">:</span> parameters<span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
     <span class="token punctuation">)</span>
-    resp<span class="token punctuation">.</span>raise_for_status<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token keyword">return</span> resp<span class="token punctuation">.</span>json<span class="token punctuation">(</span><span class="token punctuation">)</span>
 
 
 oyd <span class="token operator">=</span> oyd_answer<span class="token punctuation">(</span>QUESTION<span class="token punctuation">)</span>
-oyd_message <span class="token operator">=</span> oyd<span class="token punctuation">[</span><span class="token string">"choices"</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token string">"message"</span><span class="token punctuation">]</span>
+oyd_message <span class="token operator">=</span> oyd<span class="token punctuation">.</span>choices<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>message
 
-<span class="token keyword">print</span><span class="token punctuation">(</span>oyd_message<span class="token punctuation">[</span><span class="token string">"content"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-citations <span class="token operator">=</span> oyd_message<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"context"</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"citations"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>oyd_message<span class="token punctuation">.</span>content<span class="token punctuation">)</span>
+context <span class="token operator">=</span> <span class="token builtin">getattr</span><span class="token punctuation">(</span>oyd_message<span class="token punctuation">,</span> <span class="token string">"context"</span><span class="token punctuation">,</span> <span class="token boolean">None</span><span class="token punctuation">)</span> <span class="token keyword">or</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+citations <span class="token operator">=</span> context<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"citations"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"\nCitations: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>citations<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 <span class="token keyword">for</span> i<span class="token punctuation">,</span> c <span class="token keyword">in</span> <span class="token builtin">enumerate</span><span class="token punctuation">(</span>citations<span class="token punctuation">,</span> start<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
     label <span class="token operator">=</span> c<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"title"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> c<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"filepath"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> c<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"url"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> <span class="token string-interpolation"><span class="token string">f"source </span><span class="token interpolation"><span class="token punctuation">{</span>i<span class="token punctuation">}</span></span><span class="token string">"</span></span>
     <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  [doc</span><span class="token interpolation"><span class="token punctuation">{</span>i<span class="token punctuation">}</span></span><span class="token string">] </span><span class="token interpolation"><span class="token punctuation">{</span>label<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>2 · How the parameters map</h2>
-<p>Foundry IQ splits the one OYD <code>data_sources</code> block into three places: a <strong>Knowledge
+<p>Foundry IQ splits the one OYD <code>data_sources</code> block into three SDK objects: a <strong>Knowledge
 Source</strong> (your index), a <strong>Knowledge Base</strong> (your model + answer behavior), and the
 per-call <strong>retrieve</strong> request. Here is every OYD parameter and where it goes.</p>
 <table>
 <thead>
 <tr>
 <th>OYD <code>parameters</code> field</th>
-<th>Foundry IQ equivalent</th>
+<th>Foundry IQ SDK equivalent</th>
 <th>Lives on</th>
 </tr>
 </thead>
 <tbody><tr>
 <td><code>endpoint</code></td>
-<td>Search endpoint (unchanged)</td>
-<td>retrieve URL</td>
+<td><code>SearchIndexClient</code> / <code>KnowledgeBaseRetrievalClient</code> endpoint</td>
+<td>client</td>
 </tr>
 <tr>
 <td><code>index_name</code></td>
-<td><code>searchIndexParameters.searchIndexName</code></td>
+<td><code>SearchIndexKnowledgeSourceParameters(search_index_name=...)</code></td>
 <td>Knowledge Source</td>
 </tr>
 <tr>
 <td><code>semantic_configuration</code></td>
-<td><code>searchIndexParameters.semanticConfigurationName</code></td>
+<td><code>SearchIndexKnowledgeSourceParameters(semantic_configuration_name=...)</code></td>
 <td>Knowledge Source</td>
 </tr>
 <tr>
 <td><code>authentication</code></td>
-<td><code>api-key</code> header (or Entra token)</td>
-<td>request headers</td>
+<td><code>AzureKeyCredential</code> (or <code>DefaultAzureCredential</code>)</td>
+<td>client</td>
 </tr>
 <tr>
-<td><code>role_information</code> <em>(old field)</em> → <code>system</code> message</td>
-<td><code>answerInstructions</code></td>
+<td>system message <em>(old <code>role_information</code>)</em></td>
+<td><code>KnowledgeBase(answer_instructions=...)</code></td>
 <td>Knowledge Base</td>
 </tr>
 <tr>
 <td><code>in_scope: true</code></td>
-<td>grounding sentence appended to <code>answerInstructions</code></td>
+<td>grounding sentence appended to <code>answer_instructions</code></td>
 <td>Knowledge Base</td>
 </tr>
 <tr>
 <td>model / deployment</td>
-<td><code>models[].azureOpenAIParameters.deploymentId</code></td>
+<td><code>AzureOpenAIVectorizerParameters(deployment_name=...)</code></td>
 <td>Knowledge Base</td>
 </tr>
 <tr>
 <td><code>strictness</code> (1–5)</td>
-<td><code>rerankerThreshold</code> (0.0–4.0), as <code>(strictness − 1) × 1.0</code></td>
+<td><code>reranker_threshold</code> (0.0–4.0), as <code>(strictness − 1) × 1.0</code></td>
 <td>retrieve call</td>
 </tr>
 <tr>
 <td><code>top_n_documents</code> (3–20)</td>
-<td><em>no direct knob</em> — the planner sizes context; widen the pool with <code>maxOutputDocuments</code> (50–200) if needed</td>
+<td><em>no direct knob</em> — the planner sizes context; widen the pool with <code>max_output_documents</code> (50–200) if needed</td>
 <td>retrieve call</td>
 </tr>
 <tr>
 <td><code>query_type</code></td>
 <td><em>(no knob)</em> — the KB always runs agentic hybrid + semantic reranking</td>
 <td>KB pipeline</td>
-</tr>
-<tr>
-<td><code>fields_mapping</code></td>
-<td><em>(optional)</em> <code>searchIndexParameters.sourceDataFields</code> controls which fields come back in references</td>
-<td>Knowledge Source</td>
 </tr>
 </tbody></table>
 <blockquote>
@@ -290,126 +296,140 @@ with hybrid search, and reranks — so the best strategy is the default. If your
 a vector field and an embedding vectorizer, the KB uses them automatically.</p>
 </blockquote>
 </div><div class="nb-cell nb-markdown-cell"><h2>3 · Create the Knowledge Source over your existing index</h2>
-<p>A Knowledge Source of <code>kind: searchIndex</code> is a thin wrapper that points at an index you
+<p>A Knowledge Source of kind <code>searchIndex</code> is a thin wrapper that points at an index you
 already have. <strong>Nothing is re-indexed, copied, or moved</strong> — it references your index in
 place. This maps the OYD <code>index_name</code> and <code>semantic_configuration</code>.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">def</span> <span class="token function">search_rest</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> path<span class="token punctuation">,</span> body<span class="token operator">=</span><span class="token boolean">None</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token triple-quoted-string string">"""Call the Azure AI Search data plane and surface errors verbatim."""</span>
-    sep <span class="token operator">=</span> <span class="token string">"&amp;"</span> <span class="token keyword">if</span> <span class="token string">"?"</span> <span class="token keyword">in</span> path <span class="token keyword">else</span> <span class="token string">"?"</span>
-    url <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"</span><span class="token interpolation"><span class="token punctuation">{</span>SEARCH_ENDPOINT<span class="token punctuation">}</span></span><span class="token interpolation"><span class="token punctuation">{</span>path<span class="token punctuation">}</span></span><span class="token interpolation"><span class="token punctuation">{</span>sep<span class="token punctuation">}</span></span><span class="token string">api-version=</span><span class="token interpolation"><span class="token punctuation">{</span>KB_API_VERSION<span class="token punctuation">}</span></span><span class="token string">"</span></span>
-    resp <span class="token operator">=</span> requests<span class="token punctuation">.</span>request<span class="token punctuation">(</span>
-        method<span class="token punctuation">,</span>
-        url<span class="token punctuation">,</span>
-        headers<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">"api-key"</span><span class="token punctuation">:</span> SEARCH_API_KEY<span class="token punctuation">,</span> <span class="token string">"Content-Type"</span><span class="token punctuation">:</span> <span class="token string">"application/json"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
-        json<span class="token operator">=</span>body<span class="token punctuation">,</span>
-        timeout<span class="token operator">=</span><span class="token number">180</span><span class="token punctuation">,</span>
-    <span class="token punctuation">)</span>
-    <span class="token keyword">if</span> resp<span class="token punctuation">.</span>status_code <span class="token operator">&amp;</span>gt<span class="token punctuation">;</span><span class="token operator">=</span> <span class="token number">400</span><span class="token punctuation">:</span>
-        <span class="token keyword">raise</span> RuntimeError<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"</span><span class="token interpolation"><span class="token punctuation">{</span>method<span class="token punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token punctuation">{</span>path<span class="token punctuation">}</span></span><span class="token string"> -&gt; </span><span class="token interpolation"><span class="token punctuation">{</span>resp<span class="token punctuation">.</span>status_code<span class="token punctuation">}</span></span><span class="token string">\n</span><span class="token interpolation"><span class="token punctuation">{</span>resp<span class="token punctuation">.</span>text<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-    <span class="token keyword">return</span> resp<span class="token punctuation">.</span>json<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">if</span> resp<span class="token punctuation">.</span>text <span class="token keyword">else</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    SearchIndexKnowledgeSource<span class="token punctuation">,</span>
+    SearchIndexKnowledgeSourceParameters<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
 
-
-search_index_parameters <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"searchIndexName"</span><span class="token punctuation">:</span> SEARCH_INDEX<span class="token punctuation">}</span>
+ks_parameters <span class="token operator">=</span> SearchIndexKnowledgeSourceParameters<span class="token punctuation">(</span>search_index_name<span class="token operator">=</span>SEARCH_INDEX<span class="token punctuation">)</span>
 <span class="token keyword">if</span> SEMANTIC_CONFIG<span class="token punctuation">:</span>
-    search_index_parameters<span class="token punctuation">[</span><span class="token string">"semanticConfigurationName"</span><span class="token punctuation">]</span> <span class="token operator">=</span> SEMANTIC_CONFIG
+    ks_parameters<span class="token punctuation">.</span>semantic_configuration_name <span class="token operator">=</span> SEMANTIC_CONFIG
 
-ks_body <span class="token operator">=</span> <span class="token punctuation">{</span>
-    <span class="token string">"name"</span><span class="token punctuation">:</span> KS_NAME<span class="token punctuation">,</span>
-    <span class="token string">"kind"</span><span class="token punctuation">:</span> <span class="token string">"searchIndex"</span><span class="token punctuation">,</span>
-    <span class="token string">"description"</span><span class="token punctuation">:</span> <span class="token string">"Wraps the existing On Your Data search index."</span><span class="token punctuation">,</span>
-    <span class="token string">"searchIndexParameters"</span><span class="token punctuation">:</span> search_index_parameters<span class="token punctuation">,</span>
-<span class="token punctuation">}</span>
-search_rest<span class="token punctuation">(</span><span class="token string">"PUT"</span><span class="token punctuation">,</span> <span class="token string-interpolation"><span class="token string">f"/knowledgesources/</span><span class="token interpolation"><span class="token punctuation">{</span>KS_NAME<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">,</span> ks_body<span class="token punctuation">)</span>
+knowledge_source <span class="token operator">=</span> SearchIndexKnowledgeSource<span class="token punctuation">(</span>
+    name<span class="token operator">=</span>KS_NAME<span class="token punctuation">,</span>
+    description<span class="token operator">=</span><span class="token string">"Wraps the existing On Your Data search index."</span><span class="token punctuation">,</span>
+    search_index_parameters<span class="token operator">=</span>ks_parameters<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+index_client<span class="token punctuation">.</span>create_or_update_knowledge_source<span class="token punctuation">(</span>knowledge_source<span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Knowledge Source '</span><span class="token interpolation"><span class="token punctuation">{</span>KS_NAME<span class="token punctuation">}</span></span><span class="token string">' now points at index '</span><span class="token interpolation"><span class="token punctuation">{</span>SEARCH_INDEX<span class="token punctuation">}</span></span><span class="token string">'."</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>4 · Create the Knowledge Base with your existing model</h2>
 <p>The Knowledge Base ties your <strong>Azure OpenAI model</strong> to the Knowledge Source and sets the
 answer behavior. Three fields carry your OYD configuration:</p>
 <ul>
 <li><strong><code>models</code></strong> → the same Azure OpenAI deployment OYD used, for query planning + synthesis.</li>
-<li><strong><code>outputMode: answerSynthesis</code></strong> → return a written, cited answer (not raw chunks). This
-is what makes the KB a drop-in for OYD.</li>
-<li><strong><code>answerInstructions</code></strong> → your OYD system message, plus the grounding sentence that
+<li><strong><code>output_mode=ANSWER_SYNTHESIS</code></strong> → return a written, cited answer (not raw chunks).
+This is what makes the KB a drop-in for OYD.</li>
+<li><strong><code>answer_instructions</code></strong> → your OYD system message, plus the grounding sentence that
 <code>in_scope: true</code> used to enforce.</li>
 </ul>
-<p>Default <code>retrievalReasoningEffort</code> to <code>low</code>: it adds query planning (the big jump over
+<p>Default <code>retrieval_reasoning_effort</code> to <code>low</code>: it adds query planning (the big jump over
 single-shot OYD retrieval) without much latency. Raise it to <code>medium</code> only for genuinely
 multi-part questions.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># in_scope: true  -&gt;  an explicit grounding instruction</span>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    AzureOpenAIVectorizerParameters<span class="token punctuation">,</span>
+    KnowledgeBase<span class="token punctuation">,</span>
+    KnowledgeBaseAzureOpenAIModel<span class="token punctuation">,</span>
+    KnowledgeSourceReference<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>knowledgebases<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    KnowledgeRetrievalLowReasoningEffort<span class="token punctuation">,</span>
+    KnowledgeRetrievalOutputMode<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># in_scope: true  -&gt;  an explicit grounding instruction</span>
 answer_instructions <span class="token operator">=</span> <span class="token punctuation">(</span>
     SYSTEM_MESSAGE
     <span class="token operator">+</span> <span class="token string">" Only use the retrieved sources. If the answer is not in them, say you do not know."</span>
 <span class="token punctuation">)</span>
 
-kb_body <span class="token operator">=</span> <span class="token punctuation">{</span>
-    <span class="token string">"name"</span><span class="token punctuation">:</span> KB_NAME<span class="token punctuation">,</span>
-    <span class="token string">"description"</span><span class="token punctuation">:</span> <span class="token string">"Migrated from Azure OpenAI On Your Data."</span><span class="token punctuation">,</span>
-    <span class="token string">"models"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
-        <span class="token punctuation">{</span>
-            <span class="token string">"kind"</span><span class="token punctuation">:</span> <span class="token string">"azureOpenAI"</span><span class="token punctuation">,</span>
-            <span class="token string">"azureOpenAIParameters"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span>
-                <span class="token string">"resourceUri"</span><span class="token punctuation">:</span> AOAI_ENDPOINT<span class="token punctuation">,</span>
-                <span class="token string">"deploymentId"</span><span class="token punctuation">:</span> AOAI_DEPLOYMENT<span class="token punctuation">,</span>
-                <span class="token string">"modelName"</span><span class="token punctuation">:</span> AOAI_MODEL<span class="token punctuation">,</span>
-                <span class="token string">"apiKey"</span><span class="token punctuation">:</span> AOAI_API_KEY<span class="token punctuation">,</span>
-            <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        <span class="token punctuation">}</span>
-    <span class="token punctuation">]</span><span class="token punctuation">,</span>
-    <span class="token string">"knowledgeSources"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"name"</span><span class="token punctuation">:</span> KS_NAME<span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-    <span class="token string">"outputMode"</span><span class="token punctuation">:</span> <span class="token string">"answerSynthesis"</span><span class="token punctuation">,</span>
-    <span class="token string">"retrievalReasoningEffort"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token string">"kind"</span><span class="token punctuation">:</span> <span class="token string">"low"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
-    <span class="token string">"answerInstructions"</span><span class="token punctuation">:</span> answer_instructions<span class="token punctuation">,</span>
-<span class="token punctuation">}</span>
-search_rest<span class="token punctuation">(</span><span class="token string">"PUT"</span><span class="token punctuation">,</span> <span class="token string-interpolation"><span class="token string">f"/knowledgebases/</span><span class="token interpolation"><span class="token punctuation">{</span>KB_NAME<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">,</span> kb_body<span class="token punctuation">)</span>
+<span class="token comment"># The same Azure OpenAI deployment OYD used. With an API key here; for production, omit</span>
+<span class="token comment"># api_key and let the Search service's managed identity reach Azure OpenAI (see Best practices).</span>
+model_parameters <span class="token operator">=</span> AzureOpenAIVectorizerParameters<span class="token punctuation">(</span>
+    resource_url<span class="token operator">=</span>AOAI_ENDPOINT<span class="token punctuation">,</span>
+    deployment_name<span class="token operator">=</span>AOAI_DEPLOYMENT<span class="token punctuation">,</span>
+    model_name<span class="token operator">=</span>AOAI_MODEL<span class="token punctuation">,</span>
+    api_key<span class="token operator">=</span>AOAI_API_KEY<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+knowledge_base <span class="token operator">=</span> KnowledgeBase<span class="token punctuation">(</span>
+    name<span class="token operator">=</span>KB_NAME<span class="token punctuation">,</span>
+    description<span class="token operator">=</span><span class="token string">"Migrated from Azure OpenAI On Your Data."</span><span class="token punctuation">,</span>
+    models<span class="token operator">=</span><span class="token punctuation">[</span>KnowledgeBaseAzureOpenAIModel<span class="token punctuation">(</span>azure_open_ai_parameters<span class="token operator">=</span>model_parameters<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    knowledge_sources<span class="token operator">=</span><span class="token punctuation">[</span>KnowledgeSourceReference<span class="token punctuation">(</span>name<span class="token operator">=</span>KS_NAME<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    output_mode<span class="token operator">=</span>KnowledgeRetrievalOutputMode<span class="token punctuation">.</span>ANSWER_SYNTHESIS<span class="token punctuation">,</span>
+    retrieval_reasoning_effort<span class="token operator">=</span>KnowledgeRetrievalLowReasoningEffort<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    answer_instructions<span class="token operator">=</span>answer_instructions<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+index_client<span class="token punctuation">.</span>create_or_update_knowledge_base<span class="token punctuation">(</span>knowledge_base<span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Knowledge Base '</span><span class="token interpolation"><span class="token punctuation">{</span>KB_NAME<span class="token punctuation">}</span></span><span class="token string">' ready (answerSynthesis, model '</span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_DEPLOYMENT<span class="token punctuation">}</span></span><span class="token string">')."</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>5 · The call you make instead (Foundry IQ)</h2>
-<p>This is the replacement for §1. One <code>POST</code> to <code>/knowledgebases/{kb}/retrieve</code>, one
-question, one grounded answer with citations. The remaining OYD knobs map onto the
-per-call <code>knowledgeSourceParams</code>:</p>
+<p>This is the replacement for §1. A <code>KnowledgeBaseRetrievalClient</code> bound to your KB, one
+question, one grounded answer with citations. The remaining OYD knob maps onto the
+per-call source params:</p>
 <ul>
-<li><code>strictness: 3</code> → <code>rerankerThreshold: 2.0</code>  (the <code>(strictness − 1) × 1.0</code> from the table)</li>
+<li><code>strictness: 3</code> → <code>reranker_threshold: 2.0</code>  (the <code>(strictness − 1) × 1.0</code> from the table)</li>
 </ul>
-<p>OYD's <code>top_n_documents</code> has no direct equivalent — the planner decides how much grounding
-to pass to synthesis. If you need to widen the candidate pool, set <code>maxOutputDocuments</code>
-(allowed range <strong>50–200</strong>) on the source params.</p>
-<p>The synthesized answer comes back in <code>response[]</code>; the citations in <code>references[]</code>; and a
-step-by-step <code>activity[]</code> trace shows what the planner did.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">def</span> <span class="token function">kb_answer</span><span class="token punctuation">(</span>question<span class="token punctuation">,</span> <span class="token operator">*</span><span class="token punctuation">,</span> strictness<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+<p>The synthesized answer comes back in <code>result.response</code>; the citations in
+<code>result.references</code>; and a step-by-step <code>result.activity</code> trace shows what the planner did.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>knowledgebases <span class="token keyword">import</span> KnowledgeBaseRetrievalClient
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>knowledgebases<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    KnowledgeBaseMessage<span class="token punctuation">,</span>
+    KnowledgeBaseMessageTextContent<span class="token punctuation">,</span>
+    KnowledgeBaseRetrievalRequest<span class="token punctuation">,</span>
+    SearchIndexKnowledgeSourceParams<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+retrieval_client <span class="token operator">=</span> KnowledgeBaseRetrievalClient<span class="token punctuation">(</span>
+    endpoint<span class="token operator">=</span>SEARCH_ENDPOINT<span class="token punctuation">,</span> credential<span class="token operator">=</span>search_credential<span class="token punctuation">,</span> knowledge_base_name<span class="token operator">=</span>KB_NAME
+<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">kb_answer</span><span class="token punctuation">(</span>messages<span class="token punctuation">,</span> <span class="token operator">*</span><span class="token punctuation">,</span> strictness<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> include_activity<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
     reranker_threshold <span class="token operator">=</span> <span class="token punctuation">(</span>strictness <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">1.0</span>  <span class="token comment"># OYD strictness 1-5 -&gt; KB threshold 0-4</span>
-    body <span class="token operator">=</span> <span class="token punctuation">{</span>
-        <span class="token string">"messages"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"text"</span><span class="token punctuation">,</span> <span class="token string">"text"</span><span class="token punctuation">:</span> question<span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token string">"knowledgeSourceParams"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
-            <span class="token punctuation">{</span>
-                <span class="token string">"kind"</span><span class="token punctuation">:</span> <span class="token string">"searchIndex"</span><span class="token punctuation">,</span>
-                <span class="token string">"knowledgeSourceName"</span><span class="token punctuation">:</span> KS_NAME<span class="token punctuation">,</span>
-                <span class="token string">"includeReferences"</span><span class="token punctuation">:</span> <span class="token boolean">True</span><span class="token punctuation">,</span>
-                <span class="token string">"includeReferenceSourceData"</span><span class="token punctuation">:</span> <span class="token boolean">True</span><span class="token punctuation">,</span>
-                <span class="token string">"rerankerThreshold"</span><span class="token punctuation">:</span> reranker_threshold<span class="token punctuation">,</span>
-            <span class="token punctuation">}</span>
+    request <span class="token operator">=</span> KnowledgeBaseRetrievalRequest<span class="token punctuation">(</span>
+        messages<span class="token operator">=</span><span class="token punctuation">[</span>
+            KnowledgeBaseMessage<span class="token punctuation">(</span>
+                role<span class="token operator">=</span>m<span class="token punctuation">[</span><span class="token string">"role"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> content<span class="token operator">=</span><span class="token punctuation">[</span>KnowledgeBaseMessageTextContent<span class="token punctuation">(</span>text<span class="token operator">=</span>m<span class="token punctuation">[</span><span class="token string">"content"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+            <span class="token punctuation">)</span>
+            <span class="token keyword">for</span> m <span class="token keyword">in</span> messages
         <span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token string">"includeActivity"</span><span class="token punctuation">:</span> <span class="token boolean">True</span><span class="token punctuation">,</span>
-    <span class="token punctuation">}</span>
-    <span class="token keyword">return</span> search_rest<span class="token punctuation">(</span><span class="token string">"POST"</span><span class="token punctuation">,</span> <span class="token string-interpolation"><span class="token string">f"/knowledgebases/</span><span class="token interpolation"><span class="token punctuation">{</span>KB_NAME<span class="token punctuation">}</span></span><span class="token string">/retrieve"</span></span><span class="token punctuation">,</span> body<span class="token punctuation">)</span>
+        knowledge_source_params<span class="token operator">=</span><span class="token punctuation">[</span>
+            SearchIndexKnowledgeSourceParams<span class="token punctuation">(</span>
+                knowledge_source_name<span class="token operator">=</span>KS_NAME<span class="token punctuation">,</span>
+                include_references<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                include_reference_source_data<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                reranker_threshold<span class="token operator">=</span>reranker_threshold<span class="token punctuation">,</span>
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        include_activity<span class="token operator">=</span>include_activity<span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+    <span class="token keyword">return</span> retrieval_client<span class="token punctuation">.</span>retrieve<span class="token punctuation">(</span>request<span class="token punctuation">)</span>
 
 
 <span class="token keyword">def</span> <span class="token function">answer_text</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">:</span>
     parts <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
-    <span class="token keyword">for</span> message <span class="token keyword">in</span> result<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"response"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-        <span class="token keyword">for</span> content <span class="token keyword">in</span> message<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"content"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-            <span class="token keyword">if</span> content<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"text"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-                parts<span class="token punctuation">.</span>append<span class="token punctuation">(</span>content<span class="token punctuation">[</span><span class="token string">"text"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> message <span class="token keyword">in</span> <span class="token punctuation">(</span>result<span class="token punctuation">.</span>response <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">for</span> content <span class="token keyword">in</span> <span class="token punctuation">(</span>message<span class="token punctuation">.</span>content <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            text <span class="token operator">=</span> <span class="token builtin">getattr</span><span class="token punctuation">(</span>content<span class="token punctuation">,</span> <span class="token string">"text"</span><span class="token punctuation">,</span> <span class="token boolean">None</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> text<span class="token punctuation">:</span>
+                parts<span class="token punctuation">.</span>append<span class="token punctuation">(</span>text<span class="token punctuation">)</span>
     <span class="token keyword">return</span> <span class="token string">"\n\n"</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span>parts<span class="token punctuation">)</span>
 
 
-kb <span class="token operator">=</span> kb_answer<span class="token punctuation">(</span>QUESTION<span class="token punctuation">)</span>
+kb <span class="token operator">=</span> kb_answer<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> QUESTION<span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
 
 <span class="token keyword">print</span><span class="token punctuation">(</span>answer_text<span class="token punctuation">(</span>kb<span class="token punctuation">)</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"\nReferences:"</span><span class="token punctuation">)</span>
-<span class="token keyword">for</span> ref <span class="token keyword">in</span> kb<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"references"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
-    source <span class="token operator">=</span> ref<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"sourceData"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
-    label <span class="token operator">=</span> source<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"title"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> source<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"filepath"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> ref<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"docKey"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> <span class="token string">""</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  [ref_id:</span><span class="token interpolation"><span class="token punctuation">{</span>ref<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">] </span><span class="token interpolation"><span class="token punctuation">{</span>label<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"\nActivity steps: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>kb<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'activity'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">   References: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>kb<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'references'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h3>See the planner's work</h3>
+<span class="token keyword">for</span> ref <span class="token keyword">in</span> <span class="token punctuation">(</span>kb<span class="token punctuation">.</span>references <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
+    source <span class="token operator">=</span> ref<span class="token punctuation">.</span>source_data <span class="token keyword">or</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    label <span class="token operator">=</span> source<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"title"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> source<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"filepath"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> <span class="token builtin">getattr</span><span class="token punctuation">(</span>ref<span class="token punctuation">,</span> <span class="token string">"doc_key"</span><span class="token punctuation">,</span> <span class="token boolean">None</span><span class="token punctuation">)</span> <span class="token keyword">or</span> ref<span class="token punctuation">.</span><span class="token builtin">id</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  [ref_id:</span><span class="token interpolation"><span class="token punctuation">{</span>ref<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">}</span></span><span class="token string">] </span><span class="token interpolation"><span class="token punctuation">{</span>label<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"\nActivity steps: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>kb<span class="token punctuation">.</span>activity <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">   References: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>kb<span class="token punctuation">.</span>references <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h3>See the planner's work</h3>
 <p>On Your Data was a black box. The Knowledge Base returns an <code>activity</code> trace: the
 subqueries it planned, which source it hit, and token counts for planning vs. synthesis.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">print</span><span class="token punctuation">(</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>kb<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"activity"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> indent<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">2000</span><span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h3>What a real run looks like</h3>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">activity <span class="token operator">=</span> <span class="token punctuation">[</span>a<span class="token punctuation">.</span>as_dict<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">if</span> <span class="token builtin">hasattr</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> <span class="token string">"as_dict"</span><span class="token punctuation">)</span> <span class="token keyword">else</span> a <span class="token keyword">for</span> a <span class="token keyword">in</span> <span class="token punctuation">(</span>kb<span class="token punctuation">.</span>activity <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>activity<span class="token punctuation">,</span> indent<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">2000</span><span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h3>What a real run looks like</h3>
 <p>Here is a representative run against the public <strong><code>hotels-sample-index</code></strong> (create it in
 seconds from the Azure portal's <em>Import data → hotels-sample</em>), asking <em>"Which hotels are
 luxury resorts with free wifi, and what amenities make them stand out?"</em></p>
@@ -420,11 +440,11 @@ luxury resorts with free wifi, and what amenities make them stand out?"</em></p>
 Citations: 5
 </code></pre>
 <p><strong>Foundry IQ (after)</strong> — the planner fans out, then synthesizes with <code>[ref_id:N]</code> citations:</p>
-<pre><code class="language-text">1. Double Sanctuary Resort — 5-star, ranked #1 by Conde Nast Traveler; free WiFi,
+<pre><code class="language-text">1. Sapphire Resort — downtown; free WiFi, continental breakfast, air conditioning [ref_id:0].
+2. Double Sanctuary Resort — 5-star, ranked #1 by Conde Nast Traveler; free WiFi,
    fitness center, Nespresso in room [ref_id:2].
-2. Marquis Plaza &amp; Suites — free WiFi, full kitchen, free breakfast buffet [ref_id:3].
 ...
-References: 41   Activity steps: 5
+References: 19   Activity steps: 5
 </code></pre>
 <p>The <code>activity</code> trace shows <em>why</em> the second answer is broader — it ran two planned
 subqueries instead of one lookup:</p>
@@ -440,41 +460,20 @@ Oct 14, 2026, and it grounds the answer in a wider candidate set.</p>
 but only the Foundry IQ call still runs after Oct 14, 2026.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"On Your Data  (retires Oct 14, 2026)"</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"-"</span> <span class="token operator">*</span> <span class="token number">44</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>oyd_message<span class="token punctuation">[</span><span class="token string">"content"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>oyd_message<span class="token punctuation">.</span>content<span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Foundry IQ Knowledge Base  (answer synthesis)"</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"-"</span> <span class="token operator">*</span> <span class="token number">44</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span>answer_text<span class="token punctuation">(</span>kb<span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>7 · Multi-turn</h2>
-<p>On Your Data was stateless — every call started over. The retrieve API takes a <code>messages</code>
-array, so you can pass prior turns and the planner uses them as context. Append the answer
-and ask a follow-up.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">def</span> <span class="token function">kb_answer_messages</span><span class="token punctuation">(</span>messages<span class="token punctuation">,</span> <span class="token operator">*</span><span class="token punctuation">,</span> strictness<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    reranker_threshold <span class="token operator">=</span> <span class="token punctuation">(</span>strictness <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">1.0</span>
-    body <span class="token operator">=</span> <span class="token punctuation">{</span>
-        <span class="token string">"messages"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
-            <span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> m<span class="token punctuation">[</span><span class="token string">"role"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"text"</span><span class="token punctuation">,</span> <span class="token string">"text"</span><span class="token punctuation">:</span> m<span class="token punctuation">[</span><span class="token string">"content"</span><span class="token punctuation">]</span><span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">}</span>
-            <span class="token keyword">for</span> m <span class="token keyword">in</span> messages
-        <span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token string">"knowledgeSourceParams"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
-            <span class="token punctuation">{</span>
-                <span class="token string">"kind"</span><span class="token punctuation">:</span> <span class="token string">"searchIndex"</span><span class="token punctuation">,</span>
-                <span class="token string">"knowledgeSourceName"</span><span class="token punctuation">:</span> KS_NAME<span class="token punctuation">,</span>
-                <span class="token string">"includeReferences"</span><span class="token punctuation">:</span> <span class="token boolean">True</span><span class="token punctuation">,</span>
-                <span class="token string">"includeReferenceSourceData"</span><span class="token punctuation">:</span> <span class="token boolean">True</span><span class="token punctuation">,</span>
-                <span class="token string">"rerankerThreshold"</span><span class="token punctuation">:</span> reranker_threshold<span class="token punctuation">,</span>
-            <span class="token punctuation">}</span>
-        <span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token string">"includeActivity"</span><span class="token punctuation">:</span> <span class="token boolean">False</span><span class="token punctuation">,</span>
-    <span class="token punctuation">}</span>
-    <span class="token keyword">return</span> search_rest<span class="token punctuation">(</span><span class="token string">"POST"</span><span class="token punctuation">,</span> <span class="token string-interpolation"><span class="token string">f"/knowledgebases/</span><span class="token interpolation"><span class="token punctuation">{</span>KB_NAME<span class="token punctuation">}</span></span><span class="token string">/retrieve"</span></span><span class="token punctuation">,</span> body<span class="token punctuation">)</span>
-
-
-conversation <span class="token operator">=</span> <span class="token punctuation">[</span>
+<p>On Your Data was stateless — every call started over. <code>kb_answer</code> already takes a list of
+messages, so you can pass prior turns and the planner uses them as context. Append the
+answer and ask a follow-up.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">conversation <span class="token operator">=</span> <span class="token punctuation">[</span>
     <span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> QUESTION<span class="token punctuation">}</span><span class="token punctuation">,</span>
     <span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"assistant"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> answer_text<span class="token punctuation">(</span>kb<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
     <span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> <span class="token string">"Can you give me more detail on that?"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
 <span class="token punctuation">]</span>
-follow_up <span class="token operator">=</span> kb_answer_messages<span class="token punctuation">(</span>conversation<span class="token punctuation">)</span>
+follow_up <span class="token operator">=</span> kb_answer<span class="token punctuation">(</span>conversation<span class="token punctuation">,</span> include_activity<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span>answer_text<span class="token punctuation">(</span>follow_up<span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>Common errors</h2>
 <p>The failures you are most likely to hit — including two the migration itself surfaces:</p>
 <table>
@@ -486,34 +485,34 @@ follow_up <span class="token operator">=</span> kb_answer_messages<span class="t
 </tr>
 </thead>
 <tbody><tr>
-<td>OYD <code>400</code> — <code>role_information: Extra inputs are not permitted</code></td>
+<td><code>openai.BadRequestError</code> — <code>role_information: Extra inputs are not permitted</code></td>
 <td>The GA API (<code>2024-10-21</code>) removed the <code>role_information</code> data-source parameter</td>
-<td>Move your instructions to a <code>system</code> message in <code>messages[]</code> (see §1)</td>
+<td>Move your instructions to a <code>system</code> message (see §1)</td>
 </tr>
 <tr>
-<td>Retrieve <code>400</code> — <code>MaxOutputDocuments must be between 50 and 200</code></td>
-<td><code>maxOutputDocuments</code> is a candidate-pool cap, not OYD's <code>top_n</code></td>
+<td><code>HttpResponseError</code> — <code>MaxOutputDocuments must be between 50 and 200</code></td>
+<td><code>max_output_documents</code> is a candidate-pool cap, not OYD's <code>top_n</code></td>
 <td>Omit it (the planner sizes context), or pass a value in 50–200</td>
 </tr>
 <tr>
-<td>Retrieve <code>401</code>/<code>403</code> with Entra auth</td>
+<td><code>HttpResponseError</code> 401/403 on retrieve with Entra auth</td>
 <td>The caller lacks a data-plane role</td>
 <td>Grant <strong>Search Index Data Reader</strong> on the Search service; wait 5–10 min for propagation</td>
 </tr>
 <tr>
-<td><code>403</code> during synthesis with managed identity</td>
+<td>403 during synthesis with managed identity</td>
 <td>The Search service MI can't reach Azure OpenAI</td>
 <td>Give the Search MI <strong>Cognitive Services OpenAI User</strong> on the Azure OpenAI resource</td>
 </tr>
 <tr>
-<td>Retrieve <code>404</code> on the KB</td>
+<td><code>ResourceNotFoundError</code> on retrieve</td>
 <td>The Knowledge Base does not exist or the name is wrong</td>
 <td>Create the KB (§4) first; match <code>KB_NAME</code></td>
 </tr>
 <tr>
 <td>Empty answer, <code>references: 0</code></td>
-<td><code>rerankerThreshold</code> too high, or the index has no semantic config</td>
-<td>Lower <code>rerankerThreshold</code>; confirm <code>semanticConfigurationName</code> matches your index</td>
+<td><code>reranker_threshold</code> too high, or the index has no semantic config</td>
+<td>Lower <code>reranker_threshold</code>; confirm <code>semantic_configuration_name</code> matches your index</td>
 </tr>
 </tbody></table>
 </div><div class="nb-cell nb-markdown-cell"><h2>Best practices</h2>
@@ -523,19 +522,19 @@ follow_up <span class="token operator">=</span> kb_answer_messages<span class="t
 and score groundedness and relevance. Microsoft Foundry ships built-in RAG evaluators
 (groundedness, relevance, retrieval) for exactly this — see
 <a href="https://learn.microsoft.com/azure/ai-foundry/concepts/evaluation-approach-gen-ai">Evaluation of generative AI applications</a>.</li>
-<li><strong>Use Microsoft Entra ID in production.</strong> Drop the <code>api-key</code> headers and the <code>apiKey</code> in
-the model block. Send <code>Authorization: Bearer &lt;token&gt;</code> (Search audience
-<code>https://search.azure.com/.default</code>). Grant <strong>Search Service Contributor</strong> to create the
-Knowledge Source and Knowledge Base, and <strong>Search Index Data Reader</strong> to run retrieve.
-For synthesis, enable a managed identity on the Search service, give it <strong>Cognitive
-Services OpenAI User</strong> on your Azure OpenAI resource, and replace the model's <code>apiKey</code>
-with <code>authIdentity</code>. See
+<li><strong>Use Microsoft Entra ID in production.</strong> Drop the <code>AzureKeyCredential</code> and the
+<code>api_key</code> in the model parameters. Pass <code>DefaultAzureCredential()</code> to both clients. Grant
+<strong>Search Service Contributor</strong> to create the Knowledge Source and Knowledge Base, and
+<strong>Search Index Data Reader</strong> to run retrieve. For synthesis, enable a managed identity on
+the Search service, give it <strong>Cognitive Services OpenAI User</strong> on your Azure OpenAI
+resource, and drop the model's <code>api_key</code>. See
 <a href="https://learn.microsoft.com/azure/search/search-security-rbac">Azure AI Search role-based access</a>.</li>
-<li><strong>Tune two dials, not five.</strong> <code>rerankerThreshold</code> is your old <code>strictness</code> (raise it to
-cut weak matches); <code>retrievalReasoningEffort</code> (<code>minimal</code> / <code>low</code> / <code>medium</code>) trades
+<li><strong>Tune two dials, not five.</strong> <code>reranker_threshold</code> is your old <code>strictness</code> (raise it to
+cut weak matches); <code>retrieval_reasoning_effort</code> (<code>minimal</code> / <code>low</code> / <code>medium</code>) trades
 latency for harder query planning. Start at <code>low</code>.</li>
-<li><strong>Mind the preview.</strong> The Knowledge Base API is <code>2026-05-01-preview</code>. Pin the version and
-watch the <a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-migrate">agentic retrieval migration guide</a>
+<li><strong>Mind the preview.</strong> The Knowledge Base SDK surface is <code>2026-05-01-preview</code>. Pin the
+package version and watch the
+<a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-migrate">agentic retrieval migration guide</a>
 before moving to production.</li>
 </ul>
 <p>When you outgrow a single index — multiple sources, SharePoint/OneLake/Web, or an agent
@@ -546,42 +545,39 @@ that calls the KB as a tool — keep the same Knowledge Base and follow
 your repository with the prompt below. It captures the whole recipe: find the OYD call, map
 the parameters, create the two resources, swap the call.</p>
 <pre><code class="language-text">Migrate this codebase off Azure OpenAI On Your Data (retires Oct 14, 2026) to a Foundry IQ
-Knowledge Base in answer-synthesis mode. Keep the existing Azure AI Search index and Azure
-OpenAI deployment. Steps:
+Knowledge Base in answer-synthesis mode, using the Python SDKs. Keep the existing Azure AI
+Search index and Azure OpenAI deployment. Steps:
 
-1. Find the On Your Data call: search for `data_sources`, `azure_search`,
-   `AzureSearchChatExtensionConfiguration`, or `extra_body={"data_sources"...}`.
-2. Read these fields from data_sources[0].parameters: endpoint, index_name,
+1. Find the On Your Data call: search for `data_sources`, `azure_search`, or
+   `extra_body={"data_sources"...}` passed to openai chat.completions.create.
+2. Read these fields from data_sources[0]["parameters"]: endpoint, index_name,
    semantic_configuration, strictness, top_n_documents, in_scope, query_type. The OYD
-   instructions are the `system` message in messages[] (older code may put them in a
-   `role_information` parameter, which the current API rejects).
-3. Create a Knowledge Source (kind: searchIndex) over that index, carrying index_name -&gt;
-   searchIndexName and semantic_configuration -&gt; semanticConfigurationName.
-   PUT {search_endpoint}/knowledgesources/{ks}?api-version=2026-05-01-preview
-4. Create a Knowledge Base with outputMode=answerSynthesis. Map the existing chat
-   deployment into models[].azureOpenAIParameters, the OYD system message (+ an in_scope
-   grounding sentence) into answerInstructions, and reference the Knowledge Source.
-   PUT {search_endpoint}/knowledgebases/{kb}?api-version=2026-05-01-preview
-5. Replace the chat-completions call with:
-   POST {search_endpoint}/knowledgebases/{kb}/retrieve?api-version=2026-05-01-preview
-   Map strictness -&gt; rerankerThreshold via (strictness-1)*1.0 on knowledgeSourceParams.
-   OYD's top_n_documents has no direct equal; only set maxOutputDocuments if you need to
-   widen the candidate pool (allowed range 50-200). Read the answer from
-   response[].content[].text and citations from references[].
-6. Keep the existing system message identical via answerInstructions. Do not re-index data.
-   Use Microsoft Entra ID auth in production instead of api-key headers.
+   instructions are the `system` message (older code may put them in a `role_information`
+   parameter, which the current API rejects).
+3. Create a Knowledge Source (azure-search-documents): SearchIndexKnowledgeSource with
+   SearchIndexKnowledgeSourceParameters(search_index_name=..., semantic_configuration_name=...),
+   then SearchIndexClient.create_or_update_knowledge_source(ks).
+4. Create a Knowledge Base: KnowledgeBase(output_mode=ANSWER_SYNTHESIS, models=[
+   KnowledgeBaseAzureOpenAIModel(AzureOpenAIVectorizerParameters(deployment_name=...))],
+   answer_instructions=&lt;system message + in_scope grounding&gt;, knowledge_sources=[ref]),
+   then SearchIndexClient.create_or_update_knowledge_base(kb).
+5. Replace the chat-completions call with KnowledgeBaseRetrievalClient.retrieve(
+   KnowledgeBaseRetrievalRequest(messages=[...], knowledge_source_params=[
+   SearchIndexKnowledgeSourceParams(reranker_threshold=(strictness-1)*1.0)])). Read the
+   answer from result.response[].content[].text and citations from result.references.
+   Only set max_output_documents if you need a wider pool (allowed range 50-200).
+6. Keep the existing system message identical via answer_instructions. Do not re-index
+   data. Use Microsoft Entra ID (DefaultAzureCredential) in production instead of api keys.
 </code></pre>
 <p>For a CLI that discovers your OYD config and scaffolds the migration, see the companion
 <a href="https://github.com/farzad528/azure-openai-on-your-data-migrator">azure-openai-on-your-data-migrator</a>.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Clean up</h2>
 <p>This recipe created exactly two resources on your Search service — the Knowledge Source and
 the Knowledge Base. Your index and model are untouched. Remove the two to leave no residue.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">for</span> path <span class="token keyword">in</span> <span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"/knowledgebases/</span><span class="token interpolation"><span class="token punctuation">{</span>KB_NAME<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">,</span> <span class="token string-interpolation"><span class="token string">f"/knowledgesources/</span><span class="token interpolation"><span class="token punctuation">{</span>KS_NAME<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">try</span><span class="token punctuation">:</span>
-        search_rest<span class="token punctuation">(</span><span class="token string">"DELETE"</span><span class="token punctuation">,</span> path<span class="token punctuation">)</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Deleted </span><span class="token interpolation"><span class="token punctuation">{</span>path<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-    <span class="token keyword">except</span> Exception <span class="token keyword">as</span> exc<span class="token punctuation">:</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Skipped </span><span class="token interpolation"><span class="token punctuation">{</span>path<span class="token punctuation">}</span></span><span class="token string">: </span><span class="token interpolation"><span class="token punctuation">{</span>exc<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>References</h2>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">index_client<span class="token punctuation">.</span>delete_knowledge_base<span class="token punctuation">(</span>KB_NAME<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Deleted knowledge base '</span><span class="token interpolation"><span class="token punctuation">{</span>KB_NAME<span class="token punctuation">}</span></span><span class="token string">'"</span></span><span class="token punctuation">)</span>
+index_client<span class="token punctuation">.</span>delete_knowledge_source<span class="token punctuation">(</span>KS_NAME<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Deleted knowledge source '</span><span class="token interpolation"><span class="token punctuation">{</span>KS_NAME<span class="token punctuation">}</span></span><span class="token string">'"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>References</h2>
 <ul>
 <li><a href="https://learn.microsoft.com/azure/ai-foundry/openai/concepts/use-your-data">Azure OpenAI On Your Data</a></li>
 <li><a href="https://learn.microsoft.com/azure/ai-foundry/openai/concepts/model-retirements">Azure OpenAI model &amp; feature retirements</a></li>
@@ -590,7 +586,7 @@ the Knowledge Base. Your index and model are untouched. Remove the two to leave 
 <li><a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-search-index">Create a Knowledge Source over a search index</a></li>
 <li><a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base">Create a Knowledge Base</a></li>
 <li><a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve">Retrieve from a Knowledge Base</a></li>
-<li><a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-migrate">Agentic retrieval migration guide</a></li>
+<li><a href="https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/CHANGELOG.md">azure-search-documents (Python SDK changelog)</a></li>
 <li><a href="https://github.com/farzad528/azure-openai-on-your-data-migrator">azure-openai-on-your-data-migrator (companion CLI)</a></li>
 </ul>
 </div></div></div></div> </section> <!-- Tags --> <section class="mt-12 pt-8 border-t border-subtle"> <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
