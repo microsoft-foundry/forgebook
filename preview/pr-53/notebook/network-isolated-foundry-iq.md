@@ -842,72 +842,84 @@ Managed VNet replaces **Step 1 + Step 5** (you no longer build the VNet or the j
 | AC8 | Same data-plane calls from OFF the VNet fail with **403** | ✅ PASS |
 | AC9 | Portal UX (ai.azure.com) over Bastion: build KS/KB + use in Agent playground | 📋 walkthrough |
 
-## Appendix C — Bypass-free isolation with a Network Security Perimeter (NSP)
+## Appendix C — Turning the trusted-service bypass OFF (shared private link vs. NSP)
 
-The main guide keeps Foundry IQ private with **private endpoints + shared private links**. There's a second, complementary control that some regulated customers explicitly require: a **Network Security Perimeter (NSP)** so you can run with the Foundry **trusted-service bypass turned OFF** (`networkAcls.bypass = None`, i.e. "Allow access to Azure services" = **off**) and still let the agent reach the Knowledge Base.
+Some regulated customers (utilities, FSI, defense) prohibit the Foundry account's **trusted-service bypass** — `networkAcls.bypass = AzureServices`, the **"Allow Azure services on the trusted services list to access this resource"** checkbox. They're right to: with the bypass on, the resource is reachable from *any* Azure VM that presents valid credentials, so stolen creds from anywhere in Azure defeat the isolation. The goal is to run with **`bypass = None`** (box **unchecked**) and still have the agent reach the Knowledge Base.
 
-> **Why this matters.** `bypass = AzureServices` makes a resource reachable from *any* Azure VM that presents valid credentials — auditors at utilities, FSI, and defense often prohibit it because stolen credentials from anywhere in Azure would defeat isolation. NSP replaces that broad bypass with **identity + perimeter** trust: resources in the **same** perimeter reach each other implicitly **when the call uses managed identity**, and everything else is denied by default.
+> ✅ **The headline (validated, sometimes surprising):** with the **shared private link** from the main guide (Step 3, Search → Foundry account, group `openai_account`) already in place, you can set **`bypass = None` and the agent KB retrieve keeps working — *no NSP required*.** The Search→Foundry hop (query planning + answer synthesis) rides the **private endpoint**, which is **bypass-independent**. So for the architecture in this cookbook, the trusted-service bypass was effectively **redundant**, and disabling it is essentially free.
 
-> ✅ **This appendix is validated.** Unlike a hypothetical, the results below were executed against the same `rg-foundryiq-isolated-wus3` deployment and reverted. Both Azure AI Search (`Microsoft.Search/searchServices`) and the Foundry account (`Microsoft.CognitiveServices/accounts`, kind `AIServices`) support NSP. 📚 [Add a search service to an NSP](https://learn.microsoft.com/azure/search/search-security-network-security-perimeter) · [Add Microsoft Foundry to an NSP](https://learn.microsoft.com/azure/foundry/how-to/add-foundry-to-network-security-perimeter)
+A **Network Security Perimeter (NSP)** is the *defense-in-depth* layer on top — a logged, deny-by-default boundary. It is **not** what makes the bypass-free hop work (the private endpoint is), and you only *need* it in specific cases. This appendix shows both, with the verified evidence.
 
-### The pattern
+> 📚 [Add a search service to an NSP](https://learn.microsoft.com/azure/search/search-security-network-security-perimeter) · [Add Microsoft Foundry to an NSP](https://learn.microsoft.com/azure/foundry/how-to/add-foundry-to-network-security-perimeter) · both Azure AI Search (`Microsoft.Search/searchServices`) and the Foundry account (`Microsoft.CognitiveServices/accounts`, kind `AIServices`) support NSP. Everything below was executed against `rg-foundryiq-isolated-wus3` and reverted.
 
-```mermaid
-flowchart LR
-  subgraph NSP["Network Security Perimeter (ENFORCED) — intra-perimeter trust via managed identity"]
-    Foundry["Foundry account (AIServices)<br/>PNA=Disabled · bypass=None"]
-    Search["Azure AI Search<br/>PNA=Disabled · KB"]
-  end
-  Agent["Foundry Agent (MCP knowledge_base_retrieve)<br/>auth: ProjectManagedIdentity"]
-  Agent -->|"agent → KB retrieve (intra-perimeter) ✅"| Search
-  Search -->|"query planning + answer synthesis → Foundry model (MI) ✅"| Foundry
-  Ext["Off-perimeter VM / laptop"] x--x|"403 deny-by-default ✅"| Search
-```
+### Option 1 (recommended) — just turn the bypass off
 
-### Build it (Azure CLI)
+If you followed Step 3 (the `openai_account` shared private link is approved), this is the whole change — one PATCH, no new resources:
 
 ```bash
-az extension add --name nsp --upgrade
-
-# 1) Perimeter + profile
-az network perimeter create  --name nsp-foundryiq -g <rg> -l <region>
-az network perimeter profile create --name nsp-profile --perimeter-name nsp-foundryiq -g <rg>
-
-# 2) Associate BOTH resources to the same profile (see the Enforced-mode caveat below)
-az network perimeter association create --name assoc-search  --perimeter-name nsp-foundryiq -g <rg> \
-  --access-mode Enforced --private-link-resource "{id:<SEARCH_ARM_ID>}"  --profile "{id:<PROFILE_ARM_ID>}"
-az network perimeter association create --name assoc-foundry --perimeter-name nsp-foundryiq -g <rg> \
-  --access-mode Enforced --private-link-resource "{id:<FOUNDRY_ARM_ID>}" --profile "{id:<PROFILE_ARM_ID>}"
-
-# 3) Turn the trusted-service bypass OFF on the Foundry account (keep PNA Disabled)
+# Turn the trusted-service bypass OFF on the Foundry account (keep PNA Disabled)
 az rest --method patch \
   --url "https://management.azure.com<FOUNDRY_ARM_ID>?api-version=2025-06-01" \
   --headers "Content-Type=application/json" \
   --body '{"properties":{"networkAcls":{"bypass":"None","defaultAction":"Deny","ipRules":[],"virtualNetworkRules":[]}}}'
 ```
 
-Prereqs that still apply from the main guide: **managed identity + RBAC only** (no keys), Search KB already built, and an **in-VNet host (Bastion)** to issue the data-plane `retrieve`. The `retrieve` itself reaches Search over the **private endpoint**; NSP governs the **Search↔Foundry** trust hop that the bypass used to cover.
+Then re-run the Step 6 retrieve and the Step 7 agent — both still return grounded, cited answers.
+
+### Option 2 — add an NSP for defense-in-depth
+
+Use this when you want a **logged, deny-by-default perimeter** around both resources, your auditor requires an explicit network trust boundary, **or** you do **not** have a private path between Search and Foundry (no `openai_account` SPL) and still need the bypass off. Put both resources in the **same** perimeter; same-perimeter + managed-identity gives implicit intra-perimeter trust.
+
+```bash
+az extension add --name nsp --upgrade
+
+az network perimeter create  --name nsp-foundryiq -g <rg> -l <region>
+az network perimeter profile create --name nsp-profile --perimeter-name nsp-foundryiq -g <rg>
+
+# Associate BOTH resources to the same profile — in ENFORCED mode (see the gotcha below)
+az network perimeter association create --name assoc-search  --perimeter-name nsp-foundryiq -g <rg> \
+  --access-mode Enforced --private-link-resource "{id:<SEARCH_ARM_ID>}"  --profile "{id:<PROFILE_ARM_ID>}"
+az network perimeter association create --name assoc-foundry --perimeter-name nsp-foundryiq -g <rg> \
+  --access-mode Enforced --private-link-resource "{id:<FOUNDRY_ARM_ID>}" --profile "{id:<PROFILE_ARM_ID>}"
+```
+
+```mermaid
+flowchart LR
+  subgraph NSP["Network Security Perimeter (ENFORCED) — defense-in-depth"]
+    Foundry["Foundry account (AIServices)<br/>PNA=Disabled · bypass=None"]
+    Search["Azure AI Search<br/>PNA=Disabled · KB"]
+  end
+  Agent["Foundry Agent (MCP knowledge_base_retrieve)<br/>auth: ProjectManagedIdentity"]
+  Agent -->|"agent → KB retrieve (over private endpoint) ✅"| Search
+  Search -->|"query planning + answer synthesis → Foundry (private endpoint / intra-perimeter) ✅"| Foundry
+  Ext["Off-perimeter VM / laptop"] x--x|"403 deny-by-default ✅"| Search
+```
+
+Prereqs that still apply: **managed identity + RBAC only** (no keys), the Search KB already built, and an **in-VNet host (Bastion)** to issue the data-plane `retrieve`.
 
 ### Verified results (executed, then reverted)
 
-| Configuration | `retrieve` (direct, in-VNet) | Agent over MCP | Verdict |
+| Configuration | Direct `retrieve` (in-VNet) | Agent over MCP | Verdict |
 |---|---|---|---|
-| **Learning** mode, bypass ON | ❌ `InternalServerError` "An error has occurred." | ❌ `knowledge_base_retrieve` 400 | **Breaks** |
-| **Enforced** mode, bypass ON | ✅ grounded, refs ≥ 1 | ✅ grounded + cited | Works |
-| **Enforced** mode, **bypass = None** (target) | ✅ grounded, refs ≥ 1 | ✅ grounded + cited | **Works — bypass-free** |
-| Off-perimeter caller (any mode) | — | — | ✅ **403** deny-by-default |
+| bypass **ON**, no NSP *(baseline)* | ✅ grounded, refs ≥ 1 | ✅ grounded + cited | Works |
+| **bypass = None, no NSP** *(SPL alone)* | ✅ grounded, refs ≥ 1 | ✅ grounded + cited | **Works — the key result** |
+| bypass ON, NSP **Learning** | ❌ `InternalServerError` | ❌ `knowledge_base_retrieve` 400 | **Breaks** |
+| bypass ON, NSP **Enforced** | ✅ grounded, refs ≥ 1 | ✅ grounded + cited | Works |
+| **bypass = None, NSP Enforced** | ✅ grounded, refs ≥ 1 | ✅ grounded + cited | Works |
+| Off-perimeter / off-VNet caller | — | — | ✅ **403** deny-by-default |
 
-> ⛔ **Critical gotcha — do not validate in Learning mode.** The docs' standard advice is "associate in Learning mode, check the logs, then switch to Enforced." For **agentic retrieval that does not work**: associating both resources in **Learning** mode *breaks* the KB `retrieve` (server-side `InternalServerError`), and the implicit intra-perimeter trust only activates in **Enforced** mode. Associate directly in **Enforced**, or expect a transient outage. *(Filed as a product bug; this is the same query-time-read failure signature seen with Foundry File Search vector stores.)*
+> ⛔ **NSP gotcha — do not validate in Learning mode.** The docs say "associate in Learning mode, check logs, then switch to Enforced." For agentic retrieval that does **not** work: associating both resources in **Learning** mode *breaks* the KB `retrieve` (server-side `InternalServerError`), and the implicit intra-perimeter trust only activates in **Enforced**. Associate **directly in Enforced**, or expect a transient outage. *(Filed as a product bug; same query-time-read signature as Foundry File Search vector stores.)*
 
-> 🔎 **Verify functionally, not via NSP logs.** Because the agent→Search and Search→Foundry hops travel private endpoints / shared private links, they **don't appear in `NSPAccessLogs`** — that table stays empty for these calls. Confirm success by running the `retrieve` (and the off-perimeter 403), not by reading perimeter logs.
+> 🔎 **Verify functionally, not via NSP logs.** The agent→Search and Search→Foundry hops travel private endpoints / shared private links, so they **don't appear in `NSPAccessLogs`** — that table stays empty for these calls. Confirm success by running the `retrieve` (and the off-perimeter 403), not by reading perimeter logs.
 
-### NSP vs. shared private link — when to use which
+### Which should I use?
 
-| | **Shared private link** (main guide) | **NSP** (this appendix) |
+| | **Shared private link only** (Option 1) | **Add NSP** (Option 2) |
 |---|---|---|
-| What it secures | Search **outbound** to Blob + Foundry over private endpoints | A **trust boundary** so Search↔Foundry talk intra-perimeter without the bypass |
-| Lets you set Foundry `bypass = None` | No (the bypass typically stays on) | **Yes** — the main reason to add NSP |
-| Effort | Already covered in Steps 1–8 | Extra perimeter + association + Enforced-mode caveat |
-| Use when | Standard private isolation is enough | Auditor explicitly **prohibits** the `AzureServices` bypass |
+| Lets you run `bypass = None` | ✅ **Yes** — validated; the private endpoint covers Search↔Foundry | ✅ Yes |
+| What it gives you | A private path that makes the bypass redundant | A **logged, deny-by-default perimeter** (defense-in-depth) + explicit trust boundary |
+| Extra resources | None (already built in Step 3) | NSP + profile + 2 associations + (optional) diagnostics |
+| Required when | You have the `openai_account` SPL (this cookbook's design) | No private path between Search↔Foundry, **or** an auditor mandates a perimeter |
+| Caveats | — | Enforced-mode only; private-path hops don't show in NSP logs |
 
-> NSP **complements** the private-endpoint design — it doesn't replace it. Add it when, and only when, "Allow access to Azure services" must be **off**.
+> **Bottom line:** the shared private link is what makes bypass-free isolation work; **NSP is additive governance, not a prerequisite.** Add NSP when you want the perimeter's logging/deny-by-default guarantees or when there's no private path to make redundant — not because it's the only way to uncheck the box.
