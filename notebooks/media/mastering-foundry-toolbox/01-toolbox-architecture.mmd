@@ -1,0 +1,47 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Segoe UI, Helvetica, Arial, sans-serif","primaryColor":"#eef4ff","primaryBorderColor":"#3b6fd6","primaryTextColor":"#102a54","lineColor":"#5b6b86","clusterBkg":"#f7f9fc","clusterBorder":"#c7d2e3"}}}%%
+flowchart LR
+    subgraph BUILD["BUILD (developer)"]
+        direction TB
+        T1["Web Search"]
+        T2["MCP servers"]
+        T3["Azure AI Search"]
+        T4["Code Interpreter"]
+        T5["File Search"]
+        T6["OpenAPI"]
+        T7["A2A"]
+        T8["Work IQ"]
+        T9["Fabric IQ"]
+        T10["Browser Automation"]
+        T11["Skills"]
+        TS{{"toolbox_search_preview<br/>(tool search)"}}
+    end
+
+    subgraph TBX["Toolbox (managed resource)"]
+        direction TB
+        V1["version 1"]
+        V2["version 2"]
+        DEF(["default_version"]):::accent
+        V2 --> DEF
+    end
+
+    BUILD -->|create_version| TBX
+
+    EP["Single MCP endpoint<br/>/toolboxes/{name}/mcp?api-version=v1<br/>header: Foundry-Features: Toolboxes=V1Preview"]:::endpoint
+    DEF --> EP
+
+    subgraph CONSUME["CONSUME (any MCP client)"]
+        direction TB
+        C1["Foundry hosted agent"]
+        C2["Microsoft Agent Framework"]
+        C3["LangGraph"]
+        C4["Copilot SDK"]
+    end
+
+    EP --> CONSUME
+
+    GOV["Governed by default:<br/>identity &middot; RAI guardrail &middot; APIM &middot; Azure Policy"]:::gov
+    TBX -.-> GOV
+
+    classDef accent fill:#dbe9ff,stroke:#3b6fd6,color:#102a54,font-weight:bold;
+    classDef endpoint fill:#fff4e6,stroke:#e8910c,color:#5c3b00;
+    classDef gov fill:#eef7ee,stroke:#3a9d4a,color:#13431d;
