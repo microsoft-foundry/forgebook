@@ -14,6 +14,21 @@
 #   - date: Publication date (YYYY-MM-DD)
 #   - tags: List of topic tags
 
+- slug: migrate-oyd-to-foundry-iq
+  path: notebooks/migrate-oyd-to-foundry-iq.ipynb
+  title: "Migrate Azure OpenAI On Your Data to Foundry IQ"
+  description: "On Your Data retires October 14, 2026. Keep your existing Azure AI Search index and Azure OpenAI model — swap the single OYD REST call for a Foundry IQ Knowledge Base answer-synthesis retrieve."
+  date: "2026-06-17"
+  authors:
+    - github: farzad528
+  tags:
+    - iq
+    - retrieval
+    - grounding
+    - rag
+    - azure-ai-search
+    - azure-openai
+
 - slug: foundry-agent-part-1
   path: notebooks/foundry-agent-part-1.ipynb
   title: "Create Your First Agent (Part 1)"
