@@ -204,3 +204,17 @@
     - tools
     - grounding
     - retrieval
+- slug: network-isolated-foundry-iq
+  path: notebooks/network-isolated-foundry-iq.ipynb
+  title: "Network-Isolated Foundry IQ: A Verified Enterprise Blueprint"
+  description: "A checklist-driven, IT-admin field guide that PROVES Foundry IQ (Azure AI Search Knowledge Bases) and the Foundry Agent Service consuming it over MCP run fully inside a customer VNet — with private endpoints, no public data-plane access, and acceptance tests that pass on the jumpbox and fail (by design) from outside the network."
+  date: "2026-05-29"
+  authors:
+    - github: farzad528
+  tags:
+    - iq
+    - azure-ai-search
+    - security
+    - agents
+    - agent-service
+    - mcp
