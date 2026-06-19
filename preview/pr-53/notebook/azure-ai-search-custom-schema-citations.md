@@ -28,6 +28,7 @@ agent that grounds on a custom-schema Azure AI Search index.
 |---|---|
 | Microsoft Foundry project | A project endpoint and one chat deployment (e.g. `gpt-4.1`) |
 | Azure AI Search | An existing index, connected to the project as a `CognitiveSearch` connection |
+| Index field attributes | The fields you map to `url` and `title` must be **retrievable** and **searchable** in the index definition, or they won't appear in citation annotations |
 | Identity | `az login` — the notebook uses `DefaultAzureCredential` |
 
 You do **not** need to re-index or rename any fields. This recipe works against the schema you

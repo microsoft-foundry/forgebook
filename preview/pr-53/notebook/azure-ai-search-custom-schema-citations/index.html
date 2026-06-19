@@ -55,6 +55,10 @@ agent that grounds on a custom-schema Azure AI Search index.</p>
 <td>An existing index, connected to the project as a <code>CognitiveSearch</code> connection</td>
 </tr>
 <tr>
+<td>Index field attributes</td>
+<td>The fields you map to <code>url</code> and <code>title</code> must be <strong>retrievable</strong> and <strong>searchable</strong> in the index definition, or they won't appear in citation annotations</td>
+</tr>
+<tr>
 <td>Identity</td>
 <td><code>az login</code> — the notebook uses <code>DefaultAzureCredential</code></td>
 </tr>
