@@ -1,0 +1,971 @@
+<!DOCTYPE html><html lang="en" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="MAI-Voice-1 notebook using Foundry endpoint with REST and SDK patterns, long-form synthesis, and character-based cost estimation."><meta name="keywords" content="Microsoft Foundry, Foundry cookbook, AI cookbook, Jupyter notebook recipes, AI recipes, agent recipes, model inference, multimodal AI, hands-on AI guides, developer tutorials, mai, models, inference, speech, text-to-speech, audio, audio-generation"><meta name="author" content="Microsoft Foundry"><link rel="canonical" href="https://microsoft-foundry.github.io/forgebook/preview/pr-61/notebook/mai-voice-1-foundry/"><link rel="icon" type="image/svg+xml" href="/forgebook/preview/pr-61/favicon.svg"><meta name="base-url" content="/forgebook/preview/pr-61"><meta property="og:site_name" content="Microsoft Foundry Forgebook"><meta property="og:type" content="article"><meta property="og:title" content="Generate Speech with MAI-Voice-1 | Forgebook"><meta property="og:description" content="MAI-Voice-1 notebook using Foundry endpoint with REST and SDK patterns, long-form synthesis, and character-based cost estimation."><meta property="og:url" content="https://microsoft-foundry.github.io/forgebook/preview/pr-61/notebook/mai-voice-1-foundry/"><meta property="og:image" content="https://microsoft-foundry.github.io/forgebook/preview/pr-61/images/og/forgebook.png"><meta property="og:image:alt" content="Forgebook logo with the text: Your cookbook for building AI with Microsoft Foundry."><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Generate Speech with MAI-Voice-1 | Forgebook"><meta name="twitter:description" content="MAI-Voice-1 notebook using Foundry endpoint with REST and SDK patterns, long-form synthesis, and character-based cost estimation."><meta name="twitter:image" content="https://microsoft-foundry.github.io/forgebook/preview/pr-61/images/og/forgebook.png"><meta name="twitter:image:alt" content="Forgebook logo with the text: Your cookbook for building AI with Microsoft Foundry."><meta property="article:published_time" content="2026-06-02T00:00:00.000Z"><meta property="article:tag" content="mai"><meta property="article:tag" content="models"><meta property="article:tag" content="inference"><meta property="article:tag" content="speech"><meta property="article:tag" content="text-to-speech"><meta property="article:tag" content="audio"><meta property="article:tag" content="audio-generation"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://microsoft-foundry.github.io/forgebook/#organization","name":"Microsoft Foundry Forgebook","url":"https://microsoft-foundry.github.io/forgebook/","logo":{"@type":"ImageObject","url":"https://microsoft-foundry.github.io/forgebook/preview/pr-61/images/og/forgebook.png","width":1200,"height":630},"sameAs":["https://github.com/microsoft-foundry/forgebook","https://learn.microsoft.com/azure/foundry"]},{"@type":"WebSite","@id":"https://microsoft-foundry.github.io/forgebook/#website","name":"Forgebook","alternateName":"Microsoft Foundry Forgebook","url":"https://microsoft-foundry.github.io/forgebook/preview/pr-61/","description":"Forgebook is a Microsoft Foundry cookbook of runnable Jupyter notebook recipes, hands-on AI guides, and examples for building agents, model inference, and multimodal apps.","inLanguage":"en-US","publisher":{"@id":"https://microsoft-foundry.github.io/forgebook/#organization"},"mainEntityOfPage":"https://microsoft-foundry.github.io/forgebook/preview/pr-61/notebook/mai-voice-1-foundry/"},{"@type":"TechArticle","@id":"https://microsoft-foundry.github.io/forgebook/preview/pr-61/notebook/mai-voice-1-foundry/#article","headline":"Generate Speech with MAI-Voice-1","description":"MAI-Voice-1 notebook using Foundry endpoint with REST and SDK patterns, long-form synthesis, and character-based cost estimation.","url":"https://microsoft-foundry.github.io/forgebook/preview/pr-61/notebook/mai-voice-1-foundry/","mainEntityOfPage":"https://microsoft-foundry.github.io/forgebook/preview/pr-61/notebook/mai-voice-1-foundry/","image":"https://microsoft-foundry.github.io/forgebook/preview/pr-61/images/og/forgebook.png","datePublished":"2026-06-02T00:00:00.000Z","dateModified":"2026-06-02T00:00:00.000Z","author":[{"@type":"Person","name":"Anirban Ganguly","url":"https://github.com/anihitk07","sameAs":["https://github.com/anihitk07","https://www.linkedin.com/in/anirban-ganguly-uk/"],"jobTitle":"Contributor"}],"publisher":{"@id":"https://microsoft-foundry.github.io/forgebook/#organization"},"isPartOf":{"@id":"https://microsoft-foundry.github.io/forgebook/#website"},"inLanguage":"en-US","keywords":["mai","models","inference","speech","text-to-speech","audio","audio-generation"],"about":[{"@type":"Thing","name":"mai"},{"@type":"Thing","name":"models"},{"@type":"Thing","name":"inference"},{"@type":"Thing","name":"speech"},{"@type":"Thing","name":"text-to-speech"},{"@type":"Thing","name":"audio"},{"@type":"Thing","name":"audio-generation"}],"learningResourceType":"Jupyter notebook recipe","programmingLanguage":"Python","codeRepository":"https://github.com/microsoft-foundry/forgebook","isBasedOn":"https://github.com/microsoft-foundry/forgebook/blob/main/notebooks/mai-voice-1-foundry.ipynb"}]}</script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer"><!-- Theme initialization script - runs before page renders to prevent flicker --><script>
+      (function() {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (theme === 'high-contrast') {
+          document.documentElement.classList.add('high-contrast');
+        }
+        // 'light' is default - no class needed
+      })();
+    </script><link rel="alternate" type="application/rss+xml" title="Forgebook RSS Feed" href="https://microsoft-foundry.github.io/forgebook/preview/pr-61/rss.xml"><!-- KaTeX CSS for math rendering --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous"><title>Generate Speech with MAI-Voice-1 | Forgebook</title><link rel="stylesheet" href="/forgebook/preview/pr-61/_astro/BaseLayout.SvHPwR9y.css"><link rel="stylesheet" href="/forgebook/preview/pr-61/_astro/index.BKG1Zkjs.css"></head> <body class="min-h-screen bg-surface text-primary"> <header data-pagefind-ignore class="site-header sticky top-0 z-50 backdrop-blur-sm border-b border-subtle" style="background-color: color-mix(in srgb, var(--neutral-bg-1) 80%, transparent);"> <nav class="site-nav max-w-6xl mx-auto px-3 py-3 sm:px-4 sm:py-4 flex flex-wrap items-center justify-between gap-2 sm:gap-4"> <a href="/forgebook/preview/pr-61/" class="flex items-center gap-2 text-lg sm:text-xl font-bold text-primary"> <span class="logo-wrapper inline-flex items-center" data-astro-cid-tvrurpns> <!-- Light mode logo --> <svg class="logo-light" width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-astro-cid-tvrurpns> <path d="M31.8828 31.4888C31.9828 31.4888 32.0825 31.2227 32.0825 30.8525V20.5393C32.0825 18.2645 33.8417 15.8473 36.3079 15.1144C36.1541 14.6139 34.5887 9.4832 34.1453 8.05877C33.6796 6.56109 32.3488 3 30.7183 3C30.7061 3 30.6938 3.00099 30.681 3.00299C30.6805 3.00299 30.6818 3.00299 30.681 3.00299C30.5589 3.02397 30.4379 3.14344 30.3208 3.34579C29.4694 4.90171 29.0881 11.3876 29.0881 16.2456V22.2805C29.8207 24.8685 31.52 30.8579 31.6501 31.2221C31.6501 31.2221 31.7831 31.4888 31.8828 31.4888Z" fill="url(#paint0_linear_light)" data-astro-cid-tvrurpns></path> <path d="M42.6987 14.8814H37.8828C34.6469 14.8814 32.085 17.7769 32.085 20.5059V30.8191C32.085 31.1892 31.9853 31.4556 31.8856 31.4556C31.7856 31.4556 31.6526 31.1892 31.6526 31.1892C31.6526 31.1892 31.8523 31.7551 32.1183 31.7551H37.396C39.039 31.7551 43.9965 30.1242 43.9965 25.0322V16.3528C43.9965 15.2475 43.3641 14.8814 42.6987 14.8814Z" fill="url(#paint1_linear_light)" data-astro-cid-tvrurpns></path> <path d="M6.23329 45.6667H20.5734C26.8285 45.6667 29.0911 40.2419 29.0911 35.5157V16.246C29.0911 10.688 29.5901 3 30.7213 3H22.1209C20.0743 3 18.3109 5.19656 16.3146 9.62299C14.3183 14.0494 4.69979 41.2832 4.27026 42.5715C3.57156 44.6683 4.20372 45.6667 6.23329 45.6667Z" fill="url(#paint2_linear_light)" data-astro-cid-tvrurpns></path> <defs data-astro-cid-tvrurpns> <linearGradient id="paint0_linear_light" x1="32.698" y1="31.4888" x2="32.698" y2="5.04147" gradientUnits="userSpaceOnUse" data-astro-cid-tvrurpns> <stop offset="0.02" stop-color="#201BA6" data-astro-cid-tvrurpns></stop> <stop offset="0.64" stop-color="#2D29C7" data-astro-cid-tvrurpns></stop> <stop offset="1" stop-color="#201BA6" data-astro-cid-tvrurpns></stop> </linearGradient> <linearGradient id="paint1_linear_light" x1="37.8244" y1="31.6132" x2="37.8244" y2="15.0681" gradientUnits="userSpaceOnUse" data-astro-cid-tvrurpns> <stop stop-color="#3530C3" data-astro-cid-tvrurpns></stop> <stop offset="0.5" stop-color="#6D71D1" data-astro-cid-tvrurpns></stop> <stop offset="0.966555" stop-color="#C0BFF5" data-astro-cid-tvrurpns></stop> <stop offset="1" stop-color="#E3E4FF" data-astro-cid-tvrurpns></stop> </linearGradient> <linearGradient id="paint2_linear_light" x1="15.0466" y1="45.6248" x2="15.0466" y2="2.54716" gradientUnits="userSpaceOnUse" data-astro-cid-tvrurpns> <stop stop-color="#302EC9" data-astro-cid-tvrurpns></stop> <stop offset="0.445601" stop-color="#302EC9" data-astro-cid-tvrurpns></stop> <stop offset="0.949145" stop-color="#CACAFB" data-astro-cid-tvrurpns></stop> <stop offset="1" stop-color="#7F7EAF" data-astro-cid-tvrurpns></stop> </linearGradient> </defs> </svg> <!-- Dark mode logo --> <svg class="logo-dark" width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-astro-cid-tvrurpns> <path d="M30.0999 3C30.049 3.07484 30.0026 3.15534 29.9599 3.23859C29.7551 3.63778 29.5864 4.20032 29.4449 4.87485C29.1611 6.22807 28.9739 8.0958 28.8491 10.1697C28.5996 14.3207 28.5996 19.3408 28.5996 22.8195V36.6507L28.5994 36.7048C28.5702 41.273 24.8298 44.9709 20.2089 44.9998L20.1545 45H4.8567C4.263 45 3.85302 44.4211 4.05726 43.8745C6.33213 37.7875 9.53936 29.2248 12.2481 22.0351C13.6025 18.4401 14.8322 15.1886 15.7584 12.7614C16.6875 10.3268 17.306 8.73629 17.4418 8.44858C17.8119 7.66467 18.4141 6.29266 19.2729 5.11284C20.1376 3.92489 21.2132 3.00002 22.5089 3H30.0999ZM43.4074 15.2762C43.737 15.2762 44.0042 15.5405 44.0042 15.8663V26.5059L44.0037 26.5722C43.9677 29.3755 41.658 31.637 38.8142 31.637H31.9941C32.0087 31.6194 32.0229 31.6014 32.037 31.5828C32.2829 31.2551 32.4216 30.7891 32.4301 30.201L32.4305 30.1436V21.1226C32.4305 17.8937 35.0778 15.2762 38.3438 15.2762H43.4074ZM31.3719 3.21635C31.8367 3.21637 32.3399 3.58389 32.8622 4.33174C33.3743 5.06521 33.8587 6.09953 34.3018 7.28581C35.1595 9.58125 35.8452 12.3973 36.2817 14.5727C33.4451 15.4292 31.3813 18.0372 31.3813 21.1226V30.1173L31.3811 30.1381C31.3783 30.3533 31.3315 30.6059 31.2447 30.7994C31.1484 31.0138 31.0483 31.0682 30.9828 31.0682C30.9283 31.0682 30.8224 31.0239 30.6698 30.8479C30.5262 30.6823 30.3792 30.4442 30.2383 30.1676C29.9647 29.6309 29.7342 28.991 29.6029 28.5723V22.8195C29.6029 13.031 29.9479 8.08907 30.3672 5.59814C30.5779 4.34695 30.803 3.74402 30.9918 3.45688C31.0827 3.31865 31.1572 3.26623 31.2059 3.24362C31.2554 3.22071 31.3026 3.21635 31.3719 3.21635Z" fill="white" data-astro-cid-tvrurpns></path> </svg> <!-- High contrast mode logo --> <svg class="logo-hc" width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-astro-cid-tvrurpns> <path fill-rule="evenodd" clip-rule="evenodd" d="M29.7976 5.60384C30.7819 5.63186 31.5831 6.16452 32.219 6.9202C32.8684 7.69209 33.3825 8.73577 33.7937 9.85433C34.5698 11.9655 35.021 14.462 35.2875 16.2245C35.5793 16.1754 35.879 16.1495 36.1847 16.1495H40.4874L40.5316 16.1507C40.9863 16.1738 41.3478 16.5497 41.3478 17.0101V26.1546C41.3478 28.7442 39.2813 30.8512 36.7074 30.9165L36.7053 30.9166L36.5863 30.9182H32.6561V30.9192H30.0621C30.0469 30.9192 30.0318 30.9187 30.0165 30.918L29.9535 30.9182L29.9533 30.9137C29.5071 30.8714 29.1391 30.5765 28.8621 30.2491C28.64 29.9867 28.4376 29.6586 28.258 29.2932V34.8757L28.2558 35.066V35.068C28.1543 39.072 24.9271 42.2992 20.9231 42.4007L20.9213 42.4008L20.7306 42.4032H7.72766L7.72532 42.4031L7.66584 42.4012H7.66349L7.66113 42.401C6.97371 42.3585 6.49913 41.6872 6.69759 41.0255L6.69894 41.0212L6.71775 40.9648L6.71943 40.96C10.5235 30.6644 17.4019 12.1112 18.0746 10.5507L18.0753 10.5491L18.1025 10.4879L18.103 10.4867L18.1037 10.4854C18.4075 9.83417 18.9232 8.64648 19.6578 7.61089C20.3886 6.58069 21.3667 5.65734 22.6104 5.60131H22.614L22.726 5.59879L22.7277 5.59845H29.7976V5.60384ZM22.7294 6.55141C21.9332 6.55143 21.1754 7.13264 20.4662 8.11795C19.7772 9.07556 19.291 10.1938 18.9667 10.8884C18.8636 11.1094 18.3502 12.4434 17.554 14.5534C16.7675 16.6383 15.7231 19.4319 14.5724 22.5213C12.271 28.7 9.54581 36.0588 7.61292 41.2901C7.58531 41.3651 7.63921 41.4505 7.73019 41.4505H20.7289C24.3041 41.4505 27.2132 38.5971 27.3032 35.0436L27.3054 34.8738V25.2186C27.3047 25.1737 27.3042 25.1288 27.3042 25.0838V24.93H27.3054V22.9865C27.3054 20.0007 27.3054 15.6674 27.5186 12.0786C27.6249 10.2898 27.7861 8.64893 28.0364 7.4417C28.1016 7.12703 28.1761 6.8277 28.2622 6.55477H27.3385V6.55141H22.7294ZM29.271 6.55477C29.0333 7.16057 28.8476 8.12901 28.7057 9.33552C28.5569 10.6009 28.4574 12.1122 28.391 13.7085C28.2582 16.9011 28.258 20.4248 28.258 22.9865V25.1976L28.2604 25.3011C28.2924 26.3745 28.5553 27.5542 28.9354 28.4781C29.1385 28.9724 29.3656 29.3693 29.5895 29.6337C29.8243 29.9114 29.9883 29.9664 30.0621 29.9664H30.711C30.7707 29.7823 30.8065 29.5551 30.8065 29.281V21.5277L30.8077 21.4166C30.8538 19.1348 32.3215 17.2022 34.3607 16.4671C34.0982 14.7124 33.6555 12.2403 32.8994 10.1831C32.5051 9.11073 32.0375 8.1841 31.49 7.53361C30.9638 6.90813 30.3988 6.57581 29.7767 6.55561L29.7163 6.55477H29.271ZM36.1847 17.1023C33.7407 17.1023 31.7593 19.0837 31.7593 21.5277V29.281L31.7576 29.397C31.7519 29.5938 31.7311 29.7841 31.6944 29.9652H36.5846C38.689 29.9651 40.3951 28.2591 40.3951 26.1546V17.1023H36.1847Z" fill="white" data-astro-cid-tvrurpns></path> </svg> </span> Forgebook </a> <div class="site-nav-actions flex items-center gap-2 sm:gap-4"> <button id="search-button" class="search-trigger hc-hover inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-secondary hover:text-primary hover:bg-surface-elevated transition-colors cursor-pointer" type="button" aria-label="Search notebooks" aria-keyshortcuts="Control+k Meta+k"> <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"></path> </svg> <span class="search-shortcut hidden sm:inline-flex items-center gap-0.5 text-xs badge rounded px-1.5 py-0.5"> <kbd class="font-mono text-[10px]">⌘</kbd><kbd class="font-mono text-[10px]">K</kbd> </span> </button> <button id="theme-toggle" class="theme-toggle-btn hc-hover p-2 sm:p-1.5 rounded-md text-secondary hover:text-primary hover:bg-surface-elevated transition-colors cursor-pointer" title="Toggle theme" aria-label="Toggle theme" data-astro-cid-x3pjskd3> <!-- Sun (light mode) --> <svg class="theme-icon theme-icon-light w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" data-astro-cid-x3pjskd3> <circle cx="12" cy="12" r="5" data-astro-cid-x3pjskd3></circle> <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" data-astro-cid-x3pjskd3></path> </svg> <!-- Moon (dark mode) --> <svg class="theme-icon theme-icon-dark w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none" data-astro-cid-x3pjskd3> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" data-astro-cid-x3pjskd3></path> </svg> <!-- Half circle (high contrast mode) --> <svg class="theme-icon theme-icon-hc w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none" data-astro-cid-x3pjskd3> <circle cx="12" cy="12" r="10" data-astro-cid-x3pjskd3></circle> <path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" data-astro-cid-x3pjskd3></path> </svg> </button>  <script type="module" src="/forgebook/preview/pr-61/_astro/ThemeToggle.astro_astro_type_script_index_0_lang.Bo-iG-ft.js"></script> <a href="/forgebook/preview/pr-61/rss.xml" class="hc-hover inline-flex items-center justify-center rounded-md p-1.5 sm:p-2 text-secondary hover:text-primary hover:bg-surface-elevated transition-colors" title="RSS Feed" aria-label="RSS Feed"> <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"> <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1Z"></path> </svg> </a> <a href="https://github.com/microsoft-foundry/forgebook" target="_blank" rel="noopener noreferrer" class="github-button hc-hover inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 sm:px-2.5 sm:py-1.5 text-sm text-secondary hover:text-primary border border-subtle hover:border-muted hover:bg-surface-elevated transition-colors" aria-label="View on GitHub"> <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path> </svg> <!-- Desktop: full path, Tablet: repo name only, Mobile: icon only --> <span class="hidden lg:inline">microsoft-foundry/forgebook</span> <span class="hidden md:inline lg:hidden">forgebook</span> <span id="github-stars" class="inline-flex items-center gap-1 ml-0.5 sm:ml-1 pl-1.5 border-l border-subtle" data-repo="microsoft-foundry/forgebook" style> <svg class="w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path> </svg> <span class="font-medium" id="github-star-count">18</span> </span> </a> <script type="module">const n=document.getElementById("github-stars"),o=document.getElementById("github-star-count");if(n&&o&&!o.textContent){const c=n.dataset.repo;fetch(`https://api.github.com/repos/${c}`,{headers:{Accept:"application/vnd.github.v3+json"}}).then(t=>t.ok?t.json():null).then(t=>{if(t&&typeof t.stargazers_count=="number"){const e=t.stargazers_count;o.textContent=e>=1e3?(e/1e3).toFixed(1).replace(/\.0$/,"")+"k":e.toString(),n.style.display=""}}).catch(()=>{})}</script> </div> </nav> </header> <main data-pagefind-body class="max-w-6xl mx-auto px-4 py-8">   <header class="max-w-4xl mx-auto mb-8 lg:max-w-none lg:pr-[252px]"> <div class="lg:max-w-4xl"> <h1 data-pagefind-meta="title" class="text-3xl font-bold text-primary mb-4"> Generate Speech with MAI-Voice-1 </h1> <p data-pagefind-meta="description" class="text-lg text-secondary mb-6"> MAI-Voice-1 notebook using Foundry endpoint with REST and SDK patterns, long-form synthesis, and character-based cost estimation. </p> <div class="flex flex-wrap gap-3"> <!-- Open button group (GitHub primary + VS Code dropdown) --> <div class="relative" id="open-container"> <div class="inline-flex items-center"> <a id="github-btn" href="https://github.com/microsoft-foundry/forgebook/blob/main/notebooks/mai-voice-1-foundry.ipynb" target="_blank" rel="noopener noreferrer" data-slug="mai-voice-1-foundry" class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-primary rounded-l-lg transition-colors border-r-0"> <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path> </svg>
+Open in GitHub
+</a> <button id="vscode-dropdown-btn" data-slug="mai-voice-1-foundry" data-vscode-url="https://vscode.dev/github/microsoft-foundry/forgebook/blob/main/notebooks/mai-voice-1-foundry.ipynb" data-insiders-url="https://insiders.vscode.dev/github/microsoft-foundry/forgebook/blob/main/notebooks/mai-voice-1-foundry.ipynb" class="notebook-action hc-hover inline-flex items-center px-2 py-2 text-sm font-medium btn-primary rounded-r-lg transition-colors cursor-pointer" aria-haspopup="menu" aria-expanded="false" aria-label="Open options"> <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path> </svg> </button> </div> <div id="vscode-dropdown" class="absolute left-0 mt-2 w-80 max-w-[calc(100vw-2rem)] dropdown-menu rounded-lg shadow-lg py-1 z-50 hidden" role="menu" aria-label="Open options"> <button role="menuitem" data-version="stable" class="vscode-version-option dropdown-item w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left whitespace-nowrap"> <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"> <mask id="vs-stable-mask" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"> <path fill-rule="evenodd" clip-rule="evenodd" d="M70.9119 99.3171C72.4869 99.9307 74.2828 99.8914 75.8725 99.1264L96.4608 89.2197C98.6242 88.1787 100 85.9892 100 83.5872V16.4133C100 14.0113 98.6243 11.8218 96.4609 10.7808L75.8725 0.873756C73.7862 -0.130129 71.3446 0.11576 69.5135 1.44695C69.252 1.63711 69.0028 1.84943 68.769 2.08341L29.3551 38.0415L12.1872 25.0096C10.589 23.7965 8.35363 23.8959 6.86933 25.2461L1.36303 30.2549C-0.452552 31.9064 -0.454633 34.7627 1.35853 36.417L16.2471 50.0001L1.35853 63.5832C-0.454633 65.2374 -0.452552 68.0938 1.36303 69.7453L6.86933 74.7541C8.35363 76.1043 10.589 76.2037 12.1872 74.9905L29.3551 61.9587L68.769 97.9167C69.3925 98.5406 70.1246 99.0104 70.9119 99.3171ZM75.0152 27.2989L45.1091 50.0001L75.0152 72.7012V27.2989Z" fill="white"></path> </mask> <g mask="url(#vs-stable-mask)"> <path d="M96.4614 10.7962L75.8569 0.875542C73.4719 -0.272773 70.6217 0.211611 68.75 2.08333L1.29858 63.5832C-0.515693 65.2373 -0.513607 68.0937 1.30308 69.7452L6.81272 74.754C8.29793 76.1042 10.5347 76.2036 12.1338 74.9905L93.3609 13.3699C96.086 11.3026 100 13.2462 100 16.6667V16.4275C100 14.0265 98.6246 11.8378 96.4614 10.7962Z" fill="#0065A9"></path> <path d="M96.4614 89.2038L75.8569 99.1245C73.4719 100.273 70.6217 99.7884 68.75 97.9167L1.29858 36.4169C-0.515693 34.7627 -0.513607 31.9063 1.30308 30.2548L6.81272 25.246C8.29793 23.8958 10.5347 23.7964 12.1338 25.0095L93.3609 86.6301C96.086 88.6974 100 86.7538 100 83.3334V83.5726C100 85.9735 98.6246 88.1622 96.4614 89.2038Z" fill="#007ACC"></path> <path d="M75.8578 99.1263C73.4721 100.274 70.6219 99.7885 68.75 97.9166C71.0564 100.223 75 98.5895 75 95.3278V4.67213C75 1.41039 71.0564 -0.223106 68.75 2.08329C70.6219 0.211402 73.4721 -0.273666 75.8578 0.873633L96.4587 10.7807C98.6234 11.8217 100 14.0112 100 16.4132V83.5871C100 85.9891 98.6234 88.1786 96.4586 89.2196L75.8578 99.1263Z" fill="#1F9CF0"></path> </g> </svg> <span>Open in VS Code for the Web</span> </button> <button role="menuitem" data-version="insiders" class="vscode-version-option dropdown-item w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left whitespace-nowrap"> <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"> <mask id="vs-insiders-mask" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"> <path fill-rule="evenodd" clip-rule="evenodd" d="M70.9119 99.3171C72.4869 99.9307 74.2828 99.8914 75.8725 99.1264L96.4608 89.2197C98.6242 88.1787 100 85.9892 100 83.5872V16.4133C100 14.0113 98.6243 11.8218 96.4609 10.7808L75.8725 0.873756C73.7862 -0.130129 71.3446 0.11576 69.5135 1.44695C69.252 1.63711 69.0028 1.84943 68.769 2.08341L29.3551 38.0415L12.1872 25.0096C10.589 23.7965 8.35363 23.8959 6.86933 25.2461L1.36303 30.2549C-0.452552 31.9064 -0.454633 34.7627 1.35853 36.417L16.2471 50.0001L1.35853 63.5832C-0.454633 65.2374 -0.452552 68.0938 1.36303 69.7453L6.86933 74.7541C8.35363 76.1043 10.589 76.2037 12.1872 74.9905L29.3551 61.9587L68.769 97.9167C69.3925 98.5406 70.1246 99.0104 70.9119 99.3171ZM75.0152 27.2989L45.1091 50.0001L75.0152 72.7012V27.2989Z" fill="white"></path> </mask> <g mask="url(#vs-insiders-mask)"> <path d="M96.4614 10.7962L75.8569 0.875542C73.4719 -0.272773 70.6217 0.211611 68.75 2.08333L1.29858 63.5832C-0.515693 65.2373 -0.513607 68.0937 1.30308 69.7452L6.81272 74.754C8.29793 76.1042 10.5347 76.2036 12.1338 74.9905L93.3609 13.3699C96.086 11.3026 100 13.2462 100 16.6667V16.4275C100 14.0265 98.6246 11.8378 96.4614 10.7962Z" fill="#009a7c"></path> <path d="M96.4614 89.2038L75.8569 99.1245C73.4719 100.273 70.6217 99.7884 68.75 97.9167L1.29858 36.4169C-0.515693 34.7627 -0.513607 31.9063 1.30308 30.2548L6.81272 25.246C8.29793 23.8958 10.5347 23.7964 12.1338 25.0095L93.3609 86.6301C96.086 88.6974 100 86.7538 100 83.3334V83.5726C100 85.9735 98.6246 88.1622 96.4614 89.2038Z" fill="#00b294"></path> <path d="M75.8578 99.1263C73.4721 100.274 70.6219 99.7885 68.75 97.9166C71.0564 100.223 75 98.5895 75 95.3278V4.67213C75 1.41039 71.0564 -0.223106 68.75 2.08329C70.6219 0.211402 73.4721 -0.273666 75.8578 0.873633L96.4587 10.7807C98.6234 11.8217 100 14.0112 100 16.4132V83.5871C100 85.9891 98.6234 88.1786 96.4586 89.2196L75.8578 99.1263Z" fill="#24bfa5"></path> </g> </svg> <span>Open in VS Code Insiders for the Web</span> </button> </div> </div> <!-- Markdown Button with Dropdown --> <div class="relative" id="markdown-container"> <div class="inline-flex items-center"> <button id="copy-markdown-btn" data-slug="mai-voice-1-foundry" class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-secondary rounded-l-lg transition-colors cursor-pointer border-r-0" aria-label="Copy page"> <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true"> <path fill="currentColor" d="M5.503 4.627L5.5 6.75v10.504a3.25 3.25 0 0 0 3.25 3.25h8.616a2.25 2.25 0 0 1-2.122 1.5H8.75A4.75 4.75 0 0 1 4 17.254V6.75c0-.98.627-1.815 1.503-2.123M17.75 2A2.25 2.25 0 0 1 20 4.25v13a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-13A2.25 2.25 0 0 1 8.75 2zm0 1.5h-9a.75.75 0 0 0-.75.75v13c0 .414.336.75.75.75h9a.75.75 0 0 0 .75-.75v-13a.75.75 0 0 0-.75-.75"></path> </svg> <span id="copy-btn-text" class="hidden sm:inline">Copy page</span> </button> <button id="markdown-dropdown-btn" class="notebook-action hc-hover inline-flex items-center px-2 py-2 text-sm font-medium btn-secondary rounded-r-lg transition-colors cursor-pointer" aria-haspopup="true" aria-expanded="false" aria-label="Markdown options"> <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path> </svg> </button> </div> <div id="markdown-dropdown" class="absolute left-0 mt-2 w-52 dropdown-menu rounded-lg shadow-lg py-1 z-50 hidden" role="menu"> <button id="dropdown-copy-markdown" data-slug="mai-voice-1-foundry" class="dropdown-item w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left" role="menuitem"> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path> </svg> <span id="dropdown-copy-text">Copy in Markdown</span> </button> <a id="view-markdown-link" href="/forgebook/preview/pr-61/notebook/mai-voice-1-foundry.md" data-slug="mai-voice-1-foundry" class="dropdown-item flex items-center gap-3 px-4 py-2 text-sm transition-colors" role="menuitem"> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path> </svg>
+View in Markdown
+</a> </div> </div> <!-- Share Button with Dropdown --> <div class="relative" id="share-container"> <div class="inline-flex items-center"> <button id="share-btn" data-slug="mai-voice-1-foundry" data-share-url="/forgebook/preview/pr-61/notebook/mai-voice-1-foundry/" data-share-title="Generate Speech with MAI-Voice-1" class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-secondary rounded-l-lg transition-colors cursor-pointer border-r-0" aria-label="Share"> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path> </svg> <span id="share-btn-text" class="hidden sm:inline">Share</span> </button> <button id="share-dropdown-btn" class="notebook-action hc-hover inline-flex items-center px-2 py-2 text-sm font-medium btn-secondary rounded-r-lg transition-colors cursor-pointer" aria-haspopup="true" aria-expanded="false" aria-label="Share options"> <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path> </svg> </button> </div> <div id="share-dropdown" class="absolute right-0 mt-2 w-48 dropdown-menu rounded-lg shadow-lg py-1 z-50 hidden" role="menu"> <button id="copy-link-btn" class="share-menu-item dropdown-item w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left" role="menuitem"> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path> </svg> <span id="copy-link-text">Copy Link</span> </button> <a id="share-x" href="#" target="_blank" rel="noopener noreferrer" class="share-menu-item dropdown-item flex items-center gap-3 px-4 py-2 text-sm transition-colors" role="menuitem"> <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path> </svg>
+Share on X
+</a> <a id="share-linkedin" href="#" target="_blank" rel="noopener noreferrer" class="share-menu-item dropdown-item flex items-center gap-3 px-4 py-2 text-sm transition-colors" role="menuitem"> <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path> </svg>
+Share on LinkedIn
+</a> <button id="native-share-btn" class="share-menu-item dropdown-item hidden w-full items-center gap-3 px-4 py-2 text-sm transition-colors text-left border-t border-subtle mt-1 pt-2" role="menuitem"> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path> </svg>
+More options...
+</button> </div> </div> </div> <script type="module" src="/forgebook/preview/pr-61/_astro/NotebookActions.astro_astro_type_script_index_0_lang.Da2zsEzL.js"></script> </div> </header>  <section class="max-w-5xl mx-auto mb-8 lg:max-w-none lg:pr-[252px]"> <div class="lg:max-w-5xl"> <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3"> Author </h2> <div class="flex flex-wrap gap-2"> <div class="w-full sm:w-80 flex items-start justify-between gap-3 p-2 rounded-lg hover:bg-surface-elevated transition-colors overflow-hidden"> <div class="flex items-center gap-3 min-w-0 overflow-hidden"> <a href="https://github.com/anihitk07" target="_blank" rel="noopener noreferrer" class="shrink-0" aria-label="Anirban Ganguly on GitHub"> <img src="https://github.com/anihitk07.png?size=200" alt="Anirban Ganguly's avatar" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=Anirban%20Ganguly&amp;size=200&amp;background=6366f1&amp;color=fff&amp;bold=true';" class="w-14 h-14 rounded-full border-2 border-subtle bg-surface-elevated" loading="lazy"> </a> <div class="min-w-0 overflow-hidden"> <div class="font-medium text-primary truncate">Anirban Ganguly</div> <div class="text-sm text-muted truncate">Contributor</div> <div class="text-sm text-muted truncate">@anihitk07</div> </div> </div> <div class="flex flex-col items-center gap-0.5 text-muted"> <a href="https://github.com/anihitk07" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md p-1 hover:bg-surface-elevated hover:text-primary transition-colors" aria-label="GitHub"> <svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path> </svg> </a> <a href="https://www.linkedin.com/in/anirban-ganguly-uk/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md p-1 hover:bg-surface-elevated hover:text-primary transition-colors" aria-label="LinkedIn"> <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"> <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path> </svg> </a>  </div> </div> </div> </div> </section>  <div class="flex justify-center"> <article class="max-w-4xl w-full"> <!-- Notebook Content --> <section class="prose prose-slate dark:prose-invert max-w-none"> <div class="notebook-content"><div class="nb-notebook"><div class="nb-worksheet"><div class="nb-cell nb-markdown-cell"><h2>Generate Speech with MAI-Voice-1</h2>
+<p><strong>Problem this recipe solves:</strong> You need expressive, low-latency TTS on Foundry that supports plain text, SSML emotion/prosody, batch long-form narration, and the Azure Speech SDK — all wired through a single endpoint and credential.</p>
+<p><strong>Who this is for:</strong> Developers shipping IVR, audiobook, character voice, or notification audio on Microsoft Foundry.</p>
+<p><strong>Reusable pattern:</strong> Authenticate once against the Foundry endpoint, then call a single <code>synthesize_to_file(...)</code> helper with progressively richer SSML payloads. The same helper handles plain text, emotion styles, prosody adjustments, and 4 KB+ long-form blocks.</p>
+<p><strong>You will produce:</strong></p>
+<ul>
+<li>five reference audio files saved to <code>media/mai-voice-1-foundry/</code> (basic, emotion, prosody, SDK, long-form)</li>
+<li>a <code>data/mai-voice-1-foundry/evidence.json</code> manifest with file sizes and synthesis metadata</li>
+<li>a copyable SSML template you can re-use for every voice in the MAI catalog</li>
+</ul>
+</div><div class="nb-cell nb-markdown-cell"><h3>Recipe flow (what to run and what to watch)</h3>
+<ol>
+<li>Run §1 setup — confirms env vars, picks the voice (<code>en-us-Grant:MAI-Voice-1</code> by default), and prints the auth mode.</li>
+<li>Run §2 (basic REST) first. If this works, the rest of the notebook will work — endpoint + auth are validated.</li>
+<li>Run §3 (emotion) and §4 (prosody) for tone control. These are the patterns to copy into product SSML.</li>
+<li>Run §5 (Azure Speech SDK) only if you need streaming or audio-output devices; otherwise REST is simpler.</li>
+<li>Run §6 (voice prompting concept) for awareness — full custom voice cloning lives in the Personal Voice API.</li>
+<li>Run §7 for long-form (&gt;1 minute). Use chunking + concat if blocks exceed ~5 KB.</li>
+<li>Run §8 (cost calculator) before generating thousands of files.</li>
+<li>Run §9 evidence + §10 failure-modes when packaging for review.</li>
+</ol>
+<p><strong>Watch for:</strong></p>
+<ul>
+<li>SDK returns <code>SynthesizingAudioCompleted</code> with <strong>zero bytes</strong> on some Foundry endpoints — the helper detects this and falls back to REST automatically.</li>
+<li>401/403 → confirm <code>Cognitive Services User</code> on the Foundry account.</li>
+<li>File grows but won't play → wrong content type (request <code>audio-24khz-48kbitrate-mono-mp3</code>).</li>
+</ul>
+</div><div class="nb-cell nb-markdown-cell"><h2>1. Setup</h2>
+</div><div class="nb-cell nb-markdown-cell"><p><strong>What this does:</strong> loads <code>deployment.env</code>, picks the voice name, and prints the auth principal so you can validate RBAC.</p>
+<p><strong>Watch for:</strong> if <code>MAI_VOICE_NAME</code> is unset, the notebook defaults to <code>en-us-Grant:MAI-Voice-1</code>. Browse the Foundry catalog for the full voice list.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># %pip install -q azure-cognitiveservices-speech python-dotenv requests azure-identity</span></code></pre></div></div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">import</span> os
+<span class="token keyword">import</span> io
+<span class="token keyword">import</span> json
+<span class="token keyword">import</span> base64
+<span class="token keyword">import</span> time
+<span class="token keyword">import</span> requests
+<span class="token keyword">from</span> pathlib <span class="token keyword">import</span> Path
+<span class="token keyword">from</span> urllib<span class="token punctuation">.</span>parse <span class="token keyword">import</span> urlparse
+<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>identity <span class="token keyword">import</span> DefaultAzureCredential<span class="token punctuation">,</span> get_bearer_token_provider
+
+<span class="token keyword">import</span> azure<span class="token punctuation">.</span>cognitiveservices<span class="token punctuation">.</span>speech <span class="token keyword">as</span> speechsdk
+
+load_dotenv<span class="token punctuation">(</span>dotenv_path<span class="token operator">=</span><span class="token string">"deployment.env"</span><span class="token punctuation">,</span> override<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+VOICE_SPEECH_KEY <span class="token operator">=</span> <span class="token punctuation">(</span>
+    os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"VOICE_SPEECH_KEY"</span><span class="token punctuation">)</span>
+    <span class="token keyword">or</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"AZURE_SPEECH_KEY"</span><span class="token punctuation">)</span>
+    <span class="token keyword">or</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"AZURE_FOUNDRY_API_KEY"</span><span class="token punctuation">)</span>
+    <span class="token keyword">or</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"SPEECH_KEY"</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span>
+VOICE_SPEECH_REGION <span class="token operator">=</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"VOICE_SPEECH_REGION"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"SPEECH_REGION"</span><span class="token punctuation">,</span> <span class="token string">"eastus"</span><span class="token punctuation">)</span>
+VOICE_SPEECH_ENDPOINT <span class="token operator">=</span> <span class="token punctuation">(</span>
+    os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"VOICE_SPEECH_ENDPOINT"</span><span class="token punctuation">)</span>
+    <span class="token keyword">or</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"AZURE_SPEECH_ENDPOINT"</span><span class="token punctuation">)</span>
+    <span class="token keyword">or</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"AZURE_FOUNDRY_ENDPOINT"</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span>
+AZURE_FOUNDRY_RESOURCE_ID <span class="token operator">=</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"AZURE_FOUNDRY_RESOURCE_ID"</span><span class="token punctuation">)</span>
+MAI_VOICE_NAME <span class="token operator">=</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"MAI_VOICE_NAME"</span><span class="token punctuation">,</span> <span class="token string">"en-us-Grant:MAI-Voice-1"</span><span class="token punctuation">)</span>
+USE_ENTRA_AUTH <span class="token operator">=</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"USE_ENTRA_AUTH"</span><span class="token punctuation">,</span> <span class="token string">"true"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>lower<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token string">"true"</span>
+
+<span class="token comment"># Backward-compatible aliases used in later cells</span>
+SPEECH_KEY <span class="token operator">=</span> VOICE_SPEECH_KEY
+SPEECH_REGION <span class="token operator">=</span> VOICE_SPEECH_REGION
+
+<span class="token keyword">assert</span> VOICE_SPEECH_ENDPOINT<span class="token punctuation">,</span> <span class="token string">"Set AZURE_FOUNDRY_ENDPOINT or VOICE_SPEECH_ENDPOINT in deployment.env"</span>
+<span class="token keyword">if</span> <span class="token keyword">not</span> USE_ENTRA_AUTH<span class="token punctuation">:</span>
+    <span class="token keyword">assert</span> VOICE_SPEECH_KEY<span class="token punctuation">,</span> <span class="token string">"Set AZURE_FOUNDRY_API_KEY or VOICE_SPEECH_KEY in deployment.env when USE_ENTRA_AUTH=false"</span>
+<span class="token keyword">if</span> USE_ENTRA_AUTH <span class="token keyword">and</span> <span class="token keyword">not</span> AZURE_FOUNDRY_RESOURCE_ID<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"⚠️ AZURE_FOUNDRY_RESOURCE_ID is not set. REST calls still work; SDK will use bearer-token fallback."</span><span class="token punctuation">)</span>
+
+<span class="token comment"># Foundry project/account endpoint sample pattern:</span>
+<span class="token comment">#   https://&lt;foundry-account&gt;.cognitiveservices.azure.com/tts/cognitiveservices/v1</span>
+TTS_ENDPOINT <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"</span><span class="token interpolation"><span class="token punctuation">{</span>VOICE_SPEECH_ENDPOINT<span class="token punctuation">.</span>rstrip<span class="token punctuation">(</span><span class="token string">'/'</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">/tts/cognitiveservices/v1"</span></span>
+
+token_provider <span class="token operator">=</span> <span class="token boolean">None</span>
+<span class="token keyword">if</span> USE_ENTRA_AUTH<span class="token punctuation">:</span>
+    <span class="token keyword">for</span> env_var <span class="token keyword">in</span> <span class="token punctuation">(</span><span class="token string">"AZURE_TENANT_ID"</span><span class="token punctuation">,</span> <span class="token string">"AZURE_CLIENT_ID"</span><span class="token punctuation">,</span> <span class="token string">"AZURE_CLIENT_SECRET"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span>env_var<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token string">""</span><span class="token punctuation">:</span>
+            os<span class="token punctuation">.</span>environ<span class="token punctuation">.</span>pop<span class="token punctuation">(</span>env_var<span class="token punctuation">,</span> <span class="token boolean">None</span><span class="token punctuation">)</span>
+    token_provider <span class="token operator">=</span> get_bearer_token_provider<span class="token punctuation">(</span>
+        DefaultAzureCredential<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token string">"https://cognitiveservices.azure.com/.default"</span>
+    <span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">decode_current_token_claims</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> <span class="token builtin">dict</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> <span class="token keyword">not</span> USE_ENTRA_AUTH<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    token <span class="token operator">=</span> token_provider<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    payload <span class="token operator">=</span> token<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">"."</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+    payload <span class="token operator">+=</span> <span class="token string">"="</span> <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token operator">-</span><span class="token builtin">len</span><span class="token punctuation">(</span>payload<span class="token punctuation">)</span> <span class="token operator">%</span> <span class="token number">4</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> json<span class="token punctuation">.</span>loads<span class="token punctuation">(</span>base64<span class="token punctuation">.</span>urlsafe_b64decode<span class="token punctuation">(</span>payload<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">build_tts_headers</span><span class="token punctuation">(</span>output_format<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> <span class="token builtin">dict</span><span class="token punctuation">:</span>
+    headers <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token string">"Content-Type"</span><span class="token punctuation">:</span> <span class="token string">"application/ssml+xml"</span><span class="token punctuation">,</span>
+        <span class="token string">"X-Microsoft-OutputFormat"</span><span class="token punctuation">:</span> output_format<span class="token punctuation">,</span>
+        <span class="token string">"User-Agent"</span><span class="token punctuation">:</span> <span class="token string">"MAI-Voice-Demo"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> USE_ENTRA_AUTH<span class="token punctuation">:</span>
+        headers<span class="token punctuation">[</span><span class="token string">"Authorization"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"Bearer </span><span class="token interpolation"><span class="token punctuation">{</span>token_provider<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        headers<span class="token punctuation">[</span><span class="token string">"Ocp-Apim-Subscription-Key"</span><span class="token punctuation">]</span> <span class="token operator">=</span> SPEECH_KEY
+    <span class="token keyword">return</span> headers
+
+<span class="token keyword">def</span> <span class="token function">create_speech_config</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> speechsdk<span class="token punctuation">.</span>SpeechConfig<span class="token punctuation">:</span>
+    parsed <span class="token operator">=</span> urlparse<span class="token punctuation">(</span>VOICE_SPEECH_ENDPOINT<span class="token punctuation">.</span>rstrip<span class="token punctuation">(</span><span class="token string">'/'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    base_endpoint <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"</span><span class="token interpolation"><span class="token punctuation">{</span>parsed<span class="token punctuation">.</span>scheme<span class="token punctuation">}</span></span><span class="token string">://</span><span class="token interpolation"><span class="token punctuation">{</span>parsed<span class="token punctuation">.</span>netloc<span class="token punctuation">}</span></span><span class="token string">"</span></span>
+    cfg <span class="token operator">=</span> speechsdk<span class="token punctuation">.</span>SpeechConfig<span class="token punctuation">(</span>endpoint<span class="token operator">=</span>base_endpoint<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> USE_ENTRA_AUTH<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> AZURE_FOUNDRY_RESOURCE_ID<span class="token punctuation">:</span>
+            cfg<span class="token punctuation">.</span>authorization_token <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"aad#</span><span class="token interpolation"><span class="token punctuation">{</span>AZURE_FOUNDRY_RESOURCE_ID<span class="token punctuation">}</span></span><span class="token string">#</span><span class="token interpolation"><span class="token punctuation">{</span>token_provider<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            cfg<span class="token punctuation">.</span>authorization_token <span class="token operator">=</span> token_provider<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> cfg
+    <span class="token comment"># Key mode fallback for environments where local auth is enabled.</span>
+    <span class="token keyword">return</span> speechsdk<span class="token punctuation">.</span>SpeechConfig<span class="token punctuation">(</span>subscription<span class="token operator">=</span>SPEECH_KEY<span class="token punctuation">,</span> region<span class="token operator">=</span>SPEECH_REGION<span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">ensure_voice_response_ok</span><span class="token punctuation">(</span>response<span class="token punctuation">:</span> requests<span class="token punctuation">.</span>Response<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> <span class="token boolean">None</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> response<span class="token punctuation">.</span>ok<span class="token punctuation">:</span>
+        <span class="token keyword">return</span>
+    <span class="token keyword">if</span> USE_ENTRA_AUTH <span class="token keyword">and</span> response<span class="token punctuation">.</span>status_code <span class="token keyword">in</span> <span class="token punctuation">(</span><span class="token number">401</span><span class="token punctuation">,</span> <span class="token number">403</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        claims <span class="token operator">=</span> decode_current_token_claims<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        oid <span class="token operator">=</span> claims<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"oid"</span><span class="token punctuation">,</span> <span class="token string">"unknown"</span><span class="token punctuation">)</span>
+        <span class="token keyword">raise</span> requests<span class="token punctuation">.</span>HTTPError<span class="token punctuation">(</span>
+            <span class="token string-interpolation"><span class="token string">f"Voice synthesis request failed with </span><span class="token interpolation"><span class="token punctuation">{</span>response<span class="token punctuation">.</span>status_code<span class="token punctuation">}</span></span><span class="token string">: </span><span class="token interpolation"><span class="token punctuation">{</span>response<span class="token punctuation">.</span>text<span class="token punctuation">}</span></span><span class="token string">\n"</span></span>
+            <span class="token string">"Entra auth troubleshooting:\n"</span>
+            <span class="token string-interpolation"><span class="token string">f"- Token principal oid: </span><span class="token interpolation"><span class="token punctuation">{</span>oid<span class="token punctuation">}</span></span><span class="token string">\n"</span></span>
+            <span class="token string">"- Required role on the Foundry account: Cognitive Services Speech User (and, if needed, Cognitive Services User)\n"</span>
+            <span class="token string">"- Required data action: Microsoft.CognitiveServices/accounts/SpeechServices/speechrest/synthesis/action\n"</span>
+            <span class="token string">"- For token auth, set AZURE_FOUNDRY_ENDPOINT=https://&lt;foundry-account&gt;.cognitiveservices.azure.com\n"</span>
+            <span class="token string">"- If this is a new role assignment, wait a few minutes and retry after refreshing token"</span><span class="token punctuation">,</span>
+            response<span class="token operator">=</span>response<span class="token punctuation">,</span>
+        <span class="token punctuation">)</span>
+    response<span class="token punctuation">.</span>raise_for_status<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">post_tts</span><span class="token punctuation">(</span>ssml<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span> output_format<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> requests<span class="token punctuation">.</span>Response<span class="token punctuation">:</span>
+    response <span class="token operator">=</span> requests<span class="token punctuation">.</span>post<span class="token punctuation">(</span>
+        TTS_ENDPOINT<span class="token punctuation">,</span>
+        headers<span class="token operator">=</span>build_tts_headers<span class="token punctuation">(</span>output_format<span class="token operator">=</span>output_format<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        data<span class="token operator">=</span>ssml<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span>
+
+    <span class="token comment"># Optional one-time fallback: if token mode fails and key exists, retry with key auth.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">not</span> response<span class="token punctuation">.</span>ok<span class="token punctuation">)</span> <span class="token keyword">and</span> USE_ENTRA_AUTH <span class="token keyword">and</span> VOICE_SPEECH_KEY<span class="token punctuation">:</span>
+        fallback_headers <span class="token operator">=</span> <span class="token punctuation">{</span>
+            <span class="token string">"Content-Type"</span><span class="token punctuation">:</span> <span class="token string">"application/ssml+xml"</span><span class="token punctuation">,</span>
+            <span class="token string">"X-Microsoft-OutputFormat"</span><span class="token punctuation">:</span> output_format<span class="token punctuation">,</span>
+            <span class="token string">"User-Agent"</span><span class="token punctuation">:</span> <span class="token string">"MAI-Voice-Demo"</span><span class="token punctuation">,</span>
+            <span class="token string">"Ocp-Apim-Subscription-Key"</span><span class="token punctuation">:</span> VOICE_SPEECH_KEY<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+        fallback <span class="token operator">=</span> requests<span class="token punctuation">.</span>post<span class="token punctuation">(</span>TTS_ENDPOINT<span class="token punctuation">,</span> headers<span class="token operator">=</span>fallback_headers<span class="token punctuation">,</span> data<span class="token operator">=</span>ssml<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> fallback<span class="token punctuation">.</span>ok<span class="token punctuation">:</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"⚠️ Bearer-token request failed; API-key fallback succeeded for this call."</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> fallback
+        response <span class="token operator">=</span> fallback
+
+    ensure_voice_response_ok<span class="token punctuation">(</span>response<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> response
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ TTS Endpoint : </span><span class="token interpolation"><span class="token punctuation">{</span>TTS_ENDPOINT<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ Region       : </span><span class="token interpolation"><span class="token punctuation">{</span>VOICE_SPEECH_REGION<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ Voice Name   : </span><span class="token interpolation"><span class="token punctuation">{</span>MAI_VOICE_NAME<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ Auth mode    : </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token string">'DefaultAzureCredential (Bearer token)'</span> <span class="token keyword">if</span> USE_ENTRA_AUTH <span class="token keyword">else</span> <span class="token string">'API key'</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">if</span> USE_ENTRA_AUTH<span class="token punctuation">:</span>
+    claims <span class="token operator">=</span> decode_current_token_claims<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ Token principal oid: </span><span class="token interpolation"><span class="token punctuation">{</span>claims<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'oid'</span><span class="token punctuation">,</span> <span class="token string">'unknown'</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ Token tenant id   : </span><span class="token interpolation"><span class="token punctuation">{</span>claims<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'tid'</span><span class="token punctuation">,</span> <span class="token string">'unknown'</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ Resource ID      : </span><span class="token interpolation"><span class="token punctuation">{</span>AZURE_FOUNDRY_RESOURCE_ID <span class="token keyword">or</span> <span class="token string">'not set (SDK fallback mode)'</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"ℹ️ Required RBAC role for TTS: Cognitive Services Speech User"</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>2. Basic TTS — REST API</h2>
+<p>The simplest way to generate speech: POST SSML, receive audio bytes.</p>
+</div><div class="nb-cell nb-markdown-cell"><p><strong>What this does:</strong> the core <code>synthesize_to_file(...)</code> helper hits <code>POST /tts/cognitiveservices/v1</code> with <code>application/ssml+xml</code>. Even the 'basic' case sends SSML — the helper just wraps your text.</p>
+<p><strong>Why it matters:</strong> validating this section confirms endpoint + auth + voice + output codec all work end-to-end. Don't skip ahead until this succeeds.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">def</span> <span class="token function">synthesize_to_file</span><span class="token punctuation">(</span>
+    text<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span>
+    output_path<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span>
+    voice<span class="token punctuation">:</span> <span class="token builtin">str</span> <span class="token operator">=</span> MAI_VOICE_NAME<span class="token punctuation">,</span>
+    output_format<span class="token punctuation">:</span> <span class="token builtin">str</span> <span class="token operator">=</span> <span class="token string">"audio-24khz-160kbitrate-mono-mp3"</span><span class="token punctuation">,</span>
+    lang<span class="token punctuation">:</span> <span class="token builtin">str</span> <span class="token operator">=</span> <span class="token string">"en-US"</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> <span class="token builtin">float</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""Synthesize text to audio using MAI-Voice-1 REST API. Returns elapsed time."""</span>
+    ssml <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"""&lt;speak version='1.0' xml:lang='</span><span class="token interpolation"><span class="token punctuation">{</span>lang<span class="token punctuation">}</span></span><span class="token string">'&gt;
+  &lt;voice xml:lang='</span><span class="token interpolation"><span class="token punctuation">{</span>lang<span class="token punctuation">}</span></span><span class="token string">' name='</span><span class="token interpolation"><span class="token punctuation">{</span>voice<span class="token punctuation">}</span></span><span class="token string">'&gt;</span><span class="token interpolation"><span class="token punctuation">{</span>text<span class="token punctuation">}</span></span><span class="token string">&lt;/voice&gt;
+&lt;/speak&gt;"""</span></span>
+
+    start <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    response <span class="token operator">=</span> post_tts<span class="token punctuation">(</span>ssml<span class="token operator">=</span>ssml<span class="token punctuation">,</span> output_format<span class="token operator">=</span>output_format<span class="token punctuation">)</span>
+    elapsed <span class="token operator">=</span> time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> start
+
+    <span class="token keyword">with</span> <span class="token builtin">open</span><span class="token punctuation">(</span>output_path<span class="token punctuation">,</span> <span class="token string">"wb"</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
+        f<span class="token punctuation">.</span>write<span class="token punctuation">(</span>response<span class="token punctuation">.</span>content<span class="token punctuation">)</span>
+
+    size_kb <span class="token operator">=</span> <span class="token builtin">len</span><span class="token punctuation">(</span>response<span class="token punctuation">.</span>content<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">1024</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ Saved: </span><span class="token interpolation"><span class="token punctuation">{</span>output_path<span class="token punctuation">}</span></span><span class="token string"> (</span><span class="token interpolation"><span class="token punctuation">{</span>size_kb<span class="token punctuation">:</span><span class="token format-spec">.1f</span><span class="token punctuation">}</span></span><span class="token string"> KB)  |  API latency: </span><span class="token interpolation"><span class="token punctuation">{</span>elapsed<span class="token punctuation">:</span><span class="token format-spec">.2f</span><span class="token punctuation">}</span></span><span class="token string">s"</span></span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> elapsed
+
+
+TEXT_BASIC <span class="token operator">=</span> <span class="token punctuation">(</span>
+    <span class="token string">"Welcome to Microsoft Foundry. MAI-Voice-1 is a high-fidelity speech "</span>
+    <span class="token string">"generation model that produces natural, expressive audio. "</span>
+    <span class="token string">"It powers Copilot Audio Expressions and is now available for developers."</span>
+<span class="token punctuation">)</span>
+
+synthesize_to_file<span class="token punctuation">(</span>TEXT_BASIC<span class="token punctuation">,</span> <span class="token string">"media/mai-voice-1-foundry/output_basic.mp3"</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># Inline playback in Jupyter</span>
+<span class="token keyword">from</span> IPython<span class="token punctuation">.</span>display <span class="token keyword">import</span> Audio<span class="token punctuation">,</span> display
+display<span class="token punctuation">(</span>Audio<span class="token punctuation">(</span><span class="token string">"media/mai-voice-1-foundry/output_basic.mp3"</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>3. SSML with Emotion / Tone Control</h2>
+<p>MAI-Voice-1 supports per-turn emotion control through SSML <code>&lt;mstts:express-as&gt;</code> tags.</p>
+</div><div class="nb-cell nb-markdown-cell"><p><strong>Why it matters:</strong> the <code>&lt;mstts:express-as style=...&gt;</code> tag is the <strong>only</strong> way to get emotion control. Memorize the namespace declarations.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">def</span> <span class="token function">synthesize_ssml_to_file</span><span class="token punctuation">(</span>ssml<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span> output_path<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> <span class="token boolean">None</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""Send raw SSML directly to the TTS endpoint."""</span>
+    response <span class="token operator">=</span> post_tts<span class="token punctuation">(</span>ssml<span class="token operator">=</span>ssml<span class="token punctuation">,</span> output_format<span class="token operator">=</span><span class="token string">"audio-24khz-160kbitrate-mono-mp3"</span><span class="token punctuation">)</span>
+    <span class="token keyword">with</span> <span class="token builtin">open</span><span class="token punctuation">(</span>output_path<span class="token punctuation">,</span> <span class="token string">"wb"</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
+        f<span class="token punctuation">.</span>write<span class="token punctuation">(</span>response<span class="token punctuation">.</span>content<span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ Saved: </span><span class="token interpolation"><span class="token punctuation">{</span>output_path<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+
+
+<span class="token comment"># Example: Express-as emotion tags for conversational styles</span>
+<span class="token comment"># Available styles depend on voice — check Azure Speech Studio for MAI-Voice-1 styles</span>
+SSML_EMOTION <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"""&lt;speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis'
+                         xmlns:mstts='http://www.w3.org/2001/mstts'
+                         xml:lang='en-US'&gt;
+  &lt;voice name='</span><span class="token interpolation"><span class="token punctuation">{</span>MAI_VOICE_NAME<span class="token punctuation">}</span></span><span class="token string">'&gt;
+    &lt;mstts:express-as style='excited'&gt;
+      We're thrilled to announce MAI-Voice-1 is now available on Microsoft Foundry!
+    &lt;/mstts:express-as&gt;
+    &lt;break time='500ms'/&gt;
+    &lt;mstts:express-as style='calm'&gt;
+      It delivers 60 seconds of audio in under one second on a single GPU.
+    &lt;/mstts:express-as&gt;
+    &lt;break time='300ms'/&gt;
+    &lt;mstts:express-as style='empathetic'&gt;
+      Building great voice experiences has never been easier for developers.
+    &lt;/mstts:express-as&gt;
+  &lt;/voice&gt;
+&lt;/speak&gt;"""</span></span>
+
+synthesize_ssml_to_file<span class="token punctuation">(</span>SSML_EMOTION<span class="token punctuation">,</span> <span class="token string">"media/mai-voice-1-foundry/output_emotion.mp3"</span><span class="token punctuation">)</span>
+display<span class="token punctuation">(</span>Audio<span class="token punctuation">(</span><span class="token string">"media/mai-voice-1-foundry/output_emotion.mp3"</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>4. SSML Advanced: Prosody Control (Rate, Pitch, Volume)</h2>
+</div><div class="nb-cell nb-markdown-cell"><p><strong>What this does:</strong> demonstrates the <code>&lt;prosody&gt;</code> tag for rate, pitch, and volume. These attributes stack — use them sparingly or speech sounds robotic.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">SSML_PROSODY <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"""&lt;speak version='1.0' xml:lang='en-US'&gt;
+  &lt;voice xml:lang='en-US' name='</span><span class="token interpolation"><span class="token punctuation">{</span>MAI_VOICE_NAME<span class="token punctuation">}</span></span><span class="token string">'&gt;
+    &lt;!-- Slow down for emphasis --&gt;
+    &lt;prosody rate='slow' pitch='+5%'&gt;
+      The price is twenty-two dollars per one million characters.
+    &lt;/prosody&gt;
+    &lt;break time='400ms'/&gt;
+    &lt;!-- Speed up for a fast-paced segment --&gt;
+    &lt;prosody rate='fast' volume='loud'&gt;
+      Deploy it today on Microsoft Foundry!
+    &lt;/prosody&gt;
+  &lt;/voice&gt;
+&lt;/speak&gt;"""</span></span>
+
+synthesize_ssml_to_file<span class="token punctuation">(</span>SSML_PROSODY<span class="token punctuation">,</span> <span class="token string">"media/mai-voice-1-foundry/output_prosody.mp3"</span><span class="token punctuation">)</span>
+display<span class="token punctuation">(</span>Audio<span class="token punctuation">(</span><span class="token string">"media/mai-voice-1-foundry/output_prosody.mp3"</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>5. Azure Speech SDK — Synthesize to Speaker</h2>
+<p>Using the Python SDK for real-time or SDK-based integration.</p>
+</div><div class="nb-cell nb-markdown-cell"><p><strong>Watch for:</strong> the SDK can return <code>SynthesizingAudioCompleted</code> with <code>len(audio_data) == 0</code> on Foundry. The helper detects empty bytes and falls back to REST. If you ship SDK code in production, copy this fallback or you'll deploy silently broken audio.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">def</span> <span class="token function">synthesize_with_sdk</span><span class="token punctuation">(</span>text<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span> output_file<span class="token punctuation">:</span> <span class="token builtin">str</span> <span class="token operator">=</span> <span class="token string">"media/mai-voice-1-foundry/output_sdk.mp3"</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> <span class="token boolean">None</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""Synthesize text using the Azure Speech SDK with REST fallback for Foundry endpoints."""</span>
+    speech_config <span class="token operator">=</span> create_speech_config<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    speech_config<span class="token punctuation">.</span>speech_synthesis_voice_name <span class="token operator">=</span> MAI_VOICE_NAME
+    speech_config<span class="token punctuation">.</span>set_speech_synthesis_output_format<span class="token punctuation">(</span>
+        speechsdk<span class="token punctuation">.</span>SpeechSynthesisOutputFormat<span class="token punctuation">.</span>Audio24Khz160KBitRateMonoMp3
+    <span class="token punctuation">)</span>
+
+    synthesizer  <span class="token operator">=</span> speechsdk<span class="token punctuation">.</span>SpeechSynthesizer<span class="token punctuation">(</span>
+        speech_config<span class="token operator">=</span>speech_config<span class="token punctuation">,</span>
+        audio_config<span class="token operator">=</span><span class="token boolean">None</span>
+    <span class="token punctuation">)</span>
+
+    result <span class="token operator">=</span> synthesizer<span class="token punctuation">.</span>speak_text_async<span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> result<span class="token punctuation">.</span>reason <span class="token operator">==</span> speechsdk<span class="token punctuation">.</span>ResultReason<span class="token punctuation">.</span>SynthesizingAudioCompleted<span class="token punctuation">:</span>
+        audio_bytes <span class="token operator">=</span> result<span class="token punctuation">.</span>audio_data <span class="token keyword">or</span> <span class="token string">b""</span>
+        <span class="token keyword">if</span> <span class="token builtin">len</span><span class="token punctuation">(</span>audio_bytes<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"⚠️ SDK returned empty audio bytes on this endpoint; falling back to REST synthesis."</span><span class="token punctuation">)</span>
+            synthesize_to_file<span class="token punctuation">(</span>text<span class="token punctuation">,</span> output_file<span class="token punctuation">)</span>
+            <span class="token keyword">return</span>
+        Path<span class="token punctuation">(</span>output_file<span class="token punctuation">)</span><span class="token punctuation">.</span>write_bytes<span class="token punctuation">(</span>audio_bytes<span class="token punctuation">)</span>
+        size_kb <span class="token operator">=</span> <span class="token builtin">len</span><span class="token punctuation">(</span>audio_bytes<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">1024</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ Synthesized </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string"> chars → </span><span class="token interpolation"><span class="token punctuation">{</span>output_file<span class="token punctuation">}</span></span><span class="token string"> (</span><span class="token interpolation"><span class="token punctuation">{</span>size_kb<span class="token punctuation">:</span><span class="token format-spec">.1f</span><span class="token punctuation">}</span></span><span class="token string"> KB)"</span></span><span class="token punctuation">)</span>
+    <span class="token keyword">elif</span> result<span class="token punctuation">.</span>reason <span class="token operator">==</span> speechsdk<span class="token punctuation">.</span>ResultReason<span class="token punctuation">.</span>Canceled<span class="token punctuation">:</span>
+        details <span class="token operator">=</span> result<span class="token punctuation">.</span>cancellation_details
+        <span class="token keyword">raise</span> RuntimeError<span class="token punctuation">(</span>
+            <span class="token string-interpolation"><span class="token string">f"Speech SDK synthesis canceled: </span><span class="token interpolation"><span class="token punctuation">{</span>details<span class="token punctuation">.</span>reason<span class="token punctuation">}</span></span><span class="token string">. "</span></span>
+            <span class="token string-interpolation"><span class="token string">f"Details: </span><span class="token interpolation"><span class="token punctuation">{</span>details<span class="token punctuation">.</span>error_details <span class="token keyword">or</span> <span class="token string">'n/a'</span><span class="token punctuation">}</span></span><span class="token string">"</span></span>
+        <span class="token punctuation">)</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> RuntimeError<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Speech SDK synthesis returned unexpected result reason: </span><span class="token interpolation"><span class="token punctuation">{</span>result<span class="token punctuation">.</span>reason<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+
+
+synthesize_with_sdk<span class="token punctuation">(</span>
+    <span class="token string">"MAI Voice One is brought to you by Microsoft AI, powering the next generation "</span>
+    <span class="token string">"of voice experiences in Copilot and beyond."</span>
+<span class="token punctuation">)</span>
+display<span class="token punctuation">(</span>Audio<span class="token punctuation">(</span><span class="token string">"media/mai-voice-1-foundry/output_sdk.mp3"</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>6. Voice Prompting (Concept Demo)</h2>
+<p>MAI-Voice-1 supports <strong>voice prompting</strong> — provide a short audio clip and the model clones that speaker's voice without fine-tuning.</p>
+<blockquote>
+<p>⚠️ <strong>Requires Microsoft approval</strong> — custom voice creation is subject to <a href="https://learn.microsoft.com/legal/ai-code-of-conduct">Microsoft's Responsible AI policies</a>. The feature is available through <strong>Azure Speech Personal Voice</strong>.</p>
+</blockquote>
+</div><div class="nb-cell nb-markdown-cell"><p>Voice prompting (clone from a 10s sample) is via the Personal Voice API — outside this notebook's scope. This cell is documentation only.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># Voice prompting is available through the Personal Voice API in Azure Speech.</span>
+<span class="token comment"># Reference: https://learn.microsoft.com/azure/ai-services/speech-service/personal-voice-overview</span>
+
+<span class="token comment"># Conceptual example — actual Personal Voice API requires approved access.</span>
+<span class="token comment"># The SSML reference voice tag is used to specify the cloned voice:</span>
+
+SSML_VOICE_PROMPT <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"""&lt;speak version='1.0' xml:lang='en-US'&gt;
+  &lt;voice name='</span><span class="token interpolation"><span class="token punctuation">{</span>MAI_VOICE_NAME<span class="token punctuation">}</span></span><span class="token string">'&gt;
+    &lt;!--
+    For voice prompting / Personal Voice:
+    1. Obtain an approved Personal Voice speaker profile ID from Azure Speech.
+    2. Use the DragonLatestNeural voice with the speaker profile ID.
+
+    Example after approval:
+    &lt;voice name='DragonLatestNeural'&gt;
+      &lt;mstts:ttsembedding speakerProfileId='your-speaker-profile-id'/&gt;
+      Your synthesized text here.
+    &lt;/voice&gt;
+    --&gt;
+    This demonstrates MAI-Voice-1's voice prompting capability description.
+    With an approved speaker profile, the model clones any voice from a
+    ten-second audio sample — no fine-tuning required.
+  &lt;/voice&gt;
+&lt;/speak&gt;"""</span></span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Voice prompting SSML template shown above."</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"See: https://learn.microsoft.com/azure/ai-services/speech-service/personal-voice-overview"</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>7. Long-Form Narration (Batch Synthesis)</h2>
+<p>For content &gt;5 minutes (audiobooks, podcasts, lectures), use the Batch Synthesis API.</p>
+</div><div class="nb-cell nb-markdown-cell"><p><strong>What this does:</strong> synthesizes a multi-paragraph script. For &gt;5 KB blocks, chunk by sentence and concatenate the resulting MP3s.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">LONG_TEXT <span class="token operator">=</span> <span class="token triple-quoted-string string">"""Chapter One: The Dawn of Microsoft AI.
+
+Microsoft AI has been developing world-class models that power millions of experiences 
+across Copilot, Bing, PowerPoint, and Azure. Today marks a significant milestone as 
+MAI-Voice-1, MAI-Transcribe-1, and MAI-Image-2 become available to every developer 
+through Microsoft Foundry.
+
+Chapter Two: Voice at Scale.
+
+MAI-Voice-1 can generate sixty seconds of expressive, human-like audio in under one 
+second on a single GPU. This makes real-time voice assistants, interactive IVR systems, 
+and large-scale audiobook production economically viable for developers of all sizes.
+
+Chapter Three: Building the Future.
+
+With pricing starting at twenty-two dollars per million characters, developers can 
+build rich voice experiences without breaking their budget. The future of human-computer 
+interaction is voice — and MAI-Voice-1 is at the center of that future."""</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Long-form text length: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>LONG_TEXT<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string"> characters"</span></span><span class="token punctuation">)</span>
+
+<span class="token comment"># Synthesize using the SDK (suitable for texts up to a few thousand characters)</span>
+synthesize_with_sdk<span class="token punctuation">(</span>LONG_TEXT<span class="token punctuation">,</span> <span class="token string">"media/mai-voice-1-foundry/output_longform.mp3"</span><span class="token punctuation">)</span>
+display<span class="token punctuation">(</span>Audio<span class="token punctuation">(</span><span class="token string">"media/mai-voice-1-foundry/output_longform.mp3"</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>8. 💰 Cost Calculator</h2>
+<p><strong>MAI-Voice-1 pricing: $22 per 1M characters</strong></p>
+<p>Characters include spaces and punctuation (all characters in the input text).</p>
+</div><div class="nb-cell nb-markdown-cell"><p><strong>Watch for:</strong> pricing is <strong>per character</strong> including whitespace. Long whitespace runs in SSML still cost money.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># ── Cost Calculator ─────────────────────────────────────────</span>
+PRICE_PER_1M_CHARS <span class="token operator">=</span> <span class="token number">22.00</span>  <span class="token comment"># USD per 1 million characters (as of April 2026)</span>
+
+<span class="token comment"># Average reading speeds:</span>
+<span class="token comment">#   ~ 500 chars/min (slow, conversational)</span>
+<span class="token comment">#   ~ 800 chars/min (natural speech)</span>
+<span class="token comment">#   ~ 1200 chars/min (fast narration)</span>
+
+scenarios <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string">"Single blog post (3,000 chars)"</span><span class="token punctuation">:</span>          <span class="token number">3_000</span><span class="token punctuation">,</span>
+    <span class="token string">"Short audiobook chapter (30,000 chars)"</span><span class="token punctuation">:</span>  <span class="token number">30_000</span><span class="token punctuation">,</span>
+    <span class="token string">"Full audiobook (~500K chars)"</span><span class="token punctuation">:</span>            <span class="token number">500_000</span><span class="token punctuation">,</span>
+    <span class="token string">"Daily IVR traffic (1M chars/day)"</span><span class="token punctuation">:</span>      <span class="token number">1_000_000</span><span class="token punctuation">,</span>
+    <span class="token string">"Enterprise monthly (50M chars)"</span><span class="token punctuation">:</span> <span class="token number">50_000_000</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"\nMAI-Voice-1 Cost Estimator  ($</span><span class="token interpolation"><span class="token punctuation">{</span>PRICE_PER_1M_CHARS<span class="token punctuation">:</span><span class="token format-spec">.2f</span><span class="token punctuation">}</span></span><span class="token string"> / 1M chars)"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"</span><span class="token interpolation"><span class="token punctuation">{</span><span class="token string">'Scenario'</span><span class="token punctuation">:</span><span class="token format-spec">&lt;45</span><span class="token punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token string">'Characters'</span><span class="token punctuation">:</span><span class="token format-spec">&gt;12</span><span class="token punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token string">'Cost (USD)'</span><span class="token punctuation">:</span><span class="token format-spec">&gt;12</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"-"</span> <span class="token operator">*</span> <span class="token number">71</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> label<span class="token punctuation">,</span> chars <span class="token keyword">in</span> scenarios<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cost <span class="token operator">=</span> <span class="token punctuation">(</span>chars <span class="token operator">/</span> <span class="token number">1_000_000</span><span class="token punctuation">)</span> <span class="token operator">*</span> PRICE_PER_1M_CHARS
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"</span><span class="token interpolation"><span class="token punctuation">{</span>label<span class="token punctuation">:</span><span class="token format-spec">&lt;45</span><span class="token punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token punctuation">{</span>chars<span class="token punctuation">:</span><span class="token format-spec">&gt;12,</span><span class="token punctuation">}</span></span><span class="token string"> $</span><span class="token interpolation"><span class="token punctuation">{</span>cost<span class="token punctuation">:</span><span class="token format-spec">&gt;11.4f</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+
+<span class="token comment"># Current text from notebook</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Current demo cost:"</span><span class="token punctuation">)</span>
+demo_chars <span class="token operator">=</span> <span class="token builtin">len</span><span class="token punctuation">(</span>TEXT_BASIC<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token builtin">len</span><span class="token punctuation">(</span>LONG_TEXT<span class="token punctuation">)</span>
+demo_cost  <span class="token operator">=</span> <span class="token punctuation">(</span>demo_chars <span class="token operator">/</span> <span class="token number">1_000_000</span><span class="token punctuation">)</span> <span class="token operator">*</span> PRICE_PER_1M_CHARS
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  </span><span class="token interpolation"><span class="token punctuation">{</span>demo_chars<span class="token punctuation">:</span><span class="token format-spec">,</span><span class="token punctuation">}</span></span><span class="token string"> chars → $</span><span class="token interpolation"><span class="token punctuation">{</span>demo_cost<span class="token punctuation">:</span><span class="token format-spec">.6f</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>9. Summary &amp; Next Steps</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Basic TTS (REST)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SSML emotion control</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SSML prosody (rate/pitch)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Azure Speech SDK</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Voice prompting (Personal Voice)</td>
+<td>✅ (requires approval)</td>
+</tr>
+<tr>
+<td>Long-form narration</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>10+ languages</td>
+<td>🔜 Coming soon</td>
+</tr>
+</tbody></table>
+<p><strong>Resources:</strong></p>
+<ul>
+<li><a href="https://ai.azure.com/catalog/models/MAI-Voice-1">Model Card</a></li>
+<li><a href="https://learn.microsoft.com/azure/ai-services/speech-service/text-to-speech">Azure Speech TTS docs</a></li>
+<li><a href="https://learn.microsoft.com/azure/ai-services/speech-service/speech-synthesis-markup">SSML reference</a></li>
+<li><a href="https://learn.microsoft.com/azure/ai-services/speech-service/personal-voice-overview">Personal Voice (voice cloning)</a></li>
+<li><a href="https://playground.microsoft.ai">MAI Playground</a></li>
+</ul>
+</div><div class="nb-cell nb-markdown-cell"><p>Checklist for shipping MAI-Voice-1 into a product.</p>
+</div><div class="nb-cell nb-markdown-cell"><h2>10. Evidence Pack — Audio Files + Manifest</h2>
+<p>Five MP3 samples generated by this notebook are committed to <code>media/mai-voice-1-foundry/</code>. Use the player cell below to spot-check each sample without re-running synthesis. The manifest below records sizes and voice name so reviewers can verify what produced the audio.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> datetime <span class="token keyword">import</span> datetime
+<span class="token keyword">from</span> pathlib <span class="token keyword">import</span> Path
+<span class="token keyword">import</span> json
+<span class="token keyword">from</span> IPython<span class="token punctuation">.</span>display <span class="token keyword">import</span> display<span class="token punctuation">,</span> Markdown<span class="token punctuation">,</span> HTML
+
+EVIDENCE_PATH <span class="token operator">=</span> Path<span class="token punctuation">(</span><span class="token string">"data/mai-voice-1-foundry/evidence.json"</span><span class="token punctuation">)</span>
+EVIDENCE_PATH<span class="token punctuation">.</span>parent<span class="token punctuation">.</span>mkdir<span class="token punctuation">(</span>parents<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> exist_ok<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+samples <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">(</span><span class="token string">"Basic plain text"</span><span class="token punctuation">,</span>           <span class="token string">"media/mai-voice-1-foundry/output_basic.mp3"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">"Emotion (SSML express-as)"</span><span class="token punctuation">,</span>  <span class="token string">"media/mai-voice-1-foundry/output_emotion.mp3"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">"Prosody (rate/pitch/volume)"</span><span class="token punctuation">,</span><span class="token string">"media/mai-voice-1-foundry/output_prosody.mp3"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">"SDK synthesis (REST-fallback safe)"</span><span class="token punctuation">,</span> <span class="token string">"media/mai-voice-1-foundry/output_sdk.mp3"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">(</span><span class="token string">"Long-form narration (~900 chars)"</span><span class="token punctuation">,</span>   <span class="token string">"media/mai-voice-1-foundry/output_longform.mp3"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+
+files <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token keyword">for</span> label<span class="token punctuation">,</span> path <span class="token keyword">in</span> samples<span class="token punctuation">:</span>
+    p <span class="token operator">=</span> Path<span class="token punctuation">(</span>path<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> p<span class="token punctuation">.</span>exists<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">and</span> p<span class="token punctuation">.</span>stat<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>st_size <span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        files<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"label"</span><span class="token punctuation">:</span> label<span class="token punctuation">,</span> <span class="token string">"file"</span><span class="token punctuation">:</span> path<span class="token punctuation">,</span> <span class="token string">"size_bytes"</span><span class="token punctuation">:</span> p<span class="token punctuation">.</span>stat<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>st_size<span class="token punctuation">}</span><span class="token punctuation">)</span>
+        display<span class="token punctuation">(</span>HTML<span class="token punctuation">(</span>
+            <span class="token string-interpolation"><span class="token string">f'&lt;p&gt;&lt;strong&gt;</span><span class="token interpolation"><span class="token punctuation">{</span>label<span class="token punctuation">}</span></span><span class="token string">&lt;/strong&gt; — &lt;code&gt;</span><span class="token interpolation"><span class="token punctuation">{</span>path<span class="token punctuation">}</span></span><span class="token string">&lt;/code&gt; (</span><span class="token interpolation"><span class="token punctuation">{</span>p<span class="token punctuation">.</span>stat<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>st_size<span class="token punctuation">:</span><span class="token format-spec">,</span><span class="token punctuation">}</span></span><span class="token string"> bytes)&lt;/p&gt;'</span></span>
+            <span class="token string-interpolation"><span class="token string">f'&lt;audio controls preload="none" src="</span><span class="token interpolation"><span class="token punctuation">{</span>path<span class="token punctuation">}</span></span><span class="token string">"&gt;&lt;/audio&gt;'</span></span>
+        <span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        display<span class="token punctuation">(</span>Markdown<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"⚠️ Missing or empty: `</span><span class="token interpolation"><span class="token punctuation">{</span>path<span class="token punctuation">}</span></span><span class="token string">` — re-run the matching section first."</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+evidence <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string">"generated_at_utc"</span><span class="token punctuation">:</span> datetime<span class="token punctuation">.</span>utcnow<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>isoformat<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">"Z"</span><span class="token punctuation">,</span>
+    <span class="token string">"voice_name"</span><span class="token punctuation">:</span> <span class="token builtin">globals</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"MAI_VOICE_NAME"</span><span class="token punctuation">,</span> <span class="token string">"en-us-Grant:MAI-Voice-1"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token string">"auth_mode"</span><span class="token punctuation">:</span> <span class="token string">"entra"</span> <span class="token keyword">if</span> <span class="token builtin">globals</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"USE_ENTRA_AUTH"</span><span class="token punctuation">,</span> <span class="token boolean">True</span><span class="token punctuation">)</span> <span class="token keyword">else</span> <span class="token string">"api_key"</span><span class="token punctuation">,</span>
+    <span class="token string">"samples"</span><span class="token punctuation">:</span> files<span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+EVIDENCE_PATH<span class="token punctuation">.</span>write_text<span class="token punctuation">(</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>evidence<span class="token punctuation">,</span> indent<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span> encoding<span class="token operator">=</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"\n✅ Evidence manifest saved: </span><span class="token interpolation"><span class="token punctuation">{</span>EVIDENCE_PATH<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+</code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>11. Failure Modes and Fixes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>401</code> / <code>403</code> from <code>/tts/cognitiveservices/v1</code></td>
+<td>Token principal lacks <code>Cognitive Services User</code> on the Foundry account</td>
+<td>Assign the role, wait ~30s, refresh the token (the notebook re-fetches automatically on next call)</td>
+</tr>
+<tr>
+<td><code>404 Voice not found</code></td>
+<td><code>MAI_VOICE_NAME</code> typo or unsupported voice</td>
+<td>Check the Foundry catalog. MAI voices use the <code>:</code> separator (e.g. <code>en-us-Grant:MAI-Voice-1</code>)</td>
+</tr>
+<tr>
+<td>SDK reports success but file is empty</td>
+<td>Foundry endpoint quirk — SDK returns 0 bytes silently</td>
+<td>Use the fallback in §5 — detects empty <code>audio_data</code> and re-synthesizes via REST</td>
+</tr>
+<tr>
+<td>Generated audio plays as noise</td>
+<td>Wrong <code>X-Microsoft-OutputFormat</code> for the file extension</td>
+<td>Match the header to the extension (<code>audio-24khz-48kbitrate-mono-mp3</code> for <code>.mp3</code>, <code>riff-24khz-16bit-mono-pcm</code> for <code>.wav</code>)</td>
+</tr>
+<tr>
+<td><code>400 Invalid SSML</code></td>
+<td>Missing/wrong namespace declarations</td>
+<td>Always include <code>xmlns:mstts="http://www.w3.org/2001/mstts"</code> when using <code>&lt;mstts:express-as&gt;</code></td>
+</tr>
+<tr>
+<td>Long-form returns a truncated file</td>
+<td>Single payload too large</td>
+<td>Chunk on sentence boundaries (&lt; 5 KB per call) and concatenate the MP3 byte streams</td>
+</tr>
+<tr>
+<td>Cost overrun on batch generation</td>
+<td>Forgot whitespace counts</td>
+<td>Use §8 with realistic character counts (include all SSML markup) before kicking off batches</td>
+</tr>
+</tbody></table>
+</div><div class="nb-cell nb-markdown-cell"><h2>12. Takeaway Artifact</h2>
+<p>Copy three things from this notebook into your service:</p>
+<ol>
+<li><strong><code>synthesize_to_file(...)</code></strong> — the REST helper with SDK fallback baked in.</li>
+<li><strong>The SSML template in §3 / §4</strong> — change the voice + style, keep the namespace block. This is the only SSML you need for 90% of MAI-Voice-1 work.</li>
+<li><strong><code>data/mai-voice-1-foundry/evidence.json</code></strong> — the manifest pattern. Run it on every batch job to give reviewers a record of voice, character counts, and file sizes per release.</li>
+</ol>
+</div><div class="nb-cell nb-markdown-cell"><h2>Over to you</h2>
+<p>Our Microsoft Superintelligence (MSI) team is excited for you to try out <strong>MAI-Voice-1</strong> and see how it can make it easier to build expressive, low-latency text-to-speech experiences in your next app! Whether you're voicing IVR menus, narrating long-form content, giving characters a voice in a game, or sending personalized audio notifications, this recipe equips you with the SSML patterns, the SDK fallback, and the cost model to go from prototype to product.</p>
+<p>If you build something cool with this recipe, share it back with us! Open an issue or PR on Forgebook and tell us what worked, what surprised you, and where you'd like a deeper-dive recipe next.</p>
+</div></div></div></div> </section> <!-- Tags --> <section class="mt-12 pt-8 border-t border-subtle"> <h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">
+Tags
+</h2> <div class="flex flex-wrap gap-2"> <span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-5"> mai </span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-2"> models </span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-1"> inference </span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-2"> speech </span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-4"> text-to-speech </span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-6"> audio </span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-7"> audio-generation </span> </div> </section> </article> <aside class="toc-container hidden lg:block" data-astro-cid-xvrfupwn> <nav class="toc sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto" aria-label="Table of contents" data-astro-cid-xvrfupwn> <h2 class="toc-title" data-astro-cid-xvrfupwn>On this page</h2> <ul class="toc-list" role="list" data-astro-cid-xvrfupwn> <!-- Populated by JavaScript --> </ul> </nav> </aside>  <script type="module">function f(){const c=document.querySelector(".toc-list"),i=document.querySelector(".notebook-content");if(!c||!i)return;const r=i.querySelectorAll("h1, h2, h3");if(r.length===0){const e=document.querySelector(".toc-container");e&&(e.style.display="none");return}const l=new Set;r.forEach((e,n)=>{if(!e.id){let t=e.textContent?.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||`heading-${n}`,o=t,p=1;for(;l.has(o);)o=`${t}-${p++}`;e.id=o}l.add(e.id)});const d=document.createDocumentFragment();r.forEach(e=>{const n=document.createElement("li"),t=document.createElement("a");t.href=`#${e.id}`,t.textContent=e.textContent,e.tagName.toLowerCase()==="h3"&&t.classList.add("toc-h3"),n.appendChild(t),d.appendChild(n)}),c.appendChild(d);const a=c.querySelectorAll("a"),h={root:null,rootMargin:"-80px 0px -80% 0px",threshold:0};let s=null;const u=new IntersectionObserver(e=>{e.forEach(n=>{if(n.isIntersecting){const t=n.target.id,o=c.querySelector(`a[href="#${t}"]`);o&&o!==s&&(s?.classList.remove("active"),o.classList.add("active"),s=o)}})},h);r.forEach(e=>u.observe(e)),a.length>0&&(a[0].classList.add("active"),s=a[0]),document.addEventListener("astro:before-swap",()=>{u.disconnect()},{once:!0})}f();document.addEventListener("astro:after-swap",f);</script> </div>  </main> <footer data-pagefind-ignore class="border-t border-subtle mt-16"> <div class="max-w-6xl mx-auto px-4 py-8 text-center text-muted text-sm space-y-3"> <p>Built with Astro • MIT License</p> <nav class="flex flex-wrap justify-center gap-x-4 gap-y-2" aria-label="Footer"> <a class="hover:text-primary transition-colors" href="https://github.com/microsoft-foundry/forgebook">GitHub</a> <a class="hover:text-primary transition-colors" href="https://github.com/microsoft-foundry/forgebook/blob/main/LICENSE">License</a> <a class="hover:text-primary transition-colors" href="https://github.com/microsoft-foundry/forgebook/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a> <a class="hover:text-primary transition-colors" href="https://github.com/microsoft-foundry/forgebook/blob/main/SECURITY.md">Security</a> <a class="hover:text-primary transition-colors" href="https://github.com/microsoft-foundry/forgebook/blob/main/SUPPORT.md">Support</a> <a class="hover:text-primary transition-colors" href="https://privacy.microsoft.com/privacystatement">Privacy</a> <a class="hover:text-primary transition-colors" href="https://www.microsoft.com/legal/terms-of-use">Terms of Use</a> <a class="hover:text-primary transition-colors" href="https://www.microsoft.com/legal/intellectualproperty/trademarks">Trademarks</a> </nav> </div> </footer> <div id="search-modal" class="search-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Search notebooks"> <div class="search-panel"> <div class="search-input-wrapper"> <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"></path> </svg> <input id="search-input" class="search-input" type="text" aria-label="Search notebooks" aria-controls="search-results" placeholder="Search notebooks..." autocomplete="off" autocorrect="off" spellcheck="false"> </div> <div id="search-results" class="search-results" aria-live="polite"> <div class="search-empty">Type to search notebooks</div> </div> <div class="search-footer search-footer-hints"> <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span> <span><kbd>↵</kbd> Open</span> <span><kbd>Esc</kbd> Close</span> </div> </div> </div> <script>(function(){const base = "/forgebook/preview/pr-61/";
+
+(function() {
+  var modal = document.getElementById('search-modal');
+  var input = document.getElementById('search-input');
+  var resultsContainer = document.getElementById('search-results');
+  var pagefindInstance = null;
+  var activeIndex = -1;
+  var debounceTimer = null;
+  var lastSearch = null;
+  var searchResultClicked = false;
+
+  function trackSearchModal(action, source) {
+    if (window.__telemetry) {
+      window.__telemetry.trackEvent(action, { source: source || 'unknown' });
+    }
+  }
+
+  function openSearch(source) {
+    modal.style.display = 'flex';
+    input.value = '';
+    resultsContainer.innerHTML = '<div class="search-empty">Type to search notebooks</div>';
+    activeIndex = -1;
+    requestAnimationFrame(function() { input.focus(); });
+    document.body.style.overflow = 'hidden';
+    trackSearchModal('SearchOpen', source);
+  }
+
+  function closeSearch(source) {
+    if (modal.style.display === 'none') return;
+    if (lastSearch && !searchResultClicked && window.__telemetry) {
+      window.__telemetry.trackEvent('SearchAbandon', {
+        source: source || 'unknown',
+        query: lastSearch.query,
+        queryLength: lastSearch.queryLength,
+        resultCount: lastSearch.resultCount,
+        hasResults: lastSearch.hasResults,
+      });
+    }
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+    trackSearchModal('SearchClose', source);
+    lastSearch = null;
+    searchResultClicked = false;
+  }
+
+  async function loadPagefind() {
+    if (pagefindInstance) return pagefindInstance;
+    try {
+      pagefindInstance = await import(base + 'pagefind/pagefind.js');
+      await pagefindInstance.init();
+      return pagefindInstance;
+    } catch (e) {
+      console.warn('Pagefind not available:', e);
+      return null;
+    }
+  }
+
+  async function doSearch(query) {
+    if (!query || query.length < 2) {
+      resultsContainer.innerHTML = '<div class="search-empty">Type to search notebooks</div>';
+      activeIndex = -1;
+      return;
+    }
+
+    var pf = await loadPagefind();
+    if (!pf) {
+      resultsContainer.innerHTML = '<div class="search-empty">Search is not available</div>';
+      return;
+    }
+
+    var search = await pf.search(query);
+    lastSearch = {
+      query: query,
+      queryLength: query.length,
+      resultCount: search.results.length,
+      hasResults: search.results.length > 0,
+    };
+    searchResultClicked = false;
+
+    // Track search behavior. The raw query is an intentional recipe-demand
+    // signal used to identify net-new cookbook topics; see docs/analytics.md.
+    if (window.__telemetry) {
+      window.__telemetry.trackEvent('Search', {
+        query: query,
+        queryLength: query.length,
+        resultCount: search.results.length,
+        hasResults: search.results.length > 0,
+      });
+    }
+
+    if (search.results.length === 0) {
+      resultsContainer.innerHTML = '<div class="search-empty">No results for &ldquo;' + query.replace(/</g, '&lt;') + '&rdquo;</div>';
+      activeIndex = -1;
+      return;
+    }
+
+    // Load first 8 results
+    var sliced = search.results.slice(0, 8);
+    var items = await Promise.all(sliced.map(function(r) { return r.data(); }));
+
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var title = (item.meta && item.meta.title) || 'Untitled';
+      var excerpt = item.excerpt || '';
+      html += '<a class="search-result-item" href="' + item.url + '" data-index="' + i + '">';
+      html += '<div class="search-result-title">' + escapeHtml(title) + '</div>';
+      html += '<div class="search-result-excerpt">' + excerpt + '</div>';
+      html += '</a>';
+    }
+    resultsContainer.innerHTML = html;
+    activeIndex = -1;
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function updateActive() {
+    var items = resultsContainer.querySelectorAll('.search-result-item');
+    for (var i = 0; i < items.length; i++) {
+      if (i === activeIndex) {
+        items[i].setAttribute('data-active', '');
+        items[i].scrollIntoView({ block: 'nearest' });
+      } else {
+        items[i].removeAttribute('data-active');
+      }
+    }
+  }
+
+  // Global keyboard shortcut: Cmd+K / Ctrl+K
+  document.addEventListener('keydown', function(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (modal.style.display === 'none') {
+        openSearch('keyboard-shortcut');
+      } else {
+        closeSearch('keyboard-shortcut');
+      }
+    }
+    if (e.key === 'Escape' && modal.style.display !== 'none') {
+      e.preventDefault();
+      closeSearch('escape');
+    }
+  });
+
+  // Search button trigger
+  var btn = document.getElementById('search-button');
+  if (btn) btn.addEventListener('click', function() { openSearch('button'); });
+
+  // Track search result link clicks (mouse)
+  resultsContainer.addEventListener('click', function(e) {
+    var link = e.target.closest && e.target.closest('.search-result-item');
+    if (link && window.__telemetry) {
+      searchResultClicked = true;
+      window.__telemetry.trackEvent('SearchResultClick', {
+        query: input.value,
+        queryLength: input.value.length,
+        resultIndex: parseInt(link.getAttribute('data-index') || '0', 10),
+        resultUrl: link.getAttribute('href'),
+      });
+    }
+  });
+
+  // Close on backdrop click
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeSearch('backdrop');
+  });
+
+  // Input handling with debounce
+  input.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    var q = input.value;
+    debounceTimer = setTimeout(function() { doSearch(q); }, 200);
+  });
+
+  // Keyboard navigation within modal
+  input.addEventListener('keydown', function(e) {
+    var items = resultsContainer.querySelectorAll('.search-result-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (items.length > 0) {
+        activeIndex = Math.min(activeIndex + 1, items.length - 1);
+        updateActive();
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (items.length > 0) {
+        activeIndex = Math.max(activeIndex - 1, 0);
+        updateActive();
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0 && items[activeIndex]) {
+        var resultUrl = items[activeIndex].getAttribute('href');
+        // Track which search result was clicked and its position
+        if (window.__telemetry) {
+          searchResultClicked = true;
+          window.__telemetry.trackEvent('SearchResultClick', {
+            query: input.value,
+            queryLength: input.value.length,
+            resultIndex: activeIndex,
+            resultUrl: resultUrl,
+          });
+        }
+        window.location.href = resultUrl;
+      }
+    }
+  });
+})();
+})();</script> <script type="module" src="/forgebook/preview/pr-61/_astro/BaseLayout.astro_astro_type_script_index_0_lang.CLhZ7aF7.js"></script> <!-- Application Insights telemetry --> <script type="module" src="/forgebook/preview/pr-61/_astro/BaseLayout.astro_astro_type_script_index_1_lang.XJ2XBT_t.js"></script> <!-- Twemoji for consistent emoji rendering across platforms --> <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script> <script>
+      // Parse emojis after page load
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof twemoji !== 'undefined') {
+          twemoji.parse(document.body, {
+            folder: 'svg',
+            ext: '.svg',
+            base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/'
+          });
+        }
+      });
+    </script> <!-- WebMCP: expose Forgebook tools to browser agents (W3C spec) and legacy WebMCP widget --> <script>
+      (function () {
+        var basePath = document.querySelector('meta[name="base-url"]')?.content || '/forgebook';
+
+        // --- Shared tool definitions ---
+        // Each tool works with both the W3C document.modelContext API and the
+        // jasonjmcghee/WebMCP widget fallback. The execute callback receives
+        // structured input and reuses existing client-side page state.
+
+        var tools = [
+          {
+            name: 'list_recipes',
+            title: 'List Forgebook Recipes',
+            description: 'List Microsoft Foundry Forgebook recipes with title, description, tags, and URL. Works best from the homepage.',
+            inputSchema: { type: "object", properties: {} },
+            annotations: { readOnlyHint: true },
+            execute: function () {
+              var cards = document.querySelectorAll('[data-notebook-slug]');
+              if (cards.length === 0) {
+                return "No recipe cards found on this page. Navigate to the homepage first.";
+              }
+              var recipes = [];
+              cards.forEach(function (card) {
+                recipes.push({
+                  slug: card.getAttribute('data-notebook-slug'),
+                  title: card.getAttribute('data-notebook-title') || card.querySelector('h3, h2')?.textContent?.trim(),
+                  description: card.getAttribute('data-notebook-description') || '',
+                  tags: (card.getAttribute('data-notebook-tags') || '').split(',').filter(Boolean),
+                  url: window.location.origin + basePath + '/notebook/' + card.getAttribute('data-notebook-slug') + '/'
+                });
+              });
+              return JSON.stringify(recipes, null, 2);
+            }
+          },
+          {
+            name: 'search_recipes',
+            title: 'Search Forgebook Recipes',
+            description: 'Search Microsoft Foundry Forgebook recipes by keyword (matches title, description, tags). Works best from the homepage.',
+            inputSchema: {
+              type: "object",
+              properties: {
+                query: { type: "string", description: "Search keyword" }
+              },
+              required: ["query"]
+            },
+            annotations: { readOnlyHint: true },
+            execute: function (input) {
+              var q = (input.query || '').toLowerCase();
+              var cards = document.querySelectorAll('[data-notebook-slug]');
+              var results = [];
+              cards.forEach(function (card) {
+                var title = (card.getAttribute('data-notebook-title') || card.querySelector('h3, h2')?.textContent || '').toLowerCase();
+                var desc = (card.getAttribute('data-notebook-description') || '').toLowerCase();
+                var tags = (card.getAttribute('data-notebook-tags') || '').toLowerCase();
+                if (title.includes(q) || desc.includes(q) || tags.includes(q)) {
+                  results.push({
+                    slug: card.getAttribute('data-notebook-slug'),
+                    title: card.getAttribute('data-notebook-title') || card.querySelector('h3, h2')?.textContent?.trim(),
+                    description: card.getAttribute('data-notebook-description') || '',
+                    tags: (card.getAttribute('data-notebook-tags') || '').split(',').filter(Boolean),
+                    url: window.location.origin + basePath + '/notebook/' + card.getAttribute('data-notebook-slug') + '/'
+                  });
+                }
+              });
+              return results.length > 0 ? JSON.stringify(results, null, 2) : 'No recipes matched "' + input.query + '".';
+            }
+          },
+          {
+            name: 'get_page_content',
+            title: 'Read Current Page',
+            description: 'Get the text content of the current Forgebook page (useful for reading a recipe).',
+            inputSchema: { type: "object", properties: {} },
+            annotations: { readOnlyHint: true },
+            execute: function () {
+              var article = document.querySelector('article') || document.querySelector('[data-pagefind-body]');
+              if (!article) return "No article content found on this page.";
+              var text = article.innerText || article.textContent || '';
+              if (text.length > 12000) {
+                text = text.substring(0, 12000) + '\n\n[... truncated — page has ' + text.length + ' characters total]';
+              }
+              return text;
+            }
+          },
+          {
+            name: 'navigate_to_recipe',
+            title: 'Go to Recipe',
+            description: 'Navigate the browser to a specific Forgebook recipe by slug.',
+            inputSchema: {
+              type: "object",
+              properties: {
+                slug: { type: "string", description: "The recipe slug, e.g. foundry-agent-part-1" }
+              },
+              required: ["slug"]
+            },
+            annotations: { readOnlyHint: false },
+            execute: function (input) {
+              var url = window.location.origin + basePath + '/notebook/' + input.slug + '/';
+              window.location.href = url;
+              return 'Navigating to ' + url;
+            }
+          },
+          {
+            name: 'get_current_page_info',
+            title: 'Current Page Info',
+            description: 'Get metadata about the current Forgebook page (URL, title, description, whether it is a recipe).',
+            inputSchema: { type: "object", properties: {} },
+            annotations: { readOnlyHint: true },
+            execute: function () {
+              return JSON.stringify({
+                url: window.location.href,
+                title: document.title,
+                description: document.querySelector('meta[name="description"]')?.content || '',
+                isRecipePage: !!document.querySelector('article .notebook-content'),
+                recipeTitle: document.querySelector('article h1, [data-pagefind-meta="title"]')?.textContent?.trim() || null
+              }, null, 2);
+            }
+          }
+        ];
+
+        function toToolResult(result) {
+          if (result && typeof result === 'object' && Array.isArray(result.content)) {
+            return result;
+          }
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: typeof result === 'string' ? result : JSON.stringify(result, null, 2)
+              }
+            ]
+          };
+        }
+
+        function registerNativeTools(modelContext, label) {
+          tools.forEach(function (t) {
+            try {
+              modelContext.registerTool({
+                name: t.name,
+                title: t.title,
+                description: t.description,
+                inputSchema: t.inputSchema,
+                annotations: t.annotations,
+                execute: async function (input) {
+                  return toToolResult(await Promise.resolve(t.execute(input || {})));
+                }
+              });
+            } catch (e) {
+              console.warn('[WebMCP/' + label + '] Failed to register tool "' + t.name + '":', e);
+            }
+          });
+        }
+
+        // ---------------------------------------------------------------
+        // W3C WebMCP (document.modelContext) — native browser agent API
+        // Spec: https://webmachinelearning.github.io/webmcp/
+        // ---------------------------------------------------------------
+        if (typeof document !== 'undefined' && document.modelContext && typeof document.modelContext.registerTool === 'function') {
+          registerNativeTools(document.modelContext, 'document.modelContext');
+        } else if (typeof navigator !== 'undefined' && navigator.modelContext && typeof navigator.modelContext.registerTool === 'function') {
+          // Compatibility fallback for older browser prototypes that exposed
+          // WebMCP on navigator instead of document.
+          registerNativeTools(navigator.modelContext, 'navigator.modelContext');
+        }
+
+        // ---------------------------------------------------------------
+        // Legacy WebMCP widget (jasonjmcghee/WebMCP) — fallback for
+        // environments without native browser agent support.
+        // Loaded async; tools registered on script load.
+        // ---------------------------------------------------------------
+        window.__forgebook_tools = tools;
+      })();
+    </script> <script>(function(){const webmcpSrc = "/forgebook/preview/pr-61/webmcp.js";
+
+      (function () {
+        var s = document.createElement('script');
+        s.src = webmcpSrc;
+        s.onload = function () {
+          if (typeof WebMCP === 'undefined' || !window.__forgebook_tools) return;
+          var mcp = new WebMCP({
+            color: '#6366f1',
+            position: 'bottom-right',
+            size: '28px',
+            padding: '16px'
+          });
+          window.__forgebook_tools.forEach(function (t) {
+            mcp.registerTool(
+              t.name,
+              t.description,
+              t.inputSchema,
+              function (args) {
+                var result = t.execute(args || {});
+                return toToolResult(result);
+              }
+            );
+          });
+        };
+        document.head.appendChild(s);
+      })();
+    })();</script> </body> </html>
