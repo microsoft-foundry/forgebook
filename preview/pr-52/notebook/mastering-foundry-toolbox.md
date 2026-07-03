@@ -681,25 +681,55 @@ else:
 
 #### 4i · Work IQ *(preview)*
 
-📄 **Docs:** [Work IQ](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/work-iq)
+📄 **Docs:** [Connect agents to Microsoft 365 with Work IQ](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/work-iq) · [Foundry connection quickstart](https://learn.microsoft.com/microsoft-365/copilot/extensibility/work-iq/mcp/quickstart/foundry) · [Enable Work IQ in your tenant](https://learn.microsoft.com/microsoft-365/copilot/extensibility/work-iq/enable-work-iq)
 
 **What it is.** A Microsoft-managed tool that reasons over the signed-in user's **Microsoft 365
 work context** - mail, chats, meetings, and documents - so the agent can answer "what did my team
 decide about X?" style questions.
 
-**How it works.** It is fully hosted by Microsoft; you only point it at a connection. Because it
-acts **as the user**, its connection is **oauth2** - the caller's token flows through (Foundry
-managed identity passthrough) and Work IQ honors that user's M365 permissions.
+**How it works.** Work IQ is a remote **MCP server** (`https://workiq.svc.cloud.microsoft/mcp`)
+that always runs **as the signed-in user** (delegated / on-behalf-of auth - application-only auth is
+*not* supported). Its project connection is therefore **oauth2**, and you must back it with **your
+own Microsoft Entra app registration** so Foundry has a client to drive the OAuth flow. A connection
+that isn't backed by a correctly configured app (missing the `WorkIQAgent.Ask` scope / token
+audience) is accepted by `create_version` but fails at *runtime* with errors like
+`TokenAudience is required for OBO` or `Failed to fetch agent card: 404`.
 
-**Key parameters:**
-- `project_connection_id` - **required** `str`; the Work IQ connection.
+> ⚠️ You can't reuse someone else's preview connection - **each tenant registers its own Entra app.**
+
+**Prerequisites**
+- **Foundry Project Manager** role (to create the connection) plus **Foundry User** role for the
+  developer, the agent runtime identity, and every user who signs in.
+- A **Microsoft 365 Copilot license** for each user who calls Work IQ.
+- A **Microsoft Entra Global Administrator** to grant admin consent.
+- Your tenant **enabled for Work IQ** - a one-time `az ad sp create --id fdcc1f02-fc51-4226-8753-f668596af7f7`
+  (or the Graph Explorer equivalent) provisions the Work IQ service principal so the
+  `WorkIQAgent.Ask` permission becomes selectable.
+
+**Step 1 - Register your own Entra app** ([Entra admin center](https://entra.microsoft.com) -> *Entra ID -> App registrations -> New registration*):
+1. Copy the **Application (client) ID** and **Directory (tenant) ID**.
+2. **Certificates & secrets -> New client secret**; copy the secret **value**.
+3. **API permissions -> Add a permission -> Work IQ ->** delegated **`WorkIQAgent.Ask`**, then
+   **Grant admin consent for the tenant**. (If Work IQ isn't listed, finish *Enable Work IQ* above.)
+
+**Step 2 - Create the Work IQ connection in Foundry** (*Tools -> Connect a tool -> Catalog -> "Work IQ MCP"*), using the values from your app:
+
+| Field | Value |
+|---|---|
+| **Endpoint** | `https://workiq.svc.cloud.microsoft/mcp` |
+| **Client ID** | Application (client) ID |
+| **Client secret** | the secret value |
+| **Authorization URL** | `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize` |
+| **Token / Refresh URL** | `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token` |
+| **Scopes** | `api://workiq.svc.cloud.microsoft/WorkIQAgent.Ask,offline_access` |
+
+**Step 3 - Add the redirect URI back.** After you save, Foundry shows an **OAuth redirect URL** -
+paste it into the app registration under **Authentication -> Add a platform -> Web**.
+
+**Key SDK parameters:**
+- `project_connection_id` - **required** `str`; the Work IQ connection you created above.
 - `name`, `description` - used by Tool Search ranking.
 
-**Create the connection** (Work IQ requires `oauth2`):
-
-```
-azd ai connection create my-workiq --kind remote-tool --target <work-iq-endpoint> --auth-type oauth2
-```
 
 ```python
 from azure.ai.projects.models import WorkIQPreviewToolboxTool

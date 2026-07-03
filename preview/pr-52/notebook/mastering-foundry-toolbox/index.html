@@ -725,21 +725,77 @@ connection has no target endpoint, or <code>agent_card_path</code> to override t
 <span class="token keyword">else</span><span class="token punctuation">:</span>
     skip<span class="token punctuation">(</span><span class="token string">"A2A_PROJECT_CONNECTION_ID not set - skipping A2A"</span><span class="token punctuation">)</span></code></pre></div><div class="nb-output" data-prompt-number="11"><pre class="language-python">⏭️  Skipping — A2A_PROJECT_CONNECTION_ID <span class="token keyword">not</span> <span class="token builtin">set</span> <span class="token operator">-</span> skipping A2A
 </pre></div></div><div class="nb-cell nb-markdown-cell"><h4>4i · Work IQ <em>(preview)</em></h4>
-<p>📄 <strong>Docs:</strong> <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/work-iq">Work IQ</a></p>
+<p>📄 <strong>Docs:</strong> <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/work-iq">Connect agents to Microsoft 365 with Work IQ</a> · <a href="https://learn.microsoft.com/microsoft-365/copilot/extensibility/work-iq/mcp/quickstart/foundry">Foundry connection quickstart</a> · <a href="https://learn.microsoft.com/microsoft-365/copilot/extensibility/work-iq/enable-work-iq">Enable Work IQ in your tenant</a></p>
 <p><strong>What it is.</strong> A Microsoft-managed tool that reasons over the signed-in user's <strong>Microsoft 365
 work context</strong> - mail, chats, meetings, and documents - so the agent can answer "what did my team
 decide about X?" style questions.</p>
-<p><strong>How it works.</strong> It is fully hosted by Microsoft; you only point it at a connection. Because it
-acts <strong>as the user</strong>, its connection is <strong>oauth2</strong> - the caller's token flows through (Foundry
-managed identity passthrough) and Work IQ honors that user's M365 permissions.</p>
-<p><strong>Key parameters:</strong></p>
+<p><strong>How it works.</strong> Work IQ is a remote <strong>MCP server</strong> (<code>https://workiq.svc.cloud.microsoft/mcp</code>)
+that always runs <strong>as the signed-in user</strong> (delegated / on-behalf-of auth - application-only auth is
+<em>not</em> supported). Its project connection is therefore <strong>oauth2</strong>, and you must back it with <strong>your
+own Microsoft Entra app registration</strong> so Foundry has a client to drive the OAuth flow. A connection
+that isn't backed by a correctly configured app (missing the <code>WorkIQAgent.Ask</code> scope / token
+audience) is accepted by <code>create_version</code> but fails at <em>runtime</em> with errors like
+<code>TokenAudience is required for OBO</code> or <code>Failed to fetch agent card: 404</code>.</p>
+<blockquote>
+<p>⚠️ You can't reuse someone else's preview connection - <strong>each tenant registers its own Entra app.</strong></p>
+</blockquote>
+<p><strong>Prerequisites</strong></p>
 <ul>
-<li><code>project_connection_id</code> - <strong>required</strong> <code>str</code>; the Work IQ connection.</li>
+<li><strong>Foundry Project Manager</strong> role (to create the connection) plus <strong>Foundry User</strong> role for the
+developer, the agent runtime identity, and every user who signs in.</li>
+<li>A <strong>Microsoft 365 Copilot license</strong> for each user who calls Work IQ.</li>
+<li>A <strong>Microsoft Entra Global Administrator</strong> to grant admin consent.</li>
+<li>Your tenant <strong>enabled for Work IQ</strong> - a one-time <code>az ad sp create --id fdcc1f02-fc51-4226-8753-f668596af7f7</code>
+(or the Graph Explorer equivalent) provisions the Work IQ service principal so the
+<code>WorkIQAgent.Ask</code> permission becomes selectable.</li>
+</ul>
+<p><strong>Step 1 - Register your own Entra app</strong> (<a href="https://entra.microsoft.com">Entra admin center</a> -&gt; <em>Entra ID -&gt; App registrations -&gt; New registration</em>):</p>
+<ol>
+<li>Copy the <strong>Application (client) ID</strong> and <strong>Directory (tenant) ID</strong>.</li>
+<li><strong>Certificates &amp; secrets -&gt; New client secret</strong>; copy the secret <strong>value</strong>.</li>
+<li><strong>API permissions -&gt; Add a permission -&gt; Work IQ -&gt;</strong> delegated <strong><code>WorkIQAgent.Ask</code></strong>, then
+<strong>Grant admin consent for the tenant</strong>. (If Work IQ isn't listed, finish <em>Enable Work IQ</em> above.)</li>
+</ol>
+<p><strong>Step 2 - Create the Work IQ connection in Foundry</strong> (<em>Tools -&gt; Connect a tool -&gt; Catalog -&gt; "Work IQ MCP"</em>), using the values from your app:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Endpoint</strong></td>
+<td><code>https://workiq.svc.cloud.microsoft/mcp</code></td>
+</tr>
+<tr>
+<td><strong>Client ID</strong></td>
+<td>Application (client) ID</td>
+</tr>
+<tr>
+<td><strong>Client secret</strong></td>
+<td>the secret value</td>
+</tr>
+<tr>
+<td><strong>Authorization URL</strong></td>
+<td><code>https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize</code></td>
+</tr>
+<tr>
+<td><strong>Token / Refresh URL</strong></td>
+<td><code>https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token</code></td>
+</tr>
+<tr>
+<td><strong>Scopes</strong></td>
+<td><code>api://workiq.svc.cloud.microsoft/WorkIQAgent.Ask,offline_access</code></td>
+</tr>
+</tbody></table>
+<p><strong>Step 3 - Add the redirect URI back.</strong> After you save, Foundry shows an <strong>OAuth redirect URL</strong> -
+paste it into the app registration under <strong>Authentication -&gt; Add a platform -&gt; Web</strong>.</p>
+<p><strong>Key SDK parameters:</strong></p>
+<ul>
+<li><code>project_connection_id</code> - <strong>required</strong> <code>str</code>; the Work IQ connection you created above.</li>
 <li><code>name</code>, <code>description</code> - used by Tool Search ranking.</li>
 </ul>
-<p><strong>Create the connection</strong> (Work IQ requires <code>oauth2</code>):</p>
-<pre><code>azd ai connection create my-workiq --kind remote-tool --target &lt;work-iq-endpoint&gt; --auth-type oauth2
-</code></pre>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="12"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> WorkIQPreviewToolboxTool
 
 <span class="token keyword">if</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"WORK_IQ_PROJECT_CONNECTION_ID"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
