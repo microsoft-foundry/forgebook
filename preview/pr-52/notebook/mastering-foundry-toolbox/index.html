@@ -132,9 +132,7 @@ RAI_POLICY_NAME=""                           # existing RAI policy for the polic
 </code></pre>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token operator">%</span><span class="token operator">%</span>capture
 <span class="token comment"># Toolboxes in Microsoft Foundry ship on the public-preview azure-ai-projects SDK (the typed</span>
-<span class="token comment"># toolbox + tool bindings live under project.beta.toolboxes; SDK 2.3.0 relocates</span>
-<span class="token comment"># these to project.toolboxes with a breaking API, so we cap the SDK below 2.3.0).</span>
-<span class="token comment"># mcp gives us a</span>
+<span class="token comment"># toolbox + tool bindings live under project.toolboxes as of SDK 2.3.0). mcp gives us a</span>
 <span class="token comment"># JSON-RPC client for the raw endpoint, langchain-azure-ai[tools] provides the</span>
 <span class="token comment"># LangGraph adapter, and agent-framework the MAF consumer. All on PyPI.</span>
 <span class="token keyword">import</span> importlib<span class="token punctuation">.</span>metadata <span class="token keyword">as</span> _md
@@ -149,7 +147,7 @@ _need <span class="token operator">=</span> <span class="token punctuation">[</s
 
 <span class="token keyword">if</span> _need<span class="token punctuation">:</span>
     <span class="token operator">%</span>pip install <span class="token operator">-</span><span class="token operator">-</span>quiet \
-        <span class="token string">"azure-ai-projects&gt;=2.2.0,&lt;2.3.0"</span> \
+        <span class="token string">"azure-ai-projects&gt;=2.3.0,&lt;2.4.0"</span> \
         <span class="token string">"azure-identity&gt;=1.17.0"</span> \
         <span class="token string">"mcp&gt;=1.0.0"</span> \
         <span class="token string">"httpx&gt;=0.27.0"</span> \
@@ -328,10 +326,10 @@ emits the caller / end-user token and the toolbox uses <em>that</em> token to re
 <p>A toolbox is a named resource; its capabilities live in <strong>immutable versions</strong>. You build a
 version from a list of <strong>typed tool objects</strong> plus an optional list of <strong>skills</strong>, then promote
 one version to <em>default</em> later.</p>
-<pre><code class="language-python">project.beta.toolboxes.create_version(
+<pre><code class="language-python">project.toolboxes.create_version(
     name=TOOLBOX_NAME,
     description="...",                 # human-readable, shown in listings
-    tools=[ MCPTool(...), AzureAISearchTool(...), ... ],   # one typed object per tool
+    tools=[ MCPToolboxTool(...), AzureAISearchToolboxTool(...), ... ],   # one typed object per tool
     skills=[ ToolboxSkillReference(...) ],                 # SEPARATE from tools
     policies=ToolboxPolicies(...),     # optional governance - see the policies section
 )
@@ -343,7 +341,7 @@ classes it needs</strong> at the top of its own cell, so you can lift any single
 <li><strong>Connections are referenced by <code>project_connection_id</code></strong> - the connection's name or its full
 ARM resource id. The toolbox resolves the tool's auth from that connection.</li>
 <li><strong><code>name</code> + <code>description</code></strong> are optional on every tool and are what <strong>Tool Search ranks on</strong>, so
-give each one a crisp description. (<code>MCPTool</code> instead uses <code>server_label</code> + <code>server_description</code>.)</li>
+give each one a crisp description. (<code>MCPToolboxTool</code> instead uses <code>server_label</code> + <code>server_description</code>.)</li>
 <li><strong>Only one <em>unnamed</em> tool is allowed in the entire toolbox.</strong> Give every other tool a <code>name</code>
 so you can register several tools - even several of the same type - in one toolbox.</li>
 <li><strong>Skills are NOT tools</strong> - they go in the separate <code>skills=[...]</code> list as
@@ -367,7 +365,7 @@ skills<span class="token punctuation">:</span> <span class="token builtin">list<
 <p>📄 <strong>Docs:</strong> <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/web-search">Web search</a></p>
 <p><strong>What it is.</strong> A built-in tool that grounds answers with live web results. No vector store, no
 data prep - the model decides when to search and Foundry runs the query server-side.</p>
-<p><strong>How it works.</strong> Plain <code>WebSearchTool()</code> uses <strong>Grounding with Bing</strong> (billed under its own
+<p><strong>How it works.</strong> Plain <code>WebSearchToolboxTool()</code> uses <strong>Grounding with Bing</strong> (billed under its own
 terms, no connection needed). Pass a <code>WebSearchConfiguration</code> instead to scope results to a
 <strong>Bing Custom Search</strong> instance you own - that path runs through a <strong>key-based</strong> connection.</p>
 <p><strong>Key parameters</strong> (all optional unless noted):</p>
@@ -384,10 +382,10 @@ results geographically.</li>
 -&gt; Tools -&gt; Connect a tool</em>, or with <code>azd ai connection create ... --auth-type custom-keys</code>, then
 pass its id as <code>WebSearchConfiguration.project_connection_id</code>. The default public web search needs
 <strong>no connection</strong>.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> WebSearchTool<span class="token punctuation">,</span> WebSearchConfiguration
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> WebSearchToolboxTool<span class="token punctuation">,</span> WebSearchConfiguration
 
 <span class="token keyword">if</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"BING_CUSTOM_SEARCH_PROJECT_CONNECTION_ID"</span><span class="token punctuation">)</span> <span class="token keyword">and</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"BING_CUSTOM_SEARCH_INSTANCE"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>WebSearchTool<span class="token punctuation">(</span>
+    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>WebSearchToolboxTool<span class="token punctuation">(</span>
         name<span class="token operator">=</span><span class="token string">"web_search_custom"</span><span class="token punctuation">,</span>
         description<span class="token operator">=</span><span class="token string">"Search a curated set of sites via Bing Custom Search."</span><span class="token punctuation">,</span>
         search_context_size<span class="token operator">=</span><span class="token string">"medium"</span><span class="token punctuation">,</span>  <span class="token comment"># low | medium | high</span>
@@ -397,7 +395,7 @@ pass its id as <code>WebSearchConfiguration.project_connection_id</code>. The de
         <span class="token punctuation">)</span><span class="token punctuation">,</span>
     <span class="token punctuation">)</span><span class="token punctuation">)</span>
 <span class="token keyword">else</span><span class="token punctuation">:</span>
-    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>WebSearchTool<span class="token punctuation">(</span>
+    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>WebSearchToolboxTool<span class="token punctuation">(</span>
         name<span class="token operator">=</span><span class="token string">"web_search"</span><span class="token punctuation">,</span>
         description<span class="token operator">=</span><span class="token string">"Search the public web for current information."</span><span class="token punctuation">,</span>
         search_context_size<span class="token operator">=</span><span class="token string">"medium"</span><span class="token punctuation">,</span>  <span class="token comment"># low | medium | high</span>
@@ -427,7 +425,7 @@ with open("chart.png", "wb") as f:
 to attach uploaded files to the sandbox. Omit it to let the service auto-provision a default sandbox.</li>
 <li><code>name</code>, <code>description</code> - used by Tool Search ranking.</li>
 </ul>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> CodeInterpreterTool<span class="token punctuation">,</span> AutoCodeInterpreterToolParam
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> CodeInterpreterToolboxTool<span class="token punctuation">,</span> AutoCodeInterpreterToolParam
 
 <span class="token comment"># Optional: upload a file for the sandbox to analyze (Files API on the project's OpenAI client).</span>
 file_ids <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
@@ -437,7 +435,7 @@ file_ids <span class="token operator">=</span> <span class="token punctuation">[
     file_ids <span class="token operator">=</span> <span class="token punctuation">[</span>up<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">]</span>
     <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  uploaded </span><span class="token interpolation"><span class="token punctuation">{</span>os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'CODE_INTERPRETER_FILE'</span><span class="token punctuation">]</span><span class="token punctuation">}</span></span><span class="token string"> as </span><span class="token interpolation"><span class="token punctuation">{</span>up<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 
-ci <span class="token operator">=</span> CodeInterpreterTool<span class="token punctuation">(</span>
+ci <span class="token operator">=</span> CodeInterpreterToolboxTool<span class="token punctuation">(</span>
     name<span class="token operator">=</span><span class="token string">"code_interpreter"</span><span class="token punctuation">,</span>
     description<span class="token operator">=</span><span class="token string">"Run Python in a sandbox for math, parsing, and data work."</span><span class="token punctuation">,</span>
 <span class="token punctuation">)</span>
@@ -454,7 +452,7 @@ the project's OpenAI client (<code>project.get_openai_client()</code>) for both 
 vector_store = openai.vector_stores.create(name="ProductInfoStore")
 with open("product_info.md", "rb") as fh:
     openai.vector_stores.files.upload_and_poll(vector_store_id=vector_store.id, file=fh)
-# then: FileSearchTool(vector_store_ids=[vector_store.id])
+# then: FileSearchToolboxTool(vector_store_ids=[vector_store.id])
 </code></pre>
 <p><code>vector_store_ids</code> is <strong>required</strong>, so this part skips unless you supply
 <code>FILE_SEARCH_VECTOR_STORE_ID</code> (or set <code>FILE_SEARCH_FILE</code> to create a store below). No connection is
@@ -466,7 +464,7 @@ needed - the vector store is a project resource.</p>
 <li><code>filters</code> - optional metadata filter (<code>ComparisonFilter</code> / <code>CompoundFilter</code>).</li>
 <li><code>name</code>, <code>description</code> - used by Tool Search ranking.</li>
 </ul>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> FileSearchTool
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> FileSearchToolboxTool
 
 vector_store_id <span class="token operator">=</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"FILE_SEARCH_VECTOR_STORE_ID"</span><span class="token punctuation">)</span>
 
@@ -480,7 +478,7 @@ vector_store_id <span class="token operator">=</span> os<span class="token punct
     <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  created vector store </span><span class="token interpolation"><span class="token punctuation">{</span>vs<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 
 <span class="token keyword">if</span> vector_store_id<span class="token punctuation">:</span>
-    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>FileSearchTool<span class="token punctuation">(</span>
+    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>FileSearchToolboxTool<span class="token punctuation">(</span>
         name<span class="token operator">=</span><span class="token string">"file_search"</span><span class="token punctuation">,</span>
         description<span class="token operator">=</span><span class="token string">"Search uploaded documents and attached vector stores."</span><span class="token punctuation">,</span>
         vector_store_ids<span class="token operator">=</span><span class="token punctuation">[</span>vector_store_id<span class="token punctuation">]</span><span class="token punctuation">,</span>
@@ -551,10 +549,10 @@ to gate specific tools.</li>
 <pre><code>azd ai connection create my-mcp --kind remote-tool --target https://api.example.com/mcp --auth-type oauth2
 </code></pre>
 <p>Then pass its name/id as <code>project_connection_id</code>.</p>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> MCPTool
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> MCPToolboxTool
 
 <span class="token keyword">if</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"MCP_SERVER_URL"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>MCPTool<span class="token punctuation">(</span>
+    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>MCPToolboxTool<span class="token punctuation">(</span>
         server_label<span class="token operator">=</span>os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"MCP_SERVER_LABEL"</span><span class="token punctuation">,</span> <span class="token string">"custom_mcp"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
         server_url<span class="token operator">=</span>os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">"MCP_SERVER_URL"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
         server_description<span class="token operator">=</span><span class="token string">"Tools served by a remote MCP server registered as a connection."</span><span class="token punctuation">,</span>
@@ -584,14 +582,14 @@ The connection supports <strong>key</strong> or <strong>project-managed-identity
 <pre><code>azd ai connection create my-search --kind cognitive-search --target https://&lt;svc&gt;.search.windows.net --auth-type project-managed-identity
 </code></pre>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
-    AzureAISearchTool<span class="token punctuation">,</span>
+    AzureAISearchToolboxTool<span class="token punctuation">,</span>
     AzureAISearchToolResource<span class="token punctuation">,</span>
     AISearchIndexResource<span class="token punctuation">,</span>
     AzureAISearchQueryType<span class="token punctuation">,</span>
 <span class="token punctuation">)</span>
 
 <span class="token keyword">if</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"AISEARCH_PROJECT_CONNECTION_ID"</span><span class="token punctuation">)</span> <span class="token keyword">and</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"AISEARCH_INDEX"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>AzureAISearchTool<span class="token punctuation">(</span>
+    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>AzureAISearchToolboxTool<span class="token punctuation">(</span>
         name<span class="token operator">=</span><span class="token string">"ai_search"</span><span class="token punctuation">,</span>
         description<span class="token operator">=</span><span class="token string">"Retrieve grounded passages from the enterprise knowledge index."</span><span class="token punctuation">,</span>
         azure_ai_search<span class="token operator">=</span>AzureAISearchToolResource<span class="token punctuation">(</span>
@@ -625,7 +623,7 @@ the auth. The most common auth is a project connection via <code>OpenApiProjectC
 tool</em>, or with <code>azd ai connection create ... --auth-type custom-keys</code>; pass its id as
 <code>project_connection_id</code>.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
-    OpenApiTool<span class="token punctuation">,</span>
+    OpenApiToolboxTool<span class="token punctuation">,</span>
     OpenApiFunctionDefinition<span class="token punctuation">,</span>
     OpenApiProjectConnectionAuthDetails<span class="token punctuation">,</span>
     OpenApiProjectConnectionSecurityScheme<span class="token punctuation">,</span>
@@ -637,7 +635,7 @@ tool</em>, or with <code>azd ai connection create ... --auth-type custom-keys</c
         <span class="token string">"info"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token string">"title"</span><span class="token punctuation">:</span> <span class="token string">"petstore"</span><span class="token punctuation">,</span> <span class="token string">"version"</span><span class="token punctuation">:</span> <span class="token string">"1.0.0"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
         <span class="token string">"paths"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
     <span class="token punctuation">}</span>
-    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>OpenApiTool<span class="token punctuation">(</span>
+    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>OpenApiToolboxTool<span class="token punctuation">(</span>
         openapi<span class="token operator">=</span>OpenApiFunctionDefinition<span class="token punctuation">(</span>
             name<span class="token operator">=</span><span class="token string">"petstore"</span><span class="token punctuation">,</span>
             description<span class="token operator">=</span><span class="token string">"Call the Petstore REST API to look up and manage pets."</span><span class="token punctuation">,</span>
@@ -671,10 +669,10 @@ connection has no target endpoint, or <code>agent_card_path</code> to override t
 <p><strong>Create the connection</strong> (admin, once - all six auth types apply):</p>
 <pre><code>azd ai connection create my-a2a --kind remote-tool --target https://agent.example.com --auth-type oauth2
 </code></pre>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> A2APreviewTool
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> A2APreviewToolboxTool
 
 <span class="token keyword">if</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"A2A_PROJECT_CONNECTION_ID"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    a2a <span class="token operator">=</span> A2APreviewTool<span class="token punctuation">(</span>
+    a2a <span class="token operator">=</span> A2APreviewToolboxTool<span class="token punctuation">(</span>
         name<span class="token operator">=</span><span class="token string">"billing_agent"</span><span class="token punctuation">,</span>
         description<span class="token operator">=</span><span class="token string">"Delegate billing questions to the specialized billing agent."</span><span class="token punctuation">,</span>
         project_connection_id<span class="token operator">=</span>os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">"A2A_PROJECT_CONNECTION_ID"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
@@ -701,10 +699,10 @@ managed identity passthrough) and Work IQ honors that user's M365 permissions.</
 <p><strong>Create the connection</strong> (Work IQ requires <code>oauth2</code>):</p>
 <pre><code>azd ai connection create my-workiq --kind remote-tool --target &lt;work-iq-endpoint&gt; --auth-type oauth2
 </code></pre>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> WorkIQPreviewTool
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> WorkIQPreviewToolboxTool
 
 <span class="token keyword">if</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"WORK_IQ_PROJECT_CONNECTION_ID"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>WorkIQPreviewTool<span class="token punctuation">(</span>
+    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>WorkIQPreviewToolboxTool<span class="token punctuation">(</span>
         name<span class="token operator">=</span><span class="token string">"work_iq"</span><span class="token punctuation">,</span>
         description<span class="token operator">=</span><span class="token string">"Reason over the user's Microsoft 365 work context (mail, chats, meetings, docs)."</span><span class="token punctuation">,</span>
         project_connection_id<span class="token operator">=</span>os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">"WORK_IQ_PROJECT_CONNECTION_ID"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
@@ -730,10 +728,10 @@ unattended use.</p>
 <p><strong>Create the connection</strong> (<code>project-managed-identity</code> or <code>oauth2</code>):</p>
 <pre><code>azd ai connection create my-fabriciq --kind remote-tool --target &lt;fabric-iq-endpoint&gt; --auth-type project-managed-identity
 </code></pre>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> FabricIQPreviewTool
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> FabricIQPreviewToolboxTool
 
 <span class="token keyword">if</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"FABRIC_IQ_PROJECT_CONNECTION_ID"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>FabricIQPreviewTool<span class="token punctuation">(</span>
+    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>FabricIQPreviewToolboxTool<span class="token punctuation">(</span>
         name<span class="token operator">=</span><span class="token string">"fabric_iq"</span><span class="token punctuation">,</span>
         description<span class="token operator">=</span><span class="token string">"Query governed analytics and ontology data from Microsoft Fabric."</span><span class="token punctuation">,</span>
         project_connection_id<span class="token operator">=</span>os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">"FABRIC_IQ_PROJECT_CONNECTION_ID"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
@@ -757,13 +755,13 @@ deep: <code>BrowserAutomationToolParameters(connection=BrowserAutomationToolConn
 <pre><code>azd ai connection create my-browser --kind remote-tool --target &lt;playwright-endpoint&gt; --auth-type custom-keys
 </code></pre>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
-    BrowserAutomationPreviewTool<span class="token punctuation">,</span>
+    BrowserAutomationPreviewToolboxTool<span class="token punctuation">,</span>
     BrowserAutomationToolParameters<span class="token punctuation">,</span>
     BrowserAutomationToolConnectionParameters<span class="token punctuation">,</span>
 <span class="token punctuation">)</span>
 
 <span class="token keyword">if</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"BROWSER_AUTOMATION_PROJECT_CONNECTION_ID"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>BrowserAutomationPreviewTool<span class="token punctuation">(</span>
+    tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>BrowserAutomationPreviewToolboxTool<span class="token punctuation">(</span>
         name<span class="token operator">=</span><span class="token string">"browser_automation"</span><span class="token punctuation">,</span>
         description<span class="token operator">=</span><span class="token string">"Navigate and act on live web pages to complete multi-step browser tasks."</span><span class="token punctuation">,</span>
         browser_automation_preview<span class="token operator">=</span>BrowserAutomationToolParameters<span class="token punctuation">(</span>
@@ -812,7 +810,7 @@ reference it in the <strong>separate <code>skills=</code> list</strong> with <co
 first call; every call mints a new <strong>immutable</strong> version id. <code>tools</code> is required; <code>skills</code>,
 <code>description</code>, <code>metadata</code>, and <code>policies</code> are optional.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># create_version(name, *, tools, description=None, metadata=None, skills=None, policies=None)</span>
-version <span class="token operator">=</span> project<span class="token punctuation">.</span>beta<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>create_version<span class="token punctuation">(</span>
+version <span class="token operator">=</span> project<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>create_version<span class="token punctuation">(</span>
     name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">,</span>
     description<span class="token operator">=</span><span class="token string">"Diverse demo toolbox: search, code, knowledge, and connection-backed tools."</span><span class="token punctuation">,</span>
     tools<span class="token operator">=</span>tools<span class="token punctuation">,</span>
@@ -928,7 +926,7 @@ the rest of the turn</strong>, and the model may search again for later steps.</
 for a capability before assuming it doesn't exist; you may search multiple times per turn."</em>
 Without this nudge, weaker models sometimes give up instead of searching.</p>
 </blockquote>
-</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> ToolboxSearchPreviewTool<span class="token punctuation">,</span> ToolConfig
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> ToolboxSearchPreviewToolboxTool<span class="token punctuation">,</span> ToolConfig
 
 <span class="token comment"># Re-create the version as a SEARCH-FIRST toolbox: same tools + skills, plus the</span>
 <span class="token comment"># toolbox_search_preview meta-tool and a tool_configs map (values are ToolConfig).</span>
@@ -937,18 +935,18 @@ tool_configs <span class="token operator">=</span> <span class="token punctuatio
     <span class="token string">"*"</span><span class="token punctuation">:</span> ToolConfig<span class="token punctuation">(</span>pin<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span><span class="token punctuation">,</span>           <span class="token comment"># wildcard default applied to every other tool</span>
 <span class="token punctuation">}</span>
 <span class="token comment"># Only add search keywords for azure_ai_search if it was actually added above.</span>
-<span class="token keyword">if</span> <span class="token builtin">any</span><span class="token punctuation">(</span><span class="token builtin">type</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">.</span>__name__ <span class="token operator">==</span> <span class="token string">"AzureAISearchTool"</span> <span class="token keyword">for</span> t <span class="token keyword">in</span> tools<span class="token punctuation">)</span><span class="token punctuation">:</span>
+<span class="token keyword">if</span> <span class="token builtin">any</span><span class="token punctuation">(</span><span class="token builtin">type</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">.</span>__name__ <span class="token operator">==</span> <span class="token string">"AzureAISearchToolboxTool"</span> <span class="token keyword">for</span> t <span class="token keyword">in</span> tools<span class="token punctuation">)</span><span class="token punctuation">:</span>
     tool_configs<span class="token punctuation">[</span><span class="token string">"azure_ai_search"</span><span class="token punctuation">]</span> <span class="token operator">=</span> ToolConfig<span class="token punctuation">(</span>
         additional_search_text<span class="token operator">=</span><span class="token string">"knowledge base, documentation, policy, grounding, RAG"</span><span class="token punctuation">,</span>
     <span class="token punctuation">)</span>
 
 search_tools <span class="token operator">=</span> <span class="token builtin">list</span><span class="token punctuation">(</span>tools<span class="token punctuation">)</span>
-search_tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>ToolboxSearchPreviewTool<span class="token punctuation">(</span>
+search_tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>ToolboxSearchPreviewToolboxTool<span class="token punctuation">(</span>
     description<span class="token operator">=</span><span class="token string">"Search the toolbox catalog and call the matching tool."</span><span class="token punctuation">,</span>
     tool_configs<span class="token operator">=</span>tool_configs<span class="token punctuation">,</span>
 <span class="token punctuation">)</span><span class="token punctuation">)</span>
 
-search_version <span class="token operator">=</span> project<span class="token punctuation">.</span>beta<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>create_version<span class="token punctuation">(</span>
+search_version <span class="token operator">=</span> project<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>create_version<span class="token punctuation">(</span>
     name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">,</span>
     tools<span class="token operator">=</span>search_tools<span class="token punctuation">,</span>
     skills<span class="token operator">=</span>skills <span class="token keyword">or</span> <span class="token boolean">None</span><span class="token punctuation">,</span>
@@ -960,19 +958,19 @@ the <strong>default</strong>, and the default is what the consumer endpoint serv
 atomic rollouts: build a new version, test it on its pinned per-version URL, then flip the
 default.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token comment"># List every version, newest first.</span>
-versions <span class="token operator">=</span> <span class="token builtin">list</span><span class="token punctuation">(</span>project<span class="token punctuation">.</span>beta<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>list_versions<span class="token punctuation">(</span>name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">)</span><span class="token punctuation">)</span>
+versions <span class="token operator">=</span> <span class="token builtin">list</span><span class="token punctuation">(</span>project<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>list_versions<span class="token punctuation">(</span>name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">)</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Versions:"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>v<span class="token punctuation">.</span>version <span class="token keyword">for</span> v <span class="token keyword">in</span> versions<span class="token punctuation">]</span><span class="token punctuation">)</span>
 
 <span class="token comment"># Inspect a specific version.</span>
-detail <span class="token operator">=</span> project<span class="token punctuation">.</span>beta<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>get_version<span class="token punctuation">(</span>name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">,</span> version<span class="token operator">=</span>search_version<span class="token punctuation">.</span>version<span class="token punctuation">)</span>
+detail <span class="token operator">=</span> project<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>get_version<span class="token punctuation">(</span>name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">,</span> version<span class="token operator">=</span>search_version<span class="token punctuation">.</span>version<span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Version </span><span class="token interpolation"><span class="token punctuation">{</span>detail<span class="token punctuation">.</span>version<span class="token punctuation">}</span></span><span class="token string">: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>detail<span class="token punctuation">.</span>tools<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string"> tool(s)"</span></span><span class="token punctuation">)</span>
 
 <span class="token comment"># Promote the search-first version to default - this is what consumers will get.</span>
-project<span class="token punctuation">.</span>beta<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>update<span class="token punctuation">(</span>name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">,</span> default_version<span class="token operator">=</span>search_version<span class="token punctuation">.</span>version<span class="token punctuation">)</span>
+project<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>update<span class="token punctuation">(</span>name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">,</span> default_version<span class="token operator">=</span>search_version<span class="token punctuation">.</span>version<span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ Default is now </span><span class="token interpolation"><span class="token punctuation">{</span>search_version<span class="token punctuation">.</span>version<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 
 <span class="token comment"># (Optional) delete an old version once nothing references it.</span>
-<span class="token comment"># project.beta.toolboxes.delete_version(name=TOOLBOX_NAME, version="&lt;old&gt;")</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>8 / Policies &amp; governance <em>(optional reference)</em></h2>
+<span class="token comment"># project.toolboxes.delete_version(name=TOOLBOX_NAME, version="&lt;old&gt;")</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>8 / Policies &amp; governance <em>(optional reference)</em></h2>
 <p>"Governed by default" comes from <strong>three independent control points</strong>. Only the first is a field
 on the toolbox; the other two are standard Azure mechanisms you compose <em>around</em> it.</p>
 <p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/04-policy-enforcement.svg" alt="Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens tool inputs and outputs."></p>
@@ -1015,14 +1013,14 @@ creation time, not when the toolbox is built.</p>
 <span class="token comment">#     RAI policy and Foundry screens tool inputs/outputs for that version.</span>
 RAI_POLICY_NAME <span class="token operator">=</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"RAI_POLICY_NAME"</span><span class="token punctuation">)</span>
 <span class="token keyword">if</span> RAI_POLICY_NAME<span class="token punctuation">:</span>
-    guarded <span class="token operator">=</span> project<span class="token punctuation">.</span>beta<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>create_version<span class="token punctuation">(</span>
+    guarded <span class="token operator">=</span> project<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>create_version<span class="token punctuation">(</span>
         name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">,</span>
         tools<span class="token operator">=</span>search_tools<span class="token punctuation">,</span>
         skills<span class="token operator">=</span>skills <span class="token keyword">or</span> <span class="token boolean">None</span><span class="token punctuation">,</span>
         policies<span class="token operator">=</span>ToolboxPolicies<span class="token punctuation">(</span>rai_config<span class="token operator">=</span>RaiConfig<span class="token punctuation">(</span>rai_policy_name<span class="token operator">=</span>RAI_POLICY_NAME<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
     <span class="token punctuation">)</span>
     created_resources<span class="token punctuation">[</span><span class="token string">"versions"</span><span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>guarded<span class="token punctuation">.</span>version<span class="token punctuation">)</span>
-    project<span class="token punctuation">.</span>beta<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>update<span class="token punctuation">(</span>name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">,</span> default_version<span class="token operator">=</span>guarded<span class="token punctuation">.</span>version<span class="token punctuation">)</span>
+    project<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>update<span class="token punctuation">(</span>name<span class="token operator">=</span>TOOLBOX_NAME<span class="token punctuation">,</span> default_version<span class="token operator">=</span>guarded<span class="token punctuation">.</span>version<span class="token punctuation">)</span>
     <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"✅ RAI-guarded version </span><span class="token interpolation"><span class="token punctuation">{</span>guarded<span class="token punctuation">.</span>version<span class="token punctuation">}</span></span><span class="token string"> is now default"</span></span><span class="token punctuation">)</span>
 <span class="token keyword">else</span><span class="token punctuation">:</span>
     skip<span class="token punctuation">(</span><span class="token string">"RAI_POLICY_NAME not set - showing the shape only"</span><span class="token punctuation">)</span>
@@ -1032,7 +1030,7 @@ RAI_POLICY_NAME <span class="token operator">=</span> os<span class="token punct
 <span class="token comment">#     API Management (rate-limit / IP / header policies live in APIM), then register the</span>
 <span class="token comment">#     APIM *gateway* URL as a normal MCP tool. Governance runs in APIM, outside the toolbox:</span>
 <span class="token comment">#</span>
-<span class="token comment">#     MCPTool(server_label="governed_mcp",</span>
+<span class="token comment">#     MCPToolboxTool(server_label="governed_mcp",</span>
 <span class="token comment">#             server_url="https://&lt;apim-name&gt;.azure-api.net/mcp",   # APIM gateway</span>
 <span class="token comment">#             project_connection_id="apim-mcp-conn")</span>
 <span class="token comment">#</span>
@@ -1227,12 +1225,12 @@ with <code>azd ai connection delete &lt;name&gt;</code>.</p>
     name <span class="token operator">=</span> created_resources<span class="token punctuation">[</span><span class="token string">"toolbox"</span><span class="token punctuation">]</span>
     <span class="token keyword">for</span> v <span class="token keyword">in</span> <span class="token builtin">reversed</span><span class="token punctuation">(</span>created_resources<span class="token punctuation">[</span><span class="token string">"versions"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
         <span class="token keyword">try</span><span class="token punctuation">:</span>
-            project<span class="token punctuation">.</span>beta<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>delete_version<span class="token punctuation">(</span>name<span class="token operator">=</span>name<span class="token punctuation">,</span> version<span class="token operator">=</span>v<span class="token punctuation">)</span>
+            project<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>delete_version<span class="token punctuation">(</span>name<span class="token operator">=</span>name<span class="token punctuation">,</span> version<span class="token operator">=</span>v<span class="token punctuation">)</span>
             <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"🗑️  Deleted version </span><span class="token interpolation"><span class="token punctuation">{</span>v<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
         <span class="token keyword">except</span> Exception <span class="token keyword">as</span> exc<span class="token punctuation">:</span>  <span class="token comment"># noqa: BLE001</span>
             <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"(skip) version </span><span class="token interpolation"><span class="token punctuation">{</span>v<span class="token punctuation">}</span></span><span class="token string">: </span><span class="token interpolation"><span class="token punctuation">{</span>exc<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
     <span class="token keyword">try</span><span class="token punctuation">:</span>
-        project<span class="token punctuation">.</span>beta<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>delete<span class="token punctuation">(</span>name<span class="token operator">=</span>name<span class="token punctuation">)</span>
+        project<span class="token punctuation">.</span>toolboxes<span class="token punctuation">.</span>delete<span class="token punctuation">(</span>name<span class="token operator">=</span>name<span class="token punctuation">)</span>
         <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"🗑️  Deleted toolbox </span><span class="token interpolation"><span class="token punctuation">{</span>name<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
     <span class="token keyword">except</span> Exception <span class="token keyword">as</span> exc<span class="token punctuation">:</span>  <span class="token comment"># noqa: BLE001</span>
         <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"(skip) toolbox </span><span class="token interpolation"><span class="token punctuation">{</span>name<span class="token punctuation">}</span></span><span class="token string">: </span><span class="token interpolation"><span class="token punctuation">{</span>exc<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>Failure modes</h2>
@@ -1252,7 +1250,7 @@ version mismatch rather than a logic bug. The ones you'll hit first:</p>
 <td>Grant the agent the Foundry user role on the toolbox first (section 3), then retry. Authorizing the tool's own connection is not enough.</td>
 </tr>
 <tr>
-<td><code>ImportError</code> on <code>ToolboxSearchPreviewTool</code>, <code>A2APreviewTool</code>, or another <code>*PreviewTool</code></td>
+<td><code>ImportError</code> on <code>ToolboxSearchPreviewToolboxTool</code>, <code>A2APreviewToolboxTool</code>, or another <code>*PreviewTool</code></td>
 <td><code>azure-ai-projects</code> older than 2.2.0</td>
 <td><code>pip install "azure-ai-projects&gt;=2.2.0"</code> and restart the kernel.</td>
 </tr>

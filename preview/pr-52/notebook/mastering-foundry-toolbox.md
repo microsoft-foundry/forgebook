@@ -84,9 +84,7 @@ RAI_POLICY_NAME=""                           # existing RAI policy for the polic
 ```python
 %%capture
 # Toolboxes in Microsoft Foundry ship on the public-preview azure-ai-projects SDK (the typed
-# toolbox + tool bindings live under project.beta.toolboxes; SDK 2.3.0 relocates
-# these to project.toolboxes with a breaking API, so we cap the SDK below 2.3.0).
-# mcp gives us a
+# toolbox + tool bindings live under project.toolboxes as of SDK 2.3.0). mcp gives us a
 # JSON-RPC client for the raw endpoint, langchain-azure-ai[tools] provides the
 # LangGraph adapter, and agent-framework the MAF consumer. All on PyPI.
 import importlib.metadata as _md
@@ -101,7 +99,7 @@ for _pkg in ("azure-ai-projects", "azure-identity", "mcp", "httpx",
 
 if _need:
     %pip install --quiet \
-        "azure-ai-projects>=2.2.0,<2.3.0" \
+        "azure-ai-projects>=2.3.0,<2.4.0" \
         "azure-identity>=1.17.0" \
         "mcp>=1.0.0" \
         "httpx>=0.27.0" \
@@ -273,10 +271,10 @@ version from a list of **typed tool objects** plus an optional list of **skills*
 one version to *default* later.
 
 ```python
-project.beta.toolboxes.create_version(
+project.toolboxes.create_version(
     name=TOOLBOX_NAME,
     description="...",                 # human-readable, shown in listings
-    tools=[ MCPTool(...), AzureAISearchTool(...), ... ],   # one typed object per tool
+    tools=[ MCPToolboxTool(...), AzureAISearchToolboxTool(...), ... ],   # one typed object per tool
     skills=[ ToolboxSkillReference(...) ],                 # SEPARATE from tools
     policies=ToolboxPolicies(...),     # optional governance - see the policies section
 )
@@ -289,7 +287,7 @@ Rules that apply to every tool:
 - **Connections are referenced by `project_connection_id`** - the connection's name or its full
   ARM resource id. The toolbox resolves the tool's auth from that connection.
 - **`name` + `description`** are optional on every tool and are what **Tool Search ranks on**, so
-  give each one a crisp description. (`MCPTool` instead uses `server_label` + `server_description`.)
+  give each one a crisp description. (`MCPToolboxTool` instead uses `server_label` + `server_description`.)
 - **Only one *unnamed* tool is allowed in the entire toolbox.** Give every other tool a `name`
   so you can register several tools - even several of the same type - in one toolbox.
 - **Skills are NOT tools** - they go in the separate `skills=[...]` list as
@@ -322,7 +320,7 @@ print("Empty tools[] and skills[] ready - run the tool parts you want below.")
 **What it is.** A built-in tool that grounds answers with live web results. No vector store, no
 data prep - the model decides when to search and Foundry runs the query server-side.
 
-**How it works.** Plain `WebSearchTool()` uses **Grounding with Bing** (billed under its own
+**How it works.** Plain `WebSearchToolboxTool()` uses **Grounding with Bing** (billed under its own
 terms, no connection needed). Pass a `WebSearchConfiguration` instead to scope results to a
 **Bing Custom Search** instance you own - that path runs through a **key-based** connection.
 
@@ -341,10 +339,10 @@ pass its id as `WebSearchConfiguration.project_connection_id`. The default publi
 **no connection**.
 
 ```python
-from azure.ai.projects.models import WebSearchTool, WebSearchConfiguration
+from azure.ai.projects.models import WebSearchToolboxTool, WebSearchConfiguration
 
 if os.getenv("BING_CUSTOM_SEARCH_PROJECT_CONNECTION_ID") and os.getenv("BING_CUSTOM_SEARCH_INSTANCE"):
-    tools.append(WebSearchTool(
+    tools.append(WebSearchToolboxTool(
         name="web_search_custom",
         description="Search a curated set of sites via Bing Custom Search.",
         search_context_size="medium",  # low | medium | high
@@ -354,7 +352,7 @@ if os.getenv("BING_CUSTOM_SEARCH_PROJECT_CONNECTION_ID") and os.getenv("BING_CUS
         ),
     ))
 else:
-    tools.append(WebSearchTool(
+    tools.append(WebSearchToolboxTool(
         name="web_search",
         description="Search the public web for current information.",
         search_context_size="medium",  # low | medium | high
@@ -397,7 +395,7 @@ with open("chart.png", "wb") as f:
 - `name`, `description` - used by Tool Search ranking.
 
 ```python
-from azure.ai.projects.models import CodeInterpreterTool, AutoCodeInterpreterToolParam
+from azure.ai.projects.models import CodeInterpreterToolboxTool, AutoCodeInterpreterToolParam
 
 # Optional: upload a file for the sandbox to analyze (Files API on the project's OpenAI client).
 file_ids = []
@@ -407,7 +405,7 @@ if os.getenv("CODE_INTERPRETER_FILE"):
     file_ids = [up.id]
     print(f"  uploaded {os.environ['CODE_INTERPRETER_FILE']} as {up.id}")
 
-ci = CodeInterpreterTool(
+ci = CodeInterpreterToolboxTool(
     name="code_interpreter",
     description="Run Python in a sandbox for math, parsing, and data work.",
 )
@@ -432,7 +430,7 @@ openai = project.get_openai_client()
 vector_store = openai.vector_stores.create(name="ProductInfoStore")
 with open("product_info.md", "rb") as fh:
     openai.vector_stores.files.upload_and_poll(vector_store_id=vector_store.id, file=fh)
-# then: FileSearchTool(vector_store_ids=[vector_store.id])
+# then: FileSearchToolboxTool(vector_store_ids=[vector_store.id])
 ```
 
 `vector_store_ids` is **required**, so this part skips unless you supply
@@ -446,7 +444,7 @@ needed - the vector store is a project resource.
 - `name`, `description` - used by Tool Search ranking.
 
 ```python
-from azure.ai.projects.models import FileSearchTool
+from azure.ai.projects.models import FileSearchToolboxTool
 
 vector_store_id = os.getenv("FILE_SEARCH_VECTOR_STORE_ID")
 
@@ -460,7 +458,7 @@ if not vector_store_id and os.getenv("FILE_SEARCH_FILE"):
     print(f"  created vector store {vs.id}")
 
 if vector_store_id:
-    tools.append(FileSearchTool(
+    tools.append(FileSearchToolboxTool(
         name="file_search",
         description="Search uploaded documents and attached vector stores.",
         vector_store_ids=[vector_store_id],
@@ -513,10 +511,10 @@ azd ai connection create my-mcp --kind remote-tool --target https://api.example.
 Then pass its name/id as `project_connection_id`.
 
 ```python
-from azure.ai.projects.models import MCPTool
+from azure.ai.projects.models import MCPToolboxTool
 
 if os.getenv("MCP_SERVER_URL"):
-    tools.append(MCPTool(
+    tools.append(MCPToolboxTool(
         server_label=os.getenv("MCP_SERVER_LABEL", "custom_mcp"),
         server_url=os.environ["MCP_SERVER_URL"],
         server_description="Tools served by a remote MCP server registered as a connection.",
@@ -557,14 +555,14 @@ azd ai connection create my-search --kind cognitive-search --target https://<svc
 
 ```python
 from azure.ai.projects.models import (
-    AzureAISearchTool,
+    AzureAISearchToolboxTool,
     AzureAISearchToolResource,
     AISearchIndexResource,
     AzureAISearchQueryType,
 )
 
 if os.getenv("AISEARCH_PROJECT_CONNECTION_ID") and os.getenv("AISEARCH_INDEX"):
-    tools.append(AzureAISearchTool(
+    tools.append(AzureAISearchToolboxTool(
         name="ai_search",
         description="Retrieve grounded passages from the enterprise knowledge index.",
         azure_ai_search=AzureAISearchToolResource(
@@ -606,7 +604,7 @@ tool*, or with `azd ai connection create ... --auth-type custom-keys`; pass its 
 
 ```python
 from azure.ai.projects.models import (
-    OpenApiTool,
+    OpenApiToolboxTool,
     OpenApiFunctionDefinition,
     OpenApiProjectConnectionAuthDetails,
     OpenApiProjectConnectionSecurityScheme,
@@ -618,7 +616,7 @@ if os.getenv("OPENAPI_PROJECT_CONNECTION_ID"):
         "info": {"title": "petstore", "version": "1.0.0"},
         "paths": {},
     }
-    tools.append(OpenApiTool(
+    tools.append(OpenApiToolboxTool(
         openapi=OpenApiFunctionDefinition(
             name="petstore",
             description="Call the Petstore REST API to look up and manage pets.",
@@ -662,10 +660,10 @@ azd ai connection create my-a2a --kind remote-tool --target https://agent.exampl
 ```
 
 ```python
-from azure.ai.projects.models import A2APreviewTool
+from azure.ai.projects.models import A2APreviewToolboxTool
 
 if os.getenv("A2A_PROJECT_CONNECTION_ID"):
-    a2a = A2APreviewTool(
+    a2a = A2APreviewToolboxTool(
         name="billing_agent",
         description="Delegate billing questions to the specialized billing agent.",
         project_connection_id=os.environ["A2A_PROJECT_CONNECTION_ID"],
@@ -702,10 +700,10 @@ azd ai connection create my-workiq --kind remote-tool --target <work-iq-endpoint
 ```
 
 ```python
-from azure.ai.projects.models import WorkIQPreviewTool
+from azure.ai.projects.models import WorkIQPreviewToolboxTool
 
 if os.getenv("WORK_IQ_PROJECT_CONNECTION_ID"):
-    tools.append(WorkIQPreviewTool(
+    tools.append(WorkIQPreviewToolboxTool(
         name="work_iq",
         description="Reason over the user's Microsoft 365 work context (mail, chats, meetings, docs).",
         project_connection_id=os.environ["WORK_IQ_PROJECT_CONNECTION_ID"],
@@ -741,10 +739,10 @@ azd ai connection create my-fabriciq --kind remote-tool --target <fabric-iq-endp
 ```
 
 ```python
-from azure.ai.projects.models import FabricIQPreviewTool
+from azure.ai.projects.models import FabricIQPreviewToolboxTool
 
 if os.getenv("FABRIC_IQ_PROJECT_CONNECTION_ID"):
-    tools.append(FabricIQPreviewTool(
+    tools.append(FabricIQPreviewToolboxTool(
         name="fabric_iq",
         description="Query governed analytics and ontology data from Microsoft Fabric.",
         project_connection_id=os.environ["FABRIC_IQ_PROJECT_CONNECTION_ID"],
@@ -779,13 +777,13 @@ azd ai connection create my-browser --kind remote-tool --target <playwright-endp
 
 ```python
 from azure.ai.projects.models import (
-    BrowserAutomationPreviewTool,
+    BrowserAutomationPreviewToolboxTool,
     BrowserAutomationToolParameters,
     BrowserAutomationToolConnectionParameters,
 )
 
 if os.getenv("BROWSER_AUTOMATION_PROJECT_CONNECTION_ID"):
-    tools.append(BrowserAutomationPreviewTool(
+    tools.append(BrowserAutomationPreviewToolboxTool(
         name="browser_automation",
         description="Navigate and act on live web pages to complete multi-step browser tasks.",
         browser_automation_preview=BrowserAutomationToolParameters(
@@ -847,7 +845,7 @@ first call; every call mints a new **immutable** version id. `tools` is required
 
 ```python
 # create_version(name, *, tools, description=None, metadata=None, skills=None, policies=None)
-version = project.beta.toolboxes.create_version(
+version = project.toolboxes.create_version(
     name=TOOLBOX_NAME,
     description="Diverse demo toolbox: search, code, knowledge, and connection-backed tools.",
     tools=tools,
@@ -957,7 +955,7 @@ on demand.
 > Without this nudge, weaker models sometimes give up instead of searching.
 
 ```python
-from azure.ai.projects.models import ToolboxSearchPreviewTool, ToolConfig
+from azure.ai.projects.models import ToolboxSearchPreviewToolboxTool, ToolConfig
 
 # Re-create the version as a SEARCH-FIRST toolbox: same tools + skills, plus the
 # toolbox_search_preview meta-tool and a tool_configs map (values are ToolConfig).
@@ -966,18 +964,18 @@ tool_configs = {
     "*": ToolConfig(pin=False),           # wildcard default applied to every other tool
 }
 # Only add search keywords for azure_ai_search if it was actually added above.
-if any(type(t).__name__ == "AzureAISearchTool" for t in tools):
+if any(type(t).__name__ == "AzureAISearchToolboxTool" for t in tools):
     tool_configs["azure_ai_search"] = ToolConfig(
         additional_search_text="knowledge base, documentation, policy, grounding, RAG",
     )
 
 search_tools = list(tools)
-search_tools.append(ToolboxSearchPreviewTool(
+search_tools.append(ToolboxSearchPreviewToolboxTool(
     description="Search the toolbox catalog and call the matching tool.",
     tool_configs=tool_configs,
 ))
 
-search_version = project.beta.toolboxes.create_version(
+search_version = project.toolboxes.create_version(
     name=TOOLBOX_NAME,
     tools=search_tools,
     skills=skills or None,
@@ -995,19 +993,19 @@ default.
 
 ```python
 # List every version, newest first.
-versions = list(project.beta.toolboxes.list_versions(name=TOOLBOX_NAME))
+versions = list(project.toolboxes.list_versions(name=TOOLBOX_NAME))
 print("Versions:", [v.version for v in versions])
 
 # Inspect a specific version.
-detail = project.beta.toolboxes.get_version(name=TOOLBOX_NAME, version=search_version.version)
+detail = project.toolboxes.get_version(name=TOOLBOX_NAME, version=search_version.version)
 print(f"Version {detail.version}: {len(detail.tools)} tool(s)")
 
 # Promote the search-first version to default - this is what consumers will get.
-project.beta.toolboxes.update(name=TOOLBOX_NAME, default_version=search_version.version)
+project.toolboxes.update(name=TOOLBOX_NAME, default_version=search_version.version)
 print(f"✅ Default is now {search_version.version}")
 
 # (Optional) delete an old version once nothing references it.
-# project.beta.toolboxes.delete_version(name=TOOLBOX_NAME, version="<old>")
+# project.toolboxes.delete_version(name=TOOLBOX_NAME, version="<old>")
 ```
 
 ## 8 / Policies & governance *(optional reference)*
@@ -1034,14 +1032,14 @@ from azure.ai.projects.models import ToolboxPolicies, RaiConfig
 #     RAI policy and Foundry screens tool inputs/outputs for that version.
 RAI_POLICY_NAME = os.getenv("RAI_POLICY_NAME")
 if RAI_POLICY_NAME:
-    guarded = project.beta.toolboxes.create_version(
+    guarded = project.toolboxes.create_version(
         name=TOOLBOX_NAME,
         tools=search_tools,
         skills=skills or None,
         policies=ToolboxPolicies(rai_config=RaiConfig(rai_policy_name=RAI_POLICY_NAME)),
     )
     created_resources["versions"].append(guarded.version)
-    project.beta.toolboxes.update(name=TOOLBOX_NAME, default_version=guarded.version)
+    project.toolboxes.update(name=TOOLBOX_NAME, default_version=guarded.version)
     print(f"✅ RAI-guarded version {guarded.version} is now default")
 else:
     skip("RAI_POLICY_NAME not set - showing the shape only")
@@ -1051,7 +1049,7 @@ else:
 #     API Management (rate-limit / IP / header policies live in APIM), then register the
 #     APIM *gateway* URL as a normal MCP tool. Governance runs in APIM, outside the toolbox:
 #
-#     MCPTool(server_label="governed_mcp",
+#     MCPToolboxTool(server_label="governed_mcp",
 #             server_url="https://<apim-name>.azure-api.net/mcp",   # APIM gateway
 #             project_connection_id="apim-mcp-conn")
 #
@@ -1273,12 +1271,12 @@ else:
     name = created_resources["toolbox"]
     for v in reversed(created_resources["versions"]):
         try:
-            project.beta.toolboxes.delete_version(name=name, version=v)
+            project.toolboxes.delete_version(name=name, version=v)
             print(f"🗑️  Deleted version {v}")
         except Exception as exc:  # noqa: BLE001
             print(f"(skip) version {v}: {exc}")
     try:
-        project.beta.toolboxes.delete(name=name)
+        project.toolboxes.delete(name=name)
         print(f"🗑️  Deleted toolbox {name}")
     except Exception as exc:  # noqa: BLE001
         print(f"(skip) toolbox {name}: {exc}")
@@ -1292,7 +1290,7 @@ version mismatch rather than a logic bug. The ones you'll hit first:
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `401` / forbidden when the agent calls the toolbox MCP endpoint | The agent identity was never authorized *to the toolbox* | Grant the agent the Foundry user role on the toolbox first (section 3), then retry. Authorizing the tool's own connection is not enough. |
-| `ImportError` on `ToolboxSearchPreviewTool`, `A2APreviewTool`, or another `*PreviewTool` | `azure-ai-projects` older than 2.2.0 | `pip install "azure-ai-projects>=2.2.0"` and restart the kernel. |
+| `ImportError` on `ToolboxSearchPreviewToolboxTool`, `A2APreviewToolboxTool`, or another `*PreviewTool` | `azure-ai-projects` older than 2.2.0 | `pip install "azure-ai-projects>=2.2.0"` and restart the kernel. |
 | A call reaches the toolbox but fails auth to the *downstream* system | Connection auth type doesn't match the caller | Match auth to the scenario: `oauth2` / `user-entra-token` for per-user access, `agentic-identity` or `project-managed-identity` for per-agent access. |
 | `create_version` rejected for multiple unnamed tools | More than one tool was added without a `name` | Only **one** unnamed tool is allowed per toolbox - give every other tool an explicit `name`. |
 | Tool Search never surfaces a tool you expect | The tool's text isn't discoverable | Add `additional_search_text`, or `pin` the tool so it's always offered regardless of the search result. |
