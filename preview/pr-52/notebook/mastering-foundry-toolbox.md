@@ -84,7 +84,9 @@ RAI_POLICY_NAME=""                           # existing RAI policy for the polic
 ```python
 %%capture
 # Toolboxes in Microsoft Foundry ship on the public-preview azure-ai-projects SDK (the typed
-# toolbox + tool bindings live under project.beta.toolboxes). mcp gives us a
+# toolbox + tool bindings live under project.beta.toolboxes; SDK 2.3.0 relocates
+# these to project.toolboxes with a breaking API, so we cap the SDK below 2.3.0).
+# mcp gives us a
 # JSON-RPC client for the raw endpoint, langchain-azure-ai[tools] provides the
 # LangGraph adapter, and agent-framework the MAF consumer. All on PyPI.
 import importlib.metadata as _md
@@ -99,7 +101,7 @@ for _pkg in ("azure-ai-projects", "azure-identity", "mcp", "httpx",
 
 if _need:
     %pip install --quiet \
-        "azure-ai-projects>=2.1.0" \
+        "azure-ai-projects>=2.2.0,<2.3.0" \
         "azure-identity>=1.17.0" \
         "mcp>=1.0.0" \
         "httpx>=0.27.0" \

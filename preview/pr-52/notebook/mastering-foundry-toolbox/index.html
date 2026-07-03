@@ -132,7 +132,9 @@ RAI_POLICY_NAME=""                           # existing RAI policy for the polic
 </code></pre>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token operator">%</span><span class="token operator">%</span>capture
 <span class="token comment"># Toolboxes in Microsoft Foundry ship on the public-preview azure-ai-projects SDK (the typed</span>
-<span class="token comment"># toolbox + tool bindings live under project.beta.toolboxes). mcp gives us a</span>
+<span class="token comment"># toolbox + tool bindings live under project.beta.toolboxes; SDK 2.3.0 relocates</span>
+<span class="token comment"># these to project.toolboxes with a breaking API, so we cap the SDK below 2.3.0).</span>
+<span class="token comment"># mcp gives us a</span>
 <span class="token comment"># JSON-RPC client for the raw endpoint, langchain-azure-ai[tools] provides the</span>
 <span class="token comment"># LangGraph adapter, and agent-framework the MAF consumer. All on PyPI.</span>
 <span class="token keyword">import</span> importlib<span class="token punctuation">.</span>metadata <span class="token keyword">as</span> _md
@@ -147,7 +149,7 @@ _need <span class="token operator">=</span> <span class="token punctuation">[</s
 
 <span class="token keyword">if</span> _need<span class="token punctuation">:</span>
     <span class="token operator">%</span>pip install <span class="token operator">-</span><span class="token operator">-</span>quiet \
-        <span class="token string">"azure-ai-projects&gt;=2.1.0"</span> \
+        <span class="token string">"azure-ai-projects&gt;=2.2.0,&lt;2.3.0"</span> \
         <span class="token string">"azure-identity&gt;=1.17.0"</span> \
         <span class="token string">"mcp&gt;=1.0.0"</span> \
         <span class="token string">"httpx&gt;=0.27.0"</span> \
