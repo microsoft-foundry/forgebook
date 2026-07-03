@@ -1,7 +1,7 @@
 jupyter>=1.0.0
 notebook>=7.0.0
 ipykernel>=6.0.0
-azure-ai-projects>=2.2.0
+azure-ai-projects>=2.2.0,<2.3.0
 azure-identity>=1.17.0
 agent-framework>=1.4.0
 mcp>=1.0.0
