@@ -85,13 +85,14 @@ RAI_POLICY_NAME=""                           # existing RAI policy for the polic
 %%capture
 # Toolboxes in Microsoft Foundry ship on the public-preview azure-ai-projects SDK (the typed
 # toolbox + tool bindings live under project.toolboxes as of SDK 2.3.0). mcp gives us a
-# JSON-RPC client for the raw endpoint, langchain-azure-ai[tools] provides the
-# LangGraph adapter, and agent-framework the MAF consumer. All on PyPI.
+# JSON-RPC client for the raw endpoint, langchain-azure-ai[tools] + langchain-mcp-adapters
+# provide the LangGraph adapter, and agent-framework the MAF consumer. All on PyPI.
 import importlib.metadata as _md
 
 _need = []
 for _pkg in ("azure-ai-projects", "azure-identity", "mcp", "httpx",
-             "python-dotenv", "langchain-azure-ai", "agent-framework"):
+             "python-dotenv", "langchain-azure-ai", "langchain-mcp-adapters",
+             "agent-framework"):
     try:
         _md.version(_pkg)
     except _md.PackageNotFoundError:
@@ -105,6 +106,7 @@ if _need:
         "httpx>=0.27.0" \
         "python-dotenv>=1.0.0" \
         "langchain-azure-ai[tools]>=1.2.4" \
+        "langchain-mcp-adapters>=0.1.0" \
         "agent-framework>=1.4.0"
 ```
 
@@ -876,10 +878,14 @@ import json, pathlib, httpx
 
 # A toolbox version as plain JSON - the declarative equivalent of the SDK build.
 # These dicts are the same shapes the typed classes produce, so this file can live in git.
+# The service requires every tool except at most one to carry a unique identifier
+# ("name", or "server_label" for MCP servers), so each entry below is named.
 version_body = {
     "tools": [
-        {"type": "web_search", "description": "Search the public web for current information."},
-        {"type": "code_interpreter", "description": "Run Python in a sandbox for data work."},
+        {"type": "web_search", "name": "web_search",
+         "description": "Search the public web for current information."},
+        {"type": "code_interpreter", "name": "code_interpreter",
+         "description": "Run Python in a sandbox for data work."},
         {
             "type": "mcp",
             "server_label": "learn",
@@ -887,7 +893,7 @@ version_body = {
             "server_url": "https://learn.microsoft.com/api/mcp",
             "require_approval": "never",
         },
-        {"type": "toolbox_search_preview"},  # make the whole toolbox search-first
+        {"type": "toolbox_search_preview", "name": "tool_search"},  # make the whole toolbox search-first
     ],
     "description": "Declarative toolbox built from a JSON manifest.",
 }
@@ -944,7 +950,7 @@ on demand.
 
 | Knob | Effect |
 |---|---|
-| **`pin`** | Tool is *always* in `tools/list` (skips search). Use for your 1-2 hottest tools. |
+| **`pin`** | Set `pin=True` so the tool is *always* in `tools/list` (skips search). Use for your 1-2 hottest tools. Omit it to leave a tool search-gated - the service rejects an explicit `pin=False`. |
 | **`additional_search_text`** | Extra keywords that make a tool findable without bloating its user-facing description. |
 | **`"*"` wildcard** | A `tool_configs` entry keyed `"*"` sets defaults for *every* tool. |
 | **Auto-pinning** | After warmup, Foundry auto-pins each user's hot set - frequently-used tools appear without a search. |
@@ -961,7 +967,9 @@ from azure.ai.projects.models import ToolboxSearchPreviewToolboxTool, ToolConfig
 # toolbox_search_preview meta-tool and a tool_configs map (values are ToolConfig).
 tool_configs = {
     "web_search": ToolConfig(pin=True),   # always exposed - no search round-trip
-    "*": ToolConfig(pin=False),           # wildcard default applied to every other tool
+    # Every other tool is search-gated by default, so it needs no entry here.
+    # NOTE: pin only accepts True - the service rejects an explicit pin=False
+    # (including via a "*" wildcard), since the search meta-tool is always pinned.
 }
 # Only add search keywords for azure_ai_search if it was actually added above.
 if any(type(t).__name__ == "AzureAISearchToolboxTool" for t in tools):
@@ -1145,28 +1153,49 @@ consumer URL, a bearer token, and the preview header.
 
 ```python
 # --- Microsoft Agent Framework -------------------------------------------------
-# MAF speaks MCP natively via MCPStreamableHTTPTool. Point it at the consumer URL
-# with the token + preview header and the agent can tool_search / call_tool.
-from agent_framework import ChatAgent
-from agent_framework.azure import AzureAIAgentClient
-from agent_framework.tools import MCPStreamableHTTPTool
+# MAF speaks MCP natively via MCPStreamableHTTPTool. Point it at the consumer URL.
+# Auth note: the toolbox MCP endpoint needs a bearer token + the preview header on
+# EVERY request, including the initialize handshake. MAF's header_provider only injects
+# on tool *calls*, so we hand it a pre-authenticated http_client whose default headers
+# cover connect + initialize. load_prompts=False skips a prompts/list the endpoint
+# doesn't serve, and we build FoundryChatClient from the endpoint + credential (the
+# project_client= path is currently incompatible with the azure-ai-projects 2.3.0 preview).
+import httpx
+from agent_framework import Agent, MCPStreamableHTTPTool
+from agent_framework.foundry import FoundryChatClient
 
 async def run_maf():
+    http = httpx.AsyncClient(
+        headers={**TOOLBOX_HEADERS, "Authorization": f"Bearer {mcp_token()}"},
+        follow_redirects=True,
+        timeout=httpx.Timeout(30.0, read=300.0),
+    )
     toolbox_tool = MCPStreamableHTTPTool(
         name="foundry_toolbox",
         url=CONSUMER_URL,
-        headers={**TOOLBOX_HEADERS, "Authorization": f"Bearer {mcp_token()}"},
+        http_client=http,
+        load_prompts=False,
     )
-    agent = ChatAgent(
-        chat_client=AzureAIAgentClient(project_client=project, model=MODEL_DEPLOYMENT),
-        instructions=(
-            "You have a tool_search tool. Search for a capability before assuming it is "
-            "unavailable; you may search multiple times per turn."
-        ),
-        tools=[toolbox_tool],
-    )
-    reply = await agent.run("Find the latest docs on toolboxes in Microsoft Foundry and summarize tool search.")
-    print(reply.text)
+    try:
+        async with toolbox_tool:
+            agent = Agent(
+                client=FoundryChatClient(
+                    project_endpoint=PROJECT_ENDPOINT,
+                    model=MODEL_DEPLOYMENT,
+                    credential=credential,
+                ),
+                instructions=(
+                    "You have a tool_search tool. Search for a capability before assuming it is "
+                    "unavailable; you may search multiple times per turn."
+                ),
+                tools=[toolbox_tool],
+            )
+            reply = await agent.run(
+                "Find the latest docs on toolboxes in Microsoft Foundry and summarize tool search."
+            )
+            print(reply.text)
+    finally:
+        await http.aclose()
 
 if os.getenv("PROJECT_ENDPOINT"):
     await run_maf()
@@ -1176,19 +1205,26 @@ else:
 
 ```python
 # --- LangGraph -----------------------------------------------------------------
-# langchain-azure-ai ships AzureAIProjectToolbox, which loads the toolbox as a set
-# of LangChain tools (Tool Search included) ready for a prebuilt ReAct agent.
+# langchain-azure-ai ships AzureAIProjectToolbox, which loads the toolbox as a set of
+# LangChain tools (Tool Search included) ready for a prebuilt ReAct agent. It pulls the
+# tools over MCP via langchain-mcp-adapters and needs the project endpoint + credential
+# explicitly (a project_client alone is not enough).
 from langchain_azure_ai.tools import AzureAIProjectToolbox
 from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
 from langgraph.prebuilt import create_react_agent
 
 async def run_langgraph():
     toolbox = AzureAIProjectToolbox(
-        project_client=project,
+        project_endpoint=PROJECT_ENDPOINT,
         toolbox_name=TOOLBOX_NAME,   # resolves the default version's MCP endpoint
+        credential=credential,
     )
     lc_tools = await toolbox.aget_tools()
-    llm = AzureAIChatCompletionsModel(project_client=project, model=MODEL_DEPLOYMENT)
+    llm = AzureAIChatCompletionsModel(
+        project_endpoint=PROJECT_ENDPOINT,
+        model_name=MODEL_DEPLOYMENT,
+        credential=credential,
+    )
     agent = create_react_agent(llm, lc_tools)
     result = await agent.ainvoke(
         {"messages": [("user", "Search the toolbox and use web search to get today's AI news.")]}
