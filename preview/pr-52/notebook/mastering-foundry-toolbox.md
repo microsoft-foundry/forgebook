@@ -1,13 +1,16 @@
 ![Toolboxes in Microsoft Foundry architecture. On the left a developer assembles a diverse set of tools - Web Search, MCP servers, Azure AI Search, Code Interpreter, File Search, OpenAPI, A2A, Work IQ, Fabric IQ, Browser Automation, Skills, and the tool-search meta-capability. These are published into a toolbox as immutable versions; one version is marked default. The default version is served from a single MCP endpoint (/toolboxes/{name}/mcp) that every MCP client consumes: Foundry hosted agents, Microsoft Agent Framework, LangGraph, and the Copilot SDK. Identity, an RAI guardrail, APIM, and Azure Policy govern the toolbox by default.](media/mastering-foundry-toolbox/01-toolbox-architecture.svg)
 
-**Toolboxes in Microsoft Foundry** are the managed way to package *many* tools behind a *single*,
-versioned, governed **MCP endpoint**. You assemble tools once, publish them as a default
-version, and every MCP client - a Foundry hosted agent, Microsoft Agent Framework, LangGraph,
-or the Copilot SDK - picks them up from the same URL without re-wiring anything.
+When several agents - or a mix of Foundry hosted agents, Microsoft Agent Framework, LangGraph,
+and Copilot SDK apps - need the *same* governed set of tools, you don't want to re-wire those
+tools and their auth into every one. The pattern that scales: package the tools **once** behind a
+single versioned, governed **MCP endpoint**, make them discoverable, and let every runtime consume
+them from the same URL.
 
-This recipe is a **broad, end-to-end walkthrough**. We build a toolbox, add *every* tool type,
-wire up *identity*, turn on *Tool Search*, manage *versions*, apply *governance policies*, and
-finally *consume* the toolbox from four different runtimes.
+This recipe teaches that pattern with **Toolboxes in Microsoft Foundry**, as a *reference
+walkthrough*. The runnable **core spine** is short - build a toolbox version, turn on **Tool
+Search**, verify it over MCP, and consume it from Microsoft Agent Framework. Around that spine sits
+a **catalog** of every other tool type, the REST/CI path, versioning, and governance policies -
+optional sections you can skip on a first read.
 
 #### The four pillars
 
@@ -18,16 +21,12 @@ finally *consume* the toolbox from four different runtimes.
 | **Tool Search** | The model is shown two meta-tools and *searches* for capability on demand, so a 200-tool toolbox stays as cheap as a 2-tool one. |
 | **Governed by default** | An RAI guardrail screens tool I/O; APIM and Azure Policy add gateway- and control-plane-level controls. |
 
-#### What you'll learn
+#### By the end, you'll be able to
 
-1. Configure the `AIProjectClient` toolbox surface and a token provider for the MCP endpoint.
-2. The six connection **auth types** and how a hosted agent propagates identity to each tool.
-3. Build a toolbox version with Web Search, MCP, Azure AI Search, Code Interpreter, File Search, OpenAPI, A2A, Work IQ, Fabric IQ, Browser Automation, and Skills.
-4. Do the *same thing declaratively* - build a toolbox version straight from the **REST API**.
-5. **Tool Search** - the meta-tool model, the ranking algorithm, and the knobs that control it.
-6. **Versioning** - immutable versions and promoting a new default.
-7. **Policies** - the RAI guardrail, an APIM-fronted MCP server, and Azure Policy at connection-creation time.
-8. Verify the live MCP endpoint, then consume it from MAF, LangGraph, and the Copilot SDK.
+- **Build** a versioned toolbox that exposes multiple tool types behind one MCP endpoint.
+- **Configure** per-connection identity so every consumer inherits correct, least-privilege access.
+- **Enable** Tool Search so a large toolbox stays as cheap for the model to use as a small one.
+- **Consume** the same toolbox unchanged from Agent Framework, LangGraph, and the Copilot SDK.
 
 > **Preview.** Toolbox, Tool Search, A2A, Browser Automation, Skills, and the Work IQ / Fabric IQ
 > tools are in preview. APIs and headers may change. Past the two required vars (`PROJECT_ENDPOINT`,
@@ -297,6 +296,10 @@ Rules that apply to every tool:
 Each block below is **skip-guarded** on its env vars, so the cells run with just the two required
 vars set - you'll get a Web Search + Code Interpreter toolbox. We build the `tools` list across the
 parts (run them top-to-bottom), then create the version in the final part.
+
+> **Core spine vs. catalog.** *4b (Web Search)* is the one tool we walk end-to-end; *4c - 4l*
+> are a **reference catalog** of the other tool types - skim or skip them, jump to *4m* to create
+> the version, then continue to Tool Search. Every catalog cell is self-contained and skip-guarded.
 
 #### 4a · Start the tool and skill lists
 
@@ -854,7 +857,7 @@ print(f"Assembled {len(tools)} tool(s) + {len(skills)} skill(s)")
 print(f"✅ Created {TOOLBOX_NAME} version {version.version}")
 ```
 
-## 5 / The REST API path (declarative / CI)
+## 5 / The REST API path (declarative / CI) *(optional reference)*
 
 The SDK above is a thin wrapper over the **toolboxes REST API**. When you want to ship a toolbox
 from CI - or from a language without an SDK - call the API directly. The whole build is one
@@ -981,7 +984,7 @@ created_resources["versions"].append(search_version.version)
 print(f"✅ Search-first version {search_version.version} - tools/list will now return tool_search + pinned only")
 ```
 
-## 7 / Versioning
+## 7 / Versioning *(optional reference)*
 
 Versions are **immutable** - you never edit a version, you create a new one. A single version is
 the **default**, and the default is what the consumer endpoint serves. This gives you safe,
@@ -1005,7 +1008,7 @@ print(f"✅ Default is now {search_version.version}")
 # project.beta.toolboxes.delete_version(name=TOOLBOX_NAME, version="<old>")
 ```
 
-## 8 / Policies & governance
+## 8 / Policies & governance *(optional reference)*
 
 "Governed by default" comes from **three independent control points**. Only the first is a field
 on the toolbox; the other two are standard Azure mechanisms you compose *around* it.
@@ -1221,7 +1224,7 @@ else:
         print(f"(Copilot SDK not installed in this env) {exc}")
 ```
 
-## 12 / Host MAF / LangGraph as a Foundry hosted agent
+## 12 / Host MAF / LangGraph as a Foundry hosted agent *(optional reference)*
 
 The MAF and LangGraph agents above run *locally*. The same agent code can run as a **Foundry
 hosted agent** - Foundry manages the runtime, scaling, and (critically) the **agent identity**
@@ -1279,10 +1282,31 @@ else:
         print(f"(skip) toolbox {name}: {exc}")
 ```
 
+## Failure modes
+
+Toolboxes sit on top of identity, connections, and preview APIs, so most breakage is an auth or a
+version mismatch rather than a logic bug. The ones you'll hit first:
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `401` / forbidden when the agent calls the toolbox MCP endpoint | The agent identity was never authorized *to the toolbox* | Grant the agent the Foundry user role on the toolbox first (section 3), then retry. Authorizing the tool's own connection is not enough. |
+| `ImportError` on `ToolboxSearchPreviewTool`, `A2APreviewTool`, or another `*PreviewTool` | `azure-ai-projects` older than 2.2.0 | `pip install "azure-ai-projects>=2.2.0"` and restart the kernel. |
+| A call reaches the toolbox but fails auth to the *downstream* system | Connection auth type doesn't match the caller | Match auth to the scenario: `oauth2` / `user-entra-token` for per-user access, `agentic-identity` or `project-managed-identity` for per-agent access. |
+| `create_version` rejected for multiple unnamed tools | More than one tool was added without a `name` | Only **one** unnamed tool is allowed per toolbox - give every other tool an explicit `name`. |
+| Tool Search never surfaces a tool you expect | The tool's text isn't discoverable | Add `additional_search_text`, or `pin` the tool so it's always offered regardless of the search result. |
+| MCP verify cell hangs or times out | No default version set, or the endpoint is still provisioning | Confirm a default version exists (section 7) and re-run once the version finishes publishing. |
+
+
 ## 14 / Next steps
 
-You built a toolbox in Microsoft Foundry end-to-end: every tool type, identity, Tool Search, versioning,
-governance, and four consumers. From here:
+You worked the full pattern end-to-end, and hit each objective:
+
+- **Built** a versioned toolbox that exposes multiple tool types behind one MCP endpoint.
+- **Configured** per-connection identity so each consumer inherits least-privilege access.
+- **Enabled** Tool Search so the toolbox stays cheap for the model no matter how many tools it holds.
+- **Consumed** the same toolbox unchanged from Agent Framework, LangGraph, and the Copilot SDK.
+
+From here:
 
 - **Tune Tool Search** - measure how often the model searches vs. uses pinned tools, then adjust
   `pin` / `additional_search_text` and your system prompt.
