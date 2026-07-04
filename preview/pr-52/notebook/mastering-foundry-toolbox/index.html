@@ -1116,7 +1116,7 @@ Version <span class="token number">3</span><span class="token punctuation">:</sp
 </pre></div></div><div class="nb-cell nb-markdown-cell"><h2>8 / Policies &amp; governance <em>(optional reference)</em></h2>
 <p>"Governed by default" comes from <strong>three independent control points</strong>. Only the first is a field
 on the toolbox; the other two are standard Azure mechanisms you compose <em>around</em> it.</p>
-<p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/04-policy-enforcement.svg" alt="Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. This gateway governs only MCP-server tools; built-in and first-party tools bypass it. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens every tool's inputs and outputs - built-in and MCP tools alike, so bypassing the gateway does not bypass content governance."></p>
+<p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/04-policy-enforcement.svg" alt="Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. This gateway governs the MCP-server tools that route through it. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens every tool's inputs and outputs - built-in and MCP tools alike."></p>
 <table>
 <thead>
 <tr>
@@ -1136,19 +1136,19 @@ on the toolbox; the other two are standard Azure mechanisms you compose <em>arou
 <td>2</td>
 <td><strong>APIM-fronted MCP</strong></td>
 <td><em>Your</em> Azure API Management, in front of <em>your</em> MCP server</td>
-<td><strong>Call time, MCP tools only</strong> - rate-limit / IP / header rules run in APIM for calls that route through your MCP server; the toolbox just registers the APIM gateway URL as a normal MCP tool. Built-in / first-party tools (Web Search, Code Interpreter, File Search, Azure AI Search, ...) never traverse your gateway.</td>
+<td><strong>Call time, MCP tools only</strong> - rate-limit / IP / header rules run in APIM for calls that route through your MCP server; the toolbox just registers the APIM gateway URL as a normal MCP tool.</td>
 </tr>
 <tr>
 <td>3</td>
 <td><strong>RAI guardrail</strong></td>
 <td><code>policies.rai_config.rai_policy_name</code> on a toolbox version</td>
-<td><strong>Call time, all tools</strong> - screens every tool's inputs and outputs (built-in and MCP alike), so skipping the gateway never means skipping content governance.</td>
+<td><strong>Call time, all tools</strong> - screens every tool's inputs and outputs (built-in and MCP alike).</td>
 </tr>
 </tbody></table>
 <blockquote>
 <p>Only the <strong>RAI guardrail</strong> is a toolbox field, and it screens <strong>every</strong> tool's inputs/outputs.
-<strong>APIM</strong> is your own gateway that you point an MCP tool at, so it governs <strong>only MCP-server
-tools</strong> - built-in tools never route through it; <strong>Azure Policy</strong> is authored separately by an
+<strong>APIM</strong> is your own gateway that you point an MCP tool at, so it governs the <strong>MCP-server
+tools</strong> that route through it; <strong>Azure Policy</strong> is authored separately by an
 admin and bites at connection-creation time, not when the toolbox is built.</p>
 </blockquote>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="20"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> ToolboxPolicies<span class="token punctuation">,</span> RaiConfig
