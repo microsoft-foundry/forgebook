@@ -17,19 +17,20 @@ flowchart TB
     NOTE2["Registered as a normal MCP tool:<br/>server_url = APIM gateway URL.<br/>Only calls that route through your MCP server<br/>are governed here."]:::note
     APIM -.-> NOTE2
 
-    BUILTIN["Built-in / first-party tools<br/>(Web Search, Code Interpreter, File Search,<br/>Azure AI Search, ...) - never traverse your gateway"]:::bypass
+    BUILTIN["Built-in / first-party tools<br/>(Web Search, Code Interpreter, File Search,<br/>Azure AI Search, ...) - skip the APIM gateway"]:::bypass
 
-    subgraph TB3["3 - Toolbox guardrail"]
+    subgraph TB3["3 - Toolbox guardrail (all tools)"]
         direction TB
         RAI["RAI policy<br/>policies.rai_config.rai_policy_name"]:::rai
-        IO["screens tool inputs / outputs"]:::step
+        IO["screens every tool's inputs / outputs<br/>(built-in and MCP alike)"]:::step
         RAI --> IO
     end
 
     CONNCREATE --> TBXV["Toolbox version"]:::accent
     TBXV -->|"MCP-server tools"| RT
     TBXV -->|"not MCP - no gateway"| BUILTIN
-    TBXV --> TB3
+    RT -->|"tool I/O"| TB3
+    BUILTIN -->|"tool I/O"| TB3
 
     classDef accent fill:#dbe9ff,stroke:#3b6fd6,color:#102a54,font-weight:bold;
     classDef policy fill:#fff4e6,stroke:#e8910c,color:#5c3b00;
