@@ -1,0 +1,30 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Segoe UI, Helvetica, Arial, sans-serif","primaryColor":"#eef4ff","primaryBorderColor":"#3b6fd6","primaryTextColor":"#102a54","lineColor":"#5b6b86","clusterBkg":"#f7f9fc","clusterBorder":"#c7d2e3"}}}%%
+flowchart TB
+    P1["1 &middot; Build &amp; curate<br/>select tools &middot; configure auth centrally<br/>publish a reusable, versioned toolbox"]:::build
+    P1 --> TBXBOX
+
+    subgraph TBXBOX["Toolbox &mdash; default version (immutable, promotable)"]
+        direction LR
+        TOOLS["Curated tools<br/>(Web Search, MCP, AI Search,<br/>Code Interpreter, A2A, Skills, ...)"]:::accent
+        P2["2 &middot; Discover with Tool Search<br/>two meta-tools &middot; search on demand<br/>progressive disclosure"]:::discover
+        P3["3 &middot; Govern<br/>RAI guardrail (all tools)<br/>BYO AI gateway for MCP servers<br/>governed by default &mdash; more to come"]:::govern
+        TOOLS ~~~ P2 ~~~ P3
+    end
+
+    TBXBOX --> EP["Single MCP-compatible endpoint<br/>/toolboxes/{name}/mcp"]:::endpoint
+
+    subgraph CONSUME["Consume &mdash; any MCP client, same URL unchanged"]
+        direction LR
+        MAF["Microsoft Agent Framework"]:::client
+        LG["LangGraph"]:::client
+        COP["Copilot SDK"]:::client
+        MAF ~~~ LG ~~~ COP
+    end
+    EP --> CONSUME
+
+    classDef accent fill:#dbe9ff,stroke:#3b6fd6,color:#102a54,font-weight:bold;
+    classDef endpoint fill:#e9f0fb,stroke:#3b6fd6,color:#102a54,font-weight:bold;
+    classDef build fill:#eef7ee,stroke:#3a9d4a,color:#13431d,font-weight:bold;
+    classDef discover fill:#fff4e6,stroke:#e8910c,color:#5c3b00,font-weight:bold;
+    classDef govern fill:#f3eefc,stroke:#7d57c2,color:#33215c,font-weight:bold;
+    classDef client fill:#f7f9fc,stroke:#5b6b86,color:#2a3550;
