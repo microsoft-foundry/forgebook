@@ -12,22 +12,18 @@ Search**, verify it over MCP, and consume it from Microsoft Agent Framework. Aro
 a **catalog** of every other tool type, the REST/CI path, versioning, and governance policies -
 optional sections you can skip on a first read.
 
-#### The tool lifecycle: four pillars, two available today
+#### Three pillars, all available today
 
-Toolbox covers the full tool lifecycle through **four pillars**; **Build** and **Consume** are
-available today. You define a curated set of tools **once**, manage them **centrally** in Foundry,
-and expose them through a **single MCP-compatible endpoint** that any agent can consume - the
-platform handles credential injection, token refresh, and policy enforcement at runtime.
+Toolbox packages the full tool experience into **three pillars** you use together. You define a
+curated set of tools **once**, manage them **centrally** in Foundry, and expose them through a
+**single MCP-compatible endpoint** that any agent can consume - the platform handles credential
+injection, token refresh, and policy enforcement at runtime.
 
-| Pillar | Status | What it enables |
-|---|---|---|
-| **Build** | Available today | Select tools, configure authentication centrally, and publish a reusable toolbox that any team can consume. |
-| **Consume** | Available today | Connect any agent to a single MCP-compatible endpoint to dynamically discover and invoke all tools in the toolbox. |
-
-**Discovery is progressive.** The Consume pillar's *dynamically discover* is delivered by **Tool
-Search** (section 6): the model starts each turn with two meta-tools and pulls in only the tools a
-step needs - *progressive disclosure* - so the prompt stays small and cheap no matter how many
-tools the toolbox holds.
+| Pillar | What it enables |
+|---|---|
+| **1 &middot; Build & curate** | Select tools, configure their authentication centrally, and publish a reusable, **versioned** toolbox that any team or agent consumes from one MCP endpoint. |
+| **2 &middot; Discover with Tool Search** | Agents discover tools **on demand**: the model starts each turn with two meta-tools and pulls in only the tools a step needs (*progressive disclosure*), so the prompt stays small no matter how many tools the toolbox holds. |
+| **3 &middot; Govern** | Screen every tool's inputs/outputs with an **RAI guardrail**, and front your MCP servers with a **bring-your-own AI gateway** (APIM). Governed by default - with more governance controls to come. |
 
 Because a toolbox is a **managed resource**, you can add, remove, or reconfigure tools without
 changing agent code - every agent connects to the same endpoint. **Versioning** gives you explicit
@@ -36,10 +32,11 @@ every consumer picks up the promoted version automatically, with no code changes
 
 #### By the end, you'll be able to
 
-- **Build** a versioned toolbox that exposes multiple tool types behind one MCP endpoint.
-- **Configure** per-connection identity so every consumer inherits correct, least-privilege access.
-- **Enable** Tool Search so agents **discover** tools on demand - *progressive disclosure* keeps a
-  large toolbox as cheap for the model to use as a small one.
+- **Build & curate** a versioned toolbox that exposes multiple tool types behind one MCP endpoint,
+  with per-connection identity so every consumer inherits correct, least-privilege access.
+- **Discover** tools with Tool Search - *progressive disclosure* keeps a large toolbox as cheap for
+  the model to use as a small one.
+- **Govern** the toolbox with an RAI guardrail and a bring-your-own MCP gateway.
 - **Consume** the same toolbox unchanged from Agent Framework, LangGraph, and the Copilot SDK.
 
 > **Preview.** Toolbox, Tool Search, A2A, Browser Automation, Skills, and the Work IQ / Fabric IQ

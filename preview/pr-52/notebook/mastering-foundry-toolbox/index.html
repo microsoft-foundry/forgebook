@@ -30,44 +30,42 @@ walkthrough</em>. The runnable <strong>core spine</strong> is short - build a to
 Search</strong>, verify it over MCP, and consume it from Microsoft Agent Framework. Around that spine sits
 a <strong>catalog</strong> of every other tool type, the REST/CI path, versioning, and governance policies -
 optional sections you can skip on a first read.</p>
-<h4>The tool lifecycle: four pillars, two available today</h4>
-<p>Toolbox covers the full tool lifecycle through <strong>four pillars</strong>; <strong>Build</strong> and <strong>Consume</strong> are
-available today. You define a curated set of tools <strong>once</strong>, manage them <strong>centrally</strong> in Foundry,
-and expose them through a <strong>single MCP-compatible endpoint</strong> that any agent can consume - the
-platform handles credential injection, token refresh, and policy enforcement at runtime.</p>
+<h4>Three pillars, all available today</h4>
+<p>Toolbox packages the full tool experience into <strong>three pillars</strong> you use together. You define a
+curated set of tools <strong>once</strong>, manage them <strong>centrally</strong> in Foundry, and expose them through a
+<strong>single MCP-compatible endpoint</strong> that any agent can consume - the platform handles credential
+injection, token refresh, and policy enforcement at runtime.</p>
 <table>
 <thead>
 <tr>
 <th>Pillar</th>
-<th>Status</th>
 <th>What it enables</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>Build</strong></td>
-<td>Available today</td>
-<td>Select tools, configure authentication centrally, and publish a reusable toolbox that any team can consume.</td>
+<td><strong>1 · Build &amp; curate</strong></td>
+<td>Select tools, configure their authentication centrally, and publish a reusable, <strong>versioned</strong> toolbox that any team or agent consumes from one MCP endpoint.</td>
 </tr>
 <tr>
-<td><strong>Consume</strong></td>
-<td>Available today</td>
-<td>Connect any agent to a single MCP-compatible endpoint to dynamically discover and invoke all tools in the toolbox.</td>
+<td><strong>2 · Discover with Tool Search</strong></td>
+<td>Agents discover tools <strong>on demand</strong>: the model starts each turn with two meta-tools and pulls in only the tools a step needs (<em>progressive disclosure</em>), so the prompt stays small no matter how many tools the toolbox holds.</td>
+</tr>
+<tr>
+<td><strong>3 · Govern</strong></td>
+<td>Screen every tool's inputs/outputs with an <strong>RAI guardrail</strong>, and front your MCP servers with a <strong>bring-your-own AI gateway</strong> (APIM). Governed by default - with more governance controls to come.</td>
 </tr>
 </tbody></table>
-<p><strong>Discovery is progressive.</strong> The Consume pillar's <em>dynamically discover</em> is delivered by <strong>Tool
-Search</strong> (section 6): the model starts each turn with two meta-tools and pulls in only the tools a
-step needs - <em>progressive disclosure</em> - so the prompt stays small and cheap no matter how many
-tools the toolbox holds.</p>
 <p>Because a toolbox is a <strong>managed resource</strong>, you can add, remove, or reconfigure tools without
 changing agent code - every agent connects to the same endpoint. <strong>Versioning</strong> gives you explicit
 control over when changes take effect: create and test a new version, then promote it to <em>default</em>;
 every consumer picks up the promoted version automatically, with no code changes or redeployment.</p>
 <h4>By the end, you'll be able to</h4>
 <ul>
-<li><strong>Build</strong> a versioned toolbox that exposes multiple tool types behind one MCP endpoint.</li>
-<li><strong>Configure</strong> per-connection identity so every consumer inherits correct, least-privilege access.</li>
-<li><strong>Enable</strong> Tool Search so agents <strong>discover</strong> tools on demand - <em>progressive disclosure</em> keeps a
-large toolbox as cheap for the model to use as a small one.</li>
+<li><strong>Build &amp; curate</strong> a versioned toolbox that exposes multiple tool types behind one MCP endpoint,
+with per-connection identity so every consumer inherits correct, least-privilege access.</li>
+<li><strong>Discover</strong> tools with Tool Search - <em>progressive disclosure</em> keeps a large toolbox as cheap for
+the model to use as a small one.</li>
+<li><strong>Govern</strong> the toolbox with an RAI guardrail and a bring-your-own MCP gateway.</li>
 <li><strong>Consume</strong> the same toolbox unchanged from Agent Framework, LangGraph, and the Copilot SDK.</li>
 </ul>
 <blockquote>
