@@ -182,7 +182,7 @@ connection's **auth type** decides whose identity is used. This is the single mo
 design decision in a toolbox - get it right and every consumer inherits correct, least-
 privilege access automatically.
 
-![Toolboxes in Microsoft Foundry identity flow. An end user calls a hosted agent that runs under its own agent managed identity. The agent must first be authorized to the toolbox - its identity needs the Foundry user role - before it can call the toolbox MCP endpoint. The toolbox then reaches each downstream tool through a project connection, and the connection's auth type - none, custom-keys, oauth2, user-entra-token (Foundry managed identity passthrough), project-managed-identity, or agentic-identity - selects the flow. For oauth2 and user-entra-token the agent emits the caller / end-user token and passes it to the toolbox, which uses that token to authenticate to the tool instead of the agent identity.](media/mastering-foundry-toolbox/02-auth-identity.svg)
+![Toolboxes in Microsoft Foundry identity flow. An end user calls a hosted agent that runs under its own agent managed identity. The agent must first be authorized to the toolbox - its identity needs the Foundry user role - before it can call the toolbox MCP endpoint. The toolbox then reaches each downstream tool through a project connection, and the connection's auth type - none, custom-keys, oauth2, user-entra-token (managed user identity passthrough), project-managed-identity, or agentic-identity - selects the flow. For oauth2 and user-entra-token the agent emits the caller / end-user token and passes it to the toolbox, which uses that token to authenticate to the tool instead of the agent identity.](media/mastering-foundry-toolbox/02-auth-identity.svg)
 
 #### How a hosted agent authenticates - two steps
 
@@ -193,7 +193,7 @@ privilege access automatically.
    - For `none`, `custom-keys`, `project-managed-identity`, `agentic-identity`, and
      Foundry-managed `oauth2`, the toolbox authenticates to the tool using the **connection's**
      configured identity - the agent never sees the secret.
-   - For **`oauth2`** and **`user-entra-token` (Foundry managed identity passthrough)**, the
+   - For **`oauth2`** and **`user-entra-token` (managed *user* identity passthrough)**, the
      hosted agent **emits the caller / end-user token** and passes it to the toolbox; the
      toolbox uses **that token** - not the agent identity - to authenticate to the tool. This is
      how the tool ends up acting as the real end user.
@@ -208,14 +208,14 @@ the tool actually allows:
 |---|---|
 | MCP, A2A | `none`, `custom-keys`, `oauth2`, `user-entra-token`, `project-managed-identity`, `agentic-identity` |
 | AI Search | `custom-keys`, `project-managed-identity` |
-| Web Search (custom search) | `custom-keys` |
-| OpenAPI | `custom-keys`, `project-managed-identity` |
+| Web Search (custom search) | `api-key` (Bing Custom Search) |
+| OpenAPI | `none`, `custom-keys`, `project-managed-identity` |
 | Work IQ | `oauth2` |
-| Fabric IQ | `project-managed-identity`, `oauth2` |
-| Browser Automation | `custom-keys` |
+| Fabric IQ | `oauth2`, `user-entra-token` |
+| Browser Automation | `api-key` (Playwright Workspaces) |
 
 **OAuth consent.** The first call through an `oauth2` connection returns a
-`CONSENT_REQUIRED` error (JSON-RPC code `-32006`/`-32007`) carrying a consent URL. Open it,
+`CONSENT_REQUIRED` error (JSON-RPC code `-32006`) carrying a consent URL. Open it,
 consent once, then retry - we handle exactly this in the verify section.
 
 #### Creating the connections (this is *not* an SDK-from-Python step)
@@ -236,10 +236,10 @@ You do **not** create connections from the toolbox SDK. The real ways to create 
 The connection's **auth type** is chosen at creation time (narrowed per the support table above).
 Whatever you pick is what the tool uses at runtime - the agent code never sets auth.
 
-> The relevant connection **type** for external tools (MCP, A2A, Work IQ, Fabric IQ, Browser
-> Automation) is `RemoteTool_Preview`; for Azure AI Search it is `CognitiveSearch`. In `azd`,
-> `--kind remote-tool` creates a `RemoteTool_Preview` connection and `--kind cognitive-search`
-> creates a `CognitiveSearch` one.
+> The connection **category** depends on the tool: MCP and Fabric IQ use `RemoteTool`; A2A and
+> Work IQ use `RemoteA2A`; Azure AI Search uses `CognitiveSearch`. In `azd`, `--kind remote-tool`
+> creates a `RemoteTool` connection, `--kind remote-a2a` a `RemoteA2A` one, and
+> `--kind cognitive-search` a `CognitiveSearch` one.
 
 **Two-step auth at runtime** (worth internalizing before you build):
 1. The hosted agent's identity must hold the **Foundry user role** on the project, or the toolbox
@@ -290,8 +290,9 @@ Rules that apply to every tool:
   ARM resource id. The toolbox resolves the tool's auth from that connection.
 - **`name` + `description`** are optional on every tool and are what **Tool Search ranks on**, so
   give each one a crisp description. (`MCPToolboxTool` instead uses `server_label` + `server_description`.)
-- **Only one *unnamed* tool is allowed in the entire toolbox.** Give every other tool a `name`
-  so you can register several tools - even several of the same type - in one toolbox.
+- **At most one *unnamed* tool per built-in type is allowed.** Two tools of the *same* type
+  without a `name` are rejected; give every additional tool a `name` (tools of *different* types
+  may each go unnamed).
 - **Skills are NOT tools** - they go in the separate `skills=[...]` list as
   `ToolboxSkillReference(name=..., version=...)`.
 
@@ -336,7 +337,7 @@ terms, no connection needed). Pass a `WebSearchConfiguration` instead to scope r
 - `name`, `description` - used by Tool Search ranking.
 
 **Create the connection** (only for the custom-search path; key-based) in the portal under *Build
--> Tools -> Connect a tool*, or with `azd ai connection create ... --auth-type custom-keys`, then
+-> Tools -> Connect a tool*, or with `azd ai connection create ... --auth-type api-key`, then
 pass its id as `WebSearchConfiguration.project_connection_id`. The default public web search needs
 **no connection**.
 
@@ -500,7 +501,7 @@ or in-house tools into Foundry.
 | `none` | *(none)* | Anonymous. The connection target is a public MCP URL and nothing is attached. Use for public servers (e.g. Microsoft Learn MCP). |
 | `custom-keys` | one or more header key/value pairs stored in the connection | The toolbox injects the static header(s) (e.g. `x-api-key: <value>`) on every upstream call. The agent never sees the secret. |
 | `oauth2` | a Foundry-managed OAuth app, **or** your own `clientId` / `clientSecret` + `scopes` | Delegated OAuth. The first call returns `CONSENT_REQUIRED`; the user consents once, the toolbox stores the token and then calls the tool **as that user**. |
-| `user-entra-token` | the upstream resource / `audience` (Foundry managed identity passthrough) | The hosted agent emits the **caller's Microsoft Entra token** and the toolbox forwards it to the MCP server. Use when the server consumes a delegated Entra token directly. |
+| `user-entra-token` | the upstream resource / `audience` (managed *user* identity passthrough) | The hosted agent emits the **caller's Microsoft Entra token** and the toolbox forwards it to the MCP server. Use when the server consumes a delegated Entra token directly. |
 | `project-managed-identity` | RBAC only - grant the project's managed identity the upstream's role | The project's system-assigned managed identity authenticates the call. A pure service-to-service flow with no user context. |
 | `agentic-identity` | the agent's own per-project identity (assigned to the agent) | Each agent calls with its **own distinct principal**, so downstream audit and least-privilege are per-agent rather than shared. |
 
@@ -763,20 +764,20 @@ Fabric - it reaches Fabric's data agent / MCP surface so the agent can query lak
 semantic models under Fabric's governance.
 
 **How it works.** Backed by an MCP server on the Fabric side; you supply the connection and
-optionally a `server_label`/`server_url`. Its connection supports **project-managed-identity** or
-**oauth2**. Note `require_approval` defaults to **`"always"`** - set it to `"never"` for
-unattended use.
+optionally a `server_label`/`server_url`. Its connection requires **delegated user auth** -
+**`oauth2`** or **`user-entra-token`** (OBO); application-only **`project-managed-identity` is not
+supported**. Set `require_approval` to `"never"` for unattended use.
 
 **Key parameters:**
 - `project_connection_id` - **required** `str`; the Fabric IQ connection.
-- `require_approval` - `"never" | "always"` (default `"always"`) or an `MCPToolRequireApproval` filter.
+- `require_approval` - `"never" | "always"` or an `MCPToolRequireApproval` filter; set `"never"` for unattended use.
 - `server_label`, `server_url` - optional MCP server identity (falls back to the connection).
 - `name`, `description` - used by Tool Search ranking.
 
-**Create the connection** (`project-managed-identity` or `oauth2`):
+**Create the connection** (`oauth2` or `user-entra-token` - delegated OBO):
 
 ```
-azd ai connection create my-fabriciq --kind remote-tool --target <fabric-iq-endpoint> --auth-type project-managed-identity
+azd ai connection create my-fabriciq --kind remote-tool --target <fabric-iq-endpoint> --auth-type user-entra-token
 ```
 
 ```python
@@ -798,10 +799,10 @@ else:
 
 📄 **Docs:** [Browser Automation](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/browser-automation)
 
-**What it is.** Lets the agent **drive a real browser** (via Azure Playwright Testing) to complete
+**What it is.** Lets the agent **drive a real browser** (via **Playwright Workspaces**) to complete
 multi-step web tasks - navigate, click, fill forms, read pages - when no API exists.
 
-**How it works.** The tool needs a connection to an Azure Playwright resource, nested two levels
+**How it works.** The tool needs a connection to a **Playwright Workspaces** resource, nested two levels
 deep: `BrowserAutomationToolParameters(connection=BrowserAutomationToolConnectionParameters(
 project_connection_id=...))`. The connection is **key**-based.
 
@@ -810,10 +811,10 @@ project_connection_id=...))`. The connection is **key**-based.
   `connection.project_connection_id` (**required**) points at the Playwright connection.
 - `name`, `description` - used by Tool Search ranking.
 
-**Create the connection** (key-based, to an Azure Playwright resource):
+**Create the connection** (key/token-based, to a Playwright Workspaces resource):
 
 ```
-azd ai connection create my-browser --kind remote-tool --target <playwright-endpoint> --auth-type custom-keys
+azd ai connection create my-browser --kind PlaywrightWorkspace --target <playwright-endpoint> --auth-type api-key
 ```
 
 ```python
@@ -842,12 +843,14 @@ else:
 
 📄 **Docs:** [Skills](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/skills)
 
-**What it is.** A **skill** is a reusable, published capability - a packaged prompt + its tools,
-following the `SKILL.md` spec - that you register once and reuse across toolboxes and agents.
+**What it is.** A **skill** is a reusable, published `SKILL.md` file of **behavioral instructions**
+(name + description + instruction body; **no tools are packaged inside**), following the
+[Agent Skills](https://agentskills.io) spec - registered once and reused across toolboxes and agents.
 
 **How it works.** Skills are registered out-of-band with
-`project.beta.skills.create(name, inline_content=SkillInlineContent(description=, instructions=), default=True)`
-(or `create_from_files(...)` for a multi-file zip). In a toolbox a skill is **not** a tool - you
+`project.beta.skills.create(name, inline_content=SkillInlineContent(description=, instructions=))`
+(or upload a ZIP/`SKILL.md` for multi-file packaging); a **separate** update-default call then
+promotes a version to *default*. In a toolbox a skill is **not** a tool - you
 reference it in the **separate `skills=` list** with `ToolboxSkillReference(name, version)`. Omit
 `version` to track the skill's **default** version; pin it to freeze on an immutable version.
 
@@ -866,8 +869,8 @@ from azure.ai.projects.models import ToolboxSkillReference
 #           description="Apply the company refund policy.",
 #           instructions="# Refund policy\n...SKILL.md body...",
 #       ),
-#       default=True,
 #   )
+#   # then promote the new version to default via the Skills update-default operation
 if os.getenv("SKILL_NAME"):
     skills.append(ToolboxSkillReference(
         name=os.environ["SKILL_NAME"],
@@ -917,7 +920,7 @@ import json, pathlib, httpx
 
 # A toolbox version as plain JSON - the declarative equivalent of the SDK build.
 # These dicts are the same shapes the typed classes produce, so this file can live in git.
-# The service requires every tool except at most one to carry a unique identifier
+# The service allows at most one tool *per type* without an identifier
 # ("name", or "server_label" for MCP servers), so each entry below is named.
 version_body = {
     "tools": [
@@ -1143,7 +1146,7 @@ catalog. Then we run a `tool_search` -> `call_tool` round-trip and read each too
 
 We use the `mcp` SDK's streamable-HTTP client, passing the bearer token and the mandatory
 preview header. If a tool's connection uses `oauth2`, the first call returns `CONSENT_REQUIRED`
-(`-32006`/`-32007`) with a consent URL - we surface it so you can consent and retry.
+(`-32006`) with a consent URL - we surface it so you can consent and retry.
 
 ```python
 from mcp.client.session import ClientSession
@@ -1365,9 +1368,9 @@ version mismatch rather than a logic bug. The ones you'll hit first:
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `401` / forbidden when the agent calls the toolbox MCP endpoint | The agent identity was never authorized *to the toolbox* | Grant the agent the Foundry user role on the toolbox first (section 3), then retry. Authorizing the tool's own connection is not enough. |
-| `ImportError` on `ToolboxSearchPreviewToolboxTool`, `A2APreviewToolboxTool`, or another `*PreviewTool` | `azure-ai-projects` older than 2.2.0 | `pip install "azure-ai-projects>=2.2.0"` and restart the kernel. |
+| `ImportError` on `ToolboxSearchPreviewToolboxTool`, `A2APreviewToolboxTool`, or another `*PreviewTool` | `azure-ai-projects` older than 2.3.0 | `pip install "azure-ai-projects>=2.3.0,<2.4.0"` and restart the kernel. |
 | A call reaches the toolbox but fails auth to the *downstream* system | Connection auth type doesn't match the caller | Match auth to the scenario: `oauth2` / `user-entra-token` for per-user access, `agentic-identity` or `project-managed-identity` for per-agent access. |
-| `create_version` rejected for multiple unnamed tools | More than one tool was added without a `name` | Only **one** unnamed tool is allowed per toolbox - give every other tool an explicit `name`. |
+| `create_version` rejected for multiple unnamed tools | More than one tool was added without a `name` | At most **one unnamed tool per type** is allowed - give every additional tool an explicit `name`. |
 | Tool Search never surfaces a tool you expect | The tool's text isn't discoverable | Add `additional_search_text`, or `pin` the tool so it's always offered regardless of the search result. |
 | MCP verify cell hangs or times out | No default version set, or the endpoint is still provisioning | Confirm a default version exists (section 7) and re-run once the version finishes publishing. |
 

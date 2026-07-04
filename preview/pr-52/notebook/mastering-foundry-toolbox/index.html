@@ -222,7 +222,7 @@ created_resources<span class="token punctuation">:</span> <span class="token bui
 connection's <strong>auth type</strong> decides whose identity is used. This is the single most important
 design decision in a toolbox - get it right and every consumer inherits correct, least-
 privilege access automatically.</p>
-<p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/02-auth-identity.svg" alt="Toolboxes in Microsoft Foundry identity flow. An end user calls a hosted agent that runs under its own agent managed identity. The agent must first be authorized to the toolbox - its identity needs the Foundry user role - before it can call the toolbox MCP endpoint. The toolbox then reaches each downstream tool through a project connection, and the connection's auth type - none, custom-keys, oauth2, user-entra-token (Foundry managed identity passthrough), project-managed-identity, or agentic-identity - selects the flow. For oauth2 and user-entra-token the agent emits the caller / end-user token and passes it to the toolbox, which uses that token to authenticate to the tool instead of the agent identity."></p>
+<p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/02-auth-identity.svg" alt="Toolboxes in Microsoft Foundry identity flow. An end user calls a hosted agent that runs under its own agent managed identity. The agent must first be authorized to the toolbox - its identity needs the Foundry user role - before it can call the toolbox MCP endpoint. The toolbox then reaches each downstream tool through a project connection, and the connection's auth type - none, custom-keys, oauth2, user-entra-token (managed user identity passthrough), project-managed-identity, or agentic-identity - selects the flow. For oauth2 and user-entra-token the agent emits the caller / end-user token and passes it to the toolbox, which uses that token to authenticate to the tool instead of the agent identity."></p>
 <h4>How a hosted agent authenticates - two steps</h4>
 <ol>
 <li><strong>Authorize the agent <em>to the toolbox</em> first.</strong> Before it can call the toolbox MCP endpoint
@@ -232,7 +232,7 @@ role → the toolbox rejects the agent. This is independent of any tool.</li>
 <li>For <code>none</code>, <code>custom-keys</code>, <code>project-managed-identity</code>, <code>agentic-identity</code>, and
 Foundry-managed <code>oauth2</code>, the toolbox authenticates to the tool using the <strong>connection's</strong>
 configured identity - the agent never sees the secret.</li>
-<li>For <strong><code>oauth2</code></strong> and <strong><code>user-entra-token</code> (Foundry managed identity passthrough)</strong>, the
+<li>For <strong><code>oauth2</code></strong> and <strong><code>user-entra-token</code> (managed <em>user</em> identity passthrough)</strong>, the
 hosted agent <strong>emits the caller / end-user token</strong> and passes it to the toolbox; the
 toolbox uses <strong>that token</strong> - not the agent identity - to authenticate to the tool. This is
 how the tool ends up acting as the real end user.</li>
@@ -260,11 +260,11 @@ the tool actually allows:</p>
 </tr>
 <tr>
 <td>Web Search (custom search)</td>
-<td><code>custom-keys</code></td>
+<td><code>api-key</code> (Bing Custom Search)</td>
 </tr>
 <tr>
 <td>OpenAPI</td>
-<td><code>custom-keys</code>, <code>project-managed-identity</code></td>
+<td><code>none</code>, <code>custom-keys</code>, <code>project-managed-identity</code></td>
 </tr>
 <tr>
 <td>Work IQ</td>
@@ -272,15 +272,15 @@ the tool actually allows:</p>
 </tr>
 <tr>
 <td>Fabric IQ</td>
-<td><code>project-managed-identity</code>, <code>oauth2</code></td>
+<td><code>oauth2</code>, <code>user-entra-token</code></td>
 </tr>
 <tr>
 <td>Browser Automation</td>
-<td><code>custom-keys</code></td>
+<td><code>api-key</code> (Playwright Workspaces)</td>
 </tr>
 </tbody></table>
 <p><strong>OAuth consent.</strong> The first call through an <code>oauth2</code> connection returns a
-<code>CONSENT_REQUIRED</code> error (JSON-RPC code <code>-32006</code>/<code>-32007</code>) carrying a consent URL. Open it,
+<code>CONSENT_REQUIRED</code> error (JSON-RPC code <code>-32006</code>) carrying a consent URL. Open it,
 consent once, then retry - we handle exactly this in the verify section.</p>
 </div><div class="nb-cell nb-markdown-cell"><h4>Creating the connections (this is <em>not</em> an SDK-from-Python step)</h4>
 <p>A connection is a <strong>project resource</strong> an admin creates <strong>once</strong>; tools then reference it by id.
@@ -299,10 +299,10 @@ in the body (what the portal and <code>azd</code> call under the hood).</li>
 <p>The connection's <strong>auth type</strong> is chosen at creation time (narrowed per the support table above).
 Whatever you pick is what the tool uses at runtime - the agent code never sets auth.</p>
 <blockquote>
-<p>The relevant connection <strong>type</strong> for external tools (MCP, A2A, Work IQ, Fabric IQ, Browser
-Automation) is <code>RemoteTool_Preview</code>; for Azure AI Search it is <code>CognitiveSearch</code>. In <code>azd</code>,
-<code>--kind remote-tool</code> creates a <code>RemoteTool_Preview</code> connection and <code>--kind cognitive-search</code>
-creates a <code>CognitiveSearch</code> one.</p>
+<p>The connection <strong>category</strong> depends on the tool: MCP and Fabric IQ use <code>RemoteTool</code>; A2A and
+Work IQ use <code>RemoteA2A</code>; Azure AI Search uses <code>CognitiveSearch</code>. In <code>azd</code>, <code>--kind remote-tool</code>
+creates a <code>RemoteTool</code> connection, <code>--kind remote-a2a</code> a <code>RemoteA2A</code> one, and
+<code>--kind cognitive-search</code> a <code>CognitiveSearch</code> one.</p>
 </blockquote>
 <p><strong>Two-step auth at runtime</strong> (worth internalizing before you build):</p>
 <ol>
@@ -375,8 +375,9 @@ classes it needs</strong> at the top of its own cell, so you can lift any single
 ARM resource id. The toolbox resolves the tool's auth from that connection.</li>
 <li><strong><code>name</code> + <code>description</code></strong> are optional on every tool and are what <strong>Tool Search ranks on</strong>, so
 give each one a crisp description. (<code>MCPToolboxTool</code> instead uses <code>server_label</code> + <code>server_description</code>.)</li>
-<li><strong>Only one <em>unnamed</em> tool is allowed in the entire toolbox.</strong> Give every other tool a <code>name</code>
-so you can register several tools - even several of the same type - in one toolbox.</li>
+<li><strong>At most one <em>unnamed</em> tool per built-in type is allowed.</strong> Two tools of the <em>same</em> type
+without a <code>name</code> are rejected; give every additional tool a <code>name</code> (tools of <em>different</em> types
+may each go unnamed).</li>
 <li><strong>Skills are NOT tools</strong> - they go in the separate <code>skills=[...]</code> list as
 <code>ToolboxSkillReference(name=..., version=...)</code>.</li>
 </ul>
@@ -413,7 +414,7 @@ results geographically.</li>
 <li><code>name</code>, <code>description</code> - used by Tool Search ranking.</li>
 </ul>
 <p><strong>Create the connection</strong> (only for the custom-search path; key-based) in the portal under <em>Build
--&gt; Tools -&gt; Connect a tool</em>, or with <code>azd ai connection create ... --auth-type custom-keys</code>, then
+-&gt; Tools -&gt; Connect a tool</em>, or with <code>azd ai connection create ... --auth-type api-key</code>, then
 pass its id as <code>WebSearchConfiguration.project_connection_id</code>. The default public web search needs
 <strong>no connection</strong>.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="5"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> WebSearchToolboxTool<span class="token punctuation">,</span> WebSearchConfiguration
@@ -568,7 +569,7 @@ to gate specific tools.</li>
 </tr>
 <tr>
 <td><code>user-entra-token</code></td>
-<td>the upstream resource / <code>audience</code> (Foundry managed identity passthrough)</td>
+<td>the upstream resource / <code>audience</code> (managed <em>user</em> identity passthrough)</td>
 <td>The hosted agent emits the <strong>caller's Microsoft Entra token</strong> and the toolbox forwards it to the MCP server. Use when the server consumes a delegated Entra token directly.</td>
 </tr>
 <tr>
@@ -817,18 +818,18 @@ developer, the agent runtime identity, and every user involved in the OAuth flow
 Fabric - it reaches Fabric's data agent / MCP surface so the agent can query lakehouse data and
 semantic models under Fabric's governance.</p>
 <p><strong>How it works.</strong> Backed by an MCP server on the Fabric side; you supply the connection and
-optionally a <code>server_label</code>/<code>server_url</code>. Its connection supports <strong>project-managed-identity</strong> or
-<strong>oauth2</strong>. Note <code>require_approval</code> defaults to <strong><code>"always"</code></strong> - set it to <code>"never"</code> for
-unattended use.</p>
+optionally a <code>server_label</code>/<code>server_url</code>. Its connection requires <strong>delegated user auth</strong> -
+<strong><code>oauth2</code></strong> or <strong><code>user-entra-token</code></strong> (OBO); application-only <strong><code>project-managed-identity</code> is not
+supported</strong>. Set <code>require_approval</code> to <code>"never"</code> for unattended use.</p>
 <p><strong>Key parameters:</strong></p>
 <ul>
 <li><code>project_connection_id</code> - <strong>required</strong> <code>str</code>; the Fabric IQ connection.</li>
-<li><code>require_approval</code> - <code>"never" | "always"</code> (default <code>"always"</code>) or an <code>MCPToolRequireApproval</code> filter.</li>
+<li><code>require_approval</code> - <code>"never" | "always"</code> or an <code>MCPToolRequireApproval</code> filter; set <code>"never"</code> for unattended use.</li>
 <li><code>server_label</code>, <code>server_url</code> - optional MCP server identity (falls back to the connection).</li>
 <li><code>name</code>, <code>description</code> - used by Tool Search ranking.</li>
 </ul>
-<p><strong>Create the connection</strong> (<code>project-managed-identity</code> or <code>oauth2</code>):</p>
-<pre><code>azd ai connection create my-fabriciq --kind remote-tool --target &lt;fabric-iq-endpoint&gt; --auth-type project-managed-identity
+<p><strong>Create the connection</strong> (<code>oauth2</code> or <code>user-entra-token</code> - delegated OBO):</p>
+<pre><code>azd ai connection create my-fabriciq --kind remote-tool --target &lt;fabric-iq-endpoint&gt; --auth-type user-entra-token
 </code></pre>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="13"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> FabricIQPreviewToolboxTool
 
@@ -844,9 +845,9 @@ unattended use.</p>
     skip<span class="token punctuation">(</span><span class="token string">"FABRIC_IQ_PROJECT_CONNECTION_ID not set - skipping Fabric IQ"</span><span class="token punctuation">)</span></code></pre></div><div class="nb-output" data-prompt-number="13"><pre class="language-python">⏭️  Skipping — FABRIC_IQ_PROJECT_CONNECTION_ID <span class="token keyword">not</span> <span class="token builtin">set</span> <span class="token operator">-</span> skipping Fabric IQ
 </pre></div></div><div class="nb-cell nb-markdown-cell"><h4>4k · Browser Automation <em>(preview)</em></h4>
 <p>📄 <strong>Docs:</strong> <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/browser-automation">Browser Automation</a></p>
-<p><strong>What it is.</strong> Lets the agent <strong>drive a real browser</strong> (via Azure Playwright Testing) to complete
+<p><strong>What it is.</strong> Lets the agent <strong>drive a real browser</strong> (via <strong>Playwright Workspaces</strong>) to complete
 multi-step web tasks - navigate, click, fill forms, read pages - when no API exists.</p>
-<p><strong>How it works.</strong> The tool needs a connection to an Azure Playwright resource, nested two levels
+<p><strong>How it works.</strong> The tool needs a connection to a <strong>Playwright Workspaces</strong> resource, nested two levels
 deep: <code>BrowserAutomationToolParameters(connection=BrowserAutomationToolConnectionParameters( project_connection_id=...))</code>. The connection is <strong>key</strong>-based.</p>
 <p><strong>Key parameters:</strong></p>
 <ul>
@@ -854,8 +855,8 @@ deep: <code>BrowserAutomationToolParameters(connection=BrowserAutomationToolConn
 <code>connection.project_connection_id</code> (<strong>required</strong>) points at the Playwright connection.</li>
 <li><code>name</code>, <code>description</code> - used by Tool Search ranking.</li>
 </ul>
-<p><strong>Create the connection</strong> (key-based, to an Azure Playwright resource):</p>
-<pre><code>azd ai connection create my-browser --kind remote-tool --target &lt;playwright-endpoint&gt; --auth-type custom-keys
+<p><strong>Create the connection</strong> (key/token-based, to a Playwright Workspaces resource):</p>
+<pre><code>azd ai connection create my-browser --kind PlaywrightWorkspace --target &lt;playwright-endpoint&gt; --auth-type api-key
 </code></pre>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="14"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
     BrowserAutomationPreviewToolboxTool<span class="token punctuation">,</span>
@@ -878,11 +879,13 @@ deep: <code>BrowserAutomationToolParameters(connection=BrowserAutomationToolConn
     skip<span class="token punctuation">(</span><span class="token string">"BROWSER_AUTOMATION_PROJECT_CONNECTION_ID not set - skipping Browser Automation"</span><span class="token punctuation">)</span></code></pre></div><div class="nb-output" data-prompt-number="14"><pre class="language-python">⏭️  Skipping — BROWSER_AUTOMATION_PROJECT_CONNECTION_ID <span class="token keyword">not</span> <span class="token builtin">set</span> <span class="token operator">-</span> skipping Browser Automation
 </pre></div></div><div class="nb-cell nb-markdown-cell"><h4>4l · Skills (the separate <code>skills=</code> list)</h4>
 <p>📄 <strong>Docs:</strong> <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/skills">Skills</a></p>
-<p><strong>What it is.</strong> A <strong>skill</strong> is a reusable, published capability - a packaged prompt + its tools,
-following the <code>SKILL.md</code> spec - that you register once and reuse across toolboxes and agents.</p>
+<p><strong>What it is.</strong> A <strong>skill</strong> is a reusable, published <code>SKILL.md</code> file of <strong>behavioral instructions</strong>
+(name + description + instruction body; <strong>no tools are packaged inside</strong>), following the
+<a href="https://agentskills.io">Agent Skills</a> spec - registered once and reused across toolboxes and agents.</p>
 <p><strong>How it works.</strong> Skills are registered out-of-band with
-<code>project.beta.skills.create(name, inline_content=SkillInlineContent(description=, instructions=), default=True)</code>
-(or <code>create_from_files(...)</code> for a multi-file zip). In a toolbox a skill is <strong>not</strong> a tool - you
+<code>project.beta.skills.create(name, inline_content=SkillInlineContent(description=, instructions=))</code>
+(or upload a ZIP/<code>SKILL.md</code> for multi-file packaging); a <strong>separate</strong> update-default call then
+promotes a version to <em>default</em>. In a toolbox a skill is <strong>not</strong> a tool - you
 reference it in the <strong>separate <code>skills=</code> list</strong> with <code>ToolboxSkillReference(name, version)</code>. Omit
 <code>version</code> to track the skill's <strong>default</strong> version; pin it to freeze on an immutable version.</p>
 <p><strong>Key parameters</strong> (<code>ToolboxSkillReference</code>):</p>
@@ -900,8 +903,8 @@ reference it in the <strong>separate <code>skills=</code> list</strong> with <co
 <span class="token comment">#           description="Apply the company refund policy.",</span>
 <span class="token comment">#           instructions="# Refund policy\n...SKILL.md body...",</span>
 <span class="token comment">#       ),</span>
-<span class="token comment">#       default=True,</span>
 <span class="token comment">#   )</span>
+<span class="token comment">#   # then promote the new version to default via the Skills update-default operation</span>
 <span class="token keyword">if</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"SKILL_NAME"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
     skills<span class="token punctuation">.</span>append<span class="token punctuation">(</span>ToolboxSkillReference<span class="token punctuation">(</span>
         name<span class="token operator">=</span>os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">"SKILL_NAME"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
@@ -942,7 +945,7 @@ connections with <code>azd ai connection create</code> (or the portal) as covere
 
 <span class="token comment"># A toolbox version as plain JSON - the declarative equivalent of the SDK build.</span>
 <span class="token comment"># These dicts are the same shapes the typed classes produce, so this file can live in git.</span>
-<span class="token comment"># The service requires every tool except at most one to carry a unique identifier</span>
+<span class="token comment"># The service allows at most one tool *per type* without an identifier</span>
 <span class="token comment"># ("name", or "server_label" for MCP servers), so each entry below is named.</span>
 version_body <span class="token operator">=</span> <span class="token punctuation">{</span>
     <span class="token string">"tools"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
@@ -1203,7 +1206,7 @@ catalog. Then we run a <code>tool_search</code> -&gt; <code>call_tool</code> rou
 <code>_meta.tool_configuration</code> (which carries <code>require_approval</code>).</p>
 <p>We use the <code>mcp</code> SDK's streamable-HTTP client, passing the bearer token and the mandatory
 preview header. If a tool's connection uses <code>oauth2</code>, the first call returns <code>CONSENT_REQUIRED</code>
-(<code>-32006</code>/<code>-32007</code>) with a consent URL - we surface it so you can consent and retry.</p>
+(<code>-32006</code>) with a consent URL - we surface it so you can consent and retry.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="22"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> mcp<span class="token punctuation">.</span>client<span class="token punctuation">.</span>session <span class="token keyword">import</span> ClientSession
 <span class="token keyword">from</span> mcp<span class="token punctuation">.</span>client<span class="token punctuation">.</span>streamable_http <span class="token keyword">import</span> streamablehttp_client
 
@@ -1469,8 +1472,8 @@ version mismatch rather than a logic bug. The ones you'll hit first:</p>
 </tr>
 <tr>
 <td><code>ImportError</code> on <code>ToolboxSearchPreviewToolboxTool</code>, <code>A2APreviewToolboxTool</code>, or another <code>*PreviewTool</code></td>
-<td><code>azure-ai-projects</code> older than 2.2.0</td>
-<td><code>pip install "azure-ai-projects&gt;=2.2.0"</code> and restart the kernel.</td>
+<td><code>azure-ai-projects</code> older than 2.3.0</td>
+<td><code>pip install "azure-ai-projects&gt;=2.3.0,&lt;2.4.0"</code> and restart the kernel.</td>
 </tr>
 <tr>
 <td>A call reaches the toolbox but fails auth to the <em>downstream</em> system</td>
@@ -1480,7 +1483,7 @@ version mismatch rather than a logic bug. The ones you'll hit first:</p>
 <tr>
 <td><code>create_version</code> rejected for multiple unnamed tools</td>
 <td>More than one tool was added without a <code>name</code></td>
-<td>Only <strong>one</strong> unnamed tool is allowed per toolbox - give every other tool an explicit <code>name</code>.</td>
+<td>At most <strong>one unnamed tool per type</strong> is allowed - give every additional tool an explicit <code>name</code>.</td>
 </tr>
 <tr>
 <td>Tool Search never surfaces a tool you expect</td>
