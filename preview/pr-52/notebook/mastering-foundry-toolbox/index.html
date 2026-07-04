@@ -242,6 +242,23 @@ how the tool ends up acting as the real end user.</li>
 </ul>
 </li>
 </ol>
+<h4>Two identities, better together</h4>
+<p>Running a toolbox <strong>behind a hosted agent</strong> puts <em>two</em> identities in play at once, and the platform
+wires them together for you:</p>
+<ul>
+<li><strong>Agent -&gt; toolbox (the trust boundary).</strong> The hosted agent always authenticates to the toolbox
+MCP endpoint with its <strong>own agent managed identity</strong> - that identity holds the <em>Foundry user</em>
+role. This is what gates access to the toolbox itself, independent of any single tool.</li>
+<li><strong>Toolbox -&gt; tool (the end-user passthrough).</strong> For <code>oauth2</code> and <code>user-entra-token</code> connections,
+that same hosted agent <strong>forwards the caller's end-user Entra token</strong>, and the toolbox uses <em>that</em>
+token (OBO) to reach the downstream tool. The tool then acts as the <strong>real end user</strong> - per-user,
+least-privilege access with correct downstream audit.</li>
+</ul>
+<p>That's the <em>better-together</em> story: you keep the agent's managed identity as the stable, governable
+boundary <strong>to</strong> the toolbox, <strong>and</strong> still get true end-user identity on the downstream data call -
+without writing any OAuth/token-exchange plumbing in your agent code. (For non-OBO auth types the
+tool runs under the connection's own identity - the project MI, an API key, or the agent's own
+per-project <code>agentic-identity</code> - and no user token is forwarded.)</p>
 <h4>Auth support is tool-type specific</h4>
 <p>Only MCP and A2A accept all six auth types (each one is defined in detail in <strong>4e · Remote MCP
 server</strong> below). Every other tool type supports a narrower subset - pick a connection auth type
@@ -1099,7 +1116,7 @@ Version <span class="token number">3</span><span class="token punctuation">:</sp
 </pre></div></div><div class="nb-cell nb-markdown-cell"><h2>8 / Policies &amp; governance <em>(optional reference)</em></h2>
 <p>"Governed by default" comes from <strong>three independent control points</strong>. Only the first is a field
 on the toolbox; the other two are standard Azure mechanisms you compose <em>around</em> it.</p>
-<p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/04-policy-enforcement.svg" alt="Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens tool inputs and outputs."></p>
+<p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/04-policy-enforcement.svg" alt="Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. This gateway governs only MCP-server tools; built-in and first-party tools bypass it. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens tool inputs and outputs."></p>
 <table>
 <thead>
 <tr>
@@ -1119,7 +1136,7 @@ on the toolbox; the other two are standard Azure mechanisms you compose <em>arou
 <td>2</td>
 <td><strong>APIM-fronted MCP</strong></td>
 <td><em>Your</em> Azure API Management, in front of <em>your</em> MCP server</td>
-<td><strong>Call time</strong> - rate-limit / IP / header rules run in APIM; the toolbox just registers the APIM gateway URL as a normal MCP tool.</td>
+<td><strong>Call time, MCP tools only</strong> - rate-limit / IP / header rules run in APIM for calls that route through your MCP server; the toolbox just registers the APIM gateway URL as a normal MCP tool. Built-in / first-party tools (Web Search, Code Interpreter, File Search, Azure AI Search, ...) never traverse your gateway.</td>
 </tr>
 <tr>
 <td>3</td>
@@ -1129,9 +1146,10 @@ on the toolbox; the other two are standard Azure mechanisms you compose <em>arou
 </tr>
 </tbody></table>
 <blockquote>
-<p>Only the <strong>RAI guardrail</strong> is a toolbox field. <strong>APIM</strong> is your own gateway that you point an
-MCP tool at; <strong>Azure Policy</strong> is authored separately by an admin and bites at connection-
-creation time, not when the toolbox is built.</p>
+<p>Only the <strong>RAI guardrail</strong> is a toolbox field, and it screens <strong>every</strong> tool's inputs/outputs.
+<strong>APIM</strong> is your own gateway that you point an MCP tool at, so it governs <strong>only MCP-server
+tools</strong> - built-in tools never route through it; <strong>Azure Policy</strong> is authored separately by an
+admin and bites at connection-creation time, not when the toolbox is built.</p>
 </blockquote>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input" data-prompt-number="20"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>projects<span class="token punctuation">.</span>models <span class="token keyword">import</span> ToolboxPolicies<span class="token punctuation">,</span> RaiConfig
 

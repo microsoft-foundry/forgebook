@@ -206,6 +206,25 @@ privilege access automatically.
      toolbox uses **that token** - not the agent identity - to authenticate to the tool. This is
      how the tool ends up acting as the real end user.
 
+#### Two identities, better together
+
+Running a toolbox **behind a hosted agent** puts *two* identities in play at once, and the platform
+wires them together for you:
+
+- **Agent -> toolbox (the trust boundary).** The hosted agent always authenticates to the toolbox
+  MCP endpoint with its **own agent managed identity** - that identity holds the *Foundry user*
+  role. This is what gates access to the toolbox itself, independent of any single tool.
+- **Toolbox -> tool (the end-user passthrough).** For `oauth2` and `user-entra-token` connections,
+  that same hosted agent **forwards the caller's end-user Entra token**, and the toolbox uses *that*
+  token (OBO) to reach the downstream tool. The tool then acts as the **real end user** - per-user,
+  least-privilege access with correct downstream audit.
+
+That's the *better-together* story: you keep the agent's managed identity as the stable, governable
+boundary **to** the toolbox, **and** still get true end-user identity on the downstream data call -
+without writing any OAuth/token-exchange plumbing in your agent code. (For non-OBO auth types the
+tool runs under the connection's own identity - the project MI, an API key, or the agent's own
+per-project `agentic-identity` - and no user token is forwarded.)
+
 #### Auth support is tool-type specific
 
 Only MCP and A2A accept all six auth types (each one is defined in detail in **4e · Remote MCP
@@ -1071,17 +1090,18 @@ print(f"✅ Default is now {search_version.version}")
 "Governed by default" comes from **three independent control points**. Only the first is a field
 on the toolbox; the other two are standard Azure mechanisms you compose *around* it.
 
-![Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens tool inputs and outputs.](media/mastering-foundry-toolbox/04-policy-enforcement.svg)
+![Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. This gateway governs only MCP-server tools; built-in and first-party tools bypass it. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens tool inputs and outputs.](media/mastering-foundry-toolbox/04-policy-enforcement.svg)
 
 | # | Control point | Where it lives | Enforced when |
 |---|---|---|---|
 | 1 | **Azure Policy** | A separate Azure Policy resource (admin-authored) | **Connection creation** - a banned endpoint/auth is blocked before any toolbox can reference it. |
-| 2 | **APIM-fronted MCP** | *Your* Azure API Management, in front of *your* MCP server | **Call time** - rate-limit / IP / header rules run in APIM; the toolbox just registers the APIM gateway URL as a normal MCP tool. |
+| 2 | **APIM-fronted MCP** | *Your* Azure API Management, in front of *your* MCP server | **Call time, MCP tools only** - rate-limit / IP / header rules run in APIM for calls that route through your MCP server; the toolbox just registers the APIM gateway URL as a normal MCP tool. Built-in / first-party tools (Web Search, Code Interpreter, File Search, Azure AI Search, ...) never traverse your gateway. |
 | 3 | **RAI guardrail** | `policies.rai_config.rai_policy_name` on a toolbox version | **Call time** - screens tool inputs and outputs. |
 
-> Only the **RAI guardrail** is a toolbox field. **APIM** is your own gateway that you point an
-> MCP tool at; **Azure Policy** is authored separately by an admin and bites at connection-
-> creation time, not when the toolbox is built.
+> Only the **RAI guardrail** is a toolbox field, and it screens **every** tool's inputs/outputs.
+> **APIM** is your own gateway that you point an MCP tool at, so it governs **only MCP-server
+> tools** - built-in tools never route through it; **Azure Policy** is authored separately by an
+> admin and bites at connection-creation time, not when the toolbox is built.
 
 ```python
 from azure.ai.projects.models import ToolboxPolicies, RaiConfig

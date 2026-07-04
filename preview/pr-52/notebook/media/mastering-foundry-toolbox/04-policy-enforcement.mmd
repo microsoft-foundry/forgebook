@@ -8,14 +8,16 @@ flowchart TB
         CONNCREATE -->|banned endpoint/auth| BLOCK["create blocked"]:::block
     end
 
-    subgraph RT["2 - Runtime gateway (customer-owned)"]
+    subgraph RT["2 - Runtime gateway (customer-owned) - MCP-server tools only"]
         direction TB
         APIM["Azure API Management<br/>rate-limit &middot; IP filter &middot; header handling"]:::apim
         MCP["Your MCP server"]:::tool
         APIM --> MCP
     end
-    NOTE2["Registered as a normal MCP tool:<br/>server_url = APIM gateway URL"]:::note
+    NOTE2["Registered as a normal MCP tool:<br/>server_url = APIM gateway URL.<br/>Only calls that route through your MCP server<br/>are governed here."]:::note
     APIM -.-> NOTE2
+
+    BUILTIN["Built-in / first-party tools<br/>(Web Search, Code Interpreter, File Search,<br/>Azure AI Search, ...) - never traverse your gateway"]:::bypass
 
     subgraph TB3["3 - Toolbox guardrail"]
         direction TB
@@ -25,7 +27,8 @@ flowchart TB
     end
 
     CONNCREATE --> TBXV["Toolbox version"]:::accent
-    TBXV --> RT
+    TBXV -->|"MCP-server tools"| RT
+    TBXV -->|"not MCP - no gateway"| BUILTIN
     TBXV --> TB3
 
     classDef accent fill:#dbe9ff,stroke:#3b6fd6,color:#102a54,font-weight:bold;
@@ -36,3 +39,4 @@ flowchart TB
     classDef step fill:#ffffff,stroke:#9aa7bd,color:#2a3550;
     classDef block fill:#fde8e8,stroke:#cc3b3b,color:#5c1313,font-weight:bold;
     classDef note fill:#f3eefc,stroke:#7d57c2,color:#33215c;
+    classDef bypass fill:#f7f9fc,stroke:#9aa7bd,color:#2a3550,stroke-dasharray:4 3;
