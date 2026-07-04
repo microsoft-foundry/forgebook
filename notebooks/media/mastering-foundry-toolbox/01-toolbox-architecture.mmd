@@ -1,33 +1,58 @@
-%%{init: {"theme":"base","themeVariables":{"fontFamily":"Segoe UI, Helvetica, Arial, sans-serif","primaryColor":"#eef4ff","primaryBorderColor":"#3b6fd6","primaryTextColor":"#102a54","lineColor":"#5b6b86","clusterBkg":"#f7f9fc","clusterBorder":"#c7d2e3"}}}%%
-flowchart LR
-    subgraph BUILD["Build &amp; curate"]
-        direction TB
-        B1["Select tools<br/>Web Search, MCP, AI Search,<br/>Code Interpreter, A2A, Skills, ..."]:::build
-        B2["Configure auth centrally"]:::build
-        B3["Publish a reusable,<br/>versioned toolbox"]:::build
-        B1 --> B2 --> B3
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Segoe UI, Helvetica, Arial, sans-serif","lineColor":"#8a94a6"}}}%%
+flowchart TB
+    TITLE["Toolboxes in Foundry"]:::title
+    TITLE ~~~ CONSUMERS
+
+    subgraph CONSUMERS["Consumed by"]
+        direction LR
+        LG["LangGraph"]:::chip
+        MAF["Microsoft Agent<br/>Framework"]:::chip
+        GHC["GitHub Copilot"]:::chip
+        CC["Claude Code"]:::chip
+        MCS["Microsoft Copilot<br/>Studio"]:::chip
+        LG ~~~ MAF ~~~ GHC ~~~ CC ~~~ MCS
     end
+    CONSUMERS ~~~ LIFE
 
-    subgraph TBX["Toolbox &mdash; default version &middot; governed by default"]
-        direction TB
-        TOOLS["Curated tools<br/>(Web Search, MCP, AI Search,<br/>Code Interpreter, A2A, Skills, ...)"]:::accent
-        DISCOVER["Discover with Tool Search<br/>two meta-tools &middot; search on demand<br/>progressive disclosure"]:::discover
-        EP["Single MCP-compatible endpoint<br/>/toolboxes/{name}/mcp"]:::endpoint
-        TOOLS --> DISCOVER --> EP
+    subgraph LIFE["Tool lifecycle  &rarr;"]
+        direction LR
+        subgraph BUILD["Build"]
+            direction TB
+            BT["Toolboxes"]:::pink
+            BD["Curated bundles of tools<br/> <br/>Reusable across teams + agents"]:::desc
+            BT ~~~ BD
+        end
+        subgraph DISCOVER["Discover"]
+            direction TB
+            DT["Tool Search"]:::blue
+            DD["Two meta-tools<br/> <br/>Search on demand,<br/>progressive disclosure"]:::desc
+            DT ~~~ DD
+        end
+        subgraph CONSUME["Consume"]
+            direction TB
+            CT["Unified endpoint"]:::orange
+            CD["One MCP endpoint per toolbox<br/> <br/>Any agent, any framework"]:::desc
+            CT ~~~ CD
+        end
+        BUILD ~~~ DISCOVER ~~~ CONSUME
     end
+    LIFE ~~~ GOV
 
-    subgraph CONSUME["Consume &mdash; any MCP client, same URL unchanged"]
-        direction TB
-        C1["Microsoft Agent Framework"]:::client
-        C2["LangGraph"]:::client
-        C3["Copilot SDK"]:::client
-    end
+    GOV["Governed by default"]:::gov
+    GOV ~~~ CAP
+    CAP["Build once in Foundry. Use your toolbox anywhere your agents run."]:::caption
 
-    BUILD --> TBX
-    EP --> CONSUME
+    classDef title fill:#ececfb,stroke:#c9c6f0,color:#3b2f8c,font-weight:bold;
+    classDef chip fill:#edeae2,stroke:#d8d3c6,color:#4a4a4a;
+    classDef pink fill:#fbe6ee,stroke:#e6a5c0,color:#8a2b52,font-weight:bold;
+    classDef blue fill:#e6f0fb,stroke:#a5c3e6,color:#1d4e8a,font-weight:bold;
+    classDef orange fill:#fce9db,stroke:#e6b48f,color:#8a4b1d,font-weight:bold;
+    classDef desc fill:none,stroke:none,color:#4a4a4a;
+    classDef gov fill:#dbeafe,stroke:#a5c3e6,color:#1d3f7a,font-weight:bold;
+    classDef caption fill:none,stroke:none,color:#6a6a6a;
 
-    classDef accent fill:#dbe9ff,stroke:#3b6fd6,color:#102a54,font-weight:bold;
-    classDef endpoint fill:#e9f0fb,stroke:#3b6fd6,color:#102a54,font-weight:bold;
-    classDef build fill:#eef7ee,stroke:#3a9d4a,color:#13431d,font-weight:bold;
-    classDef discover fill:#fff4e6,stroke:#e8910c,color:#5c3b00,font-weight:bold;
-    classDef client fill:#f7f9fc,stroke:#5b6b86,color:#2a3550;
+    style BUILD fill:#d9f2e6,stroke:#8fd4b4,color:#0f5c3f;
+    style DISCOVER fill:#d9f2e6,stroke:#8fd4b4,color:#0f5c3f;
+    style CONSUME fill:#d9f2e6,stroke:#8fd4b4,color:#0f5c3f;
+    style CONSUMERS fill:#fbfbfa,stroke:#e2ded3,color:#4a4a4a;
+    style LIFE fill:#ffffff,stroke:#ffffff,color:#5a5a5a;
