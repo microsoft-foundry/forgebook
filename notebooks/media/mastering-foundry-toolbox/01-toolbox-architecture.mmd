@@ -1,6 +1,6 @@
 %%{init: {"theme":"base","themeVariables":{"fontFamily":"Segoe UI, Helvetica, Arial, sans-serif","primaryColor":"#eef4ff","primaryBorderColor":"#3b6fd6","primaryTextColor":"#102a54","lineColor":"#5b6b86","clusterBkg":"#f7f9fc","clusterBorder":"#c7d2e3"}}}%%
 flowchart LR
-    subgraph BUILD["BUILD (developer)"]
+    subgraph BUILD["BUILD - select tools, configure auth centrally"]
         direction TB
         T1["Web Search"]
         T2["MCP servers"]
@@ -26,20 +26,19 @@ flowchart LR
 
     BUILD -->|create_version| TBX
 
-    EP["Single MCP endpoint<br/>/toolboxes/{name}/mcp?api-version=v1<br/>header: Foundry-Features: Toolboxes=V1Preview"]:::endpoint
+    EP["Single MCP-compatible endpoint<br/>/toolboxes/{name}/mcp?api-version=v1<br/>header: Foundry-Features: Toolboxes=V1Preview"]:::endpoint
     DEF --> EP
 
-    subgraph CONSUME["CONSUME (any MCP client)"]
+    subgraph CONSUME["CONSUME - any MCP client"]
         direction TB
-        C1["Foundry hosted agent"]
-        C2["Microsoft Agent Framework"]
-        C3["LangGraph"]
-        C4["Copilot SDK"]
+        C1["Microsoft Agent Framework"]
+        C2["LangGraph"]
+        C3["Copilot SDK"]
     end
 
     EP --> CONSUME
 
-    GOV["Governed by default:<br/>identity &middot; RAI guardrail &middot; APIM &middot; Azure Policy"]:::gov
+    GOV["Governed by default:<br/>identity &middot; credential injection &middot; token refresh &middot; policy enforcement"]:::gov
     TBX -.-> GOV
 
     classDef accent fill:#dbe9ff,stroke:#3b6fd6,color:#102a54,font-weight:bold;
