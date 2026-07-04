@@ -54,6 +54,10 @@ platform handles credential injection, token refresh, and policy enforcement at 
 <td>Connect any agent to a single MCP-compatible endpoint to dynamically discover and invoke all tools in the toolbox.</td>
 </tr>
 </tbody></table>
+<p><strong>Discovery is progressive.</strong> The Consume pillar's <em>dynamically discover</em> is delivered by <strong>Tool
+Search</strong> (section 6): the model starts each turn with two meta-tools and pulls in only the tools a
+step needs - <em>progressive disclosure</em> - so the prompt stays small and cheap no matter how many
+tools the toolbox holds.</p>
 <p>Because a toolbox is a <strong>managed resource</strong>, you can add, remove, or reconfigure tools without
 changing agent code - every agent connects to the same endpoint. <strong>Versioning</strong> gives you explicit
 control over when changes take effect: create and test a new version, then promote it to <em>default</em>;
@@ -62,7 +66,8 @@ every consumer picks up the promoted version automatically, with no code changes
 <ul>
 <li><strong>Build</strong> a versioned toolbox that exposes multiple tool types behind one MCP endpoint.</li>
 <li><strong>Configure</strong> per-connection identity so every consumer inherits correct, least-privilege access.</li>
-<li><strong>Enable</strong> Tool Search so a large toolbox stays as cheap for the model to use as a small one.</li>
+<li><strong>Enable</strong> Tool Search so agents <strong>discover</strong> tools on demand - <em>progressive disclosure</em> keeps a
+large toolbox as cheap for the model to use as a small one.</li>
 <li><strong>Consume</strong> the same toolbox unchanged from Agent Framework, LangGraph, and the Copilot SDK.</li>
 </ul>
 <blockquote>
@@ -898,7 +903,7 @@ deep: <code>BrowserAutomationToolParameters(connection=BrowserAutomationToolConn
 <span class="token keyword">else</span><span class="token punctuation">:</span>
     skip<span class="token punctuation">(</span><span class="token string">"BROWSER_AUTOMATION_PROJECT_CONNECTION_ID not set - skipping Browser Automation"</span><span class="token punctuation">)</span></code></pre></div><div class="nb-output" data-prompt-number="14"><pre class="language-python">⏭️  Skipping — BROWSER_AUTOMATION_PROJECT_CONNECTION_ID <span class="token keyword">not</span> <span class="token builtin">set</span> <span class="token operator">-</span> skipping Browser Automation
 </pre></div></div><div class="nb-cell nb-markdown-cell"><h4>4l · Skills (the separate <code>skills=</code> list)</h4>
-<p>📄 <strong>Docs:</strong> <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/skills">Skills</a></p>
+<p>📄 <strong>Docs:</strong> <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/skills">Skills</a> · <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/skills#attach-skills-to-a-toolbox-preview">Attach skills to a toolbox</a></p>
 <p><strong>What it is.</strong> A <strong>skill</strong> is a reusable, published <code>SKILL.md</code> file of <strong>behavioral instructions</strong>
 (name + description + instruction body; <strong>no tools are packaged inside</strong>), following the
 <a href="https://agentskills.io">Agent Skills</a> spec - registered once and reused across toolboxes and agents.</p>
@@ -1027,13 +1032,14 @@ manifest_path<span class="token punctuation">.</span>write_text<span class="toke
 on every turn is slow, expensive, and hurts accuracy. <strong>Tool Search</strong> fixes this: instead of
 listing all tools, Foundry shows the model <strong>two meta-tools</strong> and lets it <em>search</em> for capability
 on demand.</p>
-<p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/03-tool-search-flow.svg" alt="Tool Search flow. The model starts each turn with a small flat tools/list containing two meta-tools (tool_search and call_tool) plus any pinned or auto-pinned tools. If the needed capability isn't already listed, the model calls tool_search(query, limit). Foundry ranks the full catalog by semantic match on tool name and description, plus additional_search_text keywords and a per-user auto-pin hot set, and returns only the matching tool definitions. The model then calls call_tool(name, args). Returned tools stay callable for the rest of the turn, and the model can search again for later steps."></p>
+<p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/03-tool-search-flow.svg" alt="Tool Search flow. The model starts each turn with a small flat tools/list containing two meta-tools (tool_search and call_tool) plus any pinned or auto-pinned tools. If the needed capability isn't already listed, the model calls tool_search(query, limit). Foundry ranks the toolbox's un-pinned tools by semantic match on tool name and description, plus additional_search_text keywords and a per-user auto-pin hot set, and returns only the matching tool definitions. The model then calls call_tool(name, args). Returned tools stay callable for the rest of the turn, and the model can search again for later steps."></p>
 <h4>How it works</h4>
 <ol>
 <li>Enable it by adding a <code>toolbox_search_preview</code> tool to the version.</li>
 <li><code>tools/list</code> now returns just <strong><code>tool_search</code></strong> and <strong><code>call_tool</code></strong> (+ any pinned tools).</li>
-<li>The model calls <code>tool_search(query, limit?)</code>; Foundry ranks the catalog by <strong>semantic match
-on each tool's name + description</strong> and returns only the hits.</li>
+<li>The model calls <code>tool_search(query, limit?)</code>; Foundry ranks the toolbox's <strong>un-pinned</strong> tools by
+<strong>semantic match on each tool's name + description</strong> and returns only the hits. (Pinned and
+auto-pinned tools are already in <code>tools/list</code>, so search covers the rest.)</li>
 <li>The model invokes a returned tool via <code>call_tool(name, args)</code>. <strong>Returned tools persist for
 the rest of the turn</strong>, and the model may search again for later steps.</li>
 </ol>
@@ -1089,7 +1095,7 @@ tool_configs <span class="token operator">=</span> <span class="token punctuatio
 
 search_tools <span class="token operator">=</span> <span class="token builtin">list</span><span class="token punctuation">(</span>tools<span class="token punctuation">)</span>
 search_tools<span class="token punctuation">.</span>append<span class="token punctuation">(</span>ToolboxSearchPreviewToolboxTool<span class="token punctuation">(</span>
-    description<span class="token operator">=</span><span class="token string">"Search the toolbox catalog and call the matching tool."</span><span class="token punctuation">,</span>
+    description<span class="token operator">=</span><span class="token string">"Search the toolbox's tools and call the matching one."</span><span class="token punctuation">,</span>
     tool_configs<span class="token operator">=</span>tool_configs<span class="token punctuation">,</span>
 <span class="token punctuation">)</span><span class="token punctuation">)</span>
 
@@ -1230,8 +1236,7 @@ CONSUMER_URL <span class="token operator">=</span> consumer_mcp_url<span class="
 Developer <span class="token punctuation">(</span>pinned<span class="token punctuation">)</span> <span class="token punctuation">:</span> https<span class="token punctuation">:</span><span class="token operator">//</span>zhuoqunli<span class="token operator">-</span>swedencentral<span class="token punctuation">.</span>services<span class="token punctuation">.</span>ai<span class="token punctuation">.</span>azure<span class="token punctuation">.</span>com<span class="token operator">/</span>api<span class="token operator">/</span>projects<span class="token operator">/</span>proj2<span class="token operator">/</span>toolboxes<span class="token operator">/</span>my<span class="token operator">-</span>toolbox<span class="token operator">/</span>versions<span class="token operator">/</span><span class="token number">3</span><span class="token operator">/</span>mcp?api<span class="token operator">-</span>version<span class="token operator">=</span>v1
 </pre></div></div><div class="nb-cell nb-markdown-cell"><h2>10 / Verify over MCP</h2>
 <p>Let's talk to the live endpoint with a raw MCP client to <em>prove</em> Tool Search is in effect:
-<code>tools/list</code> should return only <code>tool_search</code>, <code>call_tool</code>, and any pinned tools - not the whole
-catalog. Then we run a <code>tool_search</code> -&gt; <code>call_tool</code> round-trip and read each tool's
+<code>tools/list</code> should return only <code>tool_search</code>, <code>call_tool</code>, and any pinned tools - not every tool in the toolbox. Then we run a <code>tool_search</code> -&gt; <code>call_tool</code> round-trip and read each tool's
 <code>_meta.tool_configuration</code> (which carries <code>require_approval</code>).</p>
 <p>We use the <code>mcp</code> SDK's streamable-HTTP client, passing the bearer token and the mandatory
 preview header. If a tool's connection uses <code>oauth2</code>, the first call returns <code>CONSENT_REQUIRED</code>
@@ -1276,6 +1281,7 @@ preview header. If a tool's connection uses <code>oauth2</code>, the first call 
 tool_search <span class="token operator">-</span><span class="token operator">&amp;</span>gt<span class="token punctuation">;</span> <span class="token punctuation">{</span><span class="token string">"tools"</span><span class="token punctuation">:</span><span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"name"</span><span class="token punctuation">:</span><span class="token string">"web_search"</span><span class="token punctuation">,</span><span class="token string">"title"</span><span class="token punctuation">:</span><span class="token string">"web_search"</span><span class="token punctuation">,</span><span class="token string">"description"</span><span class="token punctuation">:</span><span class="token string">"Tool for performing a web search to add context to your responses when user query needs any factual information, statistics, claims or fresh information that is not in your training data.\nUse this tool to retrieve relevant web search results based on a user's query.\nSearch the public web for current information."</span><span class="token punctuation">,</span><span class="token string">"inputSchema"</span><span class="token punctuation">:</span><span class="token punctuation">{</span>"
   web_search<span class="token punctuation">.</span>require_approval <span class="token operator">=</span> <span class="token boolean">None</span>
 </pre></div></div><div class="nb-cell nb-markdown-cell"><h2>10b / Consume skills over MCP (resources)</h2>
+<p>📄 <strong>Docs:</strong> <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/skills#attach-skills-to-a-toolbox-preview">Attach skills to a toolbox</a> · <a href="https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/csharp/hosted-agents/agent-framework/foundry-toolbox-mcp-skills">Skills in Toolbox sample (MAF, C#)</a></p>
 <p>Skills attached to a toolbox surface as <strong>MCP Resources</strong> (SEP-2640), <em>not</em> tools - so they never
 show up in <code>tools/list</code>. The <strong>same</strong> raw MCP session lists them with <code>resources/list</code> and
 downloads each <code>SKILL.md</code> body with <code>resources/read</code>. This is exactly how any MCP client - GitHub

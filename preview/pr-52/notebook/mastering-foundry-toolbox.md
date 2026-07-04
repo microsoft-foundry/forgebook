@@ -24,6 +24,11 @@ platform handles credential injection, token refresh, and policy enforcement at 
 | **Build** | Available today | Select tools, configure authentication centrally, and publish a reusable toolbox that any team can consume. |
 | **Consume** | Available today | Connect any agent to a single MCP-compatible endpoint to dynamically discover and invoke all tools in the toolbox. |
 
+**Discovery is progressive.** The Consume pillar's *dynamically discover* is delivered by **Tool
+Search** (section 6): the model starts each turn with two meta-tools and pulls in only the tools a
+step needs - *progressive disclosure* - so the prompt stays small and cheap no matter how many
+tools the toolbox holds.
+
 Because a toolbox is a **managed resource**, you can add, remove, or reconfigure tools without
 changing agent code - every agent connects to the same endpoint. **Versioning** gives you explicit
 control over when changes take effect: create and test a new version, then promote it to *default*;
@@ -33,7 +38,8 @@ every consumer picks up the promoted version automatically, with no code changes
 
 - **Build** a versioned toolbox that exposes multiple tool types behind one MCP endpoint.
 - **Configure** per-connection identity so every consumer inherits correct, least-privilege access.
-- **Enable** Tool Search so a large toolbox stays as cheap for the model to use as a small one.
+- **Enable** Tool Search so agents **discover** tools on demand - *progressive disclosure* keeps a
+  large toolbox as cheap for the model to use as a small one.
 - **Consume** the same toolbox unchanged from Agent Framework, LangGraph, and the Copilot SDK.
 
 > **Preview.** Toolbox, Tool Search, A2A, Browser Automation, Skills, and the Work IQ / Fabric IQ
@@ -868,7 +874,7 @@ else:
 
 #### 4l · Skills (the separate `skills=` list)
 
-📄 **Docs:** [Skills](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/skills)
+📄 **Docs:** [Skills](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/skills) &middot; [Attach skills to a toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/skills#attach-skills-to-a-toolbox-preview)
 
 **What it is.** A **skill** is a reusable, published `SKILL.md` file of **behavioral instructions**
 (name + description + instruction body; **no tools are packaged inside**), following the
@@ -1013,14 +1019,15 @@ on every turn is slow, expensive, and hurts accuracy. **Tool Search** fixes this
 listing all tools, Foundry shows the model **two meta-tools** and lets it *search* for capability
 on demand.
 
-![Tool Search flow. The model starts each turn with a small flat tools/list containing two meta-tools (tool_search and call_tool) plus any pinned or auto-pinned tools. If the needed capability isn't already listed, the model calls tool_search(query, limit). Foundry ranks the full catalog by semantic match on tool name and description, plus additional_search_text keywords and a per-user auto-pin hot set, and returns only the matching tool definitions. The model then calls call_tool(name, args). Returned tools stay callable for the rest of the turn, and the model can search again for later steps.](media/mastering-foundry-toolbox/03-tool-search-flow.svg)
+![Tool Search flow. The model starts each turn with a small flat tools/list containing two meta-tools (tool_search and call_tool) plus any pinned or auto-pinned tools. If the needed capability isn't already listed, the model calls tool_search(query, limit). Foundry ranks the toolbox's un-pinned tools by semantic match on tool name and description, plus additional_search_text keywords and a per-user auto-pin hot set, and returns only the matching tool definitions. The model then calls call_tool(name, args). Returned tools stay callable for the rest of the turn, and the model can search again for later steps.](media/mastering-foundry-toolbox/03-tool-search-flow.svg)
 
 #### How it works
 
 1. Enable it by adding a `toolbox_search_preview` tool to the version.
 2. `tools/list` now returns just **`tool_search`** and **`call_tool`** (+ any pinned tools).
-3. The model calls `tool_search(query, limit?)`; Foundry ranks the catalog by **semantic match
-   on each tool's name + description** and returns only the hits.
+3. The model calls `tool_search(query, limit?)`; Foundry ranks the toolbox's **un-pinned** tools by
+   **semantic match on each tool's name + description** and returns only the hits. (Pinned and
+   auto-pinned tools are already in `tools/list`, so search covers the rest.)
 4. The model invokes a returned tool via `call_tool(name, args)`. **Returned tools persist for
    the rest of the turn**, and the model may search again for later steps.
 
@@ -1057,7 +1064,7 @@ if any(type(t).__name__ == "AzureAISearchToolboxTool" for t in tools):
 
 search_tools = list(tools)
 search_tools.append(ToolboxSearchPreviewToolboxTool(
-    description="Search the toolbox catalog and call the matching tool.",
+    description="Search the toolbox's tools and call the matching one.",
     tool_configs=tool_configs,
 ))
 
@@ -1177,8 +1184,7 @@ print("Developer (pinned) :", developer_mcp_url(TOOLBOX_NAME, search_version.ver
 ## 10 / Verify over MCP
 
 Let's talk to the live endpoint with a raw MCP client to *prove* Tool Search is in effect:
-`tools/list` should return only `tool_search`, `call_tool`, and any pinned tools - not the whole
-catalog. Then we run a `tool_search` -> `call_tool` round-trip and read each tool's
+`tools/list` should return only `tool_search`, `call_tool`, and any pinned tools - not every tool in the toolbox. Then we run a `tool_search` -> `call_tool` round-trip and read each tool's
 `_meta.tool_configuration` (which carries `require_approval`).
 
 We use the `mcp` SDK's streamable-HTTP client, passing the bearer token and the mandatory
@@ -1225,6 +1231,8 @@ except Exception as exc:  # noqa: BLE001
 ```
 
 ## 10b / Consume skills over MCP (resources)
+
+📄 **Docs:** [Attach skills to a toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/skills#attach-skills-to-a-toolbox-preview) &middot; [Skills in Toolbox sample (MAF, C#)](https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/csharp/hosted-agents/agent-framework/foundry-toolbox-mcp-skills)
 
 Skills attached to a toolbox surface as **MCP Resources** (SEP-2640), *not* tools - so they never
 show up in `tools/list`. The **same** raw MCP session lists them with `resources/list` and

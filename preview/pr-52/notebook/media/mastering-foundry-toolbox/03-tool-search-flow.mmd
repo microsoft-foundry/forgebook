@@ -13,7 +13,7 @@ flowchart TB
     NEED -->|yes| CALL
     NEED -->|no| SEARCH["tool_search(query, limit?)"]:::accent
 
-    subgraph RANK["Foundry ranks the full catalog"]
+    subgraph RANK["Foundry ranks the toolbox's un-pinned tools"]
         direction TB
         R1["match on name + description<br/>(semantic)"]
         R2["+ additional_search_text keywords"]
