@@ -885,6 +885,15 @@ reference it in the **separate `skills=` list** with `ToolboxSkillReference(name
 - `name` - **required** `str`; the published skill name.
 - `version` - optional; `None` = default version, a value = pinned immutable version.
 
+**Consuming over MCP.** Once attached, a skill is **not a callable tool** - it surfaces as an
+**MCP Resource** on the *same* toolbox endpoint, following the Skills-for-MCP extension
+([SEP-2640](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2640)). Any MCP
+client calls `resources/list` once at connect time to discover attached skills, then
+`resources/read` to download each `SKILL.md` body - **no Foundry SDK required**. Frameworks layer
+the [Agent Skills](https://agentskills.io) *progressive-disclosure* pattern on top: advertise skill
+names/descriptions in the system prompt, then load the full body on demand. We consume the live
+resources over MCP in section 10b.
+
 ```python
 from azure.ai.projects.models import ToolboxSkillReference
 
@@ -1213,6 +1222,43 @@ except Exception as exc:  # noqa: BLE001
     if "-32006" in msg or "-32007" in msg or "CONSENT_REQUIRED" in msg:
         print("⚠️  OAuth consent required - open the consent URL in the error, approve, then re-run this cell.")
     print(f"verify_toolbox raised: {exc}")
+```
+
+## 10b / Consume skills over MCP (resources)
+
+Skills attached to a toolbox surface as **MCP Resources** (SEP-2640), *not* tools - so they never
+show up in `tools/list`. The **same** raw MCP session lists them with `resources/list` and
+downloads each `SKILL.md` body with `resources/read`. This is exactly how any MCP client - GitHub
+Copilot, Claude Code, or your own agent harness - loads a toolbox skill **without the Foundry
+SDK**. A framework such as Microsoft Agent Framework wraps this in a skills provider (advertise ->
+load -> read), but underneath it is just these two MCP calls.
+
+```python
+# Skills attach to a toolbox as MCP *resources* (SEP-2640), not tools. The same streamable-HTTP
+# MCP session that lists tools also lists and reads skills - no Foundry SDK needed.
+async def consume_skills():
+    headers = {**TOOLBOX_HEADERS, "Authorization": f"Bearer {mcp_token()}"}
+    async with streamablehttp_client(CONSUMER_URL, headers=headers) as (read, write, _):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            listed = await session.list_resources()
+            skills = listed.resources
+            print(f"resources/list -> {len(skills)} skill(s):", [r.name for r in skills])
+
+            for r in skills:
+                body = await session.read_resource(r.uri)  # resources/read downloads the SKILL.md
+                text = body.contents[0].text if body.contents else ""
+                print(f"\n# {r.name}  <{r.uri}>\n{text[:400]}")
+
+
+try:
+    if not os.getenv("PROJECT_ENDPOINT"):
+        skip("PROJECT_ENDPOINT not set")
+    else:
+        await consume_skills()
+except Exception as exc:  # noqa: BLE001
+    print(f"consume_skills raised: {exc}")
 ```
 
 ## 11 / Consume the toolbox
