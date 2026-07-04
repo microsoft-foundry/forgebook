@@ -1116,7 +1116,7 @@ Version <span class="token number">3</span><span class="token punctuation">:</sp
 </pre></div></div><div class="nb-cell nb-markdown-cell"><h2>8 / Policies &amp; governance <em>(optional reference)</em></h2>
 <p>"Governed by default" comes from <strong>three independent control points</strong>. Only the first is a field
 on the toolbox; the other two are standard Azure mechanisms you compose <em>around</em> it.</p>
-<p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/04-policy-enforcement.svg" alt="Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. This gateway governs only MCP-server tools; built-in and first-party tools bypass it. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens tool inputs and outputs."></p>
+<p><img src="/forgebook/preview/pr-52/notebook/media/mastering-foundry-toolbox/04-policy-enforcement.svg" alt="Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. This gateway governs only MCP-server tools; built-in and first-party tools bypass it. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens every tool's inputs and outputs - built-in and MCP tools alike, so bypassing the gateway does not bypass content governance."></p>
 <table>
 <thead>
 <tr>
@@ -1142,7 +1142,7 @@ on the toolbox; the other two are standard Azure mechanisms you compose <em>arou
 <td>3</td>
 <td><strong>RAI guardrail</strong></td>
 <td><code>policies.rai_config.rai_policy_name</code> on a toolbox version</td>
-<td><strong>Call time</strong> - screens tool inputs and outputs.</td>
+<td><strong>Call time, all tools</strong> - screens every tool's inputs and outputs (built-in and MCP alike), so skipping the gateway never means skipping content governance.</td>
 </tr>
 </tbody></table>
 <blockquote>

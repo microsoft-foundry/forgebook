@@ -1090,13 +1090,13 @@ print(f"✅ Default is now {search_version.version}")
 "Governed by default" comes from **three independent control points**. Only the first is a field
 on the toolbox; the other two are standard Azure mechanisms you compose *around* it.
 
-![Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. This gateway governs only MCP-server tools; built-in and first-party tools bypass it. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens tool inputs and outputs.](media/mastering-foundry-toolbox/04-policy-enforcement.svg)
+![Three policy enforcement points for a toolbox. (1) Control plane: an Azure Policy authored separately by an admin is enforced at connection-creation time - creating a project connection to a banned endpoint or auth type is blocked before any toolbox references it. (2) Runtime gateway: a customer-owned Azure API Management instance sits in front of your MCP server enforcing rate-limit, IP, and header policies, and is registered as a normal MCP tool whose server_url is the APIM gateway URL. This gateway governs only MCP-server tools; built-in and first-party tools bypass it. (3) Toolbox guardrail: an RAI policy named in policies.rai_config.rai_policy_name on the toolbox version screens every tool's inputs and outputs - built-in and MCP tools alike, so bypassing the gateway does not bypass content governance.](media/mastering-foundry-toolbox/04-policy-enforcement.svg)
 
 | # | Control point | Where it lives | Enforced when |
 |---|---|---|---|
 | 1 | **Azure Policy** | A separate Azure Policy resource (admin-authored) | **Connection creation** - a banned endpoint/auth is blocked before any toolbox can reference it. |
 | 2 | **APIM-fronted MCP** | *Your* Azure API Management, in front of *your* MCP server | **Call time, MCP tools only** - rate-limit / IP / header rules run in APIM for calls that route through your MCP server; the toolbox just registers the APIM gateway URL as a normal MCP tool. Built-in / first-party tools (Web Search, Code Interpreter, File Search, Azure AI Search, ...) never traverse your gateway. |
-| 3 | **RAI guardrail** | `policies.rai_config.rai_policy_name` on a toolbox version | **Call time** - screens tool inputs and outputs. |
+| 3 | **RAI guardrail** | `policies.rai_config.rai_policy_name` on a toolbox version | **Call time, all tools** - screens every tool's inputs and outputs (built-in and MCP alike), so skipping the gateway never means skipping content governance. |
 
 > Only the **RAI guardrail** is a toolbox field, and it screens **every** tool's inputs/outputs.
 > **APIM** is your own gateway that you point an MCP tool at, so it governs **only MCP-server
