@@ -1,4 +1,4 @@
-![Toolboxes in Microsoft Foundry architecture. On the left a developer assembles a diverse set of tools - Web Search, MCP servers, Azure AI Search, Code Interpreter, File Search, OpenAPI, A2A, Work IQ, Fabric IQ, Browser Automation, Skills, and the tool-search meta-capability. These are published into a toolbox as immutable versions; one version is marked default. The default version is served from a single MCP endpoint (/toolboxes/{name}/mcp) that every MCP client consumes: Foundry hosted agents, Microsoft Agent Framework, LangGraph, and the Copilot SDK. Identity, an RAI guardrail, APIM, and Azure Policy govern the toolbox by default.](media/mastering-foundry-toolbox/01-toolbox-architecture.svg)
+![Toolboxes in Microsoft Foundry architecture. In the Build pillar a developer selects a diverse set of tools - Web Search, MCP servers, Azure AI Search, Code Interpreter, File Search, OpenAPI, A2A, Work IQ, Fabric IQ, Browser Automation, Skills, and the tool-search meta-capability - and configures their authentication centrally. These are published into a toolbox as immutable versions; one version is marked default. The default version is served from a single MCP-compatible endpoint (/toolboxes/{name}/mcp) that, in the Consume pillar, any MCP client uses - here Microsoft Agent Framework, LangGraph, and the Copilot SDK. The toolbox is governed by default: identity, credential injection, token refresh, and policy enforcement at runtime.](media/mastering-foundry-toolbox/01-toolbox-architecture.svg)
 
 When several agents - or a mix of Foundry hosted agents, Microsoft Agent Framework, LangGraph,
 and Copilot SDK apps - need the *same* governed set of tools, you don't want to re-wire those
@@ -12,14 +12,22 @@ Search**, verify it over MCP, and consume it from Microsoft Agent Framework. Aro
 a **catalog** of every other tool type, the REST/CI path, versioning, and governance policies -
 optional sections you can skip on a first read.
 
-#### The four pillars
+#### The tool lifecycle: four pillars, two available today
 
-| Pillar | What it gives you |
-|---|---|
-| **One endpoint** | All tools - first-party and your own MCP servers - behind a single `/mcp` URL. |
-| **Identity built in** | Per-connection auth (keys, OAuth2, managed identity, agent identity, Foundry managed identity passthrough) flows through to each tool. |
-| **Tool Search** | The model is shown two meta-tools and *searches* for capability on demand, so a 200-tool toolbox stays as cheap as a 2-tool one. |
-| **Governed by default** | An RAI guardrail screens tool I/O; APIM and Azure Policy add gateway- and control-plane-level controls. |
+Toolbox covers the full tool lifecycle through **four pillars**; **Build** and **Consume** are
+available today. You define a curated set of tools **once**, manage them **centrally** in Foundry,
+and expose them through a **single MCP-compatible endpoint** that any agent can consume - the
+platform handles credential injection, token refresh, and policy enforcement at runtime.
+
+| Pillar | Status | What it enables |
+|---|---|---|
+| **Build** | Available today | Select tools, configure authentication centrally, and publish a reusable toolbox that any team can consume. |
+| **Consume** | Available today | Connect any agent to a single MCP-compatible endpoint to dynamically discover and invoke all tools in the toolbox. |
+
+Because a toolbox is a **managed resource**, you can add, remove, or reconfigure tools without
+changing agent code - every agent connects to the same endpoint. **Versioning** gives you explicit
+control over when changes take effect: create and test a new version, then promote it to *default*;
+every consumer picks up the promoted version automatically, with no code changes or redeployment.
 
 #### By the end, you'll be able to
 
