@@ -6,9 +6,8 @@ See [AGENTS.md](../AGENTS.md) at the repo root for full project documentation.
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `deploy.yml` | Push to `main` | Build + deploy to GitHub Pages |
+| `deploy.yml` | Push to `main`, daily cron, manual | Refresh `popular.json` from App Insights, build, deploy to GitHub Pages |
 | `preview.yml` | PR events | Validate, build with PR-scoped base, post preview URL |
-| `update-popular.yml` | Daily cron | Query App Insights, commit updated `popular.json` |
 
 ## PR Checklist
 

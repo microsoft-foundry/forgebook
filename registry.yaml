@@ -14,6 +14,21 @@
 #   - date: Publication date (YYYY-MM-DD)
 #   - tags: List of topic tags
 
+- slug: migrate-oyd-to-foundry-iq
+  path: notebooks/migrate-oyd-to-foundry-iq.ipynb
+  title: "Migrate Azure OpenAI On Your Data to Foundry IQ"
+  description: "On Your Data retires October 14, 2026. Keep your existing Azure AI Search index and Azure OpenAI model — swap the single OYD REST call for a Foundry IQ Knowledge Base answer-synthesis retrieve."
+  date: "2026-06-17"
+  authors:
+    - github: farzad528
+  tags:
+    - iq
+    - retrieval
+    - grounding
+    - rag
+    - azure-ai-search
+    - azure-openai
+
 - slug: foundry-agent-part-1
   path: notebooks/foundry-agent-part-1.ipynb
   title: "Create Your First Agent (Part 1)"
@@ -107,7 +122,7 @@
   path: notebooks/mastering-foundry-iq.ipynb
   title: "Mastering Foundry IQ"
   description: "End-to-end Foundry IQ walkthrough: every Knowledge Source type, one unified Knowledge Base, and integrations with Foundry Agent Service and Microsoft Agent Framework."
-  date: "2026-05-27"
+  date: "2026-06-02"
   authors:
     - github: farzad528
   tags:
@@ -143,7 +158,7 @@
   path: notebooks/mai-transcribe-1-5.ipynb
   title: "Build Speech-to-Text with MAI-Transcribe-1.5"
   description: "Speech API multipart cookbook for MAI-Transcribe-1.5 covering baseline transcription, verbatim mode, phrase-list entity biasing, and language identification."
-  date: "2026-05-28"
+  date: "2026-06-02"
   authors:
     - github: anihitk07
   tags:
@@ -156,7 +171,7 @@
   path: notebooks/mai-voice-2.ipynb
   title: "Build Multilingual TTS with MAI-Voice-2-Preview"
   description: "MAI-Voice-2-Preview notebook with REST calls, multilingual prebuilt voices, gated voice-prompting guidance, and model-card-aligned preview notes."
-  date: "2026-05-28"
+  date: "2026-06-02"
   authors:
     - github: anihitk07
   tags:
@@ -169,7 +184,7 @@
   path: notebooks/mai-image-2-5.ipynb
   title: "Build a Production Editing Recipe with MAI-Image-2.5"
   description: "Private-preview MAI-Image-2.5 notebook covering text-to-image generation, image edits, safety reminders, and troubleshooting."
-  date: "2026-05-28"
+  date: "2026-06-02"
   authors:
     - github: anihitk07
   tags:
@@ -182,7 +197,7 @@
   path: notebooks/sora-video-generation-rest-api.ipynb
   title: "Guide Sora 2 with Images and Audio"
   description: "Use Azure OpenAI REST calls to generate a Sora 2 clip, reuse a frame as an image reference, and add ambient audio."
-  date: "2026-05-27"
+  date: "2026-06-02"
   authors:
     - github: nicholasdbrady
   tags:
@@ -196,8 +211,8 @@
 - slug: microsoft-iq-in-foundry
   path: notebooks/microsoft-iq-in-foundry.ipynb
   title: "Microsoft IQ in Foundry"
-  description: "Build a Microsoft IQ knowledge layer in Foundry IQ — federate Work IQ, Fabric IQ, and Web IQ into one Knowledge Base, then query each IQ plus a cross-source question."
-  date: "2026-05-29"
+  description: "Build your own knowledge layer in Foundry IQ: start with your own files (zero setup), then layer in Web IQ, Work IQ, and Fabric IQ, and query every source with one call."
+  date: "2026-06-02"
   authors:
     - github: farzad528
   tags:
@@ -208,3 +223,18 @@
     - mcp
     - agents
     - agent-service
+
+- slug: azure-ai-search-custom-schema-citations
+  path: notebooks/azure-ai-search-custom-schema-citations.ipynb
+  title: "Fix Agent Citations for Custom Azure AI Search Schemas"
+  description: "Get real url/title citations from the Azure AI Search tool when your index fields aren't named url/title/content — register the index as an asset with a FieldMapping and use index_asset_id."
+  date: "2026-06-05"
+  authors:
+    - github: farzad528
+  tags:
+    - azure-ai-search
+    - agents
+    - agent-service
+    - tools
+    - grounding
+    - retrieval

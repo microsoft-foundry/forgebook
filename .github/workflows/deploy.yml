@@ -3,10 +3,15 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    # Daily redeploy at 06:00 UTC so popular notebooks data stays fresh
+    # without a separate workflow opening pull requests.
+    - cron: "0 6 * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
+  id-token: write # Required for Azure OIDC federated credential
 
 concurrency:
   group: "gh-pages-deploy"
@@ -24,11 +29,36 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: site/package-lock.json
+          cache-dependency-path: |
+            site/package-lock.json
+            scripts/package-lock.json
 
-      - name: Install dependencies
+      - name: Install site dependencies
         working-directory: ./site
         run: npm ci
+
+      - name: Install script dependencies
+        working-directory: ./scripts
+        run: npm ci
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Refresh popular notebooks data from App Insights
+        id: refresh-popular
+        continue-on-error: true
+        working-directory: ./scripts
+        env:
+          APP_INSIGHTS_RESOURCE_ID: ${{ vars.APP_INSIGHTS_RESOURCE_ID }}
+        run: npx tsx fetch-popular.ts
+
+      - name: Warn if popular data refresh failed
+        if: steps.refresh-popular.outcome == 'failure'
+        run: echo "::warning::App Insights refresh failed — building with the committed site/src/data/popular.json fallback."
 
       - name: Build site
         working-directory: ./site

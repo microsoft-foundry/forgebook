@@ -1,18 +1,19 @@
-name: Update Popular Notebooks
+name: Validate Popular Fetch
+
+# Manual-only diagnostic that exercises Azure OIDC login and the
+# App Insights query used by deploy.yml to refresh popular.json.
+# Does not build the site, does not deploy, and does not write to the
+# repository — it just proves the credentials and query work end to end.
 
 on:
-  schedule:
-    # Runs daily at 06:00 UTC
-    - cron: "0 6 * * *"
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
-  id-token: write  # Required for OIDC federated credential
+  contents: read
+  id-token: write # Required for Azure OIDC federated credential
 
 jobs:
-  fetch-popular:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -42,15 +43,8 @@ jobs:
           APP_INSIGHTS_RESOURCE_ID: ${{ vars.APP_INSIGHTS_RESOURCE_ID }}
         run: npx tsx fetch-popular.ts
 
-      - name: Create pull request for updated popular data
-        uses: peter-evans/create-pull-request@v8
-        with:
-          add-paths: site/src/data/popular.json
-          branch: chore/update-popular-notebooks
-          delete-branch: true
-          commit-message: "chore: update popular notebooks data"
-          title: "chore: update popular notebooks data"
-          body: |
-            Automated update of `site/src/data/popular.json` from Application Insights click data.
-
-            This PR is opened by the scheduled Update Popular Notebooks workflow so `main` can remain protected.
+      - name: Show fetched popular.json
+        run: |
+          echo "::group::site/src/data/popular.json"
+          cat site/src/data/popular.json
+          echo "::endgroup::"

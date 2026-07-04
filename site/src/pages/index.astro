@@ -12,6 +12,7 @@ interface PopularData {
   notebooks: { slug: string; clicks: number }[];
 }
 const popularData = popularRaw as PopularData;
+const popularityBySlug = new Map(popularData.notebooks.map((popular) => [popular.slug, popular.clicks]));
 
 const notebooksCollection = await getCollection("notebooks");
 
@@ -26,26 +27,33 @@ const notebooks = notebooksCollection.map((entry) => ({
   tags: entry.data.tags,
 }));
 
-// Build the "Most Popular" list by matching popular slugs to notebook data
-const popularSlugs = new Set(popularData.notebooks.map((n) => n.slug));
-const popularNotebooks = notebooks.filter((n) => popularSlugs.has(n.slug));
+// Build the "Popular" carousel from analytics-backed entries only.
+type NotebookSummary = (typeof notebooks)[number];
+type PopularNotebook = NotebookSummary & { popularityCount: number };
+const notebookBySlug = new Map(notebooks.map((n) => [n.slug, n]));
+const popularNotebooks = [...popularData.notebooks]
+  .sort((a, b) => b.clicks - a.clicks)
+  .slice(0, 6)
+  .map((popular) => {
+    const notebook = notebookBySlug.get(popular.slug);
+    if (!notebook) return undefined;
+
+    return { ...notebook, popularityCount: popular.clicks };
+  })
+  .filter((notebook): notebook is PopularNotebook => Boolean(notebook));
 
 // Collect tags actually used by current notebooks, preserving order
 const usedTagsSet = new Set<string>();
 for (const n of notebooks) {
   for (const t of n.tags ?? []) usedTagsSet.add(t);
 }
-const usedTags = [...usedTagsSet];
+const usedTags = [...usedTagsSet].sort((a, b) => a.localeCompare(b));
 const homeSchema = buildHomeSchema({
   canonicalUrl: absoluteSiteUrl("/", Astro.site!),
   siteUrl: absoluteSiteUrl("/", Astro.site!),
   socialImageUrl: absoluteSiteUrl(SITE.socialImage.path, Astro.site!),
 });
 
-function tagColor(tag: string): string {
-  const hash = [...tag].reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
-  return `tag-color-${((hash % 8) + 8) % 8}`;
-}
 ---
 
 <BaseLayout title={SITE.defaultTitle} description={SITE.description} canonicalPath="/" structuredData={homeSchema}>
@@ -60,54 +68,127 @@ function tagColor(tag: string): string {
       </p>
     </section>
 
-    <section>
-      <h2 class="text-2xl font-semibold text-primary mb-4">
-        Recipes <span id="recipe-count" class="text-secondary font-normal">({notebooks.length})</span>
-      </h2>
-
-      {usedTags.length > 0 && (
-        <div class="tag-filter-bar mb-6" role="toolbar" aria-label="Filter by tag">
-          {usedTags.map((tag) => (
-            <button
-              class={`tag-filter-btn ${tagColor(tag)}`}
-              data-tag={tag}
-              type="button"
-            >{tag}</button>
-          ))}
-          <button
-            class="tag-filter-btn tag-clear-btn hidden"
-            data-tag="clear"
-            type="button"
-            aria-label="Clear filter"
-          >✕</button>
-        </div>
-      )}
-
+    <section class="recipe-listings">
       {popularNotebooks.length > 0 && notebooks.length >= 12 && (
-        <div class="mb-10" id="popular-section">
-          <h3 class="text-lg font-medium text-secondary mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            Most Popular
-          </h3>
-          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <section class="popular-section" id="popular-section" role="region" aria-labelledby="popular-heading">
+          <div class="popular-section-header">
+            <h2 id="popular-heading" class="text-2xl font-semibold text-primary flex items-center gap-2">
+              <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              Popular
+            </h2>
+          </div>
+          <div class="popular-carousel-shell">
+            <div class="popular-carousel" role="list" tabindex="0" aria-label="Most Popular recipes">
             {popularNotebooks.map((notebook) => (
-              <div class="notebook-card-wrapper" data-tags={(notebook.tags ?? []).join(",")}>
-                <NotebookCard notebook={notebook} />
+              <div class="popular-card-wrapper" role="listitem">
+                <NotebookCard notebook={notebook} popularityCount={notebook.popularityCount} />
               </div>
             ))}
+            </div>
           </div>
-        </div>
+        </section>
       )}
 
-      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3" id="notebooks-grid">
-        {notebooks.map((notebook) => (
-          <div class="notebook-card-wrapper h-full" data-tags={(notebook.tags ?? []).join(",")}>
-            <NotebookCard notebook={notebook} />
+      <section class="all-recipes-section" aria-labelledby="all-recipes-heading">
+        <div class="recipes-heading-row">
+          <div class="recipes-heading-title">
+            <h2 id="all-recipes-heading" class="text-2xl font-semibold text-primary">
+              All <span id="recipe-count" class="recipe-count text-secondary font-normal">({notebooks.length})</span>
+            </h2>
           </div>
-        ))}
-      </div>
+
+          <div class="catalog-controls">
+            <div class="sort-controls" aria-label="Sort recipes">
+              <div class="sort-field-toggle" role="group" aria-label="Sort field">
+                <button class="icon-control sort-toggle-btn active" type="button" data-label="Date" data-sort-field="date" aria-pressed="true" aria-label="Sort by date">
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M6 2.25a.75.75 0 0 1 .75.75v.75h6.5V3a.75.75 0 0 1 1.5 0v.75h.75A2.5 2.5 0 0 1 18 6.25v8.25A2.5 2.5 0 0 1 15.5 17h-11A2.5 2.5 0 0 1 2 14.5V6.25a2.5 2.5 0 0 1 2.5-2.5h.75V3A.75.75 0 0 1 6 2.25ZM3.5 8v6.5c0 .55.45 1 1 1h11c.55 0 1-.45 1-1V8h-13Zm1-2.75c-.55 0-1 .45-1 1v.25h13v-.25c0-.55-.45-1-1-1h-11Z" fill="currentColor" />
+                  </svg>
+                  <span class="sr-only">Date</span>
+                </button>
+                <button class="icon-control sort-toggle-btn" type="button" data-label="Views" data-sort-field="views" aria-pressed="false" aria-label="Sort by views">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 5.25c5.1 0 8.3 4.25 9.36 6.04a1.4 1.4 0 0 1 0 1.42c-1.06 1.79-4.26 6.04-9.36 6.04s-8.3-4.25-9.36-6.04a1.4 1.4 0 0 1 0-1.42c1.06-1.79 4.26-6.04 9.36-6.04Zm0 2c-4 0-6.67 3.2-7.64 4.75.97 1.55 3.64 4.75 7.64 4.75s6.67-3.2 7.64-4.75C18.67 10.45 16 7.25 12 7.25Zm0 1.5a3.25 3.25 0 1 1 0 6.5 3.25 3.25 0 0 1 0-6.5Zm0 2a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5Z" fill="currentColor" />
+                  </svg>
+                  <span class="sr-only">Views</span>
+                </button>
+              </div>
+              <button class="icon-control sort-direction-btn" type="button" data-label="Date desc" data-sort-direction="desc" aria-label="Sort date descending">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M5.22 11.28a.75.75 0 0 1 1.06-1.06l2.97 2.97V3.75a.75.75 0 0 1 1.5 0v9.44l2.97-2.97a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0l-4.25-4.25Z" fill="currentColor" />
+                </svg>
+                <span class="sr-only">Descending</span>
+              </button>
+            </div>
+
+            {usedTags.length > 0 && (
+              <div class="tag-filter-controls" data-tag-filter-controls>
+                <details class="tag-filter-dropdown">
+                  <summary class="icon-control tag-filter-summary" data-label="Filter" aria-label="Filter tags">
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <path d="M3.25 4A1.25 1.25 0 0 1 4.5 2.75h11A1.25 1.25 0 0 1 16.46 4.8L12 10.15v4.25c0 .42-.21.82-.56 1.05l-2 1.33A.75.75 0 0 1 8.25 16.16v-6.01L3.54 4.8A1.25 1.25 0 0 1 3.25 4Zm1.55.25 4.78 5.43c.11.14.17.31.17.5v4.58l.75-.5v-4.08c0-.19.06-.36.18-.5l4.52-5.43H4.8Z" fill="currentColor" />
+                    </svg>
+                    <span class="sr-only">Filter tags</span>
+                    <span class="tag-filter-summary-count" data-tag-summary></span>
+                  </summary>
+                  <div class="tag-filter-menu" role="group" aria-label="Filter by tag">
+                    <div class="tag-filter-menu-header">
+                      <div>
+                        <p class="tag-filter-menu-title">Tags</p>
+                        <p class="tag-filter-menu-status" data-tag-status>No tags selected</p>
+                      </div>
+                      <button class="tag-filter-reset hidden" type="button" data-tag-mobile-clear>Clear</button>
+                    </div>
+                    {usedTags.map((tag) => (
+                      <label class="tag-filter-option">
+                        <input type="checkbox" value={tag} data-tag-checkbox />
+                        <span>{tag}</span>
+                      </label>
+                    ))}
+                  </div>
+                </details>
+                <button class="icon-control tag-filter-inline-clear hidden" type="button" data-label="Clear filter" data-tag-inline-clear aria-label="Clear tag filters">
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M5.22 5.22a.75.75 0 0 1 1.06 0L10 8.94l3.72-3.72a.75.75 0 1 1 1.06 1.06L11.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06L10 11.06l-3.72 3.72a.75.75 0 0 1-1.06-1.06L8.94 10 5.22 6.28a.75.75 0 0 1 0-1.06Z" fill="currentColor" />
+                  </svg>
+                  <span class="sr-only">Clear tag filters</span>
+                </button>
+              </div>
+            )}
+
+            <div class="view-toggle" role="group" aria-label="Recipe layout">
+              <button class="icon-control view-toggle-btn active" type="button" data-label="Grid" data-recipe-view="grid" aria-pressed="true" aria-label="Grid view">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M3 3.5A1.5 1.5 0 0 1 4.5 2h3A1.5 1.5 0 0 1 9 3.5v3A1.5 1.5 0 0 1 7.5 8h-3A1.5 1.5 0 0 1 3 6.5v-3Zm8 0A1.5 1.5 0 0 1 12.5 2h3A1.5 1.5 0 0 1 17 3.5v3A1.5 1.5 0 0 1 15.5 8h-3A1.5 1.5 0 0 1 11 6.5v-3Zm-8 10A1.5 1.5 0 0 1 4.5 12h3A1.5 1.5 0 0 1 9 13.5v3A1.5 1.5 0 0 1 7.5 18h-3A1.5 1.5 0 0 1 3 16.5v-3Zm8 0a1.5 1.5 0 0 1 1.5-1.5h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1-1.5-1.5v-3Z" fill="currentColor" />
+                </svg>
+                <span class="sr-only">Grid view</span>
+              </button>
+              <button class="icon-control view-toggle-btn" type="button" data-label="List" data-recipe-view="list" aria-pressed="false" aria-label="List view">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M4 4.75A1.25 1.25 0 1 1 1.5 4.75 1.25 1.25 0 0 1 4 4.75Zm2.25-.75h11a.75.75 0 0 1 0 1.5h-11a.75.75 0 0 1 0-1.5ZM4 10a1.25 1.25 0 1 1-2.5 0A1.25 1.25 0 0 1 4 10Zm2.25-.75h11a.75.75 0 0 1 0 1.5h-11a.75.75 0 0 1 0-1.5ZM4 15.25a1.25 1.25 0 1 1-2.5 0 1.25 1.25 0 0 1 2.5 0Zm2.25-.75h11a.75.75 0 0 1 0 1.5h-11a.75.75 0 0 1 0-1.5Z" fill="currentColor" />
+                </svg>
+                <span class="sr-only">List view</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="notebooks-collection grid-view" id="notebooks-grid" data-view="grid">
+          {notebooks.map((notebook) => (
+            <div
+              class="notebook-card-wrapper h-full"
+              data-date={notebook.date ?? ""}
+              data-tags={(notebook.tags ?? []).join(",")}
+              data-title={notebook.title}
+              data-views={popularityBySlug.get(notebook.slug) ?? 0}
+            >
+              <NotebookCard notebook={notebook} />
+            </div>
+          ))}
+        </div>
+      </section>
 
       {
         notebooks.length === 0 && (
@@ -141,6 +222,360 @@ jupyter notebook`}</code></pre>
 </BaseLayout>
 
 <style>
+  .recipe-listings {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .section-eyebrow {
+    color: var(--neutral-fg-3);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+  }
+
+  .popular-section {
+    border-bottom: 1px solid var(--neutral-bg-4);
+    padding-bottom: 2rem;
+  }
+
+  .popular-section-header,
+  .recipes-heading-row {
+    align-items: end;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+
+  .popular-section-header {
+    margin-bottom: 1rem;
+  }
+
+  .popular-carousel-shell {
+    --popular-card-width: 22rem;
+    position: relative;
+  }
+
+  .popular-carousel-shell::after {
+    background: linear-gradient(90deg, transparent, var(--neutral-bg-1));
+    bottom: 0.75rem;
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 3rem;
+  }
+
+  .popular-carousel {
+    display: flex;
+    gap: 1rem;
+    margin-inline: -0.25rem;
+    overflow-x: auto;
+    padding: 0.25rem 3rem 1.25rem 0.25rem;
+    scroll-padding-inline: 0.25rem;
+    scroll-snap-type: x mandatory;
+    scrollbar-color: color-mix(in srgb, var(--accent-brand) 38%, var(--neutral-bg-4)) transparent;
+    scrollbar-width: thin;
+  }
+
+  .popular-carousel::-webkit-scrollbar {
+    height: 0.55rem;
+  }
+
+  .popular-carousel::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .popular-carousel::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--accent-brand) 38%, var(--neutral-bg-4));
+    border: 2px solid var(--neutral-bg-1);
+    border-radius: 9999px;
+  }
+
+  .popular-carousel::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--accent-brand) 55%, var(--neutral-bg-4));
+  }
+
+  .popular-carousel:focus-visible {
+    border-radius: 1rem;
+  }
+
+  .popular-card-wrapper {
+    display: flex;
+    flex: 0 0 var(--popular-card-width);
+    max-width: var(--popular-card-width);
+    min-width: var(--popular-card-width);
+    scroll-snap-align: start;
+    width: var(--popular-card-width);
+  }
+
+  .popular-card-wrapper :global(.notebook-card) {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .popular-card-wrapper :global(.notebook-card-description) {
+    min-height: 4.5rem;
+  }
+
+  .all-recipes-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .catalog-controls {
+    align-items: center;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    min-height: 2.5rem;
+  }
+
+  .recipes-heading-title {
+    flex: 0 0 auto;
+  }
+
+  .recipes-heading-title h2 {
+    text-wrap: balance;
+    white-space: nowrap;
+  }
+
+  .icon-control {
+    position: relative;
+  }
+
+  .icon-control::after {
+    background: var(--neutral-fg-1);
+    border-radius: 0.4rem;
+    bottom: calc(100% + 0.45rem);
+    color: var(--neutral-bg-1);
+    content: attr(data-label);
+    font-size: 0.72rem;
+    font-weight: 600;
+    left: 50%;
+    line-height: 1;
+    opacity: 0;
+    padding: 0.35rem 0.45rem;
+    pointer-events: none;
+    position: absolute;
+    transform: translate(-50%, 0.2rem);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+    z-index: 30;
+  }
+
+  .icon-control:hover::after,
+  .icon-control:focus-visible::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  .sort-controls {
+    align-items: center;
+    background: var(--neutral-bg-3);
+    border: 1px solid var(--neutral-bg-4);
+    border-radius: 9999px;
+    box-shadow: 0 1px 2px color-mix(in srgb, #000000 7%, transparent);
+    box-sizing: border-box;
+    display: inline-flex;
+    gap: 0;
+    height: 2.5rem;
+    padding: 0.25rem;
+  }
+
+  .sort-field-toggle {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.25rem;
+  }
+
+  .sort-toggle-btn,
+  .sort-direction-btn {
+    align-items: center;
+    border-radius: 9999px;
+    box-sizing: border-box;
+    color: var(--neutral-fg-2);
+    cursor: pointer;
+    display: inline-flex;
+    height: 2rem;
+    justify-content: center;
+    min-width: 2rem;
+    padding: 0;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    width: 2rem;
+  }
+
+  .sort-toggle-btn svg,
+  .sort-direction-btn svg {
+    height: 1rem;
+    width: 1rem;
+  }
+
+  .sort-toggle-btn.active {
+    background: var(--accent-brand);
+    box-shadow: 0 1px 2px color-mix(in srgb, #000000 12%, transparent);
+    color: #fff;
+  }
+
+  .sort-direction-btn {
+    background: var(--neutral-bg-1);
+    border-left: 1px solid var(--neutral-bg-4);
+    border-radius: 0 9999px 9999px 0;
+    margin-left: 0.15rem;
+    padding-left: 0.3rem;
+    width: 2.2rem;
+  }
+
+  .sort-direction-btn::before {
+    background: var(--accent-brand);
+    border-radius: 9999px;
+    bottom: 0.4rem;
+    content: "";
+    left: 0.2rem;
+    position: absolute;
+    top: 0.4rem;
+    width: 2px;
+  }
+
+  .sort-direction-btn[data-sort-direction="asc"] svg {
+    transform: rotate(180deg);
+  }
+
+  .sort-toggle-btn:not(.active):hover,
+  .sort-toggle-btn:not(.active):focus-visible,
+  .sort-direction-btn:hover,
+  .sort-direction-btn:focus-visible {
+    background-color: var(--neutral-bg-1);
+    color: var(--neutral-fg-1);
+  }
+
+  .view-toggle {
+    align-items: center;
+    background: var(--neutral-bg-3);
+    border: 1px solid var(--neutral-bg-4);
+    border-radius: 9999px;
+    box-shadow: 0 1px 2px color-mix(in srgb, #000000 7%, transparent);
+    box-sizing: border-box;
+    display: inline-flex;
+    height: 2.5rem;
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .view-toggle-btn {
+    align-items: center;
+    border-radius: 9999px;
+    box-sizing: border-box;
+    color: var(--neutral-fg-2);
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    height: 2rem;
+    justify-content: center;
+    min-height: 2rem;
+    min-width: 2rem;
+    padding: 0;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    width: 2rem;
+  }
+
+  .view-toggle-btn svg {
+    height: 1rem;
+    width: 1rem;
+  }
+
+  .view-toggle-btn.active {
+    background: var(--accent-brand);
+    box-shadow: 0 1px 2px color-mix(in srgb, #000000 12%, transparent);
+    color: #fff;
+  }
+
+  .view-toggle-btn:not(.active):hover,
+  .view-toggle-btn:not(.active):focus-visible {
+    background-color: var(--neutral-bg-1);
+    color: var(--neutral-fg-1);
+  }
+
+  .notebooks-collection.grid-view {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 22rem));
+    justify-content: center;
+  }
+
+  .notebooks-collection.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  .notebooks-collection.list-view .notebook-card-wrapper {
+    height: auto;
+  }
+
+  .notebooks-collection.list-view :global(.notebook-card) {
+    align-items: center;
+    flex-direction: row;
+    gap: 1.25rem;
+    padding: 0.95rem 1.1rem;
+  }
+
+  .notebooks-collection.list-view :global(.notebook-card-main) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .notebooks-collection.list-view :global(.notebook-card-title) {
+    display: block;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    margin-bottom: 0.35rem;
+    min-height: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .notebooks-collection.list-view :global(.notebook-card-description) {
+    display: none;
+  }
+
+  .notebooks-collection.list-view :global(.notebook-card-footer) {
+    align-items: center;
+    display: grid;
+    flex: 0 0 clamp(16rem, 34vw, 24rem);
+    gap: 0.75rem;
+    grid-template-columns: 6rem minmax(0, 1fr);
+    margin-top: 0;
+    min-width: 0;
+  }
+
+  .notebooks-collection.list-view :global(.notebook-card-authors) {
+    display: none;
+  }
+
+  .notebooks-collection.list-view :global(.notebook-card-meta) {
+    display: block;
+    justify-self: start;
+  }
+
+  .notebooks-collection.list-view :global(.notebook-tags-row) {
+    justify-self: end;
+    margin-top: 0;
+    max-width: 100%;
+  }
+
+  .notebooks-collection.list-view :global(.notebook-tags-row [data-tag-chip]:nth-of-type(n + 3)) {
+    display: none !important;
+  }
+
   .tag-filter-bar {
     display: flex;
     gap: 0.5rem;
@@ -215,11 +650,373 @@ jupyter notebook`}</code></pre>
     display: none;
   }
 
+  .tag-filter-dropdown {
+    display: block;
+    position: relative;
+  }
+
+  .tag-filter-controls {
+    align-items: center;
+    background: var(--neutral-bg-3);
+    border: 1px solid var(--neutral-bg-4);
+    border-radius: 9999px;
+    box-shadow: 0 1px 2px color-mix(in srgb, #000000 7%, transparent);
+    box-sizing: border-box;
+    display: inline-flex;
+    gap: 0;
+    height: 2.5rem;
+    padding: 0.25rem;
+    position: relative;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .tag-filter-controls.filtering {
+    border-color: color-mix(in srgb, var(--accent-brand) 38%, var(--neutral-bg-4));
+  }
+
+  .tag-filter-controls.filtering .tag-filter-summary {
+    background: var(--accent-brand);
+    border-radius: 9999px 0 0 9999px;
+    color: #fff;
+    gap: 0.35rem;
+    padding: 0 0.65rem;
+    width: auto;
+  }
+
+  .tag-filter-summary {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 9999px;
+    box-sizing: border-box;
+    color: var(--neutral-fg-2);
+    cursor: pointer;
+    display: inline-flex;
+    gap: 0.25rem;
+    height: 2rem;
+    justify-content: center;
+    list-style: none;
+    min-height: 2rem;
+    padding: 0;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    width: 2rem;
+  }
+
+  .tag-filter-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tag-filter-summary svg {
+    height: 1rem;
+    width: 1rem;
+  }
+
+  .tag-filter-summary:hover,
+  .tag-filter-summary:focus-visible {
+    background-color: var(--neutral-bg-1);
+    color: var(--neutral-fg-1);
+  }
+
+  .tag-filter-inline-clear {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-left: 1px solid color-mix(in srgb, #ffffff 38%, var(--accent-brand));
+    border-radius: 0 9999px 9999px 0;
+    box-sizing: border-box;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    height: 2rem;
+    justify-content: center;
+    touch-action: manipulation;
+    margin-left: 0;
+    padding-left: 0.2rem;
+    width: 2rem;
+  }
+
+  .tag-filter-inline-clear:hover {
+    background: color-mix(in srgb, #ffffff 12%, transparent);
+  }
+
+  .tag-filter-inline-clear.hidden {
+    display: none;
+  }
+
+  .tag-filter-inline-clear svg {
+    height: 0.95rem;
+    width: 0.95rem;
+  }
+
+  .tag-filter-summary-count {
+    align-items: center;
+    background: var(--accent-brand);
+    border-radius: 9999px;
+    color: #fff;
+    display: none;
+    font-size: 0.65rem;
+    font-weight: 700;
+    height: 1rem;
+    justify-content: center;
+    line-height: 1;
+    min-width: 1rem;
+    padding: 0 0.25rem;
+    position: static;
+  }
+
+  .tag-filter-summary-count:not(:empty) {
+    display: inline-flex;
+  }
+
+  .tag-filter-controls.filtering .tag-filter-summary-count {
+    background: #fff;
+    color: var(--accent-brand);
+  }
+
+  .tag-filter-controls.filtering .tag-filter-inline-clear {
+    background: var(--accent-brand);
+  }
+
+  .tag-filter-menu {
+    background: var(--neutral-bg-1);
+    border: 1px solid var(--neutral-bg-4);
+    border-radius: 1rem;
+    box-shadow: 0 16px 40px color-mix(in srgb, #000000 14%, transparent);
+    display: grid;
+    gap: 0.125rem;
+    left: auto;
+    margin-top: 0.5rem;
+    max-height: min(22rem, 70vh);
+    overscroll-behavior: contain;
+    overflow-y: auto;
+    padding: 0.35rem;
+    position: absolute;
+    right: 0;
+    scrollbar-width: thin;
+    width: min(20rem, calc(100vw - 2rem));
+    z-index: 20;
+  }
+
+  .tag-filter-menu-header {
+    align-items: center;
+    background:
+      linear-gradient(180deg, var(--neutral-bg-1) 70%, color-mix(in srgb, var(--neutral-bg-1) 0%, transparent));
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    margin: -0.35rem -0.35rem 0.25rem;
+    padding: 0.75rem 0.75rem 0.65rem;
+    position: sticky;
+    top: -0.35rem;
+    z-index: 1;
+  }
+
+  .tag-filter-menu-title {
+    color: var(--neutral-fg-1);
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  .tag-filter-menu-status {
+    color: var(--neutral-fg-3);
+    font-size: 0.75rem;
+    line-height: 1.2;
+    margin: 0.15rem 0 0;
+  }
+
+  .tag-filter-option {
+    align-items: center;
+    border-radius: 0.75rem;
+    color: var(--neutral-fg-1);
+    display: flex;
+    font-size: 0.875rem;
+    gap: 0.7rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.65rem;
+    touch-action: manipulation;
+  }
+
+  .tag-filter-option:hover {
+    background: var(--neutral-bg-3);
+  }
+
+  .tag-filter-option:has(input:checked) {
+    background: color-mix(in srgb, var(--accent-brand) 10%, var(--neutral-bg-1));
+    color: var(--neutral-fg-1);
+  }
+
+  .tag-filter-option input {
+    accent-color: var(--accent-brand);
+    height: 1rem;
+    width: 1rem;
+  }
+
+  .tag-filter-reset {
+    background: color-mix(in srgb, var(--accent-brand) 12%, transparent);
+    border-radius: 9999px;
+    color: var(--accent-brand);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-height: 1.9rem;
+    padding: 0.35rem 0.7rem;
+    touch-action: manipulation;
+  }
+
+  .tag-filter-reset:hover {
+    background: color-mix(in srgb, var(--accent-brand) 18%, transparent);
+  }
+
+  .tag-filter-reset.hidden {
+    display: none;
+  }
+
   /* Desktop: allow wrapping */
   @media (min-width: 640px) {
     .tag-filter-bar {
       flex-wrap: wrap;
       overflow-x: visible;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .popular-carousel-shell {
+      --popular-card-width: min(20rem, calc(100vw - 3.5rem));
+    }
+
+    .tag-filter-menu {
+      left: max(1rem, env(safe-area-inset-left));
+      max-height: min(28rem, calc(100vh - 8rem));
+      position: fixed;
+      right: max(1rem, env(safe-area-inset-right));
+      top: calc(5.25rem + env(safe-area-inset-top));
+      width: auto;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .recipe-listings {
+      gap: 2.25rem;
+    }
+
+    .popular-section-header,
+    .recipes-heading-row {
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .recipes-heading-row {
+      flex-direction: row;
+      gap: 0.375rem;
+    }
+
+    .recipes-heading-row.has-active-filter {
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .recipes-heading-row.has-active-filter .recipes-heading-title {
+      flex-basis: 100%;
+    }
+
+    .recipes-heading-row.has-active-filter .catalog-controls {
+      flex-basis: 100%;
+      width: 100%;
+    }
+
+    .recipe-count {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .catalog-controls {
+      align-items: center;
+      flex: 1 1 auto;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 0.25rem;
+      justify-content: flex-end;
+      min-width: 0;
+      width: auto;
+    }
+
+    .sort-controls,
+    .view-toggle,
+    .tag-filter-controls {
+      height: 2.375rem;
+      padding: 0.1875rem;
+    }
+
+    .sort-controls,
+    .sort-field-toggle,
+    .view-toggle {
+      gap: 0.125rem;
+    }
+
+    .sort-direction-btn {
+      margin-left: 0.125rem;
+      padding-left: 0;
+      width: 2rem;
+    }
+
+    .sort-direction-btn::before {
+      left: 0.125rem;
+    }
+
+    .view-toggle-btn {
+      justify-content: center;
+    }
+
+    .tag-filter-summary {
+      position: relative;
+    }
+
+    .tag-filter-controls.filtering .tag-filter-summary {
+      gap: 0.25rem;
+      padding: 0 0.45rem;
+      width: auto;
+    }
+
+    .tag-filter-controls.filtering .tag-filter-inline-clear {
+      padding-left: 0;
+      width: 1.875rem;
+    }
+
+    .tag-filter-summary-count {
+      font-size: 0.55rem;
+      height: 1rem;
+      line-height: 1;
+      min-width: 1rem;
+      padding: 0 0.225rem;
+      position: static;
+    }
+
+    .notebooks-collection.list-view :global(.notebook-card) {
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+    }
+
+    .notebooks-collection.list-view :global(.notebook-card-main) {
+      flex-basis: 100%;
+    }
+
+    .notebooks-collection.list-view :global(.notebook-card-title) {
+      display: -webkit-box;
+      overflow: hidden;
+      text-overflow: clip;
+      white-space: normal;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .notebooks-collection.list-view :global(.notebook-card-footer) {
+      flex: 1 1 100%;
+      grid-template-columns: auto minmax(0, 1fr);
+      width: 100%;
     }
   }
 
@@ -229,112 +1026,468 @@ jupyter notebook`}</code></pre>
   .notebook-card-wrapper.hidden {
     display: none;
   }
+
+  :global(.high-contrast) .popular-section {
+    border-color: var(--hc-border) !important;
+  }
+
+  :global(.high-contrast) .popular-carousel-shell::after {
+    display: none;
+  }
+
+  :global(.high-contrast) .view-toggle {
+    background: var(--hc-bg) !important;
+    border-color: var(--hc-border) !important;
+    box-shadow: none !important;
+  }
+
+  :global(.high-contrast) .sort-field-toggle {
+    background: var(--hc-bg) !important;
+    border-color: var(--hc-border) !important;
+  }
+
+  :global(.high-contrast) .sort-controls,
+  :global(.high-contrast) .tag-filter-summary,
+  :global(.high-contrast) .tag-filter-controls,
+  :global(.high-contrast) .tag-filter-menu {
+    background: var(--hc-bg) !important;
+    border-color: var(--hc-border) !important;
+    box-shadow: none !important;
+  }
+
+  :global(.high-contrast) .sort-controls {
+    border-color: transparent !important;
+    gap: 0.25rem;
+    isolation: isolate;
+    position: relative;
+  }
+
+  :global(.high-contrast) .sort-controls::after {
+    border: 1px solid var(--hc-border);
+    border-radius: inherit;
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 2;
+  }
+
+  :global(.high-contrast) .sort-field-toggle,
+  :global(.high-contrast) .sort-direction-btn {
+    position: relative;
+    z-index: 1;
+  }
+
+  :global(.high-contrast) .view-toggle-btn,
+  :global(.high-contrast) .sort-toggle-btn,
+  :global(.high-contrast) .sort-direction-btn,
+  :global(.high-contrast) .tag-filter-summary,
+  :global(.high-contrast) .tag-filter-inline-clear {
+    color: var(--hc-text) !important;
+  }
+
+  :global(.high-contrast) .view-toggle-btn.active,
+  :global(.high-contrast) .sort-toggle-btn.active {
+    background: var(--hc-text) !important;
+    box-shadow: none !important;
+    color: var(--hc-bg) !important;
+  }
+
+  :global(.high-contrast) .view-toggle-btn.active,
+  :global(.high-contrast) .sort-toggle-btn.active {
+    border-radius: 9999px !important;
+    box-shadow: inset 0 0 0 1px var(--hc-bg) !important;
+    height: 2rem;
+    width: 2rem;
+  }
+
+  :global(.high-contrast) .sort-direction-btn {
+    background: var(--hc-bg) !important;
+    border-left: 0 !important;
+    border-radius: 9999px !important;
+    color: var(--hc-text) !important;
+    margin-left: 0;
+    padding-left: 0;
+    width: 2rem;
+  }
+
+  :global(.high-contrast) .sort-direction-btn::before {
+    display: none;
+  }
+
+  :global(.high-contrast) .view-toggle-btn:not(.active):hover,
+  :global(.high-contrast) .view-toggle-btn:not(.active):focus-visible,
+  :global(.high-contrast) .sort-toggle-btn:not(.active):hover,
+  :global(.high-contrast) .sort-toggle-btn:not(.active):focus-visible,
+  :global(.high-contrast) .sort-direction-btn:hover,
+  :global(.high-contrast) .sort-direction-btn:focus-visible,
+  :global(.high-contrast) .tag-filter-summary:hover,
+  :global(.high-contrast) .tag-filter-summary:focus-visible,
+  :global(.high-contrast) .tag-filter-dropdown[open] .tag-filter-summary {
+    background: var(--hc-bg) !important;
+    box-shadow: inset 0 0 0 2px var(--hc-border) !important;
+    color: var(--hc-text) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-controls.filtering .tag-filter-summary,
+  :global(.high-contrast) .tag-filter-controls.filtering .tag-filter-inline-clear {
+    background: var(--hc-text) !important;
+    color: var(--hc-bg) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-controls.filtering .tag-filter-summary-count {
+    background: var(--hc-bg) !important;
+    border: 1px solid var(--hc-bg) !important;
+    color: var(--hc-text) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-menu-header {
+    background: var(--hc-bg) !important;
+    border-bottom: 1px solid var(--hc-border);
+  }
+
+  :global(.high-contrast) .tag-filter-menu-title,
+  :global(.high-contrast) .tag-filter-menu-status,
+  :global(.high-contrast) .tag-filter-option {
+    color: var(--hc-text) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-option {
+    background: var(--hc-bg) !important;
+    border: 1px solid transparent;
+    box-sizing: border-box;
+  }
+
+  :global(.high-contrast) .tag-filter-option:hover,
+  :global(.high-contrast) .tag-filter-option:focus-within {
+    background: var(--hc-bg) !important;
+    border-color: var(--hc-border);
+  }
+
+  :global(.high-contrast) .tag-filter-option:has(input:checked) {
+    background: var(--hc-bg) !important;
+    border-color: var(--hc-link);
+    color: var(--hc-text) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-option input {
+    accent-color: var(--hc-text);
+  }
+
+  :global(.high-contrast) .tag-filter-reset {
+    background: var(--hc-bg) !important;
+    border: 1px solid var(--hc-border);
+    color: var(--hc-link) !important;
+  }
+
+  :global(.high-contrast) .tag-filter-reset:hover,
+  :global(.high-contrast) .tag-filter-reset:focus-visible {
+    background: var(--hc-text) !important;
+    color: var(--hc-bg) !important;
+  }
 </style>
 
 <script>
   import { trackEvent } from "@/lib/telemetry";
 
-  function initTagFilter() {
-    const buttons = document.querySelectorAll<HTMLButtonElement>(".tag-filter-btn:not(.tag-clear-btn)");
-    const clearBtn = document.querySelector<HTMLButtonElement>(".tag-clear-btn");
-    const cards = document.querySelectorAll<HTMLElement>(".notebook-card-wrapper");
-    const popularSection = document.getElementById("popular-section");
-    const recipeCount = document.getElementById("recipe-count");
-    const mainCards = document.querySelectorAll<HTMLElement>("#notebooks-grid > .notebook-card-wrapper");
+  const recipeViewStorageKey = "forgebook-recipe-view";
+  type RecipeView = "grid" | "list";
+  type RecipeSortField = "date" | "views";
+  type RecipeSortDirection = "asc" | "desc";
 
-    const filterBar = document.querySelector<HTMLElement>(".tag-filter-bar");
+  function refitNotebookCards() {
+    document.dispatchEvent(new Event("forgebook:cards-resized"));
+  }
 
-    if (!buttons.length) return;
+  function initRecipeViewToggle() {
+    const grid = document.getElementById("notebooks-grid");
+    const buttons = document.querySelectorAll<HTMLButtonElement>("[data-recipe-view]");
+    if (!grid || !buttons.length || grid.dataset.viewToggleInitialized === "true") return;
 
-    const allTags = new Set<string>();
-    buttons.forEach((btn) => allTags.add(btn.dataset.tag!));
-    const activeTags = new Set<string>(allTags);
+    const collection = grid;
+    collection.dataset.viewToggleInitialized = "true";
 
-    function isAllSelected() {
-      return activeTags.size === allTags.size;
+    function setView(view: RecipeView, persist = false) {
+      collection.classList.toggle("grid-view", view === "grid");
+      collection.classList.toggle("list-view", view === "list");
+      collection.dataset.view = view;
+
+      buttons.forEach((button) => {
+        const isActive = button.dataset.recipeView === view;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
+
+      if (persist) {
+        localStorage.setItem(recipeViewStorageKey, view);
+        trackEvent("RecipeViewToggle", { view });
+      }
+
+      refitNotebookCards();
     }
 
-    function applyFilter() {
-      const filtering = !isAllSelected();
+    const storedView = localStorage.getItem(recipeViewStorageKey);
+    setView(storedView === "list" ? "list" : "grid");
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const view = button.dataset.recipeView === "list" ? "list" : "grid";
+        setView(view, true);
+      });
+    });
+  }
+
+  function initRecipeSorting() {
+    const collection = document.getElementById("notebooks-grid");
+    const fieldButtons = document.querySelectorAll<HTMLButtonElement>("[data-sort-field]");
+    const directionButton = document.querySelector<HTMLButtonElement>("[data-sort-direction]");
+    if (!collection || !fieldButtons.length || !directionButton || collection.dataset.sortInitialized === "true") return;
+
+    const recipeCollection = collection;
+    const sortDirectionButton = directionButton;
+    recipeCollection.dataset.sortInitialized = "true";
+    let sortField: RecipeSortField = "date";
+    let sortDirection: RecipeSortDirection = "desc";
+
+    function getDateValue(card: HTMLElement) {
+      const date = card.dataset.date ?? "";
+      const parsed = Date.parse(date);
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+
+    function getViewsValue(card: HTMLElement) {
+      return Number.parseInt(card.dataset.views ?? "0", 10) || 0;
+    }
+
+    function updateSortControls() {
+      fieldButtons.forEach((button) => {
+        const isActive = button.dataset.sortField === sortField;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
+
+      const fieldLabel = sortField === "views" ? "Views" : "Date";
+      const directionLabel = sortDirection === "desc" ? "desc" : "asc";
+      sortDirectionButton.dataset.sortDirection = sortDirection;
+      sortDirectionButton.dataset.label = `${fieldLabel} ${directionLabel}`;
+      sortDirectionButton.setAttribute(
+        "aria-label",
+        `Sort ${fieldLabel.toLowerCase()} ${sortDirection === "desc" ? "descending" : "ascending"}`,
+      );
+      const srText = sortDirectionButton.querySelector(".sr-only");
+      if (srText) srText.textContent = `${fieldLabel} ${sortDirection === "desc" ? "descending" : "ascending"}`;
+    }
+
+    function sortCards() {
+      const cards = Array.from(recipeCollection.querySelectorAll<HTMLElement>(":scope > .notebook-card-wrapper"));
+      const sortedCards = cards.sort((a, b) => {
+        const titleCompare = (a.dataset.title ?? "").localeCompare(b.dataset.title ?? "");
+
+        if (sortField === "views") {
+          const viewsCompare = sortDirection === "asc"
+            ? getViewsValue(a) - getViewsValue(b)
+            : getViewsValue(b) - getViewsValue(a);
+          return viewsCompare || getDateValue(b) - getDateValue(a) || titleCompare;
+        }
+
+        const dateCompare = sortDirection === "asc"
+          ? getDateValue(a) - getDateValue(b)
+          : getDateValue(b) - getDateValue(a);
+        return dateCompare || titleCompare;
+      });
+
+      sortedCards.forEach((card) => recipeCollection.appendChild(card));
+      updateSortControls();
+      refitNotebookCards();
+    }
+
+    fieldButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        sortField = button.dataset.sortField === "views" ? "views" : "date";
+        sortCards();
+        trackEvent("RecipeSort", { field: sortField, direction: sortDirection });
+      });
+    });
+
+    sortDirectionButton.addEventListener("click", () => {
+      sortDirection = sortDirection === "desc" ? "asc" : "desc";
+      sortCards();
+      trackEvent("RecipeSort", { field: sortField, direction: sortDirection });
+    });
+
+    sortCards();
+  }
+
+  function initTagFilter() {
+    const collection = document.getElementById("notebooks-grid");
+    if (!collection || collection.dataset.tagFilterInitialized === "true") return;
+
+    collection.dataset.tagFilterInitialized = "true";
+
+    const buttons = document.querySelectorAll<HTMLButtonElement>(".tag-filter-btn:not(.tag-clear-btn)");
+    const checkboxes = document.querySelectorAll<HTMLInputElement>("[data-tag-checkbox]");
+    const clearBtn = document.querySelector<HTMLButtonElement>(".tag-clear-btn");
+    const mobileClearBtn = document.querySelector<HTMLButtonElement>("[data-tag-mobile-clear]");
+    const inlineClearBtn = document.querySelector<HTMLButtonElement>("[data-tag-inline-clear]");
+    const recipeCount = document.getElementById("recipe-count");
+    const mainCards = document.querySelectorAll<HTMLElement>("#notebooks-grid > .notebook-card-wrapper");
+    const summary = document.querySelector<HTMLElement>("[data-tag-summary]");
+    const status = document.querySelector<HTMLElement>("[data-tag-status]");
+    const filterBar = document.querySelector<HTMLElement>(".tag-filter-bar");
+    const dropdown = document.querySelector<HTMLDetailsElement>(".tag-filter-dropdown");
+    const filterControls = document.querySelector<HTMLElement>("[data-tag-filter-controls]");
+    const recipesHeadingRow = document.querySelector<HTMLElement>(".recipes-heading-row");
+
+    if (!buttons.length && !checkboxes.length) return;
+
+    const allTags = new Set<string>();
+    buttons.forEach((btn) => {
+      if (btn.dataset.tag) allTags.add(btn.dataset.tag);
+    });
+    checkboxes.forEach((checkbox) => {
+      if (checkbox.value) allTags.add(checkbox.value);
+    });
+    const activeTags = new Set<string>();
+
+    function hasActiveFilter() {
+      return activeTags.size > 0;
+    }
+
+    function clearTags() {
+      activeTags.clear();
+    }
+
+    function updateControls() {
+      const filtering = hasActiveFilter();
       buttons.forEach((btn) => {
-        btn.classList.toggle("active", activeTags.has(btn.dataset.tag!));
+        btn.classList.toggle("active", activeTags.has(btn.dataset.tag ?? ""));
+      });
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = activeTags.has(checkbox.value);
       });
 
       if (filterBar) filterBar.classList.toggle("filtering", filtering);
+      if (filterControls) filterControls.classList.toggle("filtering", filtering);
+      if (recipesHeadingRow) recipesHeadingRow.classList.toggle("has-active-filter", filtering);
       if (clearBtn) clearBtn.classList.toggle("hidden", !filtering);
+      if (mobileClearBtn) mobileClearBtn.classList.toggle("hidden", !filtering);
+      if (inlineClearBtn) inlineClearBtn.classList.toggle("hidden", !filtering);
+      if (summary) summary.textContent = filtering ? activeTags.size.toString() : "";
+      if (status) status.textContent = filtering ? `${activeTags.size} selected` : "No tags selected";
+    }
 
-      let visiblePopular = 0;
+    function applyFilter() {
+      updateControls();
+
       let visibleMain = 0;
-      cards.forEach((card) => {
-        const cardTags = (card.dataset.tags ?? "").split(",");
-        const show = isAllSelected() || cardTags.some((t) => activeTags.has(t));
-        card.classList.toggle("hidden", !show);
-        if (show && popularSection?.contains(card)) visiblePopular++;
-      });
       mainCards.forEach((card) => {
-        if (!card.classList.contains("hidden")) visibleMain++;
+        const cardTags = (card.dataset.tags ?? "").split(",");
+        const show = !hasActiveFilter() || cardTags.some((t) => activeTags.has(t));
+        card.classList.toggle("hidden", !show);
+        if (show) visibleMain++;
       });
 
       if (recipeCount) recipeCount.textContent = `(${visibleMain})`;
 
-      if (popularSection) {
-        popularSection.classList.toggle("hidden", !isAllSelected() && visiblePopular === 0);
-      }
-
-      const hashVal = isAllSelected() ? "" : [...activeTags].join("+");
+      const hashVal = hasActiveFilter() ? [...activeTags].join("+") : "";
       history.replaceState(null, "", hashVal ? `#tag=${hashVal}` : location.pathname);
+      refitNotebookCards();
     }
 
     buttons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        const tag = btn.dataset.tag!;
-        if (isAllSelected()) {
-          // From all-selected: narrow to just this one
+        const tag = btn.dataset.tag;
+        if (!tag) return;
+
+        if (!hasActiveFilter()) {
           activeTags.clear();
           activeTags.add(tag);
         } else if (activeTags.has(tag)) {
-          // Deselect this tag
           activeTags.delete(tag);
-          // If none left, restore all
-          if (activeTags.size === 0) {
-            allTags.forEach((t) => activeTags.add(t));
-          }
         } else {
-          // Add this tag to selection
           activeTags.add(tag);
         }
         applyFilter();
         trackEvent("TagFilter", {
           tag,
           activeTags: [...activeTags].join(","),
-          isFiltering: !isAllSelected(),
+          isFiltering: hasActiveFilter(),
+        });
+      });
+    });
+
+    checkboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
+        activeTags.clear();
+        checkboxes.forEach((box) => {
+          if (box.checked) activeTags.add(box.value);
+        });
+        applyFilter();
+        trackEvent("TagFilter", {
+          tag: checkbox.value,
+          activeTags: [...activeTags].join(","),
+          isFiltering: hasActiveFilter(),
         });
       });
     });
 
     if (clearBtn) {
       clearBtn.addEventListener("click", () => {
-        activeTags.clear();
-        allTags.forEach((t) => activeTags.add(t));
+        clearTags();
         applyFilter();
         trackEvent("TagFilter", { tag: "clear", activeTags: "all", isFiltering: false });
       });
     }
 
-    // Restore from URL hash
+    if (mobileClearBtn) {
+      mobileClearBtn.addEventListener("click", () => {
+        clearTags();
+        applyFilter();
+        trackEvent("TagFilter", { tag: "clear", activeTags: "all", isFiltering: false });
+      });
+    }
+
+    if (inlineClearBtn) {
+      inlineClearBtn.addEventListener("click", () => {
+        clearTags();
+        if (dropdown) dropdown.open = false;
+        applyFilter();
+        trackEvent("TagFilter", { tag: "clear", activeTags: "all", isFiltering: false });
+      });
+    }
+
+    if (dropdown) {
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (target instanceof Node && dropdown.open && !dropdown.contains(target)) {
+          dropdown.open = false;
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && dropdown.open) {
+          dropdown.open = false;
+          dropdown.querySelector<HTMLElement>("summary")?.focus();
+        }
+      });
+    }
+
     const hash = location.hash;
     if (hash.startsWith("#tag=")) {
       activeTags.clear();
       for (const t of decodeURIComponent(hash.slice(5)).split("+")) {
         if (t && allTags.has(t)) activeTags.add(t);
       }
-      if (activeTags.size === 0) {
-        allTags.forEach((t) => activeTags.add(t));
-      }
       applyFilter();
+    } else {
+      updateControls();
     }
   }
 
+  initRecipeViewToggle();
+  initRecipeSorting();
   initTagFilter();
+  document.addEventListener("astro:after-swap", initRecipeViewToggle);
+  document.addEventListener("astro:after-swap", initRecipeSorting);
   document.addEventListener("astro:after-swap", initTagFilter);
 </script>
