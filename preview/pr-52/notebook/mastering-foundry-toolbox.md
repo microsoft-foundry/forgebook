@@ -681,50 +681,59 @@ else:
 
 #### 4i · Work IQ *(preview)*
 
-📄 **Docs:** [Connect agents to Microsoft 365 with Work IQ](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/work-iq) · [Foundry connection quickstart](https://learn.microsoft.com/microsoft-365/copilot/extensibility/work-iq/mcp/quickstart/foundry) · [Enable Work IQ in your tenant](https://learn.microsoft.com/microsoft-365/copilot/extensibility/work-iq/enable-work-iq)
+📄 **Docs:** [Connect agents to Microsoft 365 with Work IQ](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/work-iq) · [Enable Work IQ in your tenant](https://learn.microsoft.com/microsoft-365/copilot/extensibility/work-iq/enable-work-iq)
 
 **What it is.** A Microsoft-managed tool that reasons over the signed-in user's **Microsoft 365
 work context** - mail, chats, meetings, and documents - so the agent can answer "what did my team
 decide about X?" style questions.
 
-**How it works.** Work IQ is a remote **MCP server** (`https://workiq.svc.cloud.microsoft/mcp`)
-that always runs **as the signed-in user** (delegated / on-behalf-of auth - application-only auth is
-*not* supported). Its project connection is therefore **oauth2**, and you must back it with **your
-own Microsoft Entra app registration** so Foundry has a client to drive the OAuth flow. A connection
-that isn't backed by a correctly configured app (missing the `WorkIQAgent.Ask` scope / token
-audience) is accepted by `create_version` but fails at *runtime* with errors like
-`TokenAudience is required for OBO` or `Failed to fetch agent card: 404`.
+**How it works.** Foundry routes each tool call to Work IQ over the **Agent-to-Agent (A2A)**
+protocol, authenticating **On-Behalf-Of (OBO)** the signed-in user - so requests run with that
+user's Microsoft 365 permissions and sensitivity labels. Delegated Entra auth is the *only* option;
+application-only auth is **not supported**. The project connection is therefore `authType: OAuth2` /
+`category: RemoteA2A`, targeting `https://workiq.svc.cloud.microsoft/a2a/`.
+
+Because it's OBO, **you must supply your own Microsoft Entra app registration** - Work IQ only
+supports "bring your own Entra app." A connection that isn't backed by a correctly configured app
+(for example, missing the `WorkIQAgent.Ask` scope) is accepted by `create_version` but fails at
+*runtime* with errors like `TokenAudience is required for OBO` or `Failed to fetch agent card: 404`.
 
 > ⚠️ You can't reuse someone else's preview connection - **each tenant registers its own Entra app.**
 
 **Prerequisites**
 - **Foundry Project Manager** role (to create the connection) plus **Foundry User** role for the
-  developer, the agent runtime identity, and every user who signs in.
+  developer, the agent runtime identity, and every user involved in the OAuth flow.
 - A **Microsoft 365 Copilot license** for each user who calls Work IQ.
 - A **Microsoft Entra Global Administrator** to grant admin consent.
+- A project endpoint **without VNet restriction** (VNet integration isn't supported).
 - Your tenant **enabled for Work IQ** - a one-time `az ad sp create --id fdcc1f02-fc51-4226-8753-f668596af7f7`
   (or the Graph Explorer equivalent) provisions the Work IQ service principal so the
   `WorkIQAgent.Ask` permission becomes selectable.
 
 **Step 1 - Register your own Entra app** ([Entra admin center](https://entra.microsoft.com) -> *Entra ID -> App registrations -> New registration*):
-1. Copy the **Application (client) ID** and **Directory (tenant) ID**.
-2. **Certificates & secrets -> New client secret**; copy the secret **value**.
-3. **API permissions -> Add a permission -> Work IQ ->** delegated **`WorkIQAgent.Ask`**, then
-   **Grant admin consent for the tenant**. (If Work IQ isn't listed, finish *Enable Work IQ* above.)
+1. Set **Supported account types = Accounts in this organizational directory only** (single tenant),
+   **Register**, then copy the **Application (client) ID**.
+2. **API permissions -> Add a permission -> APIs my organization uses ->** search **Work IQ**
+   (app ID `fdcc1f02-fc51-4226-8753-f668596af7f7`) **-> Delegated permissions -> `WorkIQAgent.Ask`
+   -> Add permissions**, then **Grant admin consent** (requires Global Administrator).
+3. **Certificates & secrets -> New client secret**; copy the secret **Value** (shown only once).
+4. Copy the **Directory (tenant) ID** from the Entra ID overview.
 
-**Step 2 - Create the Work IQ connection in Foundry** (*Tools -> Connect a tool -> Catalog -> "Work IQ MCP"*), using the values from your app:
+**Step 2 - Create the Work IQ connection in Foundry** ([Foundry portal](https://ai.azure.com/nextgen) -> *your project -> Settings -> Connections -> New connection -> Work IQ*), using the values from your app. Connection fields can't be edited after creation.
 
 | Field | Value |
 |---|---|
-| **Endpoint** | `https://workiq.svc.cloud.microsoft/mcp` |
 | **Client ID** | Application (client) ID |
 | **Client secret** | the secret value |
 | **Authorization URL** | `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize` |
-| **Token / Refresh URL** | `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token` |
+| **Token URL** / **Refresh URL** | `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token` |
 | **Scopes** | `api://workiq.svc.cloud.microsoft/WorkIQAgent.Ask,offline_access` |
 
-**Step 3 - Add the redirect URI back.** After you save, Foundry shows an **OAuth redirect URL** -
-paste it into the app registration under **Authentication -> Add a platform -> Web**.
+You can also create the connection with the ARM REST API: `PUT .../connections/{name}?api-version=2025-04-01-preview` with `authType: OAuth2`, `category: RemoteA2A`, `target: https://workiq.svc.cloud.microsoft/a2a/`.
+
+**Step 3 - Add the redirect URI back.** After you save, Foundry returns an **OAuth redirect URL**
+(`properties.oauthRedirectUrl`) - paste it into the app registration under
+**Authentication -> Add a platform -> Web**.
 
 **Key SDK parameters:**
 - `project_connection_id` - **required** `str`; the Work IQ connection you created above.
