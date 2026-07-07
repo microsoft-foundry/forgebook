@@ -1,0 +1,168 @@
+name: Deploy PR Preview
+
+# Privileged consumer half of the preview split. Triggered by workflow_run once
+# "Preview PR" (preview.yml) finishes, this workflow always runs against the base
+# repo's workflow definition, so it gets a write-scoped GITHUB_TOKEN — even when the
+# triggering PR came from a fork. Crucially, it never checks out or executes the PR's
+# code: it only downloads the already-built static site artifact that preview.yml
+# produced, so there's no risk of a malicious PR running arbitrary code with a
+# write-capable token (the failure mode `pull_request_target` on the whole build
+# would have exposed us to).
+#
+# Deploys are additionally gated on the PR author being a member of the
+# forgebook-contributors GitHub team, matching CONTRIBUTING.md's "curated while
+# stabilizing" publishing model. Checking team membership needs an org-scoped
+# token — the default GITHUB_TOKEN cannot read team membership even for a visible
+# ("closed" privacy) team — so this requires a maintainer-created fine-grained PAT
+# (org `read:` members/teams permission only) stored as the FORGEBOOK_TEAM_READ_TOKEN
+# repo secret. That secret is a manual one-time setup step; without it the team
+# membership check step will fail loudly rather than silently treating everyone as
+# a non-member.
+on:
+  workflow_run:
+    workflows: ["Preview PR"]
+    types: [completed]
+
+concurrency:
+  group: "preview-deploy-${{ github.event.workflow_run.id }}"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Download PR metadata artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-metadata
+          path: ./pr-meta
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download built site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-dist
+          path: ./site-dist
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read PR metadata
+        id: metadata
+        run: |
+          PR_NUMBER=$(jq -r .prNumber ./pr-meta/metadata.json)
+          HEAD_SHA=$(jq -r .headSha ./pr-meta/metadata.json)
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Get PR author
+        id: pr
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const prNumber = Number('${{ steps.metadata.outputs.pr_number }}');
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            core.setOutput('author', pr.user.login);
+
+      # Requires the FORGEBOOK_TEAM_READ_TOKEN repo secret — see comment at top of file.
+      - name: Check forgebook-contributors team membership
+        id: membership
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.FORGEBOOK_TEAM_READ_TOKEN }}
+          script: |
+            const username = '${{ steps.pr.outputs.author }}';
+            let isMember = false;
+            try {
+              const res = await github.rest.teams.getMembershipForUserInOrg({
+                org: 'microsoft-foundry',
+                team_slug: 'forgebook-contributors',
+                username,
+              });
+              isMember = res.data.state === 'active';
+            } catch (err) {
+              if (err.status !== 404) {
+                throw err;
+              }
+              isMember = false;
+            }
+            core.setOutput('is_member', isMember);
+
+      - name: Deploy preview to GitHub Pages subdirectory
+        if: steps.membership.outputs.is_member == 'true'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: ./site-dist
+          target-folder: preview/pr-${{ steps.metadata.outputs.pr_number }}
+          clean: true
+
+      - name: Comment PR with preview URL
+        if: steps.membership.outputs.is_member == 'true'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const prNumber = Number('${{ steps.metadata.outputs.pr_number }}');
+            const previewUrl = `https://microsoft-foundry.github.io/forgebook/preview/pr-${prNumber}/`;
+            const body = `## 🔍 Preview\n\nA live preview of this PR is available at:\n**${previewUrl}**`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const botComment = comments.find(c => c.body.includes('## 🔍 Preview'));
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
+
+      - name: Comment PR that a maintainer needs to review before preview deploys
+        if: steps.membership.outputs.is_member == 'false'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const prNumber = Number('${{ steps.metadata.outputs.pr_number }}');
+            const body = `## 🔍 Preview\n\nBuild and checks passed, but a live preview wasn't auto-deployed because @${{ steps.pr.outputs.author }} isn't a member of \`forgebook-contributors\` yet. A maintainer can add you to the team and re-run this workflow to deploy the preview.`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const botComment = comments.find(c => c.body.includes('## 🔍 Preview'));
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
