@@ -1,0 +1,39 @@
+name: Cleanup PR Preview
+
+# Removes the preview/pr-<n> directory from gh-pages when a PR closes. Uses
+# pull_request_target (not pull_request) so it gets a write-scoped GITHUB_TOKEN even
+# for fork-based PRs — the same 403 that hits preview.yml's old deploy step would
+# otherwise hit this cleanup too. This is a safe use of pull_request_target because
+# the job never checks out or executes the PR's code: it only checks out the
+# maintainer-controlled gh-pages branch and deletes a directory named after the PR
+# number.
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+
+concurrency:
+  group: "preview-cleanup-${{ github.event.pull_request.number }}"
+  cancel-in-progress: false
+
+jobs:
+  cleanup-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+
+      - name: Remove preview directory
+        run: |
+          PR_DIR="preview/pr-${{ github.event.pull_request.number }}"
+          if [ -d "$PR_DIR" ]; then
+            git rm -rf "$PR_DIR"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "Remove preview for PR #${{ github.event.pull_request.number }}"
+            git push origin gh-pages
+          fi
