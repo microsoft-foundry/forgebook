@@ -13,11 +13,16 @@ name: Deploy PR Preview
 # forgebook-contributors GitHub team, matching CONTRIBUTING.md's "curated while
 # stabilizing" publishing model. Checking team membership needs an org-scoped
 # token — the default GITHUB_TOKEN cannot read team membership even for a visible
-# ("closed" privacy) team — so this requires a maintainer-created fine-grained PAT
-# (org `read:` members/teams permission only) stored as the FORGEBOOK_TEAM_READ_TOKEN
-# repo secret. That secret is a manual one-time setup step; without it the team
-# membership check step will fail loudly rather than silently treating everyone as
-# a non-member.
+# ("closed" privacy) team. Microsoft's open-source policy caps personal access
+# tokens at 8 days, which makes a PAT impractical here (it would need manual
+# rotation every week and silently break the workflow when it expired). Instead
+# this uses a minimal GitHub App (org permission: Members, read-only) installed
+# on microsoft-foundry; actions/create-github-app-token mints a fresh 1-hour
+# installation token at the start of each run from the app's ID + private key
+# (FORGEBOOK_APP_ID / FORGEBOOK_APP_PRIVATE_KEY secrets), so there's nothing to
+# rotate. That app is a manual one-time setup step; without those secrets the
+# team membership check step will fail loudly rather than silently treating
+# everyone as a non-member.
 on:
   workflow_run:
     workflows: ["Preview PR"]
@@ -75,14 +80,23 @@ jobs:
             });
             core.setOutput('author', pr.user.login);
 
-      # Requires the FORGEBOOK_TEAM_READ_TOKEN repo secret — see comment at top of file.
+      # Requires the FORGEBOOK_APP_ID and FORGEBOOK_APP_PRIVATE_KEY repo secrets —
+      # see comment at top of file.
+      - name: Generate GitHub App token for team membership check
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.FORGEBOOK_APP_ID }}
+          private-key: ${{ secrets.FORGEBOOK_APP_PRIVATE_KEY }}
+          owner: microsoft-foundry
+
       - name: Check forgebook-contributors team membership
         id: membership
         uses: actions/github-script@v9
         env:
           PR_AUTHOR: ${{ steps.pr.outputs.author }}
         with:
-          github-token: ${{ secrets.FORGEBOOK_TEAM_READ_TOKEN }}
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const username = process.env.PR_AUTHOR;
             let isMember = false;
