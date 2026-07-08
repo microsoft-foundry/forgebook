@@ -63,9 +63,11 @@ jobs:
       - name: Get PR author
         id: pr
         uses: actions/github-script@v9
+        env:
+          PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
         with:
           script: |
-            const prNumber = Number('${{ steps.metadata.outputs.pr_number }}');
+            const prNumber = Number(process.env.PR_NUMBER);
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -77,10 +79,12 @@ jobs:
       - name: Check forgebook-contributors team membership
         id: membership
         uses: actions/github-script@v9
+        env:
+          PR_AUTHOR: ${{ steps.pr.outputs.author }}
         with:
           github-token: ${{ secrets.FORGEBOOK_TEAM_READ_TOKEN }}
           script: |
-            const username = '${{ steps.pr.outputs.author }}';
+            const username = process.env.PR_AUTHOR;
             let isMember = false;
             try {
               const res = await github.rest.teams.getMembershipForUserInOrg({
@@ -109,9 +113,11 @@ jobs:
       - name: Comment PR with preview URL
         if: steps.membership.outputs.is_member == 'true'
         uses: actions/github-script@v9
+        env:
+          PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
         with:
           script: |
-            const prNumber = Number('${{ steps.metadata.outputs.pr_number }}');
+            const prNumber = Number(process.env.PR_NUMBER);
             const previewUrl = `https://microsoft-foundry.github.io/forgebook/preview/pr-${prNumber}/`;
             const body = `## 🔍 Preview\n\nA live preview of this PR is available at:\n**${previewUrl}**`;
 
@@ -140,10 +146,13 @@ jobs:
       - name: Comment PR that a maintainer needs to review before preview deploys
         if: steps.membership.outputs.is_member == 'false'
         uses: actions/github-script@v9
+        env:
+          PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
+          PR_AUTHOR: ${{ steps.pr.outputs.author }}
         with:
           script: |
-            const prNumber = Number('${{ steps.metadata.outputs.pr_number }}');
-            const body = `## 🔍 Preview\n\nBuild and checks passed, but a live preview wasn't auto-deployed because @${{ steps.pr.outputs.author }} isn't a member of \`forgebook-contributors\` yet. A maintainer can add you to the team and re-run this workflow to deploy the preview.`;
+            const prNumber = Number(process.env.PR_NUMBER);
+            const body = `## 🔍 Preview\n\nBuild and checks passed, but a live preview wasn't auto-deployed because @${process.env.PR_AUTHOR} isn't a member of \`forgebook-contributors\` yet. A maintainer can add you to the team and re-run this workflow to deploy the preview.`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
