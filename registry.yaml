@@ -14,6 +14,36 @@
 #   - date: Publication date (YYYY-MM-DD)
 #   - tags: List of topic tags
 
+- slug: migrate-gpt-4o-mini-to-gpt-5-1
+  path: notebooks/migrate-gpt-4o-mini-to-gpt-5-1.ipynb
+  title: "Migrate gpt-4o-mini to gpt-5.1"
+  description: "Port a Chat Completions app from gpt-4o-mini to gpt-5.1: rename max_tokens to max_completion_tokens, remove unsupported sampling, and use reasoning_effort and verbosity."
+  date: "2026-07-07"
+  authors:
+    - github: meerakurup
+  tags:
+    - models
+    - inference
+    - chat-completions
+    - reasoning
+    - responses
+    - azure-openai
+
+- slug: migrate-gpt-5-5-to-claude-opus-4-8
+  path: notebooks/migrate-gpt-5-5-to-claude-opus-4-8.ipynb
+  title: "Migrate GPT-5.5 to Claude Opus 4.8"
+  description: "Move a Chat Completions workload from GPT-5.5 to Claude Opus 4.8 on Microsoft Foundry with one adapter, side-by-side eval gates, structured output retries, streaming normalization, and rollout checks."
+  date: "2026-06-30"
+  authors:
+    - github: meerakurup
+  tags:
+    - models
+    - inference
+    - evaluation
+    - sdk
+    - azure-openai
+    - anthropic
+
 - slug: migrate-oyd-to-foundry-iq
   path: notebooks/migrate-oyd-to-foundry-iq.ipynb
   title: "Migrate Azure OpenAI On Your Data to Foundry IQ"

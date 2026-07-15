@@ -1,8 +1,15 @@
 name: Preview PR
 
+# Unprivileged build/validate/test job. Runs on the `pull_request` event so it works
+# identically for fork and same-repo PRs — but GitHub always issues a read-only
+# GITHUB_TOKEN for fork-based pull_request runs, so this workflow never attempts to
+# push anywhere. It hands its build output off as an artifact; the actual gh-pages
+# deploy (which needs write access) happens in the separate preview-deploy.yml
+# workflow, triggered via workflow_run once this one completes. See preview-deploy.yml
+# for why the split exists and how the deploy is gated.
 on:
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened]
     branches: [main]
 
 concurrency:
@@ -10,13 +17,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # --- Build, validate, and deploy preview ---
+  # --- Build, validate, and test; hand off to preview-deploy.yml via artifact ---
   build-and-preview:
-    if: ${{ github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -58,63 +63,29 @@ jobs:
           FORGEBOOK_TEST_BASE_PATH: /forgebook/preview/pr-${{ github.event.pull_request.number }}
         run: npm run test:a11y
 
-      - name: Deploy preview to GitHub Pages subdirectory
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages
-          folder: ./site/dist
-          target-folder: preview/pr-${{ github.event.pull_request.number }}
-          clean: true
-
-      - name: Comment PR with preview URL
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const previewUrl = `https://microsoft-foundry.github.io/forgebook/preview/pr-${{ github.event.pull_request.number }}/`;
-            const body = `## 🔍 Preview\n\nA live preview of this PR is available at:\n**${previewUrl}**`;
-
-            // Update existing comment or create new one
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const botComment = comments.find(c => c.body.includes('## 🔍 Preview'));
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
-            }
-
-  # --- Clean up preview on PR close ---
-  cleanup-preview:
-    if: ${{ github.event.action == 'closed' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v6
-        with:
-          ref: gh-pages
-
-      - name: Remove preview directory
+      # workflow_run doesn't expose github.event.pull_request for fork-based PRs
+      # (GitHub leaves `pull_requests` empty in that case), so pass what
+      # preview-deploy.yml needs along explicitly via an artifact.
+      - name: Save PR metadata for preview-deploy workflow
         run: |
-          PR_DIR="preview/pr-${{ github.event.pull_request.number }}"
-          if [ -d "$PR_DIR" ]; then
-            git rm -rf "$PR_DIR"
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git commit -m "Remove preview for PR #${{ github.event.pull_request.number }}"
-            git push origin gh-pages
-          fi
+          mkdir -p ./pr-meta
+          cat <<EOF > ./pr-meta/metadata.json
+          {
+            "prNumber": ${{ github.event.pull_request.number }},
+            "headSha": "${{ github.event.pull_request.head.sha }}"
+          }
+          EOF
+
+      - name: Upload PR metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-metadata
+          path: ./pr-meta/metadata.json
+          retention-days: 1
+
+      - name: Upload built site
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-dist
+          path: ./site/dist
+          retention-days: 1

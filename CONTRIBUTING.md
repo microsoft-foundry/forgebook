@@ -39,7 +39,7 @@ For site bugs, use the [Bug Report template](https://github.com/microsoft-foundr
    cd scripts && npx tsx validate-registry.ts
    ```
 
-CI runs registry validation and site build automatically. A live preview URL is posted on your PR.
+CI runs registry validation, site build, and accessibility checks automatically on every PR. A live preview URL is posted on your PR once you're a member of the [`forgebook-contributors`](https://github.com/orgs/microsoft-foundry/teams/forgebook-contributors) GitHub team — this keeps auto-deployed previews scoped to approved contributors while publishing stays curated. If checks pass but you're not yet on the team, the PR gets a comment saying so instead of a preview link; ask a maintainer to add you and re-run the workflow.
 
 Recipe PRs should include review from the relevant Foundry DX, PM, or engineering owner for technical accuracy and product positioning.
 
