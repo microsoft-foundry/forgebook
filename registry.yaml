@@ -165,6 +165,25 @@
     - agent-service
     - agent-framework
 
+- slug: mastering-foundry-toolbox
+  path: notebooks/mastering-foundry-toolbox.ipynb
+  title: "Mastering Toolboxes in Microsoft Foundry"
+  description: "End-to-end walkthrough of Toolboxes in Microsoft Foundry: every tool type, identity, Tool Search, versioning, governance, and consuming from Agent Framework, LangGraph, and Copilot SDK."
+  date: "2026-06-07"
+  authors:
+    - github: zhuoqunli
+  tags:
+    - toolbox
+    - tools
+    - mcp
+    - agents
+    - agent-service
+    - hosted-agents
+    - agent-framework
+    - langgraph
+    - governance
+    - identity
+
 - slug: mai-transcribe-1-5
   path: notebooks/mai-transcribe-1-5.ipynb
   title: "Build Speech-to-Text with MAI-Transcribe-1.5"
