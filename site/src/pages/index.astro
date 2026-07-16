@@ -8,11 +8,14 @@ import { buildHomeSchema } from "@/lib/schema";
 import popularRaw from "@/data/popular.json";
 
 interface PopularData {
+  metricVersion: "recipe-page-views-v1";
   updatedAt: string;
-  notebooks: { slug: string; clicks: number }[];
+  since: string;
+  rankingWindowDays: number;
+  notebooks: { slug: string; views: number; recentViews: number }[];
 }
 const popularData = popularRaw as PopularData;
-const popularityBySlug = new Map(popularData.notebooks.map((popular) => [popular.slug, popular.clicks]));
+const viewsBySlug = new Map(popularData.notebooks.map((popular) => [popular.slug, popular.views]));
 
 const notebooksCollection = await getCollection("notebooks");
 
@@ -29,16 +32,16 @@ const notebooks = notebooksCollection.map((entry) => ({
 
 // Build the "Popular" carousel from analytics-backed entries only.
 type NotebookSummary = (typeof notebooks)[number];
-type PopularNotebook = NotebookSummary & { popularityCount: number };
+type PopularNotebook = NotebookSummary & { viewCount: number };
 const notebookBySlug = new Map(notebooks.map((n) => [n.slug, n]));
 const popularNotebooks = [...popularData.notebooks]
-  .sort((a, b) => b.clicks - a.clicks)
+  .sort((a, b) => b.recentViews - a.recentViews)
   .slice(0, 6)
   .map((popular) => {
     const notebook = notebookBySlug.get(popular.slug);
     if (!notebook) return undefined;
 
-    return { ...notebook, popularityCount: popular.clicks };
+    return { ...notebook, viewCount: popular.views };
   })
   .filter((notebook): notebook is PopularNotebook => Boolean(notebook));
 
@@ -83,7 +86,7 @@ const homeSchema = buildHomeSchema({
             <div class="popular-carousel" role="list" tabindex="0" aria-label="Most Popular recipes">
             {popularNotebooks.map((notebook) => (
               <div class="popular-card-wrapper" role="listitem">
-                <NotebookCard notebook={notebook} popularityCount={notebook.popularityCount} />
+                <NotebookCard notebook={notebook} viewCount={notebook.viewCount} />
               </div>
             ))}
             </div>
@@ -182,7 +185,7 @@ const homeSchema = buildHomeSchema({
               data-date={notebook.date ?? ""}
               data-tags={(notebook.tags ?? []).join(",")}
               data-title={notebook.title}
-              data-views={popularityBySlug.get(notebook.slug) ?? 0}
+              data-views={viewsBySlug.get(notebook.slug) ?? 0}
             >
               <NotebookCard notebook={notebook} />
             </div>
