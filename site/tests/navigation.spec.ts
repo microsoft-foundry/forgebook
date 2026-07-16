@@ -65,6 +65,7 @@ test.describe("Site Navigation", () => {
 
     const catalog = page.getByRole("region", { name: /All/ });
     const collection = page.locator("#notebooks-grid");
+    const recipeCount = await collection.locator(".notebook-card-wrapper").count();
 
     await expect(collection).toHaveAttribute("data-view", "grid");
     await catalog.getByRole("button", { name: "List view" }).click();
@@ -72,7 +73,10 @@ test.describe("Site Navigation", () => {
 
     await catalog.getByRole("button", { name: "Sort by views" }).click();
     await expect(catalog.getByRole("button", { name: "Sort by views" })).toHaveAttribute("aria-pressed", "true");
-    await expect(collection.locator(".notebook-card-wrapper").first()).toHaveAttribute("data-views", "19");
+    const sortedViews = await collection.locator(".notebook-card-wrapper").evaluateAll((cards) =>
+      cards.map((card) => Number((card as HTMLElement).dataset.views ?? 0)),
+    );
+    expect(sortedViews[0]).toBe(Math.max(...sortedViews));
 
     await catalog.locator("summary[aria-label='Filter tags']").click();
     const tagCheckboxes = catalog.locator("[data-tag-checkbox]");
@@ -83,7 +87,7 @@ test.describe("Site Navigation", () => {
     await expect(page.locator("#recipe-count")).toHaveText("(1)");
 
     await catalog.getByRole("button", { name: "Clear tag filters" }).click();
-    await expect(page.locator("#recipe-count")).toHaveText("(13)");
+    await expect(page.locator("#recipe-count")).toHaveText(`(${recipeCount})`);
     await expect(catalog.getByRole("button", { name: "Clear tag filters" })).toBeHidden();
   });
 
