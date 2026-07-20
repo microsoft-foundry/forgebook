@@ -44,6 +44,8 @@
 - indexes
 - azure-ai-search
 - grounding
+- foundry-iq
+- byo-vector-store
 
 # Quality, safety, and operations
 - evaluation
@@ -60,6 +62,8 @@
 - security
 - identity
 - governance
+- entra-id
+- multi-tenant
 
 # Modalities
 - multimodal
@@ -80,6 +84,7 @@
 - javascript-sdk
 - agent-framework
 - langchain
+- llamaindex
 - langgraph
 - semantic-kernel
 - a2a
