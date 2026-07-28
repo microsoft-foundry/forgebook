@@ -272,7 +272,7 @@
 - slug: llamacloud-index-v2-azure-ai-search
   path: notebooks/llamacloud-index-v2-azure-ai-search.ipynb
   title: "BYO Vector Store: LlamaCloud Index V2 → Azure AI Search"
-  description: "Land LlamaCloud Index V2 parses in your own Azure AI Search with the official index-v2-data-sinks exporter — one call, no indexing code — then query it with Retrieval Harness primitives (List Files, File Grep, File Read) your agents can use."
+  description: "Land LlamaCloud Index V2 parses in your own Azure AI Search using the official index-v2-data-sinks exporter, then query them with LlamaIndex Retrieval Harness primitives."
   date: "2026-06-29"
   authors:
     - github: farzad528
@@ -280,8 +280,7 @@
     - retrieval
     - rag
     - azure-ai-search
+    - indexes
     - llamaindex
-    - byo-vector-store
-    - entra-id
-    - multi-tenant
-    - foundry-iq
+    - identity
+    - iq

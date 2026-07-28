@@ -44,8 +44,6 @@
 - indexes
 - azure-ai-search
 - grounding
-- foundry-iq
-- byo-vector-store
 
 # Quality, safety, and operations
 - evaluation
@@ -62,8 +60,6 @@
 - security
 - identity
 - governance
-- entra-id
-- multi-tenant
 
 # Modalities
 - multimodal
