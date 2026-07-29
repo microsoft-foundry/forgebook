@@ -271,8 +271,8 @@
 
 - slug: llamacloud-index-v2-azure-ai-search
   path: notebooks/llamacloud-index-v2-azure-ai-search.ipynb
-  title: "BYO Vector Store: LlamaCloud Index V2 → Azure AI Search"
-  description: "Land LlamaCloud Index V2 parses in your own Azure AI Search using the official index-v2-data-sinks exporter, then query them with LlamaIndex Retrieval Harness primitives."
+  title: "Keep LlamaCloud Parsing, Own Your Azure AI Search Index"
+  description: "Export LlamaCloud-parsed chunks into your own Azure AI Search index with the official sink, then add Semantic Ranker and Foundry IQ agentic retrieval on top."
   date: "2026-06-29"
   authors:
     - github: farzad528
@@ -284,3 +284,4 @@
     - llamaindex
     - identity
     - iq
+    - agents
