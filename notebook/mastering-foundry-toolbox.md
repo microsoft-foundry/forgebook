@@ -154,8 +154,6 @@ few helpers the rest of the notebook leans on:
   starts with `if skip(...): ...`.
 - `mcp_token()` - a bearer token scoped to `https://ai.azure.com/.default`, the audience the
   toolbox MCP endpoint expects.
-- `TOOLBOX_HEADERS` - **every** call to a toolbox MCP endpoint must carry
-  `Foundry-Features: Toolboxes=V1Preview`. Forgetting it is the #1 cause of 404s.
 - `created_resources` - a tracker the cleanup section walks in reverse.
 
 ```python
@@ -188,9 +186,6 @@ TOOLBOX_NAME = env("TOOLBOX_NAME", required=False, default="my-toolbox")
 
 # The MCP endpoint audience is ai.azure.com (NOT management.azure.com).
 TOOLBOX_SCOPE = "https://ai.azure.com/.default"
-
-# Mandatory on every toolbox MCP request while the feature is in preview.
-TOOLBOX_HEADERS = {"Foundry-Features": "Toolboxes=V1Preview"}
 
 credential = DefaultAzureCredential()
 project = AIProjectClient(endpoint=PROJECT_ENDPOINT, credential=credential)
@@ -907,6 +902,12 @@ promotes a version to *default*. In a toolbox a skill is **not** a tool - you
 reference it in the **separate `skills=` list** with `ToolboxSkillReference(name, version)`. Omit
 `version` to track the skill's **default** version; pin it to freeze on an immutable version.
 
+> Two flows need the **Skills preview flag** (`Foundry-Features: Skills=V1Preview`): skills CRUD
+> (`project.beta.skills.*` create / update-default), where the `beta.skills` SDK sends it for you,
+> **and** creating a toolbox version that references a skill. Stable `toolboxes.create_version`
+> does **not** inject it, so section 4m sets it explicitly whenever `skills` is non-empty. Reading
+> skills as MCP resources (section 10b) and regular toolbox/tool calls need **no** preview header.
+
 **Key parameters** (`ToolboxSkillReference`):
 - `name` - **required** `str`; the published skill name.
 - `version` - optional; `None` = default version, a value = pinned immutable version.
@@ -951,11 +952,15 @@ first call; every call mints a new **immutable** version id. `tools` is required
 
 ```python
 # create_version(name, *, tools, description=None, metadata=None, skills=None, policies=None)
+# Stable toolboxes.create_version does NOT auto-inject the Skills preview flag, so send it
+# ourselves whenever this version references a skill (empty kwargs when there are no skills).
+skill_kwargs = {"headers": {"Foundry-Features": "Skills=V1Preview"}} if skills else {}
 version = project.toolboxes.create_version(
     name=TOOLBOX_NAME,
     description="Diverse demo toolbox: search, code, knowledge, and connection-backed tools.",
     tools=tools,
     skills=skills or None,
+    **skill_kwargs,
 )
 created_resources["toolbox"] = TOOLBOX_NAME
 created_resources["versions"].append(version.version)
@@ -971,7 +976,7 @@ from CI - or from a language without an SDK - call the API directly. The whole b
 
 The request body is exactly the JSON the typed classes serialize to, so you can keep a versioned
 JSON manifest in source control. Every call needs the bearer token (scope
-`https://ai.azure.com/.default`) **and** the `Foundry-Features: Toolboxes=V1Preview` header.
+`https://ai.azure.com/.default`).
 
 > `azd` (the Foundry extension) handles **connections** and agent provisioning, but a **toolbox**
 > is authored with the SDK above or this REST API - there is no `azd ai toolbox` command. Create
@@ -1023,8 +1028,7 @@ if not (RUN_REST_EXAMPLE and os.getenv("PROJECT_ENDPOINT")):
     print(f"  POST  {create_url}")
     print(f"  PATCH {patch_url}   body={{'default_version': '<new>'}}")
 else:
-    headers = {"Authorization": f"Bearer {mcp_token()}", **TOOLBOX_HEADERS,
-               "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {mcp_token()}", "Content-Type": "application/json"}
 
     # 1) Create a new immutable version (auto-creates the toolbox on first call).
     resp = httpx.post(create_url, headers=headers, json=version_body, timeout=60)
@@ -1099,10 +1103,13 @@ search_tools.append(ToolboxSearchPreviewToolboxTool(
     tool_configs=tool_configs,
 ))
 
+# Same rule as section 4m: only send the Skills preview flag when this version has skills.
+skill_kwargs = {"headers": {"Foundry-Features": "Skills=V1Preview"}} if skills else {}
 search_version = project.toolboxes.create_version(
     name=TOOLBOX_NAME,
     tools=search_tools,
     skills=skills or None,
+    **skill_kwargs,
 )
 created_resources["versions"].append(search_version.version)
 print(f"✅ Search-first version {search_version.version} - tools/list will now return tool_search + pinned only")
@@ -1157,11 +1164,14 @@ from azure.ai.projects.models import ToolboxPolicies, RaiConfig
 #     RAI policy and Foundry screens tool inputs/outputs for that version.
 RAI_POLICY_NAME = os.getenv("RAI_POLICY_NAME")
 if RAI_POLICY_NAME:
+    # Only send the Skills preview flag when this version references a skill (see 4m).
+    skill_kwargs = {"headers": {"Foundry-Features": "Skills=V1Preview"}} if skills else {}
     guarded = project.toolboxes.create_version(
         name=TOOLBOX_NAME,
         tools=search_tools,
         skills=skills or None,
         policies=ToolboxPolicies(rai_config=RaiConfig(rai_policy_name=RAI_POLICY_NAME)),
+        **skill_kwargs,
     )
     created_resources["versions"].append(guarded.version)
     project.toolboxes.update(name=TOOLBOX_NAME, default_version=guarded.version)
@@ -1195,8 +1205,7 @@ every consumer with no code change.
 | **Developer** | `{project}/toolboxes/{name}/versions/{version}/mcp?api-version=v1` | one pinned version |
 | **Consumer** | `{project}/toolboxes/{name}/mcp?api-version=v1` | the **default** version |
 
-Both require the bearer token (scope `https://ai.azure.com/.default`) **and** the
-`Foundry-Features: Toolboxes=V1Preview` header on every request.
+Both require only the bearer token (scope `https://ai.azure.com/.default`) - no preview header.
 
 ```python
 _base = PROJECT_ENDPOINT.rstrip("/")
@@ -1221,8 +1230,8 @@ Let's talk to the live endpoint with a raw MCP client to *prove* Tool Search is 
 claim (tool count *and* input-schema payload size). Then we run a `tool_search` -> `call_tool`
 round-trip and read each tool's `_meta.tool_configuration` (which carries `require_approval`).
 
-We use the `mcp` SDK's streamable-HTTP client, passing the bearer token and the mandatory
-preview header. If a tool's connection uses `oauth2`, the first call returns `CONSENT_REQUIRED`
+We use the `mcp` SDK's streamable-HTTP client, passing the bearer token (no preview
+header is needed for tool calls). If a tool's connection uses `oauth2`, the first call returns `CONSENT_REQUIRED`
 (`-32006`) with a consent URL - we surface it so you can consent and retry.
 
 ```python
@@ -1233,7 +1242,7 @@ from mcp.client.streamable_http import streamablehttp_client
 
 async def _list_tools(url: str):
     """tools/list against a specific toolbox MCP endpoint."""
-    headers = {**TOOLBOX_HEADERS, "Authorization": f"Bearer {mcp_token()}"}
+    headers = {"Authorization": f"Bearer {mcp_token()}"}
     async with streamablehttp_client(url, headers=headers) as (read, write, _):
         async with ClientSession(read, write) as session:
             await session.initialize()
@@ -1258,7 +1267,7 @@ async def verify_toolbox():
     assert "tool_search" in after_names, "Tool Search not active - is the default version search-first?"
 
     # Drive the meta-tool, then read approval config off a listed tool.
-    headers = {**TOOLBOX_HEADERS, "Authorization": f"Bearer {mcp_token()}"}
+    headers = {"Authorization": f"Bearer {mcp_token()}"}
     async with streamablehttp_client(CONSUMER_URL, headers=headers) as (read, write, _):
         async with ClientSession(read, write) as session:
             await session.initialize()
@@ -1299,7 +1308,7 @@ load -> read), but underneath it is just these two MCP calls.
 # Skills attach to a toolbox as MCP *resources* (SEP-2640), not tools. The same streamable-HTTP
 # MCP session that lists tools also lists and reads skills - no Foundry SDK needed.
 async def consume_skills():
-    headers = {**TOOLBOX_HEADERS, "Authorization": f"Bearer {mcp_token()}"}
+    headers = {"Authorization": f"Bearer {mcp_token()}"}
     async with streamablehttp_client(CONSUMER_URL, headers=headers) as (read, write, _):
         async with ClientSession(read, write) as session:
             await session.initialize()
@@ -1332,13 +1341,13 @@ else:
 
 The whole point of one governed endpoint is that *any* MCP client can use it unchanged. Here are
 three: **Microsoft Agent Framework**, **LangGraph**, and the **Copilot SDK**. Each just needs the
-consumer URL, a bearer token, and the preview header.
+consumer URL and a bearer token.
 
 ```python
 # --- Microsoft Agent Framework -------------------------------------------------
 # MAF speaks MCP natively via MCPStreamableHTTPTool. Point it at the consumer URL.
-# Auth note: the toolbox MCP endpoint needs a bearer token + the preview header on
-# EVERY request, including the initialize handshake. MAF's header_provider only injects
+# Auth note: the toolbox MCP endpoint needs a bearer token on every request, including the
+# initialize handshake. MAF's header_provider only injects
 # on tool *calls*, so we hand it a pre-authenticated http_client whose default headers
 # cover connect + initialize. load_prompts=False skips a prompts/list the endpoint
 # doesn't serve, and we build FoundryChatClient from the endpoint + credential (the
@@ -1349,7 +1358,7 @@ from agent_framework.foundry import FoundryChatClient
 
 async def run_maf():
     http = httpx.AsyncClient(
-        headers={**TOOLBOX_HEADERS, "Authorization": f"Bearer {mcp_token()}"},
+        headers={"Authorization": f"Bearer {mcp_token()}"},
         follow_redirects=True,
         timeout=httpx.Timeout(30.0, read=300.0),
     )
@@ -1423,7 +1432,7 @@ else:
 ```python
 # --- Copilot SDK ---------------------------------------------------------------
 # The GitHub Copilot SDK (pip install github-copilot-sdk; Python 3.11+) consumes the toolbox as a
-# remote MCP server - same consumer URL, same bearer token + preview header. Remote MCP servers are
+# remote MCP server - same consumer URL, same bearer token. Remote MCP servers are
 # configured through create_session(..., mcp_servers={...}) with type "http".
 # Docs: https://docs.github.com/copilot/how-tos/copilot-sdk/features/mcp
 if not os.getenv("PROJECT_ENDPOINT"):
@@ -1445,7 +1454,7 @@ else:
                     "foundry_toolbox": {
                         "type": "http",
                         "url": CONSUMER_URL,
-                        "headers": {**TOOLBOX_HEADERS, "Authorization": f"Bearer {mcp_token()}"},
+                        "headers": {"Authorization": f"Bearer {mcp_token()}"},
                         "tools": ["*"],  # expose every toolbox tool (tool_search included)
                     },
                 },
@@ -1480,7 +1489,6 @@ identity instead of your `az login`).
 #     toolbox_tool = MCPStreamableHTTPTool(
 #         name="foundry_toolbox",
 #         url=CONSUMER_URL,                       # same consumer URL as local
-#         headers=TOOLBOX_HEADERS,                # token injected by the runtime
 #     )
 #     return ChatAgent(
 #         chat_client=AzureAIAgentClient(project_client=project, model=MODEL_DEPLOYMENT),
