@@ -14,6 +14,36 @@
 #   - date: Publication date (YYYY-MM-DD)
 #   - tags: List of topic tags
 
+- slug: migrate-gpt-4o-mini-to-gpt-5-1
+  path: notebooks/migrate-gpt-4o-mini-to-gpt-5-1.ipynb
+  title: "Migrate gpt-4o-mini to gpt-5.1"
+  description: "Port a Chat Completions app from gpt-4o-mini to gpt-5.1: rename max_tokens to max_completion_tokens, remove unsupported sampling, and use reasoning_effort and verbosity."
+  date: "2026-07-07"
+  authors:
+    - github: meerakurup
+  tags:
+    - models
+    - inference
+    - chat-completions
+    - reasoning
+    - responses
+    - azure-openai
+
+- slug: migrate-gpt-5-5-to-claude-opus-4-8
+  path: notebooks/migrate-gpt-5-5-to-claude-opus-4-8.ipynb
+  title: "Migrate GPT-5.5 to Claude Opus 4.8"
+  description: "Move a Chat Completions workload from GPT-5.5 to Claude Opus 4.8 on Microsoft Foundry with one adapter, side-by-side eval gates, structured output retries, streaming normalization, and rollout checks."
+  date: "2026-06-30"
+  authors:
+    - github: meerakurup
+  tags:
+    - models
+    - inference
+    - evaluation
+    - sdk
+    - azure-openai
+    - anthropic
+
 - slug: migrate-oyd-to-foundry-iq
   path: notebooks/migrate-oyd-to-foundry-iq.ipynb
   title: "Migrate Azure OpenAI On Your Data to Foundry IQ"
@@ -135,6 +165,25 @@
     - agent-service
     - agent-framework
 
+- slug: mastering-foundry-toolbox
+  path: notebooks/mastering-foundry-toolbox.ipynb
+  title: "Mastering Toolboxes in Microsoft Foundry"
+  description: "End-to-end walkthrough of Toolboxes in Microsoft Foundry: every tool type, identity, Tool Search, versioning, governance, and consuming from Agent Framework, LangGraph, and Copilot SDK."
+  date: "2026-06-07"
+  authors:
+    - github: zhuoqunli
+  tags:
+    - toolbox
+    - tools
+    - mcp
+    - agents
+    - agent-service
+    - hosted-agents
+    - agent-framework
+    - langgraph
+    - governance
+    - identity
+
 - slug: mai-transcribe-1-5
   path: notebooks/mai-transcribe-1-5.ipynb
   title: "Build Speech-to-Text with MAI-Transcribe-1.5"
@@ -219,3 +268,19 @@
     - tools
     - grounding
     - retrieval
+
+- slug: llamacloud-index-v2-azure-ai-search
+  path: notebooks/llamacloud-index-v2-azure-ai-search.ipynb
+  title: "BYO Vector Store: LlamaCloud Index V2 → Azure AI Search"
+  description: "Land LlamaCloud Index V2 parses in your own Azure AI Search using the official index-v2-data-sinks exporter, then query them with LlamaIndex Retrieval Harness primitives."
+  date: "2026-06-29"
+  authors:
+    - github: farzad528
+  tags:
+    - retrieval
+    - rag
+    - azure-ai-search
+    - indexes
+    - llamaindex
+    - identity
+    - iq
