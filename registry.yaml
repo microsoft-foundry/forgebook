@@ -268,3 +268,19 @@
     - tools
     - grounding
     - retrieval
+
+- slug: llamacloud-index-v2-azure-ai-search
+  path: notebooks/llamacloud-index-v2-azure-ai-search.ipynb
+  title: "BYO Vector Store: LlamaCloud Index V2 → Azure AI Search"
+  description: "Land LlamaCloud Index V2 parses in your own Azure AI Search using the official index-v2-data-sinks exporter, then query them with LlamaIndex Retrieval Harness primitives."
+  date: "2026-06-29"
+  authors:
+    - github: farzad528
+  tags:
+    - retrieval
+    - rag
+    - azure-ai-search
+    - indexes
+    - llamaindex
+    - identity
+    - iq

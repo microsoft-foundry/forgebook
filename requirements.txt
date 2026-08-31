@@ -9,3 +9,8 @@ httpx>=0.27.0
 python-dotenv>=1.0.0
 langchain-azure-ai[tools]>=1.2.4
 langchain-mcp-adapters>=0.1.0
+
+# LlamaCloud Index V2 -> Azure AI Search sink (llamacloud-index-v2-azure-ai-search.ipynb)
+# The notebook installs index-v2-data-sinks (Python 3.13+, from GitHub) in-place.
+openai>=1.40.0
+beautifulsoup4>=4.12.0
