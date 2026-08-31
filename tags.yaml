@@ -80,6 +80,7 @@
 - javascript-sdk
 - agent-framework
 - langchain
+- llamaindex
 - langgraph
 - semantic-kernel
 - a2a

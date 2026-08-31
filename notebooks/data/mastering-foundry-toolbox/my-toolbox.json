@@ -1,0 +1,26 @@
+{
+  "tools": [
+    {
+      "type": "web_search",
+      "name": "web_search",
+      "description": "Search the public web for current information."
+    },
+    {
+      "type": "code_interpreter",
+      "name": "code_interpreter",
+      "description": "Run Python in a sandbox for data work."
+    },
+    {
+      "type": "mcp",
+      "server_label": "learn",
+      "server_description": "Search Microsoft Learn documentation.",
+      "server_url": "https://learn.microsoft.com/api/mcp",
+      "require_approval": "never"
+    },
+    {
+      "type": "toolbox_search_preview",
+      "name": "tool_search"
+    }
+  ],
+  "description": "Declarative toolbox built from a JSON manifest."
+}
