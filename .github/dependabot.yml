@@ -22,6 +22,9 @@ updates:
       site-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - dependencies
       - site
@@ -37,6 +40,9 @@ updates:
       script-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - dependencies
       - scripts
