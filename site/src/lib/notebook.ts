@@ -182,7 +182,7 @@ function rewriteAssetPaths(html: string, notebookPath: string, basePath: string)
     (_match, prefix: string, href: string, suffix: string) => {
       // Only rewrite direct links to notebook assets. Other relative links are handled elsewhere.
       if (isAbsoluteOrSpecial(href)) return _match;
-      if (!/\.(?:png|jpe?g|gif|webp|svg|mp4|webm|mov|mp3|wav|m4a|csv|json|jsonl|txt|pdf)(?:[?#].*)?$/i.test(href)) {
+      if (!/\.(?:png|jpe?g|gif|webp|svg|excalidraw|mp4|webm|mov|mp3|wav|m4a|csv|json|jsonl|txt|pdf)(?:[?#].*)?$/i.test(href)) {
         return _match;
       }
 

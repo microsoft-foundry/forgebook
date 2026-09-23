@@ -47,7 +47,7 @@
 - slug: migrate-oyd-to-foundry-iq
   path: notebooks/migrate-oyd-to-foundry-iq.ipynb
   title: "Migrate Azure OpenAI On Your Data to Foundry IQ"
-  description: "On Your Data retires October 14, 2026. Keep your existing Azure AI Search index and Azure OpenAI model — swap the single OYD REST call for a Foundry IQ Knowledge Base answer-synthesis retrieve."
+  description: "Replace On Your Data with a Foundry IQ KB using your existing Search index, auto retrieval, and answer synthesis. Add a Prompt Agent when you need tools or workflows beyond corpus chat."
   date: "2026-06-17"
   authors:
     - github: farzad528
