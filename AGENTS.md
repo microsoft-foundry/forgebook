@@ -73,7 +73,8 @@ cd site && npm run build                      # Full build with type checking
 - Two groups: Core Capabilities (agents, inference, evaluation, etc.) and Integrations (langchain, mcp, etc.)
 
 ### Popular Notebooks
-- `site/src/data/popular.json` is refreshed by `deploy.yml` (on every push to `main`, on the daily 06:00 UTC cron, and on manual dispatch) by querying App Insights click data via OIDC.
+- `site/src/data/popular.json` is refreshed by `deploy.yml` (on every push to `main`, on the daily 06:00 UTC cron, and on manual dispatch) by querying production recipe page views via App Insights and OIDC.
+- The carousel ranks current registry recipes by trailing-30-day views while each badge displays production views since the 2026-06-02 launch.
 - The committed copy is a fallback: if the App Insights query fails, the build logs a warning and reuses the last good `popular.json` so the deploy never breaks on a transient telemetry outage.
 - **Never edit popular.json manually** — it gets overwritten on the next deploy.
 - Homepage shows "Most Popular" section only when ≥12 recipes exist

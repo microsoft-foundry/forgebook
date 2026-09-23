@@ -97,12 +97,12 @@ const keywords = [...SITE.keywords, ...tags].join(", ");
   </head>
   <body class="min-h-screen bg-surface text-primary">
     <header data-pagefind-ignore class="site-header sticky top-0 z-50 backdrop-blur-sm border-b border-subtle" style="background-color: color-mix(in srgb, var(--neutral-bg-1) 80%, transparent);">
-      <nav class="max-w-6xl mx-auto px-3 py-3 sm:px-4 sm:py-4 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+      <nav class="site-nav max-w-6xl mx-auto px-3 py-3 sm:px-4 sm:py-4 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
         <a href={withBase("/")} class="flex items-center gap-2 text-lg sm:text-xl font-bold text-primary">
           <Logo size={28} />
           {SITE.name}
         </a>
-        <div class="flex items-center gap-2 sm:gap-4">
+        <div class="site-nav-actions flex items-center gap-2 sm:gap-4">
           <SearchButton />
           <ThemeToggle />
           <a

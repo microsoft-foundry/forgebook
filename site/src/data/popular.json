@@ -1,21 +1,38 @@
 {
-  "updatedAt": "2026-05-27T07:31:43.739Z",
+  "metricVersion": "recipe-page-views-v1",
+  "updatedAt": "2026-07-16T17:10:07.405Z",
+  "since": "2026-06-02T00:00:00.000Z",
+  "rankingWindowDays": 30,
   "notebooks": [
     {
+      "slug": "mastering-foundry-iq",
+      "views": 2197,
+      "recentViews": 1029
+    },
+    {
+      "slug": "microsoft-iq-in-foundry",
+      "views": 383,
+      "recentViews": 302
+    },
+    {
+      "slug": "mai-voice-2",
+      "views": 824,
+      "recentViews": 279
+    },
+    {
+      "slug": "mai-transcribe-1-5",
+      "views": 687,
+      "recentViews": 209
+    },
+    {
       "slug": "foundry-agent-part-1",
-      "clicks": 19
+      "views": 170,
+      "recentViews": 98
     },
     {
-      "slug": "mai-voice-1-foundry",
-      "clicks": 2
-    },
-    {
-      "slug": "mai-image-2-foundry",
-      "clicks": 2
-    },
-    {
-      "slug": "mai-transcribe-1-foundry",
-      "clicks": 1
+      "slug": "migrate-oyd-to-foundry-iq",
+      "views": 92,
+      "recentViews": 92
     }
   ]
 }
