@@ -1,134 +1,127 @@
-> **[Azure OpenAI On Your Data is deprecated and retires October 14, 2026.](https://learn.microsoft.com/azure/ai-foundry/openai/concepts/use-your-data)**
-> Microsoft has stopped onboarding new models to it (it supports only the GPT‑4o / GPT‑4o‑mini
-> family). If your app calls On Your Data against an Azure AI Search index, now is the time
-> to migrate.
+> **[Azure OpenAI On Your Data retires October 14, 2026.](https://learn.microsoft.com/azure/foundry-classic/openai/concepts/use-your-data)**
 
-This recipe is the shortest complete path off On Your Data (OYD) for the most common
-setup: **one call, one Azure AI Search index, one Azure OpenAI model.** You keep your index
-and, if you want, your existing model. You swap a single API call — and here you do it
-entirely through the Python SDKs you already use.
+Already using Azure OpenAI On Your Data (OYD) to chat with an Azure AI Search index?
+**Keep the index. Wrap it in a Search Index Knowledge Source, attach that source to a
+Foundry IQ Knowledge Base, and call the KB directly for a cited answer.**
 
-The replacement is a **Foundry IQ Knowledge Base** in **answer synthesis** mode. Like OYD,
-it takes a question and returns a grounded, cited answer in one call — but it runs on the
-actively developed agentic-retrieval stack (query planning, parallel retrieval, semantic
-reranking, synthesis), so it is the forward-looking path and supports newer model families.
-
-**The whole migration in one diff:**
+For this corpus-chat use case, start with **`auto` retrieval + `answerSynthesis`**.
+Auto starts with lightweight retrieval and can escalate to LLM-based query planning,
+up to medium effort, if the first pass lacks grounding. Answer synthesis uses your
+configured model to write the answer. Neither setting means model-free or fixed-cost.
 
 ```text
-Before:  openai → chat.completions.create(
-             model=<your gpt-4o deployment>,
-             extra_body={"data_sources": [{"azure_search": <your index>}]})
-         → answer + citations
-
-After:   azure-search-documents → KnowledgeBaseRetrievalClient.retrieve(...)
-             over a Knowledge Base that wraps the SAME index + SAME (or newer) model
-         → answer + citations + activity trace
+Before: app -> Azure OpenAI chat.completions + data_sources -> answer + citations
+After:  app -> Foundry IQ KB.retrieve -> answer + references + activity
+                          |
+                 Search Index Knowledge Source
+                          |
+                 Your existing Search index
 ```
 
-| | On Your Data (today) | Foundry IQ Knowledge Base (after) |
-|---|---|---|
-| Your Search index | unchanged | unchanged — wrapped, not copied |
-| Your Azure OpenAI model | GPT‑4o / GPT‑4o‑mini only | keep it, or upgrade to a newer family (e.g. GPT‑4.1, GPT‑5) |
-| The SDK | `openai` — `chat.completions.create(extra_body=...)` | `azure-search-documents` — `KnowledgeBaseRetrievalClient.retrieve(...)` |
-| Status | retires **Oct 14, 2026** | preview (`2026-05-01-preview`), actively developed |
-| Output | answer + citations | answer + citations + activity trace |
+**By the end, you will be able to:**
+- Reuse an existing Search corpus through a knowledge source and knowledge base.
+- Replace an OYD call with direct KB answer synthesis and native citations.
+- Evaluate citation resolution and abstention before cutting over your application.
 
-This recipe does **not**:
+This recipe does not re-index data, edit your index, deploy a model, add other source
+types, or create an agent.
 
-- re-index or copy your data,
-- change your Azure AI Search index,
-- add Blob, SharePoint, OneLake, or Web sources,
-- create an agent.
+> **Preview boundary.** This path uses `2026-08-01-preview`. GA `2026-04-01` supports
+> minimal, extractive retrieval, not answer synthesis. Confirm that preview features
+> meet your deployment requirements before choosing this path.
 
-It only migrates the OYD retrieval-and-answer call to a Foundry IQ Knowledge Base. Those
-other moves are all possible later — see [Mastering Foundry IQ](mastering-foundry-iq.ipynb).
+## Choose the migration path
 
-## Why bother — one real run
+Both paths reuse your index through a **Search Index Knowledge Source + Foundry IQ KB**.
 
-Same index, same question, both engines (the public `hotels-sample-index`, asking *"Which
-hotels are luxury resorts with free wifi, and what amenities make them stand out?"*):
+![Migration decision tree: reuse the Search index in a Foundry IQ KB; choose direct auto retrieval and answer synthesis for corpus chat, or a Prompt Agent for tools and workflows.](media/migrate-oyd-to-foundry-iq/01-oyd-migration-decision-tree.png)
 
-| | On Your Data | Foundry IQ Knowledge Base |
-|---|---|---|
-| Retrieval | one hidden lookup | **planned subqueries** run in parallel |
-| Grounding | 5 citations | **19 references** |
-| Visibility | none | full **activity trace** (planning → search → synthesis) |
+[Download editable Excalidraw source](media/migrate-oyd-to-foundry-iq/01-oyd-migration-decision-tree.excalidraw)
 
-You see the *why* in the activity trace under §5. The point up front: you keep everything
-you already have and get a broader, inspectable answer — and your call still works after
-Oct 14, 2026.
+An agent is not required just to answer corpus questions, carry conversation history,
+or add another knowledge source. The OYD retirement notice recommends Agent Service
+with Foundry IQ generally; this recipe recommends the narrower direct-KB path when
+retrieval and answer generation are all your application needs.
 
 ## Prerequisites
 
-You almost certainly already have all of this — it is the same setup On Your Data uses.
-
-| | |
+| Requirement | What to check |
 |---|---|
-| **Azure AI Search service** | The one your OYD `data_sources` block points at, with your existing index. The service must be in a [preview region](https://learn.microsoft.com/azure/search/search-region-support) for Knowledge Bases. |
-| **An existing index** | With a semantic configuration (OYD's `query_type: semantic` already requires one). |
-| **Azure OpenAI / Foundry resource** | Your existing OYD chat deployment (GPT‑4o or GPT‑4o‑mini). You can reuse it as-is for the Knowledge Base, or point the KB at a newer deployment (e.g. `gpt-4.1-mini`, `gpt-5-mini`) — only the deployment name in §4 changes. |
+| Python | 3.10 or later, with a Jupyter kernel. |
+| Azure AI Search | Your existing service, in a [region supporting agentic retrieval](https://learn.microsoft.com/azure/search/search-region-support). The index and KB must be on the same service. |
+| Existing index | Match the [index requirements](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-index). Carry over your semantic configuration when present; it is optional in this preview. Vector retrieval needs a valid query-time vectorizer, not just stored vectors. |
+| Chat model | An existing [supported Azure OpenAI deployment](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base#supported-models). Reuse your OYD deployment only while that model/version remains available; GPT-4-family models are deprecated. Otherwise select an already-deployed supported model, such as `gpt-5.4-mini`. |
+| Access | Permission to manage the new KS/KB and query the index. This example uses a Search admin key and a model API key; see the Entra ID guidance below for production. |
 
-This recipe uses **API-key auth** so it runs with copy-paste. For production, switch to
-Microsoft Entra ID — see [Best practices](#best-practices) at the end.
+**Cost:** Search retrieval/reranking and model tokens are billable. Auto can add planning
+work; synthesis always needs a configured model. Measure quality, latency, and usage on
+your own queries rather than assuming lower cost or better answers than OYD.
 
-**Runtime and cost:** about 2–3 minutes end-to-end against a small index. You only pay for
-what you already use — Search queries plus Azure OpenAI tokens for query planning and
-synthesis (cents at this scale). Creating the Knowledge Source and Knowledge Base costs
-nothing, and the cleanup cell deletes both.
+**Access-control boundary:** keep any OYD filters and field mappings. The default example
+assumes all users of the application are authorized for the selected corpus. For an index
+using per-user permission metadata, set `USES_PER_USER_ACL = True` below and supply the
+verified signed-in user's Search token on every retrieve call. The helper rejects a missing
+token in that mode. Never replace per-user checks with a system prompt or an admin key.
 
-Set these in your shell or a local `.env` file next to the notebook:
+Set these in your shell or an uncommitted local `.env` next to the notebook. Use your
+actual deployment name and model family; they are not necessarily the same string.
 
 ```bash
 SEARCH_ENDPOINT=https://<your-search-service>.search.windows.net
 SEARCH_API_KEY=<your-search-admin-key>
 SEARCH_INDEX_NAME=<your-existing-index>
-SEARCH_SEMANTIC_CONFIG=<your-semantic-config-name>   # optional; omit if your index has none
+SEARCH_SEMANTIC_CONFIG=<your-semantic-config-name>   # optional in this preview
+# Optional: carry over your OYD filter and field mappings; use actual index field names.
+# SEARCH_FILTER is a static default; pass caller-specific filters to kb_answer per request.
+# SEARCH_FILTER=status eq 'published'
+# SEARCH_CONTENT_FIELDS=content
+# SEARCH_SOURCE_FIELDS=title,url,content
 
 AOAI_ENDPOINT=https://<your-foundry-resource>.openai.azure.com
 AOAI_API_KEY=<your-azure-openai-key>
-AOAI_GPT_DEPLOYMENT=gpt-4o-mini                       # your OYD deployment, or a newer one
+AOAI_GPT_DEPLOYMENT=<your-supported-chat-deployment>
+AOAI_GPT_MODEL=gpt-5.4-mini                          # underlying model, not deployment name
 ```
+
+If OYD generated query vectors through `embedding_dependency` but the index has no
+vectorizer, the KB does not automatically reproduce that setup. Configure and validate
+query-time vectorization separately before cutover, or explicitly evaluate text-only
+retrieval. This notebook never changes your index.
 
 ### Install
 
-The Knowledge Base SDK surface (`2026-05-01-preview`) ships in the preview
-`azure-search-documents` package on the
-[Azure SDK public feed](https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/),
-not PyPI. The `openai` SDK (for the On Your Data call) installs from PyPI as usual.
+Install the pinned [public PyPI preview](https://pypi.org/project/azure-search-documents/12.1.0b2/).
+It supports `2026-08-01-preview`; no extra package feed or legacy OpenAI client is needed.
 
-> **Preview surface.** The Knowledge Base SDK classes and `2026-05-01-preview` API are in
-> preview and may change. Pin the package version (as below) and check the
-> [agentic retrieval migration guide](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-migrate)
-> before a production rollout.
+Preview APIs can change. Review the [SDK changelog](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/CHANGELOG.md)
+and [API migration guide](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-migrate)
+before changing this pin.
 
 ```python
-%%capture
 %pip install --quiet \
-    "azure-search-documents==12.1.0a20260520003" \
-    "azure-identity>=1.19.0" \
+    "azure-search-documents==12.1.0b2" \
     "azure-core>=1.32.0" \
-    "openai>=1.50.0" \
-    "python-dotenv>=1.0.1" \
-    --extra-index-url https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/
+    "python-dotenv>=1.0.1"
 ```
 
 ## Configure
 
-One config cell builds the two clients and reads your settings. Everything above the line
-is what you already have for On Your Data; everything below is the two names this recipe
-will create on your Search service.
+Choose one question your corpus can answer and one it cannot. Each run uses unique KS/KB
+names and create-only operations, so it cannot overwrite existing objects. Keep the printed
+names if you stop before cleanup; rerunning this setup starts a new pair.
 
 ```python
 import json
 import os
+import re
+from time import perf_counter
+from uuid import uuid4
 
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexClient
 from dotenv import load_dotenv
-from openai import AzureOpenAI
 
-load_dotenv(override=True)
+load_dotenv()
 
 
 def env(name, *, required=True, default=None):
@@ -138,128 +131,102 @@ def env(name, *, required=True, default=None):
     return value
 
 
-# ---- What you already have (straight from your OYD setup) ----------------
+def field_names(name):
+    return [value.strip() for value in os.getenv(name, "").split(",") if value.strip()]
+
+
 SEARCH_ENDPOINT = env("SEARCH_ENDPOINT").rstrip("/")
 SEARCH_API_KEY = env("SEARCH_API_KEY")
 SEARCH_INDEX = env("SEARCH_INDEX_NAME")
 SEMANTIC_CONFIG = env("SEARCH_SEMANTIC_CONFIG", required=False)
+SEARCH_FILTER = env("SEARCH_FILTER", required=False)
+CONTENT_FIELDS = field_names("SEARCH_CONTENT_FIELDS")
+SOURCE_FIELDS = field_names("SEARCH_SOURCE_FIELDS")
 
 AOAI_ENDPOINT = env("AOAI_ENDPOINT").rstrip("/")
 AOAI_API_KEY = env("AOAI_API_KEY")
 AOAI_DEPLOYMENT = env("AOAI_GPT_DEPLOYMENT")
-AOAI_MODEL = env("AOAI_GPT_MODEL", required=False, default=AOAI_DEPLOYMENT)
+AOAI_MODEL = env("AOAI_GPT_MODEL")
+SEARCH_API_VERSION = "2026-08-01-preview"
 
-OYD_API_VERSION = "2024-10-21"   # GA Azure OpenAI data plane (On Your Data)
+run_id = uuid4().hex[:12]
+KS_NAME = f"oyd-migrated-ks-{run_id}"
+KB_NAME = f"oyd-migrated-kb-{run_id}"
+created_ks = created_kb = False
 
-# ---- The two resources this recipe creates -------------------------------
-KS_NAME = "oyd-migrated-ks"   # Knowledge Source that wraps your existing index
-KB_NAME = "oyd-migrated-kb"   # Knowledge Base that answers in synthesis mode
-
-# Your OYD system message — the `system` role message your app sends today (older OYD
-# code passed this as `role_information`). Reused verbatim as the KB's answerInstructions.
+# Replace this with your existing OYD instructions.
 SYSTEM_MESSAGE = (
     "You are a helpful assistant for our company. Answer the question using only the "
     "information in the retrieved sources."
 )
 
-# A real question your index can answer. Replace this.
+ABSTENTION = "I don't know"
 QUESTION = "What is our return policy?"
+UNSUPPORTED_QUESTION = "What is the current temperature inside my kitchen?"
+USES_PER_USER_ACL = False  # Set True for an index with per-user permission metadata.
+USER_SEARCH_TOKEN = None  # Obtain for the signed-in user in memory; never save it in .env.
 
-# ---- Clients -------------------------------------------------------------
-# OYD runs through the openai SDK; the Knowledge Base runs through azure-search-documents.
-aoai_client = AzureOpenAI(
-    azure_endpoint=AOAI_ENDPOINT, api_key=AOAI_API_KEY, api_version=OYD_API_VERSION
-)
 search_credential = AzureKeyCredential(SEARCH_API_KEY)
-index_client = SearchIndexClient(endpoint=SEARCH_ENDPOINT, credential=search_credential)
+index_client = SearchIndexClient(
+    endpoint=SEARCH_ENDPOINT, credential=search_credential, api_version=SEARCH_API_VERSION
+)
 
 print(f"Search : {SEARCH_ENDPOINT}  (index: {SEARCH_INDEX})")
-print(f"Model  : {AOAI_DEPLOYMENT}  @ {AOAI_ENDPOINT}")
+print(f"Model  : {AOAI_DEPLOYMENT} ({AOAI_MODEL})")
+print(f"New resources: {KS_NAME}, {KB_NAME}")
 ```
 
-## 1 · The call you make today (On Your Data)
+## 1 · Identify the OYD call in your application
 
-This is the On Your Data pattern through the `openai` SDK: a normal
-`chat.completions.create` call with a `data_sources` block (passed via `extra_body`) that
-points at your Search index. Azure OpenAI does the retrieval for you and folds citations
-into `message.context`. **This is the call that stops working on Oct 14, 2026.**
+The old call uses `chat.completions.create` with an `azure_search` entry in `data_sources`.
+The reference below identifies that request shape; it is not executed by this notebook.
+Retired or unavailable OYD deployments must not block the new path. All names in the
+snippet belong to the existing application, not the setup above.
 
-The cell below sends it and prints the answer plus its citations. Note the parameters
-inside `data_sources[0]["parameters"]` — `query_type`, `semantic_configuration`,
-`strictness`, `top_n_documents`, `in_scope` — and the `system` message that carries your
-instructions. Those are exactly what we map over in the next section.
-
-> **Heads-up on the system message.** The current GA API (`2024-10-21`) takes your
-> instructions as a normal `system` message. Older On Your Data code passed a
-> `role_information` field *inside* `data_sources[0]["parameters"]` — that field is
-> rejected today (`"Extra inputs are not permitted"`). If your code still sends
-> `role_information`, move it to a `system` message as shown here.
+Inspect `existing_search_parameters` for your original query type, vector/embedding
+settings, field mappings, filters, and authentication. Preserve them during migration.
+If OYD is still available, capture a baseline through your existing permission-enforcing
+application; do not recreate a less restrictive call just for comparison.
 
 ```python
-def oyd_answer(question, *, strictness=3, top_n=5, query_type="semantic"):
-    """The Azure OpenAI On Your Data call via the openai SDK. Retires Oct 14, 2026."""
-    parameters = {
-        "endpoint": SEARCH_ENDPOINT,
-        "index_name": SEARCH_INDEX,
-        "authentication": {"type": "api_key", "key": SEARCH_API_KEY},
-        "query_type": query_type,
-        "strictness": strictness,
-        "top_n_documents": top_n,
-        "in_scope": True,
-    }
-    if SEMANTIC_CONFIG:
-        parameters["semantic_configuration"] = SEMANTIC_CONFIG
-
-    return aoai_client.chat.completions.create(
-        model=AOAI_DEPLOYMENT,
-        messages=[
-            {"role": "system", "content": SYSTEM_MESSAGE},
-            {"role": "user", "content": question},
-        ],
-        extra_body={"data_sources": [{"type": "azure_search", "parameters": parameters}]},
-    )
-
-
-oyd = oyd_answer(QUESTION)
-oyd_message = oyd.choices[0].message
-
-print(oyd_message.content)
-context = getattr(oyd_message, "context", None) or {}
-citations = context.get("citations", [])
-print(f"\nCitations: {len(citations)}")
-for i, c in enumerate(citations, start=1):
-    label = c.get("title") or c.get("filepath") or c.get("url") or f"source {i}"
-    print(f"  [doc{i}] {label}")
+# Reference only: locate this call in the application you are migrating.
+oyd_response = oyd_client.chat.completions.create(
+    model=oyd_deployment,
+    messages=messages,
+    extra_body={
+        "data_sources": [
+            {"type": "azure_search", "parameters": existing_search_parameters}
+        ]
+    },
+)
 ```
 
 ## 2 · How the parameters map
 
-Foundry IQ splits the one OYD `data_sources` block into three SDK objects: a **Knowledge
-Source** (your index), a **Knowledge Base** (your model + answer behavior), and the
-per-call **retrieve** request. Here is every OYD parameter and where it goes.
+Keep the index connection separate from answer behavior and per-request controls.
+These are migration starting points, not a claim that OYD and KB ranking are equivalent.
 
-| OYD `parameters` field | Foundry IQ SDK equivalent | Lives on |
+| OYD setting | Foundry IQ setting | Lives on |
 |---|---|---|
 | `endpoint` | `SearchIndexClient` / `KnowledgeBaseRetrievalClient` endpoint | client |
 | `index_name` | `SearchIndexKnowledgeSourceParameters(search_index_name=...)` | Knowledge Source |
 | `semantic_configuration` | `SearchIndexKnowledgeSourceParameters(semantic_configuration_name=...)` | Knowledge Source |
 | `authentication` | `AzureKeyCredential` (or `DefaultAzureCredential`) | client |
-| system message *(old `role_information`)* | `KnowledgeBase(answer_instructions=...)` | Knowledge Base |
-| `in_scope: true` | grounding sentence appended to `answer_instructions` | Knowledge Base |
-| model / deployment | `AzureOpenAIVectorizerParameters(deployment_name=...)` | Knowledge Base |
-| `strictness` (1–5) | `reranker_threshold` (0.0–4.0), as `(strictness − 1) × 1.0` | retrieve call |
-| `top_n_documents` (3–20) | *no direct knob* — the planner sizes context; widen the pool with `max_output_documents` (50–200) if needed | retrieve call |
-| `query_type` | *(no knob)* — the KB always runs agentic hybrid + semantic reranking | KB pipeline |
+| System / grounding instructions | `answer_instructions`; test abstention separately | Knowledge Base |
+| Model deployment | `deployment_name` plus the actual `model_name` | Knowledge Base model |
+| `filter` | `kb_answer(filter_add_on=...)`; pass a trusted, caller-specific filter when required | retrieve source params |
+| `fields_mapping.content_fields` | `search_fields`; select retrievable citation/content fields with `source_data_fields` | Knowledge Source |
+| `strictness` | No exact conversion. Evaluate `reranker_threshold` independently if needed. | retrieve source params |
+| `top_n_documents` | Top-level `max_output_documents` caps final grounding documents, but is not identical to OYD context selection. | retrieve request |
+| `query_type` / `embedding_dependency` | Review semantic configuration, existing vector fields, and a valid query-time vectorizer. Do not assume hybrid behavior. | index / Knowledge Source |
 
-> **`query_type` has no equivalent on purpose.** On Your Data made you choose `simple`,
-> `semantic`, `vector`, or a hybrid. A Knowledge Base always plans subqueries, retrieves
-> with hybrid search, and reranks — so the best strategy is the default. If your index has
-> a vector field and an embedding vectorizer, the KB uses them automatically.
+Per-source `max_output_documents` caps intermediate candidates; the top-level setting
+caps final grounding documents. The example uses a final cap of five, not the old
+50-200 candidate-pool rule. Retune with your corpus rather than translating OYD knobs
+numerically. Index scoring profiles are not honored by KB retrieve.
 
-> **About `top_n_documents`.** In OYD this set how many documents were sent to the model.
-> In a Knowledge Base, query planning and synthesis assemble context for you, so there is
-> no 1:1 replacement. Use `max_output_documents` only to *widen the candidate pool*
-> (allowed range 50–200) — not to cap the answer the way `top_n_documents` did.
+Auto controls retrieval effort, while `answerSynthesis` controls the output. They are
+independent settings: an adaptive retrieval pipeline can still return a finished answer.
 
 ## 3 · Create the Knowledge Source over your existing index
 
@@ -269,11 +236,16 @@ place. This maps the OYD `index_name` and `semantic_configuration`.
 
 ```python
 from azure.search.documents.indexes.models import (
+    SearchIndexFieldReference,
     SearchIndexKnowledgeSource,
     SearchIndexKnowledgeSourceParameters,
 )
 
-ks_parameters = SearchIndexKnowledgeSourceParameters(search_index_name=SEARCH_INDEX)
+ks_parameters = SearchIndexKnowledgeSourceParameters(
+    search_index_name=SEARCH_INDEX,
+    search_fields=[SearchIndexFieldReference(name=name) for name in CONTENT_FIELDS],
+    source_data_fields=[SearchIndexFieldReference(name=name) for name in SOURCE_FIELDS],
+)
 if SEMANTIC_CONFIG:
     ks_parameters.semantic_configuration_name = SEMANTIC_CONFIG
 
@@ -282,24 +254,24 @@ knowledge_source = SearchIndexKnowledgeSource(
     description="Wraps the existing On Your Data search index.",
     search_index_parameters=ks_parameters,
 )
-index_client.create_or_update_knowledge_source(knowledge_source)
+index_client.create_knowledge_source(knowledge_source)
+created_ks = True
 print(f"Knowledge Source '{KS_NAME}' now points at index '{SEARCH_INDEX}'.")
 ```
 
-## 4 · Create the Knowledge Base with your existing model
+## 4 · Create the KB with auto retrieval and answer synthesis
 
-The Knowledge Base ties your **Azure OpenAI model** to the Knowledge Source and sets the
-answer behavior. Three fields carry your OYD configuration:
+Attach your supported chat deployment, set `auto`, and enable `answerSynthesis`.
+The [current KB creation guide](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base#create-a-knowledge-base)
+documents this combination for `2026-08-01-preview`.
 
-- **`models`** → the same Azure OpenAI deployment OYD used, for query planning + synthesis.
-- **`output_mode=ANSWER_SYNTHESIS`** → return a written, cited answer (not raw chunks).
-  This is what makes the KB a drop-in for OYD.
-- **`answer_instructions`** → your OYD system message, plus the grounding sentence that
-  `in_scope: true` used to enforce.
+Auto starts with lightweight retrieval and can escalate up to medium effort when
+grounding is insufficient. The model is still required for synthesis. Your app receives
+a natural-language answer, but must adapt to KB references rather than OYD's citation
+shape; this is not a wire-compatible drop-in replacement.
 
-Default `retrieval_reasoning_effort` to `low`: it adds query planning (the big jump over
-single-shot OYD retrieval) without much latency. Raise it to `medium` only for genuinely
-multi-part questions.
+The abstention instruction below defines an exact output contract for this recipe.
+It is not an authorization control or a guarantee of factual correctness.
 
 ```python
 from azure.search.documents.indexes.models import (
@@ -309,18 +281,18 @@ from azure.search.documents.indexes.models import (
     KnowledgeSourceReference,
 )
 from azure.search.documents.knowledgebases.models import (
-    KnowledgeRetrievalLowReasoningEffort,
+    KnowledgeRetrievalAutoReasoningEffort,
     KnowledgeRetrievalOutputMode,
 )
 
-# in_scope: true  ->  an explicit grounding instruction
 answer_instructions = (
     SYSTEM_MESSAGE
-    + " Only use the retrieved sources. If the answer is not in them, say you do not know."
+    + " Use only retrieved sources and cite them with [ref_id:<id>]. "
+    + f"If the sources do not answer the question, reply exactly \"{ABSTENTION}\" "
+    + "without quotation marks, additional punctuation, or citations."
 )
 
-# The same Azure OpenAI deployment OYD used. With an API key here; for production, omit
-# api_key and let the Search service's managed identity reach Azure OpenAI (see Best practices).
+# For production, use the Search service's managed identity instead of the model key.
 model_parameters = AzureOpenAIVectorizerParameters(
     resource_url=AOAI_ENDPOINT,
     deployment_name=AOAI_DEPLOYMENT,
@@ -334,23 +306,42 @@ knowledge_base = KnowledgeBase(
     models=[KnowledgeBaseAzureOpenAIModel(azure_open_ai_parameters=model_parameters)],
     knowledge_sources=[KnowledgeSourceReference(name=KS_NAME)],
     output_mode=KnowledgeRetrievalOutputMode.ANSWER_SYNTHESIS,
-    retrieval_reasoning_effort=KnowledgeRetrievalLowReasoningEffort(),
+    retrieval_reasoning_effort=KnowledgeRetrievalAutoReasoningEffort(),
     answer_instructions=answer_instructions,
 )
-index_client.create_or_update_knowledge_base(knowledge_base)
-print(f"Knowledge Base '{KB_NAME}' ready (answerSynthesis, model '{AOAI_DEPLOYMENT}').")
+index_client.create_knowledge_base(knowledge_base)
+created_kb = True
+print(f"Created '{KB_NAME}' (auto + answerSynthesis, model '{AOAI_DEPLOYMENT}').")
 ```
 
 ## 5 · The call you make instead (Foundry IQ)
 
-This is the replacement for §1. A `KnowledgeBaseRetrievalClient` bound to your KB, one
-question, one grounded answer with citations. The remaining OYD knob maps onto the
-per-call source params:
+Send messages to the KB and inherit its **auto + answerSynthesis** defaults. Require the
+index source to succeed, retain your filter, and request references and activity.
+The helper rejects partial responses and activity errors instead of displaying an
+incomplete answer as success.
 
-- `strictness: 3` → `reranker_threshold: 2.0`  (the `(strictness − 1) × 1.0` from the table)
+`SEARCH_FILTER` is the static notebook default. In an application, pass a complete
+trusted `filter_add_on` on every caller-specific request, including follow-ups and
+evaluation queries. Build it in your backend from verified caller context, not raw
+client-supplied text. It **replaces**, rather than appends to, the static default, so
+retain all required policy clauses. Omitting it or passing `None` keeps the default;
+blank or non-string filters are rejected rather than silently removing restrictions.
 
-The synthesized answer comes back in `result.response`; the citations in
-`result.references`; and a step-by-step `result.activity` trace shows what the planner did.
+Application call pattern, with both values supplied by your trusted backend:
+
+```python
+result = kb_answer(
+    messages,
+    filter_add_on=trusted_filter,
+    query_source_authorization=verified_user_search_token,
+)
+```
+
+`query_source_authorization` forwards a verified signed-in user's Search token when
+your index requires it; this is separate from the credential authenticating the app to
+Search. Obtain the token in your trusted backend with the Search audience
+`https://search.azure.com/.default`, not from arbitrary client-supplied text.
 
 ```python
 from azure.search.documents.knowledgebases import KnowledgeBaseRetrievalClient
@@ -362,12 +353,38 @@ from azure.search.documents.knowledgebases.models import (
 )
 
 retrieval_client = KnowledgeBaseRetrievalClient(
-    endpoint=SEARCH_ENDPOINT, credential=search_credential, knowledge_base_name=KB_NAME
+    endpoint=SEARCH_ENDPOINT,
+    credential=search_credential,
+    knowledge_base_name=KB_NAME,
+    api_version=SEARCH_API_VERSION,
 )
 
 
-def kb_answer(messages, *, strictness=3, include_activity=True):
-    reranker_threshold = (strictness - 1) * 1.0  # OYD strictness 1-5 -> KB threshold 0-4
+def require_complete_response(pipeline_response, result, _headers):
+    if pipeline_response.http_response.status_code == 206:
+        raise RuntimeError("KB returned HTTP 206 Partial Content; do not display it as a complete answer.")
+    activity = [entry.as_dict() for entry in (result.activity or [])]
+    errors = [entry["error"] for entry in activity if entry.get("error")]
+    if errors:
+        raise RuntimeError(f"KB retrieval activity failed: {errors}")
+    return result
+
+
+def kb_answer(
+    messages, *, max_documents=5, reranker_threshold=None,
+    filter_add_on=None, query_source_authorization=None,
+):
+    if USES_PER_USER_ACL and not query_source_authorization:
+        raise ValueError("This index requires the verified signed-in user's Search token.")
+    if isinstance(max_documents, bool) or not isinstance(max_documents, int) or max_documents < 1:
+        raise ValueError("max_documents must be a positive integer.")
+    if reranker_threshold is not None and not 0 <= reranker_threshold <= 4:
+        raise ValueError("reranker_threshold must be between 0 and 4.")
+    effective_filter = SEARCH_FILTER if filter_add_on is None else filter_add_on
+    if effective_filter is not None and (
+        not isinstance(effective_filter, str) or not effective_filter.strip()
+    ):
+        raise ValueError("Provide a non-empty OData filter; omit filter_add_on or use None to retain SEARCH_FILTER.")
     request = KnowledgeBaseRetrievalRequest(
         messages=[
             KnowledgeBaseMessage(
@@ -380,82 +397,132 @@ def kb_answer(messages, *, strictness=3, include_activity=True):
                 knowledge_source_name=KS_NAME,
                 include_references=True,
                 include_reference_source_data=True,
+                always_query_source=True,
+                fail_on_error=True,
+                filter_add_on=effective_filter,
                 reranker_threshold=reranker_threshold,
             )
         ],
-        include_activity=include_activity,
+        max_output_documents=max_documents,
+        include_activity=True,
     )
-    return retrieval_client.retrieve(request)
+    return retrieval_client.retrieve(
+        request,
+        query_source_authorization=query_source_authorization,
+        cls=require_complete_response,
+    )
+```
 
+### Read the answer and validate citation IDs
 
+Read text from every response block. A supported answer should contain native
+`[ref_id:<id>]` markers that resolve to `references`. This check catches missing or
+invented citation IDs, not whether each claim is actually supported by its source.
+The unsupported-answer contract is exactly `I don't know`, without citations.
+
+```python
 def answer_text(result):
-    parts = []
-    for message in (result.response or []):
-        for content in (message.content or []):
-            text = getattr(content, "text", None)
-            if text:
-                parts.append(text)
-    return "\n\n".join(parts)
+    return "\n\n".join(
+        content.text
+        for message in (result.response or [])
+        for content in (message.content or [])
+        if getattr(content, "text", None)
+    ).strip()
 
 
-kb = kb_answer([{"role": "user", "content": QUESTION}])
+def check_answer(result):
+    text = answer_text(result)
+    if not text:
+        raise ValueError("KB returned no answer text.")
+    cited_ids = set(re.findall(r"\[ref_id:([^\]]+)\]", text))
+    reference_ids = {str(ref.id) for ref in (result.references or [])}
+    if cited_ids - reference_ids:
+        raise ValueError(f"Unresolved citation IDs: {sorted(cited_ids - reference_ids)}")
+    if text != ABSTENTION and not cited_ids:
+        raise ValueError("Answer has no native citations and is not the agreed abstention.")
+    return text, cited_ids
 
-print(answer_text(kb))
+
+started = perf_counter()
+kb = kb_answer(
+    [{"role": "user", "content": QUESTION}], query_source_authorization=USER_SEARCH_TOKEN
+)
+elapsed_seconds = perf_counter() - started
+text, cited_ids = check_answer(kb)
+print(text)
 print("\nReferences:")
-for ref in (kb.references or [])[:5]:
+for ref in (kb.references or []):
     source = ref.source_data or {}
     label = source.get("title") or source.get("filepath") or getattr(ref, "doc_key", None) or ref.id
     print(f"  [ref_id:{ref.id}] {label}")
-print(f"\nActivity steps: {len(kb.activity or [])}   References: {len(kb.references or [])}")
+print(f"\nElapsed: {elapsed_seconds:.2f}s; cited sources: {len(cited_ids)}")
 ```
 
-### See the planner's work
+### Inspect the work auto actually performed
 
-On Your Data was a black box. The Knowledge Base returns an `activity` trace: the
-subqueries it planned, which source it hit, and token counts for planning vs. synthesis.
+Activity distinguishes retrieval, planning when used, and answer synthesis. The August
+API reports model metadata in a nested `model` object. Print operational fields rather
+than dumping your retrieved document content.
 
 ```python
-activity = [a.as_dict() if hasattr(a, "as_dict") else a for a in (kb.activity or [])]
-print(json.dumps(activity, indent=2)[:2000])
+activity_fields = {"type", "elapsedMs", "inputTokens", "outputTokens", "model"}
+activity = [
+    {key: value for key, value in entry.as_dict().items() if key in activity_fields}
+    for entry in (kb.activity or [])
+]
+print(json.dumps(activity, indent=2))
 ```
 
 ### Reading the trace
 
-The trace above is the payoff over OYD's black box. For the hotels example, the planner
-decomposed one question into **two** subqueries and ran them in parallel before
-synthesizing:
+A schematic trace might contain these activities; it is not a recorded benchmark:
 
 ```text
-modelQueryPlanning     <your model>   plans subqueries
-searchIndex            "luxury resorts with free wifi"     -> hits
-searchIndex            "amenities of luxury resorts"       -> hits
-modelAnswerSynthesis   <your model>   writes the cited answer
-agenticReasoning       (low effort)
+searchIndex            retrieve from the existing index
+modelQueryPlanning     present if auto escalates to planning
+searchIndex            additional retrieval if needed
+modelAnswerSynthesis   write an answer from retrieved evidence
 ```
 
-That fan-out is why the KB answer cites a wider set of documents than the single hidden
-lookup OYD did — same index, same model, one call each.
+Do not require every auto request to have a planning step or infer quality from the
+number of references. Evaluate claim support and relevant-source coverage separately.
 
-## 6 · Side by side
+## 6 · Check the migration on your corpus
 
-Same question, both engines. The answers should be comparable — same index, same model —
-but only the Foundry IQ call still runs after Oct 14, 2026.
+Run one supported question and one confirmed out-of-corpus question. The cell below
+checks the supported-answer citation contract and exact abstention. Inspect the cited
+documents to judge groundedness; passing these structural checks is not a quality score.
+The negative query is an additional billable retrieval/synthesis call.
+
+If you captured an OYD baseline, compare both answers to the same independently checked source text.
+Different models, ranking behavior, or prompts make this a migration check, not a
+controlled benchmark.
 
 ```python
-print("On Your Data  (retires Oct 14, 2026)")
-print("-" * 44)
-print(oyd_message.content)
-print()
-print("Foundry IQ Knowledge Base  (answer synthesis)")
-print("-" * 44)
-print(answer_text(kb))
+supported_text, supported_citations = check_answer(kb)
+if supported_text == ABSTENTION:
+    raise AssertionError("The supported question was not answered; check the corpus, filter, and query.")
+
+unsupported = kb_answer(
+    [{"role": "user", "content": UNSUPPORTED_QUESTION}],
+    query_source_authorization=USER_SEARCH_TOKEN,
+)
+unsupported_text, unsupported_citations = check_answer(unsupported)
+if unsupported_text != ABSTENTION or unsupported_citations:
+    raise AssertionError("The out-of-corpus query failed the exact abstention contract.")
+
+print(f"Supported answer: {len(supported_citations)} resolved citation IDs.")
+print(f"Unsupported answer: {unsupported_text}")
 ```
 
 ## 7 · Multi-turn
 
-On Your Data was stateless — every call started over. `kb_answer` already takes a list of
-messages, so you can pass prior turns and the planner uses them as context. Append the
-answer and ask a follow-up.
+Your application owns conversation history. Send prior turns with the next request;
+a KB retrieve call does not create a persistent chat session. This message-based auto
+path can use that context without introducing an agent. Replace the follow-up below
+with a question relevant to your chosen corpus. This single-corpus example uses the
+static filter; an application must supply its trusted filter and user token again on
+every follow-up, and keep conversation history scoped to that caller and corpus.
 
 ```python
 conversation = [
@@ -463,106 +530,144 @@ conversation = [
     {"role": "assistant", "content": answer_text(kb)},
     {"role": "user", "content": "Can you give me more detail on that?"},
 ]
-follow_up = kb_answer(conversation, include_activity=False)
-print(answer_text(follow_up))
+follow_up = kb_answer(conversation, query_source_authorization=USER_SEARCH_TOKEN)
+follow_up_text, _ = check_answer(follow_up)
+print(follow_up_text)
 ```
+
+## When to add a Foundry Prompt Agent
+
+Use a **Foundry Prompt Agent + this KB** when the application grows beyond corpus chat:
+for example, looking up a policy and then calling a separate tool to submit a request.
+Keep the Search Index Knowledge Source and KB; add the agent around them rather than
+moving or re-ingesting the corpus.
+
+Follow [Connect agents to Foundry IQ knowledge bases](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
+for the `PromptAgentDefinition` example. It creates a project connection to
+`/knowledgebases/<name>/mcp?api-version=2026-08-01-preview` and exposes only
+`knowledge_base_retrieve` through an `MCPTool`. The Foundry project's managed identity
+needs **Search Index Data Reader** on your Search service. Preserve per-user permission
+forwarding when applicable.
+
+An agent can consume the KB's synthesized answer, but that adds another model layer.
+If the agent should compose the final response itself, deliberately choose extractive
+KB output for that integration. Do not silently change a shared KB used by direct-answer
+clients. MCP tool results also differ from the REST/SDK response shape.
+
+This is an alternative architecture, not a prerequisite for the direct path above.
 
 ## Common errors
 
-The failures you are most likely to hit — including two the migration itself surfaces:
-
 | Error | Cause | Fix |
 |---|---|---|
-| `openai.BadRequestError` — `role_information: Extra inputs are not permitted` | The GA API (`2024-10-21`) removed the `role_information` data-source parameter | Move your instructions to a `system` message (see §1) |
-| `HttpResponseError` — `MaxOutputDocuments must be between 50 and 200` | `max_output_documents` is a candidate-pool cap, not OYD's `top_n` | Omit it (the planner sizes context), or pass a value in 50–200 |
-| `HttpResponseError` 401/403 on retrieve with Entra auth | The caller lacks a data-plane role | Grant **Search Index Data Reader** on the Search service; wait 5–10 min for propagation |
-| 403 during synthesis with managed identity | The Search service MI can't reach Azure OpenAI | Give the Search MI **Cognitive Services OpenAI User** on the Azure OpenAI resource |
-| `ResourceNotFoundError` on retrieve | The Knowledge Base does not exist or the name is wrong | Create the KB (§4) first; match `KB_NAME` |
-| Empty answer, `references: 0` | `reranker_threshold` too high, or the index has no semantic config | Lower `reranker_threshold`; confirm `semantic_configuration_name` matches your index |
+| Import failure or rejected `auto` | Wrong SDK or API version | Install `12.1.0b2`, restart the kernel if needed, and use `2026-08-01-preview` on both clients. |
+| 400 for a KB without a model | Auto/synthesis requires a supported model | Configure the real deployment name and model family; do not switch to GA or minimal as a silent fallback. |
+| 409 on create | The KS/KB name already exists | Inspect the existing object; do not replace create-only with an unconditional upsert. |
+| 401/403 on Search | Caller or project identity lacks access | Verify the endpoint, network path, auth mode, and the appropriate Search role. |
+| Model access/deployment error | Wrong deployment, retired model, model key, or Search managed identity | Check supported model/version and network access; for Entra, grant the Search identity **Cognitive Services User** on the model resource. |
+| HTTP 206 or activity error | Incomplete retrieval | Treat as incomplete. Investigate the source failure; do not display the partial answer as success. |
+| Missing per-user token | ACL forwarding is enabled in the helper | Supply the verified signed-in user's Search token for each call; never disable permission enforcement as a workaround. |
+| No answer or unresolved citations | Missing content, restrictive filter, field mapping, threshold, or reference handling | Inspect the source configuration and cited evidence. Do not relax an authorization filter to improve recall. |
+| Existing OYD application is unavailable | Legacy deployment/API is unavailable | Validate the new path against source-backed expected answers; the notebook does not execute OYD. |
 
 ## Best practices
 
-You have a working migration. Before you ship it:
+- **Evaluate against evidence.** Use representative questions with independently checked
+  source answers, including unsupported and permission-denied cases. Score relevance,
+  groundedness, citation accuracy, latency, and usage; citation count alone is not quality.
+  See [Foundry evaluation](https://learn.microsoft.com/azure/ai-foundry/concepts/evaluation-approach-gen-ai).
+- **Separate management from query credentials.** Install `azure-identity` and use
+  `DefaultAzureCredential()` on the Search clients for Entra authentication. The setup
+  principal needs **Search Service Contributor**; the querying identity needs
+  **Search Index Data Reader**. For outbound model calls, omit `api_key` from the KB's
+  model configuration and grant the Search service's managed identity **Cognitive Services
+  User** on the model resource. These are distinct identities and permissions.
+- **Preserve document access.** Pass the complete trusted `filter_add_on` for each
+  caller-specific request and, for permission-aware indexes, forward the verified user's
+  token on every call. An authenticated `citationUrl`
+  is not a public source URL; keep the same user authorization when resolving it.
+- **Measure auto before tuning.** Observe whether queries escalate, and evaluate thresholds
+  separately from reasoning effort. No fixed latency, cost, or quality improvement is promised.
+- **Cut over deliberately.** Pin the preview API/SDK, verify model lifecycle and region
+  support, preserve the working application path until evaluation passes, and monitor
+  errors and abstentions after rollout. OYD is not a fallback after its retirement.
 
-- **Evaluate the change, don't eyeball it.** Run your real questions through both engines
-  and score groundedness and relevance. Microsoft Foundry ships built-in RAG evaluators
-  (groundedness, relevance, retrieval) for exactly this — see
-  [Evaluation of generative AI applications](https://learn.microsoft.com/azure/ai-foundry/concepts/evaluation-approach-gen-ai).
-- **Use Microsoft Entra ID in production.** Drop the `AzureKeyCredential` and the
-  `api_key` in the model parameters. Pass `DefaultAzureCredential()` to both clients. Grant
-  **Search Service Contributor** to create the Knowledge Source and Knowledge Base, and
-  **Search Index Data Reader** to run retrieve. For synthesis, enable a managed identity on
-  the Search service, give it **Cognitive Services OpenAI User** on your Azure OpenAI
-  resource, and drop the model's `api_key`. See
-  [Azure AI Search role-based access](https://learn.microsoft.com/azure/search/search-security-rbac).
-- **Tune two dials, not five.** `reranker_threshold` is your old `strictness` (raise it to
-  cut weak matches); `retrieval_reasoning_effort` (`minimal` / `low` / `medium`) trades
-  latency for harder query planning. Start at `low`.
-- **Mind the preview.** The Knowledge Base SDK surface is `2026-05-01-preview`. Pin the
-  package version and watch the
-  [agentic retrieval migration guide](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-migrate)
-  before moving to production.
-
-When you outgrow a single index — multiple sources, SharePoint/OneLake/Web, or an agent
-that calls the KB as a tool — keep the same Knowledge Base and follow
-[Mastering Foundry IQ](mastering-foundry-iq.ipynb).
+For additional knowledge sources, see [Mastering Foundry IQ](mastering-foundry-iq.ipynb).
+An agent remains optional; source count alone does not change that decision.
 
 ## Hand it to a coding agent
 
-To migrate a real application, point a coding agent (GitHub Copilot, Claude Code, etc.) at
-your repository with the prompt below. It captures the whole recipe: find the OYD call, map
-the parameters, create the two resources, swap the call.
+Use this prompt to carry the same decision into an application repository:
 
 ```text
 Migrate this codebase off Azure OpenAI On Your Data (retires Oct 14, 2026) to a Foundry IQ
-Knowledge Base in answer-synthesis mode, using the Python SDKs. Keep the existing Azure AI
-Search index and Azure OpenAI deployment. Steps:
+Knowledge Base using auto retrieval and answerSynthesis. Start with the direct KB path
+for corpus chat; add a Foundry Prompt Agent only for additional tools/actions/workflows.
 
-1. Find the On Your Data call: search for `data_sources`, `azure_search`, or
-   `extra_body={"data_sources"...}` passed to openai chat.completions.create.
-2. Read these fields from data_sources[0]["parameters"]: endpoint, index_name,
-   semantic_configuration, strictness, top_n_documents, in_scope, query_type. The OYD
-   instructions are the `system` message (older code may put them in a `role_information`
-   parameter, which the current API rejects).
-3. Create a Knowledge Source (azure-search-documents): SearchIndexKnowledgeSource with
-   SearchIndexKnowledgeSourceParameters(search_index_name=..., semantic_configuration_name=...),
-   then SearchIndexClient.create_or_update_knowledge_source(ks).
-4. Create a Knowledge Base: KnowledgeBase(output_mode=ANSWER_SYNTHESIS, models=[
-   KnowledgeBaseAzureOpenAIModel(AzureOpenAIVectorizerParameters(deployment_name=...))],
-   answer_instructions=<system message + in_scope grounding>, knowledge_sources=[ref]),
-   then SearchIndexClient.create_or_update_knowledge_base(kb).
-5. Replace the chat-completions call with KnowledgeBaseRetrievalClient.retrieve(
-   KnowledgeBaseRetrievalRequest(messages=[...], knowledge_source_params=[
-   SearchIndexKnowledgeSourceParams(reranker_threshold=(strictness-1)*1.0)])). Read the
-   answer from result.response[].content[].text and citations from result.references.
-   Only set max_output_documents if you need a wider pool (allowed range 50-200).
-6. Keep the existing system message identical via answer_instructions. Do not re-index
-   data. Use Microsoft Entra ID (DefaultAzureCredential) in production instead of api keys.
+1. Inspect the existing data_sources/azure_search call, model, instructions, field mappings,
+   semantic and vector configuration, filters, and per-user authorization. Preserve access.
+2. Use azure-search-documents==12.1.0b2 and explicitly select 2026-08-01-preview on clients.
+   Check index compatibility and model lifecycle. Do not re-index or deploy models silently.
+3. With approval, create a new SearchIndexKnowledgeSource over the SAME index and a KB
+   with KnowledgeRetrievalAutoReasoningEffort(), output_mode=ANSWER_SYNTHESIS, a supported
+   configured model, and answer_instructions preserving the app's grounding requirements.
+   Use create-only operations; do not overwrite existing resources.
+4. Call KnowledgeBaseRetrievalClient.retrieve with messages and source params retaining
+   caller-specific filter_add_on and permission forwarding on every call, including follow-ups.
+   Set fail_on_error=True for the required index source.
+   Inherit auto from the KB. Handle 206/failed activities as incomplete, not success.
+5. Read all response text blocks, resolve native citation IDs against references, and adapt
+   the app's citation UI. Keep conversation history in the application.
+6. Evaluate supported/unsupported questions, permissions, groundedness, latency, and usage.
+   Do not linearly convert strictness or treat reference count as a quality metric.
+7. Use Entra ID in production with separate management/query/model permissions. Clean up
+   only objects created for this migration, after explicit confirmation.
 ```
 
-For a CLI that discovers your OYD config and scaffolds the migration, see the companion
-[azure-openai-on-your-data-migrator](https://github.com/farzad528/azure-openai-on-your-data-migrator).
+If using the companion [migration CLI](https://github.com/farzad528/azure-openai-on-your-data-migrator),
+check its generated API version and settings against this recipe before applying them.
 
 ## Clean up
 
-This recipe created exactly two resources on your Search service — the Knowledge Source and
-the Knowledge Base. Your index and model are untouched. Remove the two to leave no residue.
+Set `CLEAN_UP = True` only when you no longer need this run's KB and knowledge source.
+Delete the KB first, then its source. The cell only deletes objects successfully created
+in this kernel; it never deletes the existing index or model. If you keep the KB for your
+application, leave cleanup off and retain the printed names.
 
 ```python
-index_client.delete_knowledge_base(KB_NAME)
-print(f"Deleted knowledge base '{KB_NAME}'")
-index_client.delete_knowledge_source(KS_NAME)
-print(f"Deleted knowledge source '{KS_NAME}'")
+CLEAN_UP = False
+
+if CLEAN_UP:
+    if created_kb:
+        index_client.delete_knowledge_base(KB_NAME)
+        created_kb = False
+        print(f"Deleted knowledge base '{KB_NAME}'")
+    if created_ks:
+        index_client.delete_knowledge_source(KS_NAME)
+        created_ks = False
+        print(f"Deleted knowledge source '{KS_NAME}'")
+else:
+    print(f"Cleanup skipped. Retained names: {KB_NAME}, {KS_NAME}")
 ```
+
+## What you have after a successful run
+
+- **Reused corpus:** a Search Index Knowledge Source and KB over the unchanged index.
+- **Replacement call:** `kb_answer` retrieves a synthesized answer, native references,
+  and activity while your application retains conversation history.
+- **Cutover checks:** `check_answer` and the supported/unsupported questions check citation
+  resolution and abstention. Review source support and permissions separately before rollout.
 
 ## References
 
-- [Azure OpenAI On Your Data](https://learn.microsoft.com/azure/ai-foundry/openai/concepts/use-your-data)
-- [Azure OpenAI model & feature retirements](https://learn.microsoft.com/azure/ai-foundry/openai/concepts/model-retirements)
-- [What is Foundry IQ?](https://learn.microsoft.com/azure/ai-foundry/agents/concepts/what-is-foundry-iq)
-- [Agentic retrieval concept](https://learn.microsoft.com/azure/search/search-agentic-retrieval-concept)
+- [Azure OpenAI On Your Data retirement](https://learn.microsoft.com/azure/foundry-classic/openai/concepts/use-your-data)
+- [Azure OpenAI model retirement schedule](https://learn.microsoft.com/azure/foundry/openai/concepts/model-retirement-schedule)
+- [What is Foundry IQ?](https://learn.microsoft.com/azure/foundry/agents/concepts/what-is-foundry-iq)
 - [Create a Knowledge Source over a search index](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-search-index)
 - [Create a Knowledge Base](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base)
 - [Retrieve from a Knowledge Base](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve)
+- [Set retrieval reasoning effort (including auto)](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-set-retrieval-reasoning-effort)
+- [Enable answer synthesis](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-answer-synthesis)
+- [Connect Foundry Prompt Agents to a KB](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
 - [azure-search-documents (Python SDK changelog)](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/CHANGELOG.md)
 - [azure-openai-on-your-data-migrator (companion CLI)](https://github.com/farzad528/azure-openai-on-your-data-migrator)
