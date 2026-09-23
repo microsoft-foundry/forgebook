@@ -6,6 +6,7 @@
   },
   "factory_revision": "dc808da9901b075bab2d2594b22512ee5164f556",
   "factory_export_revision": "e3e1781fde931b34169e441ed66931e836d8ca10",
+  "integration_asset_revision": "af2a2e5e6a26ae11f179be37f9cca8d909cf74e2",
   "official_samples": {
     "repository": "microsoft-foundry/foundry-samples",
     "revision": "be4706c76acfe44e2ae99c2818efdc4c5ab25bd9",
