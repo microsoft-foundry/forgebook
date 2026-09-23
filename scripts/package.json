@@ -6,13 +6,13 @@
     "validate": "tsx validate-registry.ts"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
-    "tsx": "^4.23.12",
+    "@types/node": "^26.6.1",
+    "tsx": "^4.23.13",
     "typescript": "^7.0.2",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "dependencies": {
-    "@azure/identity": "^4.13.2",
+    "@azure/identity": "^4.13.3",
     "@azure/monitor-query-logs": "^1.0.0"
   }
 }
