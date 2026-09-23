@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Publishable offline-draft evidence projection (not raw receipts)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_alias",
+    "live_run",
+    "controls",
+    "publish_ready",
+    "observed_at",
+    "versions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "run_alias": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{1,48}$"
+    },
+    "live_run": {
+      "const": false
+    },
+    "publish_ready": {
+      "const": false
+    },
+    "controls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "control",
+          "status"
+        ],
+        "properties": {
+          "control": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PASS",
+              "FAIL",
+              "BLOCKED",
+              "INCONCLUSIVE"
+            ]
+          }
+        }
+      }
+    },
+    "observed_at": {
+      "type": "null"
+    },
+    "versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "search_api",
+        "project_sdk",
+        "hosted_adapter",
+        "hosted_python"
+      ],
+      "properties": {
+        "search_api": {
+          "const": "2026-08-01-preview"
+        },
+        "project_sdk": {
+          "const": "2.3.0"
+        },
+        "hosted_adapter": {
+          "const": "1.0.0b260821"
+        },
+        "hosted_python": {
+          "const": "3.13"
+        }
+      }
+    }
+  }
+}

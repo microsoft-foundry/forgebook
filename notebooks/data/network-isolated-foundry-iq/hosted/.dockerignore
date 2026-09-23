@@ -1,0 +1,7 @@
+*
+!Dockerfile
+!main.py
+!pyproject.toml
+!uv.lock
+!uv.toml
+!egress_probe.py

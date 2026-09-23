@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+private/
+*.local.json
+infra/main.json
+hosted/.azure/
+hosted/.venv/
