@@ -1,3 +1,5 @@
+> Fictional test fixture. Not regulatory guidance or instructions for operating real infrastructure.
+
 # Contoso Grid — SCADA Network Segmentation Standard
 
 Document ID: CGP-NET-007

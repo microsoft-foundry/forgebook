@@ -1,3 +1,5 @@
+> Fictional test fixture. Not regulatory guidance or instructions for operating real infrastructure.
+
 # Contoso Grid — Substation Cyber Incident Response Runbook
 
 Document ID: CGP-IR-011

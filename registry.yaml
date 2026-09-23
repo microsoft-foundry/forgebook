@@ -271,8 +271,8 @@
 
 - slug: network-isolated-foundry-iq
   path: notebooks/network-isolated-foundry-iq.ipynb
-  title: "Network-Isolated Foundry IQ: A Verified Enterprise Blueprint"
-  description: "A checklist-driven, IT-admin field guide that PROVES Foundry IQ (Azure AI Search Knowledge Bases) and the Foundry Agent Service consuming it over MCP run fully inside a customer VNet — with private endpoints, no public data-plane access, and acceptance tests that pass on the jumpbox and fail (by design) from outside the network."
+  title: "Verify Private Retrieval with Foundry IQ"
+  description: "Build a disposable BYO-VNet lab for one Blob-backed knowledge base and two agents, then distinguish network isolation from authorization failures. Live verification is pending."
   date: "2026-05-29"
   authors:
     - github: farzad528
@@ -281,7 +281,8 @@
     - azure-ai-search
     - security
     - agents
-    - agent-service
+    - prompt-agents
+    - hosted-agents
     - mcp
 
 - slug: llamacloud-index-v2-azure-ai-search

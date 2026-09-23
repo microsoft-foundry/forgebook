@@ -1,3 +1,5 @@
+> Fictional test fixture. Not regulatory guidance or instructions for operating real infrastructure.
+
 # Contoso Grid — NERC CIP Access Control Policy (CIP-004 / CIP-005)
 
 Document ID: CGP-SEC-004

@@ -1,0 +1,25 @@
+requiredVersions:
+  azd: '>=1.27.1'
+  extensions:
+    azure.ai.agents: '>=1.0.0-beta.9'
+name: private-foundry-iq-lab
+services:
+  grid-hosted:
+    host: azure.ai.agent
+    project: .
+    language: python
+    kind: hosted
+    name: grid-hosted
+    image: ${HOSTED_IMAGE_DIGEST}
+    protocols:
+      - protocol: responses
+        version: 2.0.0
+    env:
+      AZURE_AI_MODEL_DEPLOYMENT_NAME: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+      TOOLBOX_ENDPOINT: ${TOOLBOX_ENDPOINT}
+    container:
+      resources:
+        cpu: '0.5'
+        memory: 1Gi
+infra:
+  provider: microsoft.foundry

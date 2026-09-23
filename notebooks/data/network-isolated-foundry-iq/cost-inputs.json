@@ -1,0 +1,359 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Unapproved price inputs for the disposable Foundry IQ isolation lab",
+  "retrievedOn": "2026-09-23",
+  "currency": "USD",
+  "candidateRegion": "westus3",
+  "source": {
+    "url": "https://prices.azure.com/api/retail/prices",
+    "method": "Public unauthenticated retail API, currencyCode=USD, OData product/service/region filters, Consumption prices only",
+    "subscriptionPricingQueried": false,
+    "invoiceQuote": false
+  },
+  "approval": {
+    "azureTargetConfirmed": false,
+    "deploymentApproved": false,
+    "roleChangesApproved": false,
+    "testInvocationsApproved": false,
+    "cleanupApproved": false,
+    "maximumSpend": null
+  },
+  "rates": [
+    {
+      "serviceName": "Azure Cognitive Search",
+      "productName": "Azure AI Search",
+      "skuName": "Standard S2",
+      "meterName": "Standard S2 Unit",
+      "unitOfMeasure": "1 Hour",
+      "retailPrice": 1.344,
+      "quantityBasis": "replicas multiplied by partitions"
+    },
+    {
+      "serviceName": "Azure Firewall",
+      "productName": "Azure Firewall",
+      "skuName": "Standard",
+      "meterName": "Standard Deployment",
+      "unitOfMeasure": "1 Hour",
+      "retailPrice": 1.25
+    },
+    {
+      "serviceName": "Azure Firewall",
+      "productName": "Azure Firewall",
+      "skuName": "Standard",
+      "meterName": "Standard Capacity Unit",
+      "unitOfMeasure": "1 Hour",
+      "retailPrice": 0.07,
+      "note": "Confirm included capacity and charge applicability before estimating; do not silently omit or double-count this separately published meter."
+    },
+    {
+      "serviceName": "Azure Firewall",
+      "productName": "Azure Firewall",
+      "skuName": "Standard",
+      "meterName": "Standard Data Processed",
+      "unitOfMeasure": "1 GB",
+      "retailPrice": 0.016
+    },
+    {
+      "serviceName": "Azure Bastion",
+      "productName": "Azure Bastion",
+      "skuName": "Basic",
+      "meterName": "Basic Gateway",
+      "unitOfMeasure": "1 Hour",
+      "retailPrice": 0.19,
+      "note": "Candidate SKU, not selected. Native-client tunneling or private-only Bastion requirements can require a different SKU and quote."
+    },
+    {
+      "serviceName": "Virtual Machines",
+      "productName": "Virtual Machines Dsv5 Series",
+      "skuName": "Standard_D2s_v5",
+      "meterName": "D2s v5",
+      "unitOfMeasure": "1 Hour",
+      "retailPrice": 0.096,
+      "note": "Linux PAYG, not Spot, no Windows license; disks and outbound connectivity excluded."
+    },
+    {
+      "serviceName": "Container Registry",
+      "productName": "Container Registry",
+      "skuName": "Premium",
+      "meterName": "Premium Registry Unit",
+      "unitOfMeasure": "1/Day",
+      "retailPrice": 1.6666,
+      "note": "Private-endpoint-capable candidate. Storage over included limits, replication, and tasks are separate."
+    },
+    {
+      "serviceName": "Virtual Network",
+      "productName": "Virtual Network Private Link",
+      "skuName": "Standard",
+      "meterName": "Standard Private Endpoint",
+      "armRegionName": "Global",
+      "unitOfMeasure": "1 Hour",
+      "retailPrice": 0.01,
+      "note": "Count actual billable endpoints and shared private links from the reviewed resource inventory."
+    },
+    {
+      "serviceName": "Virtual Network",
+      "productName": "Virtual Network Private Link",
+      "skuName": "Standard",
+      "meterName": "Standard Data Processed - Ingress",
+      "armRegionName": "Global",
+      "unitOfMeasure": "1 GB",
+      "retailPrice": 0.01,
+      "tierMinimumUnits": 0
+    },
+    {
+      "serviceName": "Virtual Network",
+      "productName": "Virtual Network Private Link",
+      "skuName": "Standard",
+      "meterName": "Standard Data Processed - Egress",
+      "armRegionName": "Global",
+      "unitOfMeasure": "1 GB",
+      "retailPrice": 0.01,
+      "tierMinimumUnits": 0
+    },
+    {
+      "serviceName": "Virtual Network",
+      "productName": "IP Addresses",
+      "skuName": "Standard",
+      "meterName": "Standard IPv4 Static Public IP",
+      "unitOfMeasure": "1 Hour",
+      "retailPrice": 0.005
+    },
+    {
+      "serviceName": "Azure Cosmos DB",
+      "productName": "Azure Cosmos DB",
+      "skuName": "RUs",
+      "meterName": "100 RU/s",
+      "unitOfMeasure": "1/Hour",
+      "retailPrice": 0.008,
+      "note": "Manual provisioned throughput only. Multiply by actual provisioned throughput and regions; not a serverless/autoscale price."
+    },
+    {
+      "serviceName": "Foundry Tools",
+      "productName": "Foundry Agents",
+      "skuName": "Hosted",
+      "meterName": "Hosted vCPU Usage",
+      "unitOfMeasure": "1 Hour",
+      "retailPrice": 0.0994,
+      "note": "Actual Foundry Hosted meter; do not substitute Container Apps prices."
+    },
+    {
+      "serviceName": "Foundry Tools",
+      "productName": "Foundry Agents",
+      "skuName": "Hosted",
+      "meterName": "Hosted Memory Usage",
+      "unitOfMeasure": "1 Hour",
+      "retailPrice": 0.0118,
+      "note": "Multiply by billed memory quantity and active runtime; confirm memory unit in the final billing specification."
+    },
+    {
+      "serviceName": "Foundry Models",
+      "productName": "Azure OpenAI",
+      "skuName": "gpt 4.1 mini Inp regnl",
+      "meterName": "gpt 4.1 mini Inp regnl Tokens",
+      "unitOfMeasure": "1K",
+      "retailPrice": 0.00044
+    },
+    {
+      "serviceName": "Foundry Models",
+      "productName": "Azure OpenAI",
+      "skuName": "gpt 4.1 mini Outp regnl",
+      "meterName": "gpt 4.1 mini Outp regnl Tokens",
+      "unitOfMeasure": "1K",
+      "retailPrice": 0.00176
+    },
+    {
+      "serviceName": "Foundry Models",
+      "productName": "Azure OpenAI",
+      "skuName": "gpt 4.1 mini Inp glbl",
+      "meterName": "gpt 4.1 mini Inp glbl Tokens",
+      "unitOfMeasure": "1K",
+      "retailPrice": 0.0004
+    },
+    {
+      "serviceName": "Foundry Models",
+      "productName": "Azure OpenAI",
+      "skuName": "gpt 4.1 mini Outp glbl",
+      "meterName": "gpt 4.1 mini Outp glbl Tokens",
+      "unitOfMeasure": "1K",
+      "retailPrice": 0.0016,
+      "note": "Global and regional prices are alternative deployment types, not additive; residency must be explicitly approved."
+    },
+    {
+      "serviceName": "Foundry Models",
+      "productName": "Azure OpenAI Embedding",
+      "skuName": "text embedding 3 large DZ",
+      "meterName": "text embedding 3 large DZ Tokens",
+      "unitOfMeasure": "1K",
+      "retailPrice": 0.000143,
+      "note": "Data Zone candidate only, not proof of model availability or price for a different deployment type. Grader meters were deliberately excluded."
+    },
+    {
+      "serviceName": "Azure Cognitive Search",
+      "productName": "Azure AI Search",
+      "skuName": "Agentic Retrieval Low Reasoning",
+      "meterName": "Agentic Retrieval Low Reasoning Tokens",
+      "unitOfMeasure": "1K",
+      "retailPrice": 0.000022
+    },
+    {
+      "serviceName": "Azure Cognitive Search",
+      "productName": "Azure AI Search",
+      "skuName": "Agentic Retrieval Medium Reasoning",
+      "meterName": "Agentic Retrieval Medium Reasoning Tokens",
+      "unitOfMeasure": "1K",
+      "retailPrice": 0.0001
+    },
+    {
+      "serviceName": "Azure Cognitive Search",
+      "productName": "Azure AI Search",
+      "skuName": "Semantic Ranker",
+      "meterName": "Semantic Ranker queries",
+      "unitOfMeasure": "1K",
+      "retailPrice": 1.0,
+      "note": "Confirm whether/how this meter applies to the selected retrieval path; do not double-count bundled operations or assume a free tier is available."
+    },
+    {
+      "serviceName": "Log Analytics",
+      "productName": "Log Analytics",
+      "skuName": "Analytics Logs",
+      "meterName": "Analytics Logs Data Ingestion",
+      "unitOfMeasure": "1 GB",
+      "retailPrice": 2.3,
+      "tierMinimumUnits": 5,
+      "note": "API also lists a zero-price lower tier. Do not assume unused free allocation in the target subscription."
+    },
+    {
+      "serviceName": "Storage",
+      "productName": "General Block Blob v2",
+      "skuName": "Hot LRS",
+      "meterName": "Hot LRS Data Stored",
+      "unitOfMeasure": "1 GB/Month",
+      "retailPrice": 0.0184,
+      "tierMinimumUnits": 0
+    },
+    {
+      "serviceName": "Storage",
+      "productName": "General Block Blob v2",
+      "skuName": "Hot LRS",
+      "meterName": "Hot LRS Write Operations",
+      "unitOfMeasure": "10K",
+      "retailPrice": 0.05
+    },
+    {
+      "serviceName": "Storage",
+      "productName": "General Block Blob v2",
+      "skuName": "Hot LRS",
+      "meterName": "Hot Read Operations",
+      "unitOfMeasure": "10K",
+      "retailPrice": 0.004
+    },
+    {
+      "serviceName": "Storage",
+      "productName": "Standard SSD Managed Disks",
+      "skuName": "E4 LRS",
+      "meterName": "E4 LRS Disk",
+      "unitOfMeasure": "1/Month",
+      "retailPrice": 2.4
+    },
+    {
+      "serviceName": "Storage",
+      "productName": "Standard SSD Managed Disks",
+      "skuName": "E6 LRS",
+      "meterName": "E6 LRS Disk",
+      "unitOfMeasure": "1/Month",
+      "retailPrice": 4.8
+    },
+    {
+      "serviceName": "NAT Gateway",
+      "productName": "NAT Gateway",
+      "skuName": "Standard",
+      "armRegionName": "Global",
+      "meterName": "Standard Gateway",
+      "unitOfMeasure": "1 Hour",
+      "retailPrice": 0.045,
+      "note": "Candidate explicit egress for the off-VNet test runner; count only if selected in reviewed topology."
+    },
+    {
+      "serviceName": "NAT Gateway",
+      "productName": "NAT Gateway",
+      "skuName": "Standard",
+      "armRegionName": "Global",
+      "meterName": "Standard Data Processed",
+      "unitOfMeasure": "1 GB",
+      "retailPrice": 0.045
+    },
+    {
+      "serviceName": "Azure DNS",
+      "productName": "Azure DNS",
+      "skuName": "Private",
+      "armRegionName": "Zone 1",
+      "meterName": "Private Zone",
+      "unitOfMeasure": "1",
+      "retailPrice": 0.5,
+      "tierMinimumUnits": 0,
+      "note": "API reports unit 1; verify zone-month billing in final quote. Count the actual zones including ACR and monitoring."
+    },
+    {
+      "serviceName": "Azure DNS",
+      "productName": "Azure DNS",
+      "skuName": "Private",
+      "armRegionName": "Zone 1",
+      "meterName": "Private Queries",
+      "unitOfMeasure": "1M",
+      "retailPrice": 0.4,
+      "tierMinimumUnits": 0
+    },
+    {
+      "serviceName": "Storage",
+      "productName": "General Block Blob v2",
+      "skuName": "Hot ZRS",
+      "meterName": "Hot ZRS Data Stored",
+      "unitOfMeasure": "1 GB/Month",
+      "retailPrice": 0.023,
+      "tierMinimumUnits": 0,
+      "note": "Matches the authored West US 3 Standard_ZRS candidate; LRS prices above are not applicable to this storage account."
+    },
+    {
+      "serviceName": "Storage",
+      "productName": "General Block Blob v2",
+      "skuName": "Hot ZRS",
+      "meterName": "Hot ZRS Write Operations",
+      "unitOfMeasure": "10K",
+      "retailPrice": 0.0625,
+      "tierMinimumUnits": 0
+    },
+    {
+      "serviceName": "Storage",
+      "productName": "General Block Blob v2",
+      "skuName": "Hot ZRS",
+      "meterName": "Hot ZRS Read Operations",
+      "unitOfMeasure": "10K",
+      "retailPrice": 0.004,
+      "tierMinimumUnits": 0
+    }
+  ],
+  "estimateStatus": "incomplete-not-approved",
+  "total": null,
+  "remainingInputs": [
+    "User-approved tenant, subscription, region and ownership",
+    "Exact reviewed IaC inventory, SKUs and quantities",
+    "Model deployment types, capacity and data-residency approval",
+    "Bounded invocation, token, active compute and retained-resource assumptions",
+    "Applicable firewall capacity-unit inclusion/billing",
+    "Canary hosting, bandwidth, remaining state storage and backup meters",
+    "Bastion SKU required by the chosen administration workflow",
+    "Current contract discounts, taxes, currency conversion and quota availability"
+  ],
+  "safetyNotes": [
+    "List price is not an invoice or proof that a SKU/model is available.",
+    "No Azure resources were provisioned or queried for service inventory to obtain these public rates.",
+    "The same service can incur fixed, variable and dependent-resource charges; a partial subtotal is not the total.",
+    "Do not assume free quotas, preview-free billing or automatic cleanup.",
+    "Azure budget alerts are not hard spending caps."
+  ],
+  "supportingUrls": [
+    "https://learn.microsoft.com/rest/api/cost-management/retail-prices/azure-retail-prices",
+    "https://azure.microsoft.com/en-us/pricing/details/foundry-agent-service/",
+    "https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-blob#restrict-ingestion-to-a-private-network-preview"
+  ]
+}
