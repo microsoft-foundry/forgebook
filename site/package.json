@@ -29,7 +29,7 @@
     "marked-highlight": "^2.2.4",
     "notebookjs": "^0.8.3",
     "prismjs": "^1.30.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "web-vitals": "^5.3.0",
     "yaml": "^2.8.2"
   },
