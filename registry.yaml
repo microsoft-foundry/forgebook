@@ -284,3 +284,19 @@
     - llamaindex
     - identity
     - iq
+
+- slug: skill-review-teams-bot
+  path: notebooks/skill-review-teams-bot.ipynb
+  title: "Business users reviewing Foundry Skills from Teams"
+  description: "A Foundry hosted agent, published to Teams, that lets business users review, propose, and approve Foundry Skill pull requests under their own GitHub identity."
+  date: "2026-09-20"
+  authors:
+    - github: zhuoqunli
+  tags:
+    - hosted-agents
+    - toolbox
+    - mcp
+    - teams
+    - agent-framework
+    - identity
+    - governance
