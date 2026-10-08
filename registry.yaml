@@ -284,3 +284,17 @@
     - llamaindex
     - identity
     - iq
+
+- slug: acu-dynamic-hitl
+  path: notebooks/acu-dynamic-hitl.ipynb
+  title: "Dynamic human review with Content Understanding confidence scores"
+  description: "Turn Azure Content Understanding confidence scores into a per-field human-review policy: set one catch target, ship a CSV, and measure what it saves on unseen documents."
+  date: "2026-10-06"
+  authors:
+    - github: colinmurphy326
+  tags:
+    - content-understanding
+    - evaluation
+    - governance
+    - intelligent-document-processing
+    - forward-deployed-engineering
