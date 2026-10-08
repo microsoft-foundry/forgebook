@@ -1,0 +1,9 @@
+field_name,filled_decision,cutoff,score_mode,lr_coef,lr_intercept,blank_decision,target_catch_rate,min_null_precision,calibrated_at,why
+menu.name,calibrate,0.796000001,raw_confidence,,,insufficient_nulls,0.8,0.8,2026-10-08T20:13:45+00:00,target catch 80% met at threshold 0.7960
+menu.price,calibrate,0.875000001,raw_confidence,,,null_to_hitl,0.8,0.8,2026-10-08T20:13:45+00:00,target catch 80% met at threshold 0.8750
+menu.quantity,always_review,,raw_confidence,,,null_to_hitl,0.8,0.8,2026-10-08T20:13:45+00:00,AUC CI lower 0.493 < 0.5 — signal not trustworthy
+other_adjustment,always_review,,raw_confidence,,,null_to_stp,0.8,0.8,2026-10-08T20:13:45+00:00,AUC CI lower 0.470 < 0.5 — signal not trustworthy
+service_price,calibrate,0.864000001,raw_confidence,,,null_to_stp,0.8,0.8,2026-10-08T20:13:45+00:00,target catch 80% met at threshold 0.8640
+subtotal_price,calibrate,0.856000001,raw_confidence,,,null_to_stp,0.8,0.8,2026-10-08T20:13:45+00:00,target catch 80% met at threshold 0.8560
+tax_price,always_review,,raw_confidence,,,null_to_hitl,0.8,0.8,2026-10-08T20:13:45+00:00,AUC CI lower 0.371 < 0.5 — signal not trustworthy
+total_price,calibrate,0.845000001,raw_confidence,,,null_to_hitl,0.8,0.8,2026-10-08T20:13:45+00:00,target catch 80% met at threshold 0.8450

@@ -1,0 +1,19 @@
+{
+  "name": "CORD v2 Content Understanding results",
+  "source_dataset": "naver-clova-ix/cord-v2",
+  "source_revision": "7f0115a4b758a71d6473b8d085751692da2fef98",
+  "license": "CC BY 4.0",
+  "document_count": 1000,
+  "official_splits": {
+    "train": 800,
+    "validation": 100,
+    "test": 100
+  },
+  "precomputed_with_content_understanding": true,
+  "analyzer_id": "cord_receipt_v1",
+  "analyzer_base": "prebuilt-document",
+  "completion_model": "gpt-4.1",
+  "api_version": "2025-11-01",
+  "prepared_at": "2026-07-17",
+  "description": "Measured Azure Content Understanding output for every image in the pinned CORD v2 dataset. Ground truth, receipt images, CU values, and CU confidence scores all come from the actual source-data run."
+}
