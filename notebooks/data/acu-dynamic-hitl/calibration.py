@@ -16,6 +16,9 @@ field value, with these columns.
 
 ``ground_truth_value`` and ``observation_id`` are carried along for inspection
 but are not used by the calibration itself.
+
+Production routing with ``route_frame`` only needs ``field_name``,
+``extracted_value``, and ``confidence``. Labels and a split are not required.
 """
 
 from __future__ import annotations
@@ -400,11 +403,40 @@ def route_frame(
     canonical: pd.DataFrame,
     policies: Mapping[str, Mapping],
     *,
-    split: str,
+    split: str | None = None,
 ) -> pd.DataFrame:
-    """Run one split through the frozen policy, row by row, using the same
-    formula production inference would use."""
-    frame = calibration_input(canonical, split=split)
+    """Apply a frozen policy to extracted values, with no labels required.
+
+    Only ``field_name``, ``extracted_value``, and ``confidence`` are required.
+    Other input columns are carried through. Returns ``p_correct``,
+    ``route_to_hitl``, and ``route_reason``; blank values use the saved blank
+    decision without reading confidence.
+
+    Pass ``split`` to select one split of a labeled dataset. When
+    ``is_correct`` is present, missed line items are excluded and the result
+    also includes ``stp_error`` and ``error_intercepted`` for evaluation.
+    Without labels, every input extraction is routed and no error metrics
+    are produced.
+    """
+    required = ["field_name", "extracted_value", "confidence"]
+    if split is not None:
+        required.append("split")
+    missing = [column for column in required if column not in canonical.columns]
+    if missing:
+        raise KeyError(f"routing input is missing required columns: {missing}")
+    frame = canonical.copy()
+    if split is not None:
+        frame = frame.loc[frame["split"] == split].copy()
+        if frame.empty:
+            raise ValueError(f"dataset contains no rows for split {split!r}")
+    labeled = "is_correct" in frame.columns
+    if labeled:
+        labels = frame["is_correct"]
+        if labels.isna().any() or not labels.isin([True, False, 0, 1]).all():
+            raise ValueError("is_correct must contain non-null boolean or 0/1 labels")
+        frame = frame.loc[~missed_line_item_mask(frame)].copy()
+        frame["is_correct"] = frame["is_correct"].astype(int)
+    frame = frame.drop(columns=["stp_error", "error_intercepted"], errors="ignore")
     routed: list[dict[str, Any]] = []
     for row in frame.to_dict(orient="records"):
         policy = policies.get(row["field_name"])
@@ -439,22 +471,35 @@ def route_frame(
                     )
             else:
                 reason = "non_null_uncalibrated"
-        is_correct = bool(row["is_correct"])
-        routed.append(
-            {
-                **row,
-                "p_correct": p_correct,
-                "route_to_hitl": route_to_hitl,
-                "route_reason": reason,
-                "stp_error": (not is_correct) and not route_to_hitl,
-                "error_intercepted": (not is_correct) and route_to_hitl,
-            }
-        )
-    return pd.DataFrame(routed)
+        result = {
+            **row,
+            "p_correct": p_correct,
+            "route_to_hitl": route_to_hitl,
+            "route_reason": reason,
+        }
+        if labeled:
+            is_correct = bool(row["is_correct"])
+            result["stp_error"] = (not is_correct) and not route_to_hitl
+            result["error_intercepted"] = (not is_correct) and route_to_hitl
+        routed.append(result)
+    columns = list(dict.fromkeys([*frame.columns, "p_correct", "route_to_hitl", "route_reason"]))
+    if labeled:
+        columns.extend(["stp_error", "error_intercepted"])
+    result = pd.DataFrame(routed, columns=columns)
+    result["route_to_hitl"] = result["route_to_hitl"].astype(bool)
+    return result
 
 
 def held_out_metrics(routed: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     """Measured per-field and portfolio outcomes for an already-routed split."""
+    required = ("field_name", "route_to_hitl", "is_correct", "stp_error", "error_intercepted")
+    missing = [column for column in required if column not in routed.columns]
+    if missing:
+        raise KeyError(
+            f"held-out evaluation requires labeled routing output; missing columns: {missing}"
+        )
+    if routed.empty:
+        raise ValueError("no routed values to evaluate")
     rows: list[dict[str, Any]] = []
     for field_name, source in routed.groupby("field_name", sort=True):
         n = len(source)

@@ -12,7 +12,7 @@
 | `calibration_table_80pct.csv` | The calibration table written by step 4 of the notebook. Each run regenerates it. |
 | `requirements.txt` | Python dependencies for the recipe. |
 
-`calibration.py`, `acu_calibrator.py`, and `matching.py` are copied unchanged from the `dynamic_hitl/calibration_lab` folder of the [Content Understanding toolkit](https://github.com/Azure/content-understanding-toolkit). You need them to calibrate. To deploy, you only need the calibration table CSV plus `load_table` and `route_value` from step 5 of the notebook, which use the Python standard library alone.
+`calibration.py`, `acu_calibrator.py`, and `matching.py` are copied unchanged from the `dynamic_hitl/calibration_lab` folder of the [Content Understanding toolkit](https://github.com/Azure/content-understanding-toolkit). For production, load the calibration table CSV with `calib.load_calibration_table` and route extracted rows with `calib.route_frame`. Only `field_name`, `extracted_value`, and `confidence` are required; no labels, split, or refitting are needed. A table only applies to the analyzer, model, and kind of documents it was calibrated on. Install the dependencies in this folder's `requirements.txt` alongside the modules. Step 5 also supplies labels to evaluate the same routing decisions on held-out documents.
 
 ## Interactive explainer
 
