@@ -37,6 +37,7 @@
 - batch
 - open-models
 - gpt-oss
+- decision-models
 
 # Knowledge and retrieval
 - rag

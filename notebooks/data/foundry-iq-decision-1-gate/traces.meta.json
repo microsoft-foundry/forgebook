@@ -1,0 +1,41 @@
+{
+  "collected_at": "2026-10-12",
+  "k": 3,
+  "efforts": [
+    "minimal",
+    "low",
+    "medium",
+    "auto"
+  ],
+  "scores_per_trace": 3,
+  "kb_planner_model": "gpt-4.1",
+  "embedding_model": "text-embedding-3-small",
+  "decision_deployment": "Decision-1",
+  "gate_question": {
+    "type": "noul",
+    "instructions": "Does the evidence contain enough information to fully answer the question?",
+    "criteria": {
+      "true": "The evidence directly answers every part of the question.",
+      "false": "A required part of the answer is missing, or the evidence does not apply."
+    }
+  },
+  "paraphrases": [
+    {
+      "type": "noul",
+      "instructions": "Using only the evidence provided, can the question be answered completely?",
+      "criteria": {
+        "true": "Every part of the question is answered by the evidence.",
+        "false": "Part of the question is unanswered, or the evidence is about something else."
+      }
+    },
+    {
+      "type": "noul",
+      "instructions": "Is the evidence sufficient to give a complete, correct answer to the question?",
+      "criteria": {
+        "true": "The evidence states everything needed for a complete answer.",
+        "false": "The evidence is missing something needed, or is not relevant to the question."
+      }
+    }
+  ],
+  "questions_sha256": "889fab17e0b41d870de90a715178346cd3d627e171bb8895c89833546b6eb8ee"
+}
