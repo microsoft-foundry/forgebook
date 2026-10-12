@@ -12,11 +12,11 @@
 | `calibration_table_80pct.csv` | The calibration table written by step 4 of the notebook. Each run regenerates it. |
 | `requirements.txt` | Python dependencies for the recipe. |
 
-`calibration.py`, `acu_calibrator.py`, and `matching.py` are copied unchanged from the `dynamic_hitl/calibration_lab` folder of the [Content Understanding toolkit](https://github.com/Azure/content-understanding-toolkit). For production, load the calibration table CSV with `calib.load_calibration_table` and route extracted rows with `calib.route_frame`. Only `field_name`, `extracted_value`, and `confidence` are required; no labels, split, or refitting are needed. A table only applies to the analyzer, model, and kind of documents it was calibrated on. Install the dependencies in this folder's `requirements.txt` alongside the modules. Step 5 also supplies labels to evaluate the same routing decisions on held-out documents.
+`calibration.py`, `acu_calibrator.py`, and `matching.py` are the calibration library the notebook calls. For production, load the calibration table CSV with `calib.load_calibration_table` and route extracted rows with `calib.route_frame`. Only `field_name`, `extracted_value`, and `confidence` are required; no labels, split, or refitting are needed. A table only applies to the analyzer, model, and kind of documents it was calibrated on. Install the dependencies in this folder's `requirements.txt` alongside the modules. Step 5 also supplies labels to evaluate the same routing decisions on held-out documents.
 
 ## Interactive explainer
 
-`../../media/acu-dynamic-hitl/dynamic-hitl-explainer.html` is a single-file, offline build of the explainer site in the same toolkit folder (`dynamic_hitl/web_app`), built with `npm run build:single`. It makes no network requests. Its figures are precomputed from the same calibration code and data in this folder.
+`../../media/acu-dynamic-hitl/dynamic-hitl-explainer.html` is a single-file, offline interactive explainer for the recipe. It makes no network requests. Its figures are precomputed from the same calibration code and data in this folder.
 
 ## Attribution
 
