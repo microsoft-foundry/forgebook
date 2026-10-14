@@ -72,16 +72,26 @@ class CalibrationConfig:
 
     target_catch_rate: float = 0.80
     """The minimum fraction of known non-null extraction errors that human
-    review must intercept.
+    review must intercept, with 95% confidence.
 
-    This is a floor on the *calibrated* track, measured on the rows the
-    threshold was chosen from. It is not a portfolio-wide guarantee, and it
-    says nothing about how often an auto-approved value is wrong.
+    Each field's cutoff is the least-review one whose Wilson 95% lower bound
+    on catch rate clears this value, measured on the rows the threshold was
+    chosen from. Fewer known mistakes mean a wider bound, so the evidence a
+    field needs scales with the target and no fixed minimum count applies. It
+    is not a portfolio-wide guarantee, and it says nothing about how often an
+    auto-approved value is wrong.
+
+    A field with no non-null mistakes has no catch rate to measure, so this
+    value doubles as the Wilson-CI lower-bound bar its accuracy must clear
+    before its non-null values are routed to STP (``always_trust``). With a
+    ``group_col``, that bound counts documents rather than rows.
     """
 
     min_null_precision: float = 0.80
     """Null: Wilson-CI lower-bound bar that null precision must clear before
-    nulls are routed to STP."""
+    nulls are routed to STP. The bound scales with the evidence, so no fixed
+    minimum count of nulls applies. With a ``group_col`` it counts documents,
+    and a document counts as truly blank only if all of its nulls are."""
 
     min_auc_ci_lower: float = 0.50
     """Non-null: AUC 95% CI lower bound required before a threshold is fit.
@@ -93,15 +103,10 @@ class CalibrationConfig:
     borderline qualification as provisional.
     """
 
-    min_samples: int = 20
-    """Minimum non-null rows before we'll attempt to fit the LR."""
-
     min_errors_for_cv: int = 5
-    """Minimum non-null mis-extractions required for the 5-fold CV."""
-
-    min_nulls: int = 10
-    """Minimum null extractions required before the null track may route to
-    STP. Below this, nulls always go to HITL."""
+    """Minimum non-null mis-extractions required for the 5-fold CV. Applies
+    only when CV runs, which takes more than one predictor; with confidence
+    alone the ranking has nothing to cross-validate."""
 
     n_splits: int = 5
     n_bootstrap: int = 2000
@@ -111,7 +116,8 @@ class CalibrationConfig:
     """Optional document/group column for leakage-safe fold splits and
     cluster-bootstrap AUC confidence intervals. Set this to ``"document_id"``
     for datasets containing repeated observations from the same document, such
-    as receipt line items.
+    as receipt line items. It also makes the accuracy bound for a field with no
+    non-null mistakes count documents rather than rows.
     """
 
     score_mode: Literal["logistic", "raw_confidence"] = "logistic"
@@ -163,26 +169,39 @@ def build_routing_policy(
     -------
     dict with keys (subset shown — see source for full list):
         decision               : 'calibrate' | 'always_review' | 'always_trust'
-                                 | 'insufficient_data'
+                                 | 'insufficient_data'. 'always_trust' is
+                                 reserved for a field with no non-null
+                                 mistakes whose Wilson 95% lower bound on
+                                 accuracy (over documents when
+                                 ``group_col`` is set) clears
+                                 ``target_catch_rate``; with no mistakes
+                                 there is no catch rate to calibrate, so it
+                                 is judged like the null track. Short of
+                                 that bar it is 'always_review'.
+                                 'insufficient_data' means no scored
+                                 non-null values.
         reason                 : human-readable explanation
-        threshold              : LR P(correct) cutoff (only for 'calibrate')
+        threshold              : score cutoff (only for 'calibrate'); the
+                                 least-review cutoff whose catch-rate 95%
+                                 lower bound clears ``target_catch_rate``
         model                  : fitted sklearn LogisticRegression (only for
                                  'calibrate')
         lr_coef, lr_intercept  : convenience copies of the LR parameters
-        auc, auc_ci_lower,     : OOF AUC + 95% bootstrap CI
+        auc, auc_ci_lower,     : AUC + 95% bootstrap CI
             auc_ci_upper
-        confusion_matrix       : OOF CM on non-null rows
+        confusion_matrix       : CM on non-null rows at the chosen threshold
         achieved_catch_rate : errors intercepted by review (mis-extraction recall)
+        achieved_catch_ci_lower : its Wilson 95% lower bound
         hitl_load            : human-review rate
         stp_miss_rate        : observed error rate among auto-passed values
         null_policy            : sub-dict with keys
-            decision ∈ {'null_to_stp', 'null_to_hitl',
-                        'no_nulls_observed', 'insufficient_nulls'},
+            decision ∈ {'null_to_stp', 'null_to_hitl', 'no_nulls_observed'},
             null_precision, ci_lower, ci_upper, n_nulls, n_nulls_gt_null,
-            min_null_precision, min_nulls, reason.
+            n_null_docs, n_null_docs_gt_null, min_null_precision, reason.
+            With a ``group_col``, null_precision and its CI are by document.
 
     The returned dict also carries a private ``_cache`` entry holding the
-    pre-decision per-field signal (Wilson CI, OOF probs, AUC bootstrap,
+    pre-decision per-field signal (Wilson CI, scores, AUC bootstrap,
     threshold sweep). :func:`redecide_policy` consumes that cache to derive
     new policies for different ``target_catch_rate`` /
     ``min_null_precision`` values without re-running the LR fit or
@@ -193,12 +212,26 @@ def build_routing_policy(
     return _apply_policy_decisions(signal, cfg)
 
 
+def _group_values(frame: pd.DataFrame, cfg: CalibrationConfig) -> np.ndarray | None:
+    """Return the ``group_col`` values for ``frame``, or None if unconfigured."""
+    if cfg.group_col is None:
+        return None
+    if cfg.group_col not in frame.columns:
+        raise KeyError(
+            f"group_col {cfg.group_col!r} is missing from the calibration data"
+        )
+    groups = frame[cfg.group_col].to_numpy()
+    if pd.isna(groups).any():
+        raise ValueError(f"group_col {cfg.group_col!r} contains null values")
+    return groups
+
+
 def _compute_field_signal(
     df_full: pd.DataFrame,
     field_name: str,
     cfg: CalibrationConfig,
 ) -> dict:
-    """Run all per-field heavy computation (Wilson CI, LR fit, OOF probs,
+    """Run all per-field heavy computation (Wilson CI, LR fit, scores,
     AUC + bootstrap CI, threshold sweep). Output is *target-independent* —
     it does not apply the ``target_catch_rate`` or ``min_null_precision``
     gates. :func:`_apply_policy_decisions` consumes this signal to emit the
@@ -219,11 +252,23 @@ def _compute_field_signal(
     sub_nonnull = sub.loc[~is_null & ~no_confidence]
 
     # ── Null track (Wilson 95% CI on null precision) ─────────────────────────
+    # Repeated blanks from one document are not independent evidence, so with a
+    # group_col a document counts once, and counts as truly blank only if every
+    # one of its blanks is.
     n_nulls = int(len(sub_null))
     n_nulls_gt_null = int(sub_null["is_correct"].sum()) if n_nulls else 0
-    if n_nulls > 0:
-        p_hat = n_nulls_gt_null / n_nulls
-        lo, hi = _wilson_ci(n_nulls_gt_null, n_nulls, alpha=0.05)
+    null_groups = _group_values(sub_null, cfg)
+    if null_groups is not None and n_nulls:
+        docs_all_blank = sub_null["is_correct"].astype(bool).groupby(null_groups).all()
+        n_null_docs: int | None = int(len(docs_all_blank))
+        n_null_docs_gt_null: int | None = int(docs_all_blank.sum())
+        units, units_ok = n_null_docs, n_null_docs_gt_null
+    else:
+        n_null_docs = n_null_docs_gt_null = None
+        units, units_ok = n_nulls, n_nulls_gt_null
+    if units > 0:
+        p_hat = units_ok / units
+        lo, hi = _wilson_ci(units_ok, units, alpha=0.05)
         null_precision: float | None = float(p_hat)
         null_ci_lower: float | None = float(lo)
         null_ci_upper: float | None = float(hi)
@@ -242,12 +287,17 @@ def _compute_field_signal(
         "score_mode": cfg.score_mode,
         "n_nulls": n_nulls,
         "n_nulls_gt_null": n_nulls_gt_null,
+        "n_null_docs": n_null_docs,
+        "n_null_docs_gt_null": n_null_docs_gt_null,
         "null_precision": null_precision,
         "null_ci_lower": null_ci_lower,
         "null_ci_upper": null_ci_upper,
         "n": n,
         "n_errors": n_errors,
         "n_correct": n_correct,
+        # Documents behind the non-null rows; set only for a field with no
+        # mistakes when group_col is configured.
+        "n_docs": None,
         # Populated only if LR fit ran:
         "model": None,
         "oof_y": None,
@@ -261,18 +311,30 @@ def _compute_field_signal(
         "lr_skip_reason": None,
     }
 
-    if n < cfg.min_samples:
-        signal["lr_skip_reason"] = (
-            f"n={n} non-null rows below min_samples={cfg.min_samples}"
-        )
-        return signal
-    if n_errors == 0:
+    if n > 0 and n_errors == 0:
+        # Decided by a Wilson bound in _apply_policy_decisions, which scales
+        # with the target. Repeated values from one document are not
+        # independent evidence, so count documents.
+        groups = _group_values(sub_nonnull, cfg)
+        if groups is not None:
+            signal["n_docs"] = int(len(np.unique(groups)))
         signal["lr_skip_reason"] = "no errors observed in non-null extractions"
+        return signal
+    if n == 0:
+        signal["lr_skip_reason"] = "no scored non-null extractions observed"
         return signal
     if n_correct == 0:
         signal["lr_skip_reason"] = "no correct non-null extractions observed"
         return signal
-    if n_errors < cfg.min_errors_for_cv:
+
+    # With a single predictor the score is a strictly monotone function of
+    # confidence, so the ranking -- and with it the AUC and the entire threshold
+    # sweep -- cannot depend on the fitted parameters, and fitting introduces no
+    # optimism into them. There is nothing to cross-validate, so the CV floors
+    # below don't apply. Add a second predictor and the weights do drive the
+    # ranking, so out-of-fold scoring becomes necessary again.
+    rank_globally = X.shape[1] == 1
+    if not rank_globally and n_errors < cfg.min_errors_for_cv:
         signal["lr_skip_reason"] = (
             f"only {n_errors} errors — too few for {cfg.n_splits}-fold CV"
         )
@@ -289,71 +351,46 @@ def _compute_field_signal(
     def _global_scores() -> np.ndarray:
         return X[:, 0].astype(float) if raw_mode else model.predict_proba(X)[:, 1]
 
-    # With a single predictor the score is a strictly monotone function of
-    # confidence, so the ranking -- and with it the AUC and the entire threshold
-    # sweep -- cannot depend on the fitted parameters, and fitting introduces no
-    # optimism into them. Pooling probabilities from five different fold models
-    # would only reorder rows by fold membership, which is noise. Add a second
-    # predictor and the weights do drive the ranking, so out-of-fold scoring
-    # becomes necessary again.
-    rank_globally = X.shape[1] == 1
+    groups = _group_values(sub_nonnull, cfg)
 
-    groups: np.ndarray | None = None
-    if cfg.group_col is not None:
-        if cfg.group_col not in sub_nonnull.columns:
-            raise KeyError(
-                f"group_col {cfg.group_col!r} is missing from the calibration data"
-            )
-        groups = sub_nonnull[cfg.group_col].to_numpy()
-        if pd.isna(groups).any():
-            raise ValueError(f"group_col {cfg.group_col!r} contains null values")
+    if rank_globally:
+        oof_probs = _global_scores()
+    elif groups is None:
+        cv = StratifiedKFold(
+            n_splits=cfg.n_splits, shuffle=True, random_state=cfg.random_state
+        )
+        oof_probs = cross_val_predict(
+            model, X, y, cv=cv, method="predict_proba"
+        )[:, 1]
+    else:
         if len(np.unique(groups)) < cfg.n_splits:
             signal["lr_skip_reason"] = (
                 f"only {len(np.unique(groups))} unique groups — too few for "
                 f"{cfg.n_splits}-fold grouped CV"
             )
             return signal
-
-    if groups is None:
-        if rank_globally:
-            oof_probs = _global_scores()
-        else:
-            cv = StratifiedKFold(
-                n_splits=cfg.n_splits, shuffle=True, random_state=cfg.random_state
-            )
-            oof_probs = cross_val_predict(
-                model, X, y, cv=cv, method="predict_proba"
-            )[:, 1]
-    else:
         cv = StratifiedGroupKFold(
             n_splits=cfg.n_splits, shuffle=True, random_state=cfg.random_state
         )
         oof_probs = np.full(n, np.nan, dtype=float)
         try:
-            splits = cv.split(X, y, groups)
-            for train_idx, test_idx in splits:
-                # The fold walk runs in every mode: it is the viability gate that
-                # decides whether a field qualifies for a threshold at all.
+            for train_idx, test_idx in cv.split(X, y, groups):
                 if len(np.unique(y[train_idx])) < 2:
                     signal["lr_skip_reason"] = (
                         "a grouped CV training fold contains only one class"
                     )
                     return signal
-                if rank_globally:
-                    continue
                 fold_model = LogisticRegression(random_state=cfg.random_state)
                 fold_model.fit(X[train_idx], y[train_idx])
                 oof_probs[test_idx] = fold_model.predict_proba(X[test_idx])[:, 1]
         except ValueError as exc:
             signal["lr_skip_reason"] = f"grouped CV unavailable: {exc}"
             return signal
-        if rank_globally:
-            oof_probs = _global_scores()
-        elif np.isnan(oof_probs).any():
+        if np.isnan(oof_probs).any():
             signal["lr_skip_reason"] = "grouped CV did not predict every row"
             return signal
 
-    # AUC + bootstrap CI on OOF probs
+    # AUC + bootstrap CI on the scores (out-of-fold only when CV ran)
     rng = np.random.default_rng(cfg.random_state)
     boot_aucs: list[float] = []
     unique_groups = np.unique(groups) if groups is not None else None
@@ -388,8 +425,8 @@ def _compute_field_signal(
     ci_hi = float(np.percentile(boot_aucs, 97.5))
     signal.update(auc_ci_lower=ci_lo, auc_ci_upper=ci_hi)
 
-    # Sweep OOF thresholds — target-independent; downstream picks the
-    # lowest-HITL row whose `catch` clears the requested target.
+    # Sweep thresholds — target-independent; downstream picks the
+    # lowest-HITL row whose `catch_ci_lower` clears the requested target.
     cands = np.sort(np.unique(oof_probs))
     cands = np.unique(np.concatenate([cands, cands + 1e-9]))
     rows = []
@@ -402,6 +439,15 @@ def _compute_field_signal(
         rows.append((t, tn, fp, fn, tp))
     sweep = pd.DataFrame(rows, columns=["t", "tn", "fp", "fn", "tp"])
     sweep["catch"] = sweep["tn"] / n_errors
+    # The cutoff is picked on the rows it is measured on, so choose by the
+    # catch rate's 95% lower bound, not its point estimate. The margin this
+    # buys shrinks as known mistakes accumulate.
+    sweep["catch_ci_lower"], _ = proportion_confint(
+        count=sweep["tn"].to_numpy(dtype=int),
+        nobs=n_errors,
+        alpha=0.05,
+        method="wilson",
+    )
     sweep["hitl_load"] = (sweep["tn"] + sweep["fn"]) / n
     sweep["stp_n"] = sweep["tp"] + sweep["fp"]
     sweep["stp_errors"] = sweep["fp"]
@@ -433,9 +479,10 @@ def _build_null_policy(signal: dict, cfg: CalibrationConfig) -> dict:
     n_nulls_gt_null = signal["n_nulls_gt_null"]
     null_policy: dict = {
         "min_null_precision": cfg.min_null_precision,
-        "min_nulls": cfg.min_nulls,
         "n_nulls": n_nulls,
         "n_nulls_gt_null": n_nulls_gt_null,
+        "n_null_docs": signal.get("n_null_docs"),
+        "n_null_docs_gt_null": signal.get("n_null_docs_gt_null"),
         "null_precision": signal["null_precision"],
         "ci_lower": signal["null_ci_lower"],
         "ci_upper": signal["null_ci_upper"],
@@ -451,31 +498,18 @@ def _build_null_policy(signal: dict, cfg: CalibrationConfig) -> dict:
     p_hat = signal["null_precision"]
     lo = signal["null_ci_lower"]
     hi = signal["null_ci_upper"]
-    if n_nulls < cfg.min_nulls:
-        null_policy.update(
-            decision="insufficient_nulls",
-            reason=(
-                f"only {n_nulls} null extractions observed "
-                f"(< min_nulls={cfg.min_nulls}), so route nulls to HITL"
-            ),
-        )
-    elif lo >= cfg.min_null_precision:
+    n_docs = signal.get("n_null_docs")
+    basis = f" by document, {n_docs} documents" if n_docs is not None else ""
+    evidence = f"null precision {p_hat:.1%} [95% CI {lo:.1%}–{hi:.1%}{basis}]"
+    if lo >= cfg.min_null_precision:
         null_policy.update(
             decision="null_to_stp",
-            reason=(
-                f"null precision {p_hat:.1%} "
-                f"[95% CI {lo:.1%}–{hi:.1%}] clears "
-                f"{cfg.min_null_precision:.0%} bar (STP)"
-            ),
+            reason=f"{evidence} clears {cfg.min_null_precision:.0%} bar (STP)",
         )
     else:
         null_policy.update(
             decision="null_to_hitl",
-            reason=(
-                f"null precision {p_hat:.1%} "
-                f"[95% CI {lo:.1%}–{hi:.1%}] below "
-                f"{cfg.min_null_precision:.0%} bar (HITL)"
-            ),
+            reason=f"{evidence} below {cfg.min_null_precision:.0%} bar (HITL)",
         )
     return null_policy
 
@@ -498,6 +532,7 @@ def _apply_policy_decisions(signal: dict, cfg: CalibrationConfig) -> dict:
         "lr_coef": None,
         "lr_intercept": None,
         "achieved_catch_rate": None,
+        "achieved_catch_ci_lower": None,
         "hitl_load": None,
         "stp_miss_rate": None,
         "confusion_matrix": None,
@@ -510,10 +545,37 @@ def _apply_policy_decisions(signal: dict, cfg: CalibrationConfig) -> dict:
 
     skip_reason = signal.get("lr_skip_reason")
     if skip_reason is not None:
-        if signal["n"] < cfg.min_samples:
+        if signal["n"] > 0 and signal["n_errors"] == 0:
+            # No mistakes means no catch rate to calibrate, so judge the field
+            # the way the null track judges blanks: trust it only if the Wilson
+            # lower bound on its accuracy clears the target. With a group_col,
+            # each document counts once.
+            n = signal["n"]
+            n_docs = signal.get("n_docs")
+            units = n_docs if n_docs is not None else n
+            lo, hi = _wilson_ci(units, units, alpha=0.05)
+            source = f" from {n_docs} documents" if n_docs is not None else ""
+            basis = " (by document)" if n_docs is not None else ""
+            evidence = (
+                f"no mistakes in {n} filled values{source}; accuracy 95% CI"
+                f"{basis} {lo:.1%}–{hi:.1%}"
+            )
+            if lo >= cfg.target_catch_rate:
+                base.update(
+                    decision="always_trust",
+                    reason=(
+                        f"{evidence} clears {cfg.target_catch_rate:.0%} bar (STP)"
+                    ),
+                )
+            else:
+                base.update(
+                    decision="always_review",
+                    reason=(
+                        f"{evidence} below {cfg.target_catch_rate:.0%} bar (HITL)"
+                    ),
+                )
+        elif signal["n"] == 0:
             base.update(decision="insufficient_data", reason=skip_reason)
-        elif signal["n_errors"] == 0:
-            base.update(decision="always_trust", reason=skip_reason)
         else:
             base.update(decision="always_review", reason=skip_reason)
         return base
@@ -539,13 +601,14 @@ def _apply_policy_decisions(signal: dict, cfg: CalibrationConfig) -> dict:
     sweep: pd.DataFrame = signal["sweep"]
     n = signal["n"]
     n_errors = signal["n_errors"]
-    hits = sweep[sweep["catch"] >= cfg.target_catch_rate]
+    hits = sweep[sweep["catch_ci_lower"] >= cfg.target_catch_rate]
     if hits.empty:
+        best = float(sweep["catch_ci_lower"].max())
         base.update(
             decision="always_review",
             reason=(
-                f"target catch {cfg.target_catch_rate:.0%} "
-                "not achievable on OOF"
+                f"target catch {cfg.target_catch_rate:.0%} not met with 95% "
+                f"confidence: best lower bound {best:.1%} on {n_errors} mistakes"
             ),
         )
         return base
@@ -559,6 +622,7 @@ def _apply_policy_decisions(signal: dict, cfg: CalibrationConfig) -> dict:
     )
     cm = np.array([[tn, fp], [fn, tp]])
     achieved_catch = tn / n_errors
+    catch_ci_lower = float(chosen["catch_ci_lower"])
     hitl_load = (tn + fn) / n
     stp_miss = fp / (tp + fp) if (tp + fp) else float("nan")
     model = signal["model"]
@@ -566,13 +630,15 @@ def _apply_policy_decisions(signal: dict, cfg: CalibrationConfig) -> dict:
     base.update(
         decision="calibrate",
         reason=(
-            f"target catch {cfg.target_catch_rate:.0%} met at "
-            f"threshold {threshold:.4f}"
+            f"target catch {cfg.target_catch_rate:.0%} met with 95% confidence "
+            f"at threshold {threshold:.4f} (catch {achieved_catch:.1%}, "
+            f"lower bound {catch_ci_lower:.1%})"
         ),
         threshold=threshold,
         lr_coef=float(model.coef_[0, 0]) if model is not None else None,
         lr_intercept=float(model.intercept_[0]) if model is not None else None,
         achieved_catch_rate=float(achieved_catch),
+        achieved_catch_ci_lower=catch_ci_lower,
         hitl_load=float(hitl_load),
         stp_miss_rate=float(stp_miss) if not np.isnan(stp_miss) else None,
         confusion_matrix=cm,
@@ -609,12 +675,6 @@ def redecide_policies(
 # ─────────────────────────────────────────────────────────────────────────────
 # Portfolio rollup
 # ─────────────────────────────────────────────────────────────────────────────
-
-
-# Null-policy decisions that send nulls to HITL (i.e. NOT routed to STP).
-_NULL_TO_HITL_DECISIONS = frozenset(
-    {"null_to_hitl", "no_nulls_observed", "insufficient_nulls"}
-)
 
 
 def build_routing_policies(
@@ -730,12 +790,13 @@ def estimate_hitl_savings(
             expected_hitl = n_total
         else:
             decision = pol.get("decision")
-            null_to_hitl = pol["null_policy"]["decision"] in _NULL_TO_HITL_DECISIONS
+            # Same rule as the router: only an explicit null_to_stp skips review.
+            null_to_hitl = pol["null_policy"]["decision"] != "null_to_stp"
             null_hitl = n_nulls if null_to_hitl else 0
             null_savings = n_nulls - null_hitl  # nulls routed to STP
             if decision == "calibrate":
                 bucket = "calibrate"
-                # hitl_load is the OOF HITL fraction among *scored* non-null
+                # hitl_load is the HITL fraction among *scored* non-null
                 # rows; unscored rows are review whatever the cutoff says.
                 scored_hitl = int(round(float(pol["hitl_load"]) * n_scored))
                 lr_savings = n_scored - scored_hitl

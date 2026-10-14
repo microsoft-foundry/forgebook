@@ -6,11 +6,12 @@
 | `metadata.json` | Provenance for the parquet: source dataset, pinned revision, analyzer, model, API version. |
 | `cord_receipt_v1.json` | The Content Understanding analyzer that produced the parquet, with confidence scores turned on. Use it as a template. |
 | `calibration.py` | The calibration API the notebook calls. |
-| `acu_calibrator.py` | The engine behind it: grouped cross-validation, AUC intervals, Wilson bounds, cutoff sweeps. |
+| `acu_calibrator.py` | The engine behind it: AUC intervals from a document-level bootstrap, Wilson bounds, cutoff sweeps. |
 | `matching.py` | Builds `is_correct` by comparing extractions to ground truth after per-field normalization, and pairs list items, such as receipt line items, with ground truth by content. |
 | `hitl_dial.py` | Renders the mistake catch-rate dial and the accessible charts shown in the notebook. |
 | `calibration_table_80pct.csv` | The calibration table written by step 4 of the notebook. Each run regenerates it. |
 | `requirements.txt` | Python dependencies for the recipe. |
+| `test_calibration.py` | Regression tests for the calibration library. Run `python -m unittest test_calibration` from this folder. |
 
 `calibration.py`, `acu_calibrator.py`, and `matching.py` are the calibration library the notebook calls. For production, load the calibration table CSV with `calib.load_calibration_table` and route extracted rows with `calib.route_frame`. Only `field_name`, `extracted_value`, and `confidence` are required; no labels, split, or refitting are needed. A table only applies to the analyzer, model, and kind of documents it was calibrated on. Install the dependencies in this folder's `requirements.txt` alongside the modules. Step 5 also supplies labels to evaluate the same routing decisions on held-out documents.
 

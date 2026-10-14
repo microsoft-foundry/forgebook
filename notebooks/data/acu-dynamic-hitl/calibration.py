@@ -42,7 +42,7 @@ from acu_calibrator import (
 from acu_calibrator import _is_null_value as _is_null
 
 
-DEMO_DATA_PATH = Path(__file__).resolve().parent / "data" / "cord_demo.parquet"
+DEMO_DATA_PATH = Path(__file__).resolve().parent / "cord_demo.parquet"
 
 # A field earns an automatic cutoff only if the lower end of its AUC confidence
 # interval clears this bar -- i.e. we are 95% sure its confidence ranks correct
@@ -179,8 +179,8 @@ def fit_base_policies(
 ) -> dict[str, dict]:
     """Measure each field's confidence signal once, on the training split.
 
-    This is the expensive step: per field it runs grouped cross-validation,
-    bootstraps a confidence interval on AUC, and sweeps every candidate cutoff.
+    This is the expensive step: per field it bootstraps a confidence interval
+    on AUC, resampling whole documents, and sweeps every candidate cutoff.
     The result caches all of that, so re-deciding the policy at a different
     coverage target afterwards is nearly free.
 
@@ -245,9 +245,11 @@ def select_policies(
     """Pick each field's cutoff from one business target.
 
     ``target`` is the minimum share of known extraction mistakes that human
-    review must catch. Per field, the lab picks the cutoff that meets that
-    floor with the least review possible. The same number is used as the
-    precision floor the blank track must clear before blanks are auto-approved.
+    review must catch. Per field, the lab picks the least-review cutoff whose
+    catch rate clears that floor with 95% confidence. The same number is the
+    floor that, with 95% confidence, blank precision must clear before blanks
+    are auto-approved, and that a field with no filled-in mistakes must clear
+    before its filled-in values are auto-approved.
     Pass a mapping to override the target for individual fields.
     """
     if isinstance(target, Mapping):
