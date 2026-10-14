@@ -13,11 +13,9 @@ name: Deploy PR Preview
 # forgebook-contributors GitHub team, matching CONTRIBUTING.md's "curated while
 # stabilizing" publishing model. Checking team membership needs an org-scoped
 # token — the default GITHUB_TOKEN cannot read team membership even for a visible
-# ("closed" privacy) team — so this requires a maintainer-created fine-grained PAT
-# (org `read:` members/teams permission only) stored as the FORGEBOOK_TEAM_READ_TOKEN
-# repo secret. That secret is a manual one-time setup step; without it the team
-# membership check step will fail loudly rather than silently treating everyone as
-# a non-member.
+# ("closed" privacy) team. The installed forgebook-team-check App supplies a
+# short-lived members:read token. Its private key must be configured as the
+# FORGEBOOK_TEAM_CHECK_PRIVATE_KEY secret; see README.md for maintainer setup.
 on:
   workflow_run:
     workflows: ["Preview PR"]
@@ -75,14 +73,23 @@ jobs:
             });
             core.setOutput('author', pr.user.login);
 
-      # Requires the FORGEBOOK_TEAM_READ_TOKEN repo secret — see comment at top of file.
+      - name: Create team-check App token
+        id: team-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: "4244481"
+          private-key: ${{ secrets.FORGEBOOK_TEAM_CHECK_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-members: read
+
       - name: Check forgebook-contributors team membership
         id: membership
         uses: actions/github-script@v9
         env:
           PR_AUTHOR: ${{ steps.pr.outputs.author }}
         with:
-          github-token: ${{ secrets.FORGEBOOK_TEAM_READ_TOKEN }}
+          github-token: ${{ steps.team-token.outputs.token }}
           script: |
             const username = process.env.PR_AUTHOR;
             let isMember = false;
