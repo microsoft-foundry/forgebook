@@ -188,8 +188,10 @@ def fit_base_policies(
     ``score_mode='logistic'`` first maps confidence to ``P(correct)`` with a
     one-dimensional logistic regression. With confidence as the only predictor
     the two rank observations identically, so every metric and every routing
-    decision matches -- only the units of the exported cutoff differ. The
-    logistic form is what you extend when you gain a second predictor.
+    decision matches -- only the units of the exported cutoff differ. That
+    relies on a positive fitted slope: a field whose slope is not positive goes
+    to review rather than having its ranking reversed. The logistic form is
+    what you extend when you gain a second predictor.
     """
     frame = calibration_input(canonical, split=split)
     return build_routing_policies(

@@ -82,12 +82,14 @@ UNSEEN = pd.DataFrame(
 )
 
 
-def shipped_routes(train: pd.DataFrame, target: float) -> tuple[dict, pd.DataFrame]:
+def shipped_routes(
+    train: pd.DataFrame, target: float, *, score_mode: str = "raw_confidence"
+) -> tuple[dict, pd.DataFrame]:
     """Select policies at ``target``, save and reload the CSV, then route the
     unseen values with the reloaded table, as production would."""
     canonical = pd.concat([train, UNSEEN], ignore_index=True)
     policies = calib.select_policies(
-        calib.fit_base_policies(canonical, n_bootstrap=200), target
+        calib.fit_base_policies(canonical, n_bootstrap=200, score_mode=score_mode), target
     )
     with tempfile.TemporaryDirectory() as tmp:
         path = calib.save_calibration_table(policies, Path(tmp) / "table.csv")
@@ -167,6 +169,41 @@ class CalibratedCutoffTests(unittest.TestCase):
 
         self.assertEqual(policy["decision"], "always_review")
         self.assertTrue(routed.loc["test-0", "route_to_hitl"])
+
+
+class ScoreModeTests(unittest.TestCase):
+    def test_anti_predictive_confidence_stays_in_review_in_both_modes(self):
+        # Correct values carry LOW confidence and mistakes HIGH. A logistic fit
+        # would learn a negative slope and flip the ranking; it must not.
+        inverse = separated_rows(100, 20)
+        inverse["confidence"] = 1.0 - inverse["confidence"]
+        unseen_correct = pd.DataFrame(
+            {
+                "document_id": ["test-2"],
+                "split": "test",
+                "field_name": FIELD,
+                "extracted_value": ["INV-ok"],
+                "confidence": [0.05],
+                "is_correct": [True],
+            }
+        )
+        train = pd.concat([inverse, unseen_correct], ignore_index=True)
+        for mode in ("raw_confidence", "logistic"):
+            with self.subTest(score_mode=mode):
+                policy, routed = shipped_routes(train, target=0.80, score_mode=mode)
+                self.assertEqual(policy["decision"], "always_review")
+                self.assertTrue(routed.loc["test-2", "route_to_hitl"])
+        self.assertIn("slope", policy["reason"])
+
+    def test_both_modes_route_identically_with_confidence_alone(self):
+        train = separated_rows(100, 20)
+        raw_policy, raw = shipped_routes(train, target=0.80, score_mode="raw_confidence")
+        lr_policy, lr = shipped_routes(train, target=0.80, score_mode="logistic")
+
+        self.assertEqual(raw_policy["decision"], "calibrate")
+        self.assertEqual(lr_policy["decision"], "calibrate")
+        self.assertGreater(lr_policy["lr_coef"], 0)
+        self.assertEqual(raw["route_to_hitl"].tolist(), lr["route_to_hitl"].tolist())
 
 
 class BlankTrackTests(unittest.TestCase):

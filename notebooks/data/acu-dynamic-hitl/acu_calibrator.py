@@ -128,12 +128,14 @@ class CalibrationConfig:
     * ``"raw_confidence"`` — rank by raw ACU confidence directly, and deploy a
       confidence cutoff instead of model coefficients.
 
-    While confidence is the only predictor these two are strictly monotone
-    transforms of one another, so they produce the *same* ranking, AUC,
-    threshold sweep and routing decisions; only the units of the exported
-    threshold differ. The modes can only diverge once a second predictor is
-    added, at which point the logistic score stops being a function of
-    confidence alone.
+    While confidence is the only predictor these two produce the *same*
+    ranking, AUC, threshold sweep and routing decisions; only the units of the
+    exported threshold differ. That holds because a field whose fitted slope on
+    confidence is not positive goes to review (``always_review``): a negative
+    slope would reverse the ranking, so logistic mode could otherwise qualify
+    and route a field differently. The modes can only diverge once a second
+    predictor is added, at which point the logistic score stops being a
+    function of confidence alone.
     """
 
     def __post_init__(self) -> None:
@@ -327,12 +329,13 @@ def _compute_field_signal(
         signal["lr_skip_reason"] = "no correct non-null extractions observed"
         return signal
 
-    # With a single predictor the score is a strictly monotone function of
-    # confidence, so the ranking -- and with it the AUC and the entire threshold
-    # sweep -- cannot depend on the fitted parameters, and fitting introduces no
-    # optimism into them. There is nothing to cross-validate, so the CV floors
-    # below don't apply. Add a second predictor and the weights do drive the
-    # ranking, so out-of-fold scoring becomes necessary again.
+    # With a single predictor and a positive slope (enforced below), the score is
+    # a strictly increasing function of confidence, so the ranking -- and with
+    # it the AUC and the entire threshold sweep -- cannot depend on the fitted
+    # parameters, and fitting introduces no optimism into them. There is
+    # nothing to cross-validate, so the CV floors below don't apply. Add a
+    # second predictor and the weights do drive the ranking, so out-of-fold
+    # scoring becomes necessary again.
     rank_globally = X.shape[1] == 1
     if not rank_globally and n_errors < cfg.min_errors_for_cv:
         signal["lr_skip_reason"] = (
@@ -347,6 +350,19 @@ def _compute_field_signal(
     if not raw_mode:
         model = LogisticRegression(random_state=cfg.random_state)
         model.fit(X, y)
+        # A non-positive slope would flip (or flatten) the ranking: the AUC check
+        # would then reward confidence for being anti-predictive, and the fit
+        # would have picked that direction from the very rows it is scored on.
+        # Higher confidence meaning *less* likely correct points to a problem
+        # upstream, not a signal to exploit, so the field stays in review.
+        slope = float(model.coef_[0, 0])
+        if slope <= 0:
+            signal["model"] = model
+            signal["lr_skip_reason"] = (
+                f"logistic slope on confidence is {slope:+.3f}, not positive — "
+                "higher confidence does not mean more likely correct"
+            )
+            return signal
 
     def _global_scores() -> np.ndarray:
         return X[:, 0].astype(float) if raw_mode else model.predict_proba(X)[:, 1]
