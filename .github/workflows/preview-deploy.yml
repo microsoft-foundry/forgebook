@@ -79,8 +79,8 @@ jobs:
         with:
           app-id: "4244481"
           private-key: ${{ secrets.FORGEBOOK_TEAM_CHECK_PRIVATE_KEY }}
+          # Members-only Apps require the organization installation lookup.
           owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
           permission-members: read
 
       - name: Check forgebook-contributors team membership

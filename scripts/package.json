@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "validate": "tsx validate-registry.ts"
+    "validate": "tsx validate-registry.ts",
+    "test:preview-auth": "node --test preview-auth.test.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

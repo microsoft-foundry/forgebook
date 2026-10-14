@@ -81,6 +81,10 @@ The `forgebook-team-check` GitHub App (App ID `4244481`) is installed on
 uses it only to check `forgebook-contributors` membership. Artifact downloads,
 deployment, and PR comments keep using the workflow's normal `GITHUB_TOKEN`.
 
+Resolve the App installation by organization owner, without a `repositories`
+input. This App grants only organization **Members: read**; a repository
+installation lookup returns 404 and prevents token creation.
+
 An App manager must supply a valid private key as the repository secret
 `FORGEBOOK_TEAM_CHECK_PRIVATE_KEY`, or as an organization secret available to
 this repository. Upload the PEM file through GitHub Actions secret settings or
