@@ -63,56 +63,6 @@ PowerShell instead. Open a file under `notebooks/` and follow its setup cells;
 recipes may install additional dependencies. Keep any Azure credentials out of
 notebooks and source control.
 
-<details>
-<summary><strong>Maintainer deployment authentication</strong></summary>
-
-### Deployment identities
-
-PR previews and production deployment use separate identities.
-
-### PR preview team check
-
-The `forgebook-team-check` GitHub App (App ID `4244481`) is installed on
-`microsoft-foundry/forgebook` with organization **Members: read** permission.
-`preview-deploy.yml` creates a short-lived installation token for each run and
-uses it only to check `forgebook-contributors` membership. Artifact downloads,
-deployment, and PR comments keep using the workflow's normal `GITHUB_TOKEN`.
-
-Resolve the App installation by organization owner, without a `repositories`
-input. This App grants only organization **Members: read**; a repository
-installation lookup returns 404 and prevents token creation.
-
-The preview consumer checks out only the trusted `gh-pages` deployment branch
-before downloading artifacts. This provides the Git context required by the
-Pages deploy Action without checking out or executing PR source code.
-
-An App manager must supply a valid private key as the repository secret
-`FORGEBOOK_TEAM_CHECK_PRIVATE_KEY`, or as an organization secret available to
-this repository. Upload the PEM file through GitHub Actions secret settings or
-with the CLI; never paste it into a PR, chat, or source file:
-
-```bash
-gh secret set FORGEBOOK_TEAM_CHECK_PRIVATE_KEY --repo microsoft-foundry/forgebook < /path/to/forgebook-team-check.private-key.pem
-```
-
-The old `FORGEBOOK_TEAM_READ_TOKEN` PAT is no longer used. Missing or invalid
-App credentials fail the workflow; they do not bypass the membership check.
-
-### Production Azure OIDC
-
-`deploy.yml` and `validate-popular-fetch.yml` use `AZURE_CLIENT_ID`,
-`AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID`. The Entra application identified
-by `AZURE_CLIENT_ID` must have a GitHub Actions federated credential with issuer
-`https://token.actions.githubusercontent.com`, subject
-`repo:microsoft-foundry/forgebook:ref:refs/heads/main`, and audience
-`api://AzureADTokenExchange`. See the [Azure OIDC setup guide](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions).
-
-If Azure login reports `AADSTS70025`, restore that credential on the correct
-application, then rerun the failed production workflow. The preview GitHub App
-does not replace this Azure identity.
-
-</details>
-
 ## Data Collection
 
 The Forgebook public site uses standard pseudonymous web telemetry. Microsoft uses these insights only to improve Forgebook content, recipe planning, and site performance. By choosing to use the public site, you consent to this telemetry.
