@@ -36,7 +36,7 @@
   "devDependencies": {
     "@astrojs/sitemap": "^3.7.4",
     "@axe-core/playwright": "^4.13.0",
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/dompurify": "^3.2.0",
     "@types/prismjs": "^1.26.6",
