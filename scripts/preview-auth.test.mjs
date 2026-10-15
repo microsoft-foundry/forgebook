@@ -40,10 +40,26 @@ test("only the membership check receives the App token", () => {
   }
 });
 
+test("Pages deployment has trusted git context before artifacts are downloaded", () => {
+  const checkouts = job.steps.filter((current) => current.uses?.startsWith("actions/checkout@"));
+  assert.equal(checkouts.length, 1, "Pages deployment requires one trusted checkout to initialize git");
+  const checkout = checkouts[0];
+  assert.match(checkout.uses, /^actions\/checkout@[a-f0-9]{40}$/);
+  assert.equal(checkout.with.ref, "gh-pages");
+  assert.equal(checkout.with.repository ?? "${{ github.repository }}", "${{ github.repository }}");
+  assert.equal(checkout.with.path ?? ".", ".");
+  assert.equal(checkout.with["persist-credentials"], false);
+  const firstDownload = job.steps.findIndex((current) => current.uses?.startsWith("actions/download-artifact@"));
+  assert.ok(firstDownload >= 0);
+  assert.ok(job.steps.indexOf(checkout) < firstDownload, "Checkout must not clean downloaded preview artifacts");
+});
+
 test("privileged preview deployment stays gated and never runs PR source", () => {
   assert.equal(job.if, "${{ github.event.workflow_run.conclusion == 'success' }}");
   assert.deepEqual(job.permissions, { contents: "write", "pull-requests": "write", actions: "read" });
-  assert.equal(job.steps.some((current) => current.uses?.startsWith("actions/checkout@")), false);
+  for (const checkout of job.steps.filter((current) => current.uses?.startsWith("actions/checkout@"))) {
+    assert.equal(checkout.with.ref, "gh-pages", "Never check out a PR branch in the privileged consumer");
+  }
   for (const id of ["team-token", "membership"]) {
     assert.equal(step(id)["continue-on-error"] ?? false, false);
   }

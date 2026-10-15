@@ -85,6 +85,10 @@ Resolve the App installation by organization owner, without a `repositories`
 input. This App grants only organization **Members: read**; a repository
 installation lookup returns 404 and prevents token creation.
 
+The preview consumer checks out only the trusted `gh-pages` deployment branch
+before downloading artifacts. This provides the Git context required by the
+Pages deploy Action without checking out or executing PR source code.
+
 An App manager must supply a valid private key as the repository secret
 `FORGEBOOK_TEAM_CHECK_PRIVATE_KEY`, or as an organization secret available to
 this repository. Upload the PEM file through GitHub Actions secret settings or
