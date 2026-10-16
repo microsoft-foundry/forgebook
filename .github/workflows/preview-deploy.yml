@@ -4,10 +4,10 @@ name: Deploy PR Preview
 # "Preview PR" (preview.yml) finishes, this workflow always runs against the base
 # repo's workflow definition, so it gets a write-scoped GITHUB_TOKEN — even when the
 # triggering PR came from a fork. Crucially, it never checks out or executes the PR's
-# code: it only downloads the already-built static site artifact that preview.yml
-# produced, so there's no risk of a malicious PR running arbitrary code with a
-# write-capable token (the failure mode `pull_request_target` on the whole build
-# would have exposed us to).
+# code: it checks out only the trusted gh-pages deployment branch, then downloads
+# the already-built static site artifact that preview.yml produced. No PR build
+# runs with the write-capable token (the failure mode `pull_request_target` on
+# the whole build would have exposed us to).
 #
 # Deploys are additionally gated on the PR author being a member of the
 # forgebook-contributors GitHub team, matching CONTRIBUTING.md's "curated while
@@ -34,8 +34,14 @@ jobs:
       pull-requests: write
       actions: read
     steps:
+      - name: Checkout trusted Pages deployment branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: gh-pages
+          persist-credentials: false
+
       - name: Download PR metadata artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: pr-metadata
           path: ./pr-meta
@@ -43,7 +49,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download built site artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: preview-dist
           path: ./site-dist
@@ -75,7 +81,7 @@ jobs:
 
       - name: Create team-check App token
         id: team-token
-        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: "4244481"
           private-key: ${{ secrets.FORGEBOOK_TEAM_CHECK_PRIVATE_KEY }}

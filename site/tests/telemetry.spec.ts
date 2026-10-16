@@ -438,9 +438,19 @@ test.describe("Telemetry", () => {
     await page.waitForTimeout(1000);
     await flush(page, captured);
 
-    const metrics = captured.filter((e) => e.data?.baseType === "MetricData");
-    // Web vitals are environment-dependent; just verify no crash.
-    // In CI environments some vitals may not fire.
-    expect(Array.isArray(metrics)).toBe(true);
+    const metrics = captured.filter(
+      (envelope) =>
+        envelope.data?.baseType === "MetricData" &&
+        envelope.data.baseData?.metrics?.some((metric) => metric.name.startsWith("WebVital_")),
+    );
+    expect(metrics.length).toBeGreaterThanOrEqual(1);
+
+    for (const metric of metrics) {
+      expect(metric.data?.baseData?.properties).toMatchObject({
+        page: HOME,
+        rating: expect.stringMatching(/^(good|needs-improvement|poor)$/),
+        navigationType: expect.any(String),
+      });
+    }
   });
 });
