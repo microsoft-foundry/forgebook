@@ -66,6 +66,15 @@ test.describe("Site Navigation", () => {
     const catalog = page.getByRole("region", { name: /All/ });
     const collection = page.locator("#notebooks-grid");
     const recipeCount = await collection.locator(".notebook-card-wrapper").count();
+    const filteredTag = "agent-framework";
+    const matchingRecipeCount = await collection.locator(".notebook-card-wrapper").evaluateAll(
+      (cards, tag) =>
+        cards.filter((card) => (card as HTMLElement).dataset.tags?.split(",").includes(tag)).length,
+      filteredTag,
+    );
+
+    expect(matchingRecipeCount).toBeGreaterThan(0);
+    expect(matchingRecipeCount).toBeLessThan(recipeCount);
 
     await expect(collection).toHaveAttribute("data-view", "grid");
     await catalog.getByRole("button", { name: "List view" }).click();
@@ -82,9 +91,9 @@ test.describe("Site Navigation", () => {
     const tagCheckboxes = catalog.locator("[data-tag-checkbox]");
     await expect(tagCheckboxes.first()).not.toBeChecked();
 
-    await catalog.getByLabel("agent-framework").check();
-    await expect(page).toHaveURL(/#tag=agent-framework/);
-    await expect(page.locator("#recipe-count")).toHaveText("(1)");
+    await catalog.getByLabel(filteredTag).check();
+    await expect(page).toHaveURL(new RegExp(`#tag=${filteredTag}`));
+    await expect(page.locator("#recipe-count")).toHaveText(`(${matchingRecipeCount})`);
 
     await catalog.getByRole("button", { name: "Clear tag filters" }).click();
     await expect(page.locator("#recipe-count")).toHaveText(`(${recipeCount})`);
