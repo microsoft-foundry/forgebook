@@ -18,11 +18,11 @@
     "@astrojs/rss": "^4.0.19",
     "@microsoft/applicationinsights-web": "^3.4.5",
     "@tailwindcss/typography": "^0.5.20",
-    "@types/jsdom": "^28.0.3",
+    "@types/jsdom": "^30.0.0",
     "@types/marked": "^6.0.0",
     "astro": "^7.2.9",
     "dompurify": "^3.4.16",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "katex": "^0.19.0",
     "marked": "^18.1.0",
     "marked-footnote": "^1.4.0",
@@ -42,5 +42,8 @@
     "@types/prismjs": "^1.26.6",
     "pagefind": "^1.5.2",
     "tailwindcss": "^4.3.3"
+  },
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   }
 }
