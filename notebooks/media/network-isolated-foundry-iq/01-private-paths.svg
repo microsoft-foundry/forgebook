@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="850" viewBox="0 0 1200 850" role="img" aria-labelledby="title description">
+  <title id="title">Proposed private retrieval paths for prompt and hosted agents</title>
+  <desc id="description">Design only; all live controls are blocked. Customer-controlled network paths are separate from service-managed Foundry, Search, Blob and ACR. Search uses its own shared private links. Outside ingress denial and both agent egress paths still require evidence.</desc>
+  <defs>
+    <marker id="blue" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#245b9e"/></marker>
+    <marker id="purple" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#73439b"/></marker>
+    <marker id="orange" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#9a4d0a"/></marker>
+    <style>
+      text { font-family: Arial, sans-serif; fill: #172b43; }
+      .heading { font-size: 22px; font-weight: 700; }
+      .label { font-size: 18px; font-weight: 700; }
+      .note { font-size: 16px; }
+      .small { font-size: 14px; }
+      .box { fill: #fff; stroke: #6286ad; stroke-width: 2; rx: 8; }
+      .private { fill: none; stroke: #245b9e; stroke-width: 2.5; marker-end: url(#blue); }
+      .shared { fill: none; stroke: #73439b; stroke-width: 2.5; marker-end: url(#purple); }
+      .pending { fill: none; stroke: #9a4d0a; stroke-width: 2.5; stroke-dasharray: 7 5; marker-end: url(#orange); }
+    </style>
+  </defs>
+  <rect width="1200" height="850" fill="#fff"/>
+  <text x="30" y="38" class="heading">One Blob-backed KB, two agent paths</text>
+  <text x="30" y="65" class="note">Proposed design only. Live verification and deployment approval are BLOCKED.</text>
+
+  <rect x="30" y="95" width="650" height="505" rx="12" fill="#eef5fc" stroke="#6286ad" stroke-width="2"/>
+  <text x="50" y="128" class="heading">Customer-controlled VNet</text>
+  <rect x="55" y="155" width="260" height="80" class="box"/>
+  <text x="72" y="185" class="label">In-VNet test/build host</text>
+  <text x="72" y="213" class="note">Private positive controls</text>
+  <rect x="55" y="270" width="260" height="90" class="box"/>
+  <text x="72" y="300" class="label">Hosted runtime NIC</text>
+  <text x="72" y="328" class="note">Application egress path</text>
+  <rect x="55" y="395" width="260" height="100" class="box"/>
+  <text x="72" y="425" class="label">Prompt/tool-service path</text>
+  <text x="72" y="453" class="note">Data-proxy integration</text>
+  <text x="72" y="477" class="small">Support and observability gate open</text>
+  <rect x="410" y="180" width="240" height="95" class="box"/>
+  <text x="428" y="214" class="label">Private endpoints</text>
+  <text x="428" y="244" class="note">Private DNS + route mapping</text>
+  <rect x="410" y="395" width="240" height="100" class="box"/>
+  <text x="428" y="425" class="label">Firewall</text>
+  <text x="428" y="453" class="note">Reviewed exceptions only</text>
+  <text x="428" y="477" class="small">Both egress paths need live proof</text>
+  <path d="M315 195H410" class="private"/>
+  <path d="M315 300H355V227H410" class="private"/>
+  <path d="M315 419H375V255H410" class="private"/>
+  <path d="M315 341H345V420H410" class="pending"/>
+  <path d="M315 464H410" class="pending"/>
+  <text x="50" y="546" class="note">Network interfaces are not the entire managed service.</text>
+  <text x="50" y="574" class="note">The jumpbox cannot prove either agent's egress controls.</text>
+
+  <rect x="750" y="95" width="420" height="505" rx="12" fill="#f6f1fa" stroke="#9373ae" stroke-width="2"/>
+  <text x="770" y="128" class="heading">Service-managed resources</text>
+  <rect x="785" y="155" width="285" height="80" class="box"/>
+  <text x="803" y="185" class="label">Foundry + models</text>
+  <text x="803" y="213" class="note">Pinned agent invocation surfaces</text>
+  <rect x="785" y="275" width="285" height="80" class="box"/>
+  <text x="803" y="305" class="label">Search: one native KB</text>
+  <text x="803" y="333" class="note">Private ingestion + hybrid retrieval</text>
+  <rect x="785" y="410" width="285" height="65" class="box"/>
+  <text x="803" y="449" class="label">Blob: fictional corpus</text>
+  <rect x="785" y="510" width="285" height="65" class="box"/>
+  <text x="803" y="549" class="label">Private ACR: pinned image</text>
+  <path d="M650 205H785" class="private"/>
+  <path d="M650 227H710V315H785" class="private"/>
+  <path d="M710 315V543H785" class="private"/>
+  <text x="683" y="170" class="small">Private Link</text>
+  <path d="M1070 295H1110V195H1070" class="shared"/>
+  <path d="M1070 337H1110V443H1070" class="shared"/>
+  <text x="799" y="382" class="small">Search-managed shared links: Blob and models</text>
+
+  <rect x="30" y="640" width="370" height="90" rx="8" fill="#fff7ed" stroke="#b37136" stroke-width="2"/>
+  <text x="48" y="672" class="label">Unpeered outside runner + NAT</text>
+  <text x="48" y="701" class="note">Same-principal matched negative requests</text>
+  <path d="M400 682H1128V220H1070" class="pending"/>
+  <path d="M1128 320H1070" class="pending"/>
+  <text x="450" y="667" class="note">Expected denial is a test requirement, not an observed result</text>
+  <rect x="440" y="745" width="730" height="75" rx="8" fill="#fff7ed" stroke="#b37136" stroke-width="2"/>
+  <text x="458" y="775" class="label">Approved identity, control-plane and platform dependencies</text>
+  <text x="458" y="802" class="note">Canary tests and correlated diagnostics must verify allowed/denied egress.</text>
+  <path d="M650 465H700V615H1150V745" class="pending"/>
+  <text x="30" y="777" class="small">Blue: intended private access</text>
+  <text x="30" y="800" class="small">Purple: Search-managed private links</text>
+  <text x="30" y="823" class="small">Dashed: unverified test/dependency paths</text>
+</svg>

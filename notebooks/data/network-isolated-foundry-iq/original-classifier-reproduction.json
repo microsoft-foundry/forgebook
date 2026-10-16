@@ -1,0 +1,120 @@
+{
+  "scope": "Offline reproduction with mocked DNS, HTTP and credentials; not Azure network evidence",
+  "sourceRepository": "microsoft-foundry/forgebook",
+  "sourceRef": "c06549384f52c0dd8e11399b41d1d4b271c82c7a",
+  "sourcePath": "notebooks/network-isolated-foundry-iq.ipynb",
+  "cellIndexZeroBased": 33,
+  "sourceFetchedFromGitHub": true,
+  "azureDataPlaneCallsExecuted": 0,
+  "credentialAcquisitionExecuted": false,
+  "cases": [
+    {
+      "case": "expired-or-invalid-credential",
+      "status": 401,
+      "expectedIsolationProof": false,
+      "originalClassifiesIsolated": true,
+      "falsePositive": true,
+      "requests": [
+        {
+          "method": "GET",
+          "bodyPresent": false
+        }
+      ]
+    },
+    {
+      "case": "missing-RBAC-permission",
+      "status": 403,
+      "expectedIsolationProof": false,
+      "originalClassifiesIsolated": true,
+      "falsePositive": true,
+      "requests": [
+        {
+          "method": "GET",
+          "bodyPresent": false
+        }
+      ]
+    },
+    {
+      "case": "unknown-resource",
+      "status": 404,
+      "expectedIsolationProof": false,
+      "originalClassifiesIsolated": false,
+      "falsePositive": false,
+      "requests": [
+        {
+          "method": "GET",
+          "bodyPresent": false
+        }
+      ]
+    },
+    {
+      "case": "wrong-http-method",
+      "status": 405,
+      "expectedIsolationProof": false,
+      "originalClassifiesIsolated": false,
+      "falsePositive": false,
+      "requests": [
+        {
+          "method": "GET",
+          "bodyPresent": false
+        }
+      ]
+    },
+    {
+      "case": "service-failure",
+      "status": 500,
+      "expectedIsolationProof": false,
+      "originalClassifiesIsolated": false,
+      "falsePositive": false,
+      "requests": [
+        {
+          "method": "GET",
+          "bodyPresent": false
+        }
+      ]
+    },
+    {
+      "case": "DNS-failure",
+      "status": null,
+      "expectedIsolationProof": false,
+      "originalClassifiesIsolated": true,
+      "falsePositive": true,
+      "requests": [
+        {
+          "method": "GET",
+          "bodyPresent": false
+        }
+      ]
+    },
+    {
+      "case": "TLS-failure",
+      "status": null,
+      "expectedIsolationProof": false,
+      "originalClassifiesIsolated": true,
+      "falsePositive": true,
+      "requests": [
+        {
+          "method": "GET",
+          "bodyPresent": false
+        }
+      ]
+    },
+    {
+      "case": "request-timeout",
+      "status": null,
+      "expectedIsolationProof": false,
+      "originalClassifiesIsolated": true,
+      "falsePositive": true,
+      "requests": [
+        {
+          "method": "GET",
+          "bodyPresent": false
+        }
+      ]
+    }
+  ],
+  "falsePositiveCount": 5,
+  "observedRetrieveMethods": [
+    "GET"
+  ]
+}

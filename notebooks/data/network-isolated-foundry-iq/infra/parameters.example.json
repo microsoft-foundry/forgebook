@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westus3"
+    },
+    "prefix": {
+      "value": "REPLACE"
+    },
+    "sshPublicKey": {
+      "value": "REPLACE_WITH_APPROVED_PUBLIC_KEY"
+    },
+    "chatModel": {
+      "value": "gpt-4.1-mini"
+    },
+    "chatVersion": {
+      "value": "2025-04-14"
+    },
+    "chatSku": {
+      "value": "GlobalStandard"
+    },
+    "chatCapacity": {
+      "value": 10
+    },
+    "embeddingSku": {
+      "value": "Standard"
+    },
+    "embeddingCapacity": {
+      "value": 10
+    },
+    "approvedFqdns": {
+      "value": [
+        "REVIEW_REQUIRED.invalid"
+      ]
+    },
+    "vmImageVersion": {
+      "value": "REPLACE_WITH_EXACT_APPROVED_IMAGE_VERSION"
+    }
+  }
+}

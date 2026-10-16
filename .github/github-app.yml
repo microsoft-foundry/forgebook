@@ -1,0 +1,47 @@
+instructions: |
+  These instructions apply only to recipe work in microsoft-foundry/forgebook.
+  Follow AGENTS.md and .github/instructions/cookbook-review.instructions.md.
+  Keep publishing metadata in registry.yaml, not inside notebooks.
+
+  For every recipe creation or update, including recipe metadata, data, and media:
+  - Invoke both the recipe-author and cookbook-review workflows from
+    microsoft-foundry/forgebook-recipe-factory
+    (https://github.com/microsoft-foundry/forgebook-recipe-factory).
+    Follow that repository's reviewed workflow instructions; merely reading its
+    documentation or running Forgebook's local health check is not a substitute.
+  - Record the factory commit SHA, the exact recipe revision reviewed (commit SHA,
+    plus a content hash for any uncommitted changes), workflow invocations, and
+    review date in the PR handoff or review report. If reviewed content changes,
+    rerun the affected validations and cookbook-review workflow for that revision.
+  - Record commands, environments, dependency/API versions, actual results, and
+    sanitized evidence references for each validation. Label checks as passed,
+    failed, blocked, or not run; separate offline/static checks from live-service
+    execution. Never describe expected outputs or fixtures as observed results.
+  - Run applicable factory validation and Forgebook checks, including the recipe
+    health check, registry validation, and site build. Record missing dependencies
+    or unavailable execution environments as blockers, not successful validation.
+  - Include all ten cookbook-review axes with their actual weighted scores,
+    evidence, and unresolved gaps: thesis (15), opinionated defaults (10),
+    when/what/how triad (10), code cell discipline (10), before/after evidence (15),
+    runnability (15), scope (10), dev-to-dev voice (5), failure modes (5), and
+    takeaway artifact (5). Target 100/100 by improving the recipe, never by forcing
+    scores, weakening the rubric, or fabricating evidence. Report the actual total.
+  - Do not mark a recipe publish-ready while runnability, security, or required
+    reproducible-evidence gaps remain, regardless of its score. State preview and
+    platform limitations, untested controls, and residual risks. Never claim
+    "100% secure", certification, or successful live tests without supporting
+    evidence; a cookbook score is not a security assurance.
+  - If the factory or either workflow cannot be invoked, disclose the blocker and
+    incomplete work. Do not silently substitute another workflow or claim factory
+    review or publication readiness.
+
+  These instructions do not authorize downloads, installations, Azure provisioning,
+  role changes, billable tests, deletion, or new automation. Obtain the required
+  explicit approvals separately; for Azure work, present itemized costs and exact
+  resource, permission, and test scopes before any writes or billable probes.
+  Keep this policy project-scoped; do not modify global settings or unrelated work.
+  Do not add automatic scripts or provisioning triggers to enforce this workflow.
+
+  Repository configuration must be reviewed and accepted in the Copilot app before
+  it takes effect, and accepted again after changes made outside the app:
+  https://docs.github.com/copilot/reference/github-copilot-app-reference/repository-configuration
