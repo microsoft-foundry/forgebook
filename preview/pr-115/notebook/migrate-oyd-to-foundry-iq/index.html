@@ -1,0 +1,1111 @@
+<!DOCTYPE html><html lang="en" class="scroll-smooth"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Replace On Your Data with a Foundry IQ KB using your existing Search index, auto retrieval, and answer synthesis. Add a Prompt Agent when you need tools or workflows beyond corpus chat."><meta name="keywords" content="Microsoft Foundry, Foundry cookbook, AI cookbook, Jupyter notebook recipes, AI recipes, agent recipes, model inference, multimodal AI, hands-on AI guides, developer tutorials, iq, retrieval, grounding, rag, azure-ai-search, azure-openai"><meta name="author" content="Microsoft Foundry"><link rel="canonical" href="https://microsoft-foundry.github.io/forgebook/preview/pr-115/notebook/migrate-oyd-to-foundry-iq/"><link rel="icon" type="image/svg+xml" href="/forgebook/preview/pr-115/favicon.svg"><meta name="base-url" content="/forgebook/preview/pr-115"><meta property="og:site_name" content="Microsoft Foundry Forgebook"><meta property="og:type" content="article"><meta property="og:title" content="Migrate Azure OpenAI On Your Data to Foundry IQ | Forgebook"><meta property="og:description" content="Replace On Your Data with a Foundry IQ KB using your existing Search index, auto retrieval, and answer synthesis. Add a Prompt Agent when you need tools or workflows beyond corpus chat."><meta property="og:url" content="https://microsoft-foundry.github.io/forgebook/preview/pr-115/notebook/migrate-oyd-to-foundry-iq/"><meta property="og:image" content="https://microsoft-foundry.github.io/forgebook/preview/pr-115/images/og/forgebook.png"><meta property="og:image:alt" content="Forgebook logo with the text: Your cookbook for building AI with Microsoft Foundry."><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Migrate Azure OpenAI On Your Data to Foundry IQ | Forgebook"><meta name="twitter:description" content="Replace On Your Data with a Foundry IQ KB using your existing Search index, auto retrieval, and answer synthesis. Add a Prompt Agent when you need tools or workflows beyond corpus chat."><meta name="twitter:image" content="https://microsoft-foundry.github.io/forgebook/preview/pr-115/images/og/forgebook.png"><meta name="twitter:image:alt" content="Forgebook logo with the text: Your cookbook for building AI with Microsoft Foundry."><meta property="article:published_time" content="2026-06-17T00:00:00.000Z"><meta property="article:tag" content="iq"><meta property="article:tag" content="retrieval"><meta property="article:tag" content="grounding"><meta property="article:tag" content="rag"><meta property="article:tag" content="azure-ai-search"><meta property="article:tag" content="azure-openai"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://microsoft-foundry.github.io/forgebook/#organization","name":"Microsoft Foundry Forgebook","url":"https://microsoft-foundry.github.io/forgebook/","logo":{"@type":"ImageObject","url":"https://microsoft-foundry.github.io/forgebook/preview/pr-115/images/og/forgebook.png","width":1200,"height":630},"sameAs":["https://github.com/microsoft-foundry/forgebook","https://learn.microsoft.com/azure/foundry"]},{"@type":"WebSite","@id":"https://microsoft-foundry.github.io/forgebook/#website","name":"Forgebook","alternateName":"Microsoft Foundry Forgebook","url":"https://microsoft-foundry.github.io/forgebook/preview/pr-115/","description":"Forgebook is a Microsoft Foundry cookbook of runnable Jupyter notebook recipes, hands-on AI guides, and examples for building agents, model inference, and multimodal apps.","inLanguage":"en-US","publisher":{"@id":"https://microsoft-foundry.github.io/forgebook/#organization"},"mainEntityOfPage":"https://microsoft-foundry.github.io/forgebook/preview/pr-115/notebook/migrate-oyd-to-foundry-iq/"},{"@type":"TechArticle","@id":"https://microsoft-foundry.github.io/forgebook/preview/pr-115/notebook/migrate-oyd-to-foundry-iq/#article","headline":"Migrate Azure OpenAI On Your Data to Foundry IQ","description":"Replace On Your Data with a Foundry IQ KB using your existing Search index, auto retrieval, and answer synthesis. Add a Prompt Agent when you need tools or workflows beyond corpus chat.","url":"https://microsoft-foundry.github.io/forgebook/preview/pr-115/notebook/migrate-oyd-to-foundry-iq/","mainEntityOfPage":"https://microsoft-foundry.github.io/forgebook/preview/pr-115/notebook/migrate-oyd-to-foundry-iq/","image":"https://microsoft-foundry.github.io/forgebook/preview/pr-115/images/og/forgebook.png","datePublished":"2026-06-17T00:00:00.000Z","dateModified":"2026-06-17T00:00:00.000Z","author":[{"@type":"Person","name":"Farzad Sunavala","url":"https://github.com/farzad528","sameAs":["https://github.com/farzad528"],"jobTitle":"Principal Product Manager"}],"publisher":{"@id":"https://microsoft-foundry.github.io/forgebook/#organization"},"isPartOf":{"@id":"https://microsoft-foundry.github.io/forgebook/#website"},"inLanguage":"en-US","keywords":["iq","retrieval","grounding","rag","azure-ai-search","azure-openai"],"about":[{"@type":"Thing","name":"iq"},{"@type":"Thing","name":"retrieval"},{"@type":"Thing","name":"grounding"},{"@type":"Thing","name":"rag"},{"@type":"Thing","name":"azure-ai-search"},{"@type":"Thing","name":"azure-openai"}],"learningResourceType":"Jupyter notebook recipe","programmingLanguage":"Python","codeRepository":"https://github.com/microsoft-foundry/forgebook","isBasedOn":"https://github.com/microsoft-foundry/forgebook/blob/main/notebooks/migrate-oyd-to-foundry-iq.ipynb"}]}</script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer"><!-- Theme initialization script - runs before page renders to prevent flicker --><script>
+      (function() {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (theme === 'high-contrast') {
+          document.documentElement.classList.add('high-contrast');
+        }
+        // 'light' is default - no class needed
+      })();
+    </script><link rel="alternate" type="application/rss+xml" title="Forgebook RSS Feed" href="https://microsoft-foundry.github.io/forgebook/preview/pr-115/rss.xml"><!-- KaTeX CSS for math rendering --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous"><title>Migrate Azure OpenAI On Your Data to Foundry IQ | Forgebook</title><link rel="stylesheet" href="/forgebook/preview/pr-115/_astro/BaseLayout.Bj0_iDnR.css"><link rel="stylesheet" href="/forgebook/preview/pr-115/_astro/index.-m82inw4.css"></head><body class="min-h-screen bg-surface text-primary"><header data-pagefind-ignore class="site-header sticky top-0 z-50 backdrop-blur-sm border-b border-subtle" style="background-color: color-mix(in srgb, var(--neutral-bg-1) 80%, transparent);"><nav class="site-nav max-w-6xl mx-auto px-3 py-3 sm:px-4 sm:py-4 flex flex-wrap items-center justify-between gap-2 sm:gap-4"><a href="/forgebook/preview/pr-115/" class="flex items-center gap-2 text-lg sm:text-xl font-bold text-primary"><span class="logo-wrapper inline-flex items-center" data-astro-cid-f7espo7c><!-- Light mode logo --><svg class="logo-light" width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-astro-cid-f7espo7c><path d="M31.8828 31.4888C31.9828 31.4888 32.0825 31.2227 32.0825 30.8525V20.5393C32.0825 18.2645 33.8417 15.8473 36.3079 15.1144C36.1541 14.6139 34.5887 9.4832 34.1453 8.05877C33.6796 6.56109 32.3488 3 30.7183 3C30.7061 3 30.6938 3.00099 30.681 3.00299C30.6805 3.00299 30.6818 3.00299 30.681 3.00299C30.5589 3.02397 30.4379 3.14344 30.3208 3.34579C29.4694 4.90171 29.0881 11.3876 29.0881 16.2456V22.2805C29.8207 24.8685 31.52 30.8579 31.6501 31.2221C31.6501 31.2221 31.7831 31.4888 31.8828 31.4888Z" fill="url(#paint0_linear_light)" data-astro-cid-f7espo7c></path><path d="M42.6987 14.8814H37.8828C34.6469 14.8814 32.085 17.7769 32.085 20.5059V30.8191C32.085 31.1892 31.9853 31.4556 31.8856 31.4556C31.7856 31.4556 31.6526 31.1892 31.6526 31.1892C31.6526 31.1892 31.8523 31.7551 32.1183 31.7551H37.396C39.039 31.7551 43.9965 30.1242 43.9965 25.0322V16.3528C43.9965 15.2475 43.3641 14.8814 42.6987 14.8814Z" fill="url(#paint1_linear_light)" data-astro-cid-f7espo7c></path><path d="M6.23329 45.6667H20.5734C26.8285 45.6667 29.0911 40.2419 29.0911 35.5157V16.246C29.0911 10.688 29.5901 3 30.7213 3H22.1209C20.0743 3 18.3109 5.19656 16.3146 9.62299C14.3183 14.0494 4.69979 41.2832 4.27026 42.5715C3.57156 44.6683 4.20372 45.6667 6.23329 45.6667Z" fill="url(#paint2_linear_light)" data-astro-cid-f7espo7c></path><defs data-astro-cid-f7espo7c><linearGradient id="paint0_linear_light" x1="32.698" y1="31.4888" x2="32.698" y2="5.04147" gradientUnits="userSpaceOnUse" data-astro-cid-f7espo7c><stop offset="0.02" stop-color="#201BA6" data-astro-cid-f7espo7c></stop><stop offset="0.64" stop-color="#2D29C7" data-astro-cid-f7espo7c></stop><stop offset="1" stop-color="#201BA6" data-astro-cid-f7espo7c></stop></linearGradient><linearGradient id="paint1_linear_light" x1="37.8244" y1="31.6132" x2="37.8244" y2="15.0681" gradientUnits="userSpaceOnUse" data-astro-cid-f7espo7c><stop stop-color="#3530C3" data-astro-cid-f7espo7c></stop><stop offset="0.5" stop-color="#6D71D1" data-astro-cid-f7espo7c></stop><stop offset="0.966555" stop-color="#C0BFF5" data-astro-cid-f7espo7c></stop><stop offset="1" stop-color="#E3E4FF" data-astro-cid-f7espo7c></stop></linearGradient><linearGradient id="paint2_linear_light" x1="15.0466" y1="45.6248" x2="15.0466" y2="2.54716" gradientUnits="userSpaceOnUse" data-astro-cid-f7espo7c><stop stop-color="#302EC9" data-astro-cid-f7espo7c></stop><stop offset="0.445601" stop-color="#302EC9" data-astro-cid-f7espo7c></stop><stop offset="0.949145" stop-color="#CACAFB" data-astro-cid-f7espo7c></stop><stop offset="1" stop-color="#7F7EAF" data-astro-cid-f7espo7c></stop></linearGradient></defs></svg><!-- Dark mode logo --><svg class="logo-dark" width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-astro-cid-f7espo7c><path d="M30.0999 3C30.049 3.07484 30.0026 3.15534 29.9599 3.23859C29.7551 3.63778 29.5864 4.20032 29.4449 4.87485C29.1611 6.22807 28.9739 8.0958 28.8491 10.1697C28.5996 14.3207 28.5996 19.3408 28.5996 22.8195V36.6507L28.5994 36.7048C28.5702 41.273 24.8298 44.9709 20.2089 44.9998L20.1545 45H4.8567C4.263 45 3.85302 44.4211 4.05726 43.8745C6.33213 37.7875 9.53936 29.2248 12.2481 22.0351C13.6025 18.4401 14.8322 15.1886 15.7584 12.7614C16.6875 10.3268 17.306 8.73629 17.4418 8.44858C17.8119 7.66467 18.4141 6.29266 19.2729 5.11284C20.1376 3.92489 21.2132 3.00002 22.5089 3H30.0999ZM43.4074 15.2762C43.737 15.2762 44.0042 15.5405 44.0042 15.8663V26.5059L44.0037 26.5722C43.9677 29.3755 41.658 31.637 38.8142 31.637H31.9941C32.0087 31.6194 32.0229 31.6014 32.037 31.5828C32.2829 31.2551 32.4216 30.7891 32.4301 30.201L32.4305 30.1436V21.1226C32.4305 17.8937 35.0778 15.2762 38.3438 15.2762H43.4074ZM31.3719 3.21635C31.8367 3.21637 32.3399 3.58389 32.8622 4.33174C33.3743 5.06521 33.8587 6.09953 34.3018 7.28581C35.1595 9.58125 35.8452 12.3973 36.2817 14.5727C33.4451 15.4292 31.3813 18.0372 31.3813 21.1226V30.1173L31.3811 30.1381C31.3783 30.3533 31.3315 30.6059 31.2447 30.7994C31.1484 31.0138 31.0483 31.0682 30.9828 31.0682C30.9283 31.0682 30.8224 31.0239 30.6698 30.8479C30.5262 30.6823 30.3792 30.4442 30.2383 30.1676C29.9647 29.6309 29.7342 28.991 29.6029 28.5723V22.8195C29.6029 13.031 29.9479 8.08907 30.3672 5.59814C30.5779 4.34695 30.803 3.74402 30.9918 3.45688C31.0827 3.31865 31.1572 3.26623 31.2059 3.24362C31.2554 3.22071 31.3026 3.21635 31.3719 3.21635Z" fill="white" data-astro-cid-f7espo7c></path></svg><!-- High contrast mode logo --><svg class="logo-hc" width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-astro-cid-f7espo7c><path fill-rule="evenodd" clip-rule="evenodd" d="M29.7976 5.60384C30.7819 5.63186 31.5831 6.16452 32.219 6.9202C32.8684 7.69209 33.3825 8.73577 33.7937 9.85433C34.5698 11.9655 35.021 14.462 35.2875 16.2245C35.5793 16.1754 35.879 16.1495 36.1847 16.1495H40.4874L40.5316 16.1507C40.9863 16.1738 41.3478 16.5497 41.3478 17.0101V26.1546C41.3478 28.7442 39.2813 30.8512 36.7074 30.9165L36.7053 30.9166L36.5863 30.9182H32.6561V30.9192H30.0621C30.0469 30.9192 30.0318 30.9187 30.0165 30.918L29.9535 30.9182L29.9533 30.9137C29.5071 30.8714 29.1391 30.5765 28.8621 30.2491C28.64 29.9867 28.4376 29.6586 28.258 29.2932V34.8757L28.2558 35.066V35.068C28.1543 39.072 24.9271 42.2992 20.9231 42.4007L20.9213 42.4008L20.7306 42.4032H7.72766L7.72532 42.4031L7.66584 42.4012H7.66349L7.66113 42.401C6.97371 42.3585 6.49913 41.6872 6.69759 41.0255L6.69894 41.0212L6.71775 40.9648L6.71943 40.96C10.5235 30.6644 17.4019 12.1112 18.0746 10.5507L18.0753 10.5491L18.1025 10.4879L18.103 10.4867L18.1037 10.4854C18.4075 9.83417 18.9232 8.64648 19.6578 7.61089C20.3886 6.58069 21.3667 5.65734 22.6104 5.60131H22.614L22.726 5.59879L22.7277 5.59845H29.7976V5.60384ZM22.7294 6.55141C21.9332 6.55143 21.1754 7.13264 20.4662 8.11795C19.7772 9.07556 19.291 10.1938 18.9667 10.8884C18.8636 11.1094 18.3502 12.4434 17.554 14.5534C16.7675 16.6383 15.7231 19.4319 14.5724 22.5213C12.271 28.7 9.54581 36.0588 7.61292 41.2901C7.58531 41.3651 7.63921 41.4505 7.73019 41.4505H20.7289C24.3041 41.4505 27.2132 38.5971 27.3032 35.0436L27.3054 34.8738V25.2186C27.3047 25.1737 27.3042 25.1288 27.3042 25.0838V24.93H27.3054V22.9865C27.3054 20.0007 27.3054 15.6674 27.5186 12.0786C27.6249 10.2898 27.7861 8.64893 28.0364 7.4417C28.1016 7.12703 28.1761 6.8277 28.2622 6.55477H27.3385V6.55141H22.7294ZM29.271 6.55477C29.0333 7.16057 28.8476 8.12901 28.7057 9.33552C28.5569 10.6009 28.4574 12.1122 28.391 13.7085C28.2582 16.9011 28.258 20.4248 28.258 22.9865V25.1976L28.2604 25.3011C28.2924 26.3745 28.5553 27.5542 28.9354 28.4781C29.1385 28.9724 29.3656 29.3693 29.5895 29.6337C29.8243 29.9114 29.9883 29.9664 30.0621 29.9664H30.711C30.7707 29.7823 30.8065 29.5551 30.8065 29.281V21.5277L30.8077 21.4166C30.8538 19.1348 32.3215 17.2022 34.3607 16.4671C34.0982 14.7124 33.6555 12.2403 32.8994 10.1831C32.5051 9.11073 32.0375 8.1841 31.49 7.53361C30.9638 6.90813 30.3988 6.57581 29.7767 6.55561L29.7163 6.55477H29.271ZM36.1847 17.1023C33.7407 17.1023 31.7593 19.0837 31.7593 21.5277V29.281L31.7576 29.397C31.7519 29.5938 31.7311 29.7841 31.6944 29.9652H36.5846C38.689 29.9651 40.3951 28.2591 40.3951 26.1546V17.1023H36.1847Z" fill="white" data-astro-cid-f7espo7c></path></svg></span>Forgebook</a><div class="site-nav-actions flex items-center gap-2 sm:gap-4"><button id="search-button" class="search-trigger hc-hover inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-secondary hover:text-primary hover:bg-surface-elevated transition-colors cursor-pointer" type="button" aria-label="Search notebooks" aria-keyshortcuts="Control+k Meta+k"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"></path></svg><span class="search-shortcut hidden sm:inline-flex items-center gap-0.5 text-xs badge rounded px-1.5 py-0.5"><kbd class="font-mono text-[10px]">⌘</kbd><kbd class="font-mono text-[10px]">K</kbd></span></button><button id="theme-toggle" class="theme-toggle-btn hc-hover p-2 sm:p-1.5 rounded-md text-secondary hover:text-primary hover:bg-surface-elevated transition-colors cursor-pointer" title="Toggle theme" aria-label="Toggle theme" data-astro-cid-l6lhmie6><!-- Sun (light mode) --><svg class="theme-icon theme-icon-light w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" data-astro-cid-l6lhmie6><circle cx="12" cy="12" r="5" data-astro-cid-l6lhmie6></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" data-astro-cid-l6lhmie6></path></svg><!-- Moon (dark mode) --><svg class="theme-icon theme-icon-dark w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none" data-astro-cid-l6lhmie6><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" data-astro-cid-l6lhmie6></path></svg><!-- Half circle (high contrast mode) --><svg class="theme-icon theme-icon-hc w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none" data-astro-cid-l6lhmie6><circle cx="12" cy="12" r="10" data-astro-cid-l6lhmie6></circle><path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" data-astro-cid-l6lhmie6></path></svg></button><script type="module" src="/forgebook/preview/pr-115/_astro/ThemeToggle.astro_astro_type_script_index_0_lang.VAycCxMO.js"></script><a href="/forgebook/preview/pr-115/rss.xml" class="hc-hover inline-flex items-center justify-center rounded-md p-1.5 sm:p-2 text-secondary hover:text-primary hover:bg-surface-elevated transition-colors" title="RSS Feed" aria-label="RSS Feed"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1Z"></path></svg></a><a href="https://github.com/microsoft-foundry/forgebook" target="_blank" rel="noopener noreferrer" class="github-button hc-hover inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 sm:px-2.5 sm:py-1.5 text-sm text-secondary hover:text-primary border border-subtle hover:border-muted hover:bg-surface-elevated transition-colors" aria-label="View on GitHub"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path></svg><!-- Desktop: full path, Tablet: repo name only, Mobile: icon only --><span class="hidden lg:inline">microsoft-foundry/forgebook</span><span class="hidden md:inline lg:hidden">forgebook</span><span id="github-stars" class="inline-flex items-center gap-1 ml-0.5 sm:ml-1 pl-1.5 border-l border-subtle" data-repo="microsoft-foundry/forgebook" style><svg class="w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg><span class="font-medium" id="github-star-count">41</span></span></a><script type="module">var e=document.getElementById(`github-stars`),t=document.getElementById(`github-star-count`);if(e&&t&&!t.textContent){let n=e.dataset.repo;fetch(`https://api.github.com/repos/${n}`,{headers:{Accept:`application/vnd.github.v3+json`}}).then(e=>e.ok?e.json():null).then(n=>{if(n&&typeof n.stargazers_count==`number`){let r=n.stargazers_count;t.textContent=r>=1e3?(r/1e3).toFixed(1).replace(/\.0$/,``)+`k`:r.toString(),e.style.display=``}}).catch(()=>{})}</script></div></nav></header><main data-pagefind-body class="max-w-6xl mx-auto px-4 py-8"><header class="max-w-4xl mx-auto mb-8 lg:max-w-none lg:pr-[252px]"><div class="lg:max-w-4xl"><h1 data-pagefind-meta="title" class="text-3xl font-bold text-primary mb-4">Migrate Azure OpenAI On Your Data to Foundry IQ</h1><p data-pagefind-meta="description" class="text-lg text-secondary mb-6">Replace On Your Data with a Foundry IQ KB using your existing Search index, auto retrieval, and answer synthesis. Add a Prompt Agent when you need tools or workflows beyond corpus chat.</p><div class="flex flex-wrap gap-3"><!-- Open button group (GitHub primary + VS Code dropdown) --><div class="relative" id="open-container"><div class="inline-flex items-center"><a id="github-btn" href="https://github.com/microsoft-foundry/forgebook/blob/main/notebooks/migrate-oyd-to-foundry-iq.ipynb" target="_blank" rel="noopener noreferrer" data-slug="migrate-oyd-to-foundry-iq" class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-primary rounded-l-lg transition-colors border-r-0"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg>Open in GitHub</a><button id="vscode-dropdown-btn" data-slug="migrate-oyd-to-foundry-iq" data-vscode-url="https://vscode.dev/github/microsoft-foundry/forgebook/blob/main/notebooks/migrate-oyd-to-foundry-iq.ipynb" data-insiders-url="https://insiders.vscode.dev/github/microsoft-foundry/forgebook/blob/main/notebooks/migrate-oyd-to-foundry-iq.ipynb" class="notebook-action hc-hover inline-flex items-center px-2 py-2 text-sm font-medium btn-primary rounded-r-lg transition-colors cursor-pointer" aria-haspopup="menu" aria-expanded="false" aria-label="Open options"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button></div><div id="vscode-dropdown" class="absolute left-0 mt-2 w-80 max-w-[calc(100vw-2rem)] dropdown-menu rounded-lg shadow-lg py-1 z-50 hidden" role="menu" aria-label="Open options"><button role="menuitem" data-version="stable" class="vscode-version-option dropdown-item w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left whitespace-nowrap"><svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><mask id="vs-stable-mask" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><path fill-rule="evenodd" clip-rule="evenodd" d="M70.9119 99.3171C72.4869 99.9307 74.2828 99.8914 75.8725 99.1264L96.4608 89.2197C98.6242 88.1787 100 85.9892 100 83.5872V16.4133C100 14.0113 98.6243 11.8218 96.4609 10.7808L75.8725 0.873756C73.7862 -0.130129 71.3446 0.11576 69.5135 1.44695C69.252 1.63711 69.0028 1.84943 68.769 2.08341L29.3551 38.0415L12.1872 25.0096C10.589 23.7965 8.35363 23.8959 6.86933 25.2461L1.36303 30.2549C-0.452552 31.9064 -0.454633 34.7627 1.35853 36.417L16.2471 50.0001L1.35853 63.5832C-0.454633 65.2374 -0.452552 68.0938 1.36303 69.7453L6.86933 74.7541C8.35363 76.1043 10.589 76.2037 12.1872 74.9905L29.3551 61.9587L68.769 97.9167C69.3925 98.5406 70.1246 99.0104 70.9119 99.3171ZM75.0152 27.2989L45.1091 50.0001L75.0152 72.7012V27.2989Z" fill="white"></path></mask><g mask="url(#vs-stable-mask)"><path d="M96.4614 10.7962L75.8569 0.875542C73.4719 -0.272773 70.6217 0.211611 68.75 2.08333L1.29858 63.5832C-0.515693 65.2373 -0.513607 68.0937 1.30308 69.7452L6.81272 74.754C8.29793 76.1042 10.5347 76.2036 12.1338 74.9905L93.3609 13.3699C96.086 11.3026 100 13.2462 100 16.6667V16.4275C100 14.0265 98.6246 11.8378 96.4614 10.7962Z" fill="#0065A9"></path><path d="M96.4614 89.2038L75.8569 99.1245C73.4719 100.273 70.6217 99.7884 68.75 97.9167L1.29858 36.4169C-0.515693 34.7627 -0.513607 31.9063 1.30308 30.2548L6.81272 25.246C8.29793 23.8958 10.5347 23.7964 12.1338 25.0095L93.3609 86.6301C96.086 88.6974 100 86.7538 100 83.3334V83.5726C100 85.9735 98.6246 88.1622 96.4614 89.2038Z" fill="#007ACC"></path><path d="M75.8578 99.1263C73.4721 100.274 70.6219 99.7885 68.75 97.9166C71.0564 100.223 75 98.5895 75 95.3278V4.67213C75 1.41039 71.0564 -0.223106 68.75 2.08329C70.6219 0.211402 73.4721 -0.273666 75.8578 0.873633L96.4587 10.7807C98.6234 11.8217 100 14.0112 100 16.4132V83.5871C100 85.9891 98.6234 88.1786 96.4586 89.2196L75.8578 99.1263Z" fill="#1F9CF0"></path></g></svg><span>Open in VS Code for the Web</span></button><button role="menuitem" data-version="insiders" class="vscode-version-option dropdown-item w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left whitespace-nowrap"><svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><mask id="vs-insiders-mask" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><path fill-rule="evenodd" clip-rule="evenodd" d="M70.9119 99.3171C72.4869 99.9307 74.2828 99.8914 75.8725 99.1264L96.4608 89.2197C98.6242 88.1787 100 85.9892 100 83.5872V16.4133C100 14.0113 98.6243 11.8218 96.4609 10.7808L75.8725 0.873756C73.7862 -0.130129 71.3446 0.11576 69.5135 1.44695C69.252 1.63711 69.0028 1.84943 68.769 2.08341L29.3551 38.0415L12.1872 25.0096C10.589 23.7965 8.35363 23.8959 6.86933 25.2461L1.36303 30.2549C-0.452552 31.9064 -0.454633 34.7627 1.35853 36.417L16.2471 50.0001L1.35853 63.5832C-0.454633 65.2374 -0.452552 68.0938 1.36303 69.7453L6.86933 74.7541C8.35363 76.1043 10.589 76.2037 12.1872 74.9905L29.3551 61.9587L68.769 97.9167C69.3925 98.5406 70.1246 99.0104 70.9119 99.3171ZM75.0152 27.2989L45.1091 50.0001L75.0152 72.7012V27.2989Z" fill="white"></path></mask><g mask="url(#vs-insiders-mask)"><path d="M96.4614 10.7962L75.8569 0.875542C73.4719 -0.272773 70.6217 0.211611 68.75 2.08333L1.29858 63.5832C-0.515693 65.2373 -0.513607 68.0937 1.30308 69.7452L6.81272 74.754C8.29793 76.1042 10.5347 76.2036 12.1338 74.9905L93.3609 13.3699C96.086 11.3026 100 13.2462 100 16.6667V16.4275C100 14.0265 98.6246 11.8378 96.4614 10.7962Z" fill="#009a7c"></path><path d="M96.4614 89.2038L75.8569 99.1245C73.4719 100.273 70.6217 99.7884 68.75 97.9167L1.29858 36.4169C-0.515693 34.7627 -0.513607 31.9063 1.30308 30.2548L6.81272 25.246C8.29793 23.8958 10.5347 23.7964 12.1338 25.0095L93.3609 86.6301C96.086 88.6974 100 86.7538 100 83.3334V83.5726C100 85.9735 98.6246 88.1622 96.4614 89.2038Z" fill="#00b294"></path><path d="M75.8578 99.1263C73.4721 100.274 70.6219 99.7885 68.75 97.9166C71.0564 100.223 75 98.5895 75 95.3278V4.67213C75 1.41039 71.0564 -0.223106 68.75 2.08329C70.6219 0.211402 73.4721 -0.273666 75.8578 0.873633L96.4587 10.7807C98.6234 11.8217 100 14.0112 100 16.4132V83.5871C100 85.9891 98.6234 88.1786 96.4586 89.2196L75.8578 99.1263Z" fill="#24bfa5"></path></g></svg><span>Open in VS Code Insiders for the Web</span></button></div></div><!-- Markdown Button with Dropdown --><div class="relative" id="markdown-container"><div class="inline-flex items-center"><button id="copy-markdown-btn" data-slug="migrate-oyd-to-foundry-iq" class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-secondary rounded-l-lg transition-colors cursor-pointer border-r-0" aria-label="Copy page"><svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5.503 4.627L5.5 6.75v10.504a3.25 3.25 0 0 0 3.25 3.25h8.616a2.25 2.25 0 0 1-2.122 1.5H8.75A4.75 4.75 0 0 1 4 17.254V6.75c0-.98.627-1.815 1.503-2.123M17.75 2A2.25 2.25 0 0 1 20 4.25v13a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-13A2.25 2.25 0 0 1 8.75 2zm0 1.5h-9a.75.75 0 0 0-.75.75v13c0 .414.336.75.75.75h9a.75.75 0 0 0 .75-.75v-13a.75.75 0 0 0-.75-.75"></path></svg><span id="copy-btn-text" class="hidden sm:inline">Copy page</span></button><button id="markdown-dropdown-btn" class="notebook-action hc-hover inline-flex items-center px-2 py-2 text-sm font-medium btn-secondary rounded-r-lg transition-colors cursor-pointer" aria-haspopup="true" aria-expanded="false" aria-label="Markdown options"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button></div><div id="markdown-dropdown" class="absolute left-0 mt-2 w-52 dropdown-menu rounded-lg shadow-lg py-1 z-50 hidden" role="menu"><button id="dropdown-copy-markdown" data-slug="migrate-oyd-to-foundry-iq" class="dropdown-item w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg><span id="dropdown-copy-text">Copy in Markdown</span></button><a id="view-markdown-link" href="/forgebook/preview/pr-115/notebook/migrate-oyd-to-foundry-iq.md" data-slug="migrate-oyd-to-foundry-iq" class="dropdown-item flex items-center gap-3 px-4 py-2 text-sm transition-colors" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>View in Markdown</a></div></div><!-- Share Button with Dropdown --><div class="relative" id="share-container"><div class="inline-flex items-center"><button id="share-btn" data-slug="migrate-oyd-to-foundry-iq" data-share-url="/forgebook/preview/pr-115/notebook/migrate-oyd-to-foundry-iq/" data-share-title="Migrate Azure OpenAI On Your Data to Foundry IQ" class="notebook-action hc-hover inline-flex items-center gap-2 px-4 py-2 text-sm font-medium btn-secondary rounded-l-lg transition-colors cursor-pointer border-r-0" aria-label="Share"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg><span id="share-btn-text" class="hidden sm:inline">Share</span></button><button id="share-dropdown-btn" class="notebook-action hc-hover inline-flex items-center px-2 py-2 text-sm font-medium btn-secondary rounded-r-lg transition-colors cursor-pointer" aria-haspopup="true" aria-expanded="false" aria-label="Share options"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button></div><div id="share-dropdown" class="absolute right-0 mt-2 w-48 dropdown-menu rounded-lg shadow-lg py-1 z-50 hidden" role="menu"><button id="copy-link-btn" class="share-menu-item dropdown-item w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg><span id="copy-link-text">Copy Link</span></button><a id="share-x" href="#" target="_blank" rel="noopener noreferrer" class="share-menu-item dropdown-item flex items-center gap-3 px-4 py-2 text-sm transition-colors" role="menuitem"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>Share on X</a><a id="share-linkedin" href="#" target="_blank" rel="noopener noreferrer" class="share-menu-item dropdown-item flex items-center gap-3 px-4 py-2 text-sm transition-colors" role="menuitem"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path></svg>Share on LinkedIn</a><button id="native-share-btn" class="share-menu-item dropdown-item hidden w-full items-center gap-3 px-4 py-2 text-sm transition-colors text-left border-t border-subtle mt-1 pt-2" role="menuitem"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>More options...</button></div></div></div><script type="module" src="/forgebook/preview/pr-115/_astro/NotebookActions.astro_astro_type_script_index_0_lang.DbU7CnFw.js"></script></div></header><section class="max-w-5xl mx-auto mb-8 lg:max-w-none lg:pr-[252px]"><div class="lg:max-w-5xl"><h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">Author</h2><div class="flex flex-wrap gap-2"><div class="w-full sm:w-80 flex items-start justify-between gap-3 p-2 rounded-lg hover:bg-surface-elevated transition-colors overflow-hidden"><div class="flex items-center gap-3 min-w-0 overflow-hidden"><a href="https://github.com/farzad528" target="_blank" rel="noopener noreferrer" class="shrink-0" aria-label="Farzad Sunavala on GitHub"><img src="https://github.com/farzad528.png?size=200" alt="Farzad Sunavala's avatar" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=Farzad%20Sunavala&amp;size=200&amp;background=6366f1&amp;color=fff&amp;bold=true';" class="w-14 h-14 rounded-full border-2 border-subtle bg-surface-elevated" loading="lazy"></a><div class="min-w-0 overflow-hidden"><div class="font-medium text-primary truncate">Farzad Sunavala</div><div class="text-sm text-muted truncate">Principal Product Manager</div><div class="text-sm text-muted truncate">@farzad528</div></div></div><div class="flex flex-col items-center gap-0.5 text-muted"><a href="https://github.com/farzad528" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md p-1 hover:bg-surface-elevated hover:text-primary transition-colors" aria-label="GitHub"><svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path></svg></a></div></div></div></div></section><div class="flex justify-center"><article class="max-w-4xl w-full"><!-- Notebook Content --><section class="prose prose-slate dark:prose-invert max-w-none"><div class="notebook-content"><div class="nb-notebook"><div class="nb-worksheet"><div class="nb-cell nb-markdown-cell"><blockquote>
+<p><strong><a href="https://learn.microsoft.com/azure/foundry-classic/openai/concepts/use-your-data">Azure OpenAI On Your Data retires October 14, 2026.</a></strong></p>
+</blockquote>
+<p>Already using Azure OpenAI On Your Data (OYD) to chat with an Azure AI Search index?
+<strong>Keep the index. Wrap it in a Search Index Knowledge Source, attach that source to a
+Foundry IQ Knowledge Base, and call the KB directly for a cited answer.</strong></p>
+<p>For this corpus-chat use case, start with <strong><code>auto</code> retrieval + <code>answerSynthesis</code></strong>.
+Auto starts with lightweight retrieval and can escalate to LLM-based query planning,
+up to medium effort, if the first pass lacks grounding. Answer synthesis uses your
+configured model to write the answer. Neither setting means model-free or fixed-cost.</p>
+<pre><code class="language-text">Before: app -&gt; Azure OpenAI chat.completions + data_sources -&gt; answer + citations
+After:  app -&gt; Foundry IQ KB.retrieve -&gt; answer + references + activity
+                          |
+                 Search Index Knowledge Source
+                          |
+                 Your existing Search index
+</code></pre>
+<p><strong>By the end, you will be able to:</strong></p>
+<ul>
+<li>Reuse an existing Search corpus through a knowledge source and knowledge base.</li>
+<li>Replace an OYD call with direct KB answer synthesis and native citations.</li>
+<li>Evaluate citation resolution and abstention before cutting over your application.</li>
+</ul>
+<p>This recipe does not re-index data, edit your index, deploy a model, add other source
+types, or create an agent.</p>
+<blockquote>
+<p><strong>Preview boundary.</strong> This path uses <code>2026-08-01-preview</code>. GA <code>2026-04-01</code> supports
+minimal, extractive retrieval, not answer synthesis. Confirm that preview features
+meet your deployment requirements before choosing this path.</p>
+</blockquote>
+</div><div class="nb-cell nb-markdown-cell"><h2>Choose the migration path</h2>
+<p>Both paths reuse your index through a <strong>Search Index Knowledge Source + Foundry IQ KB</strong>.</p>
+<p><img src="/forgebook/preview/pr-115/notebook/media/migrate-oyd-to-foundry-iq/01-oyd-migration-decision-tree.png" alt="Migration decision tree: reuse the Search index in a Foundry IQ KB; choose direct auto retrieval and answer synthesis for corpus chat, or a Prompt Agent for tools and workflows."></p>
+<p><a href="/forgebook/preview/pr-115/notebook/media/migrate-oyd-to-foundry-iq/01-oyd-migration-decision-tree.excalidraw">Download editable Excalidraw source</a></p>
+<p>An agent is not required just to answer corpus questions, carry conversation history,
+or add another knowledge source. The OYD retirement notice recommends Agent Service
+with Foundry IQ generally; this recipe recommends the narrower direct-KB path when
+retrieval and answer generation are all your application needs.</p>
+</div><div class="nb-cell nb-markdown-cell"><h2>Prerequisites</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>What to check</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Python</td>
+<td>3.10 or later, with a Jupyter kernel.</td>
+</tr>
+<tr>
+<td>Azure AI Search</td>
+<td>Your existing service, in a <a href="https://learn.microsoft.com/azure/search/search-region-support">region supporting agentic retrieval</a>. The index and KB must be on the same service.</td>
+</tr>
+<tr>
+<td>Existing index</td>
+<td>Match the <a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-index">index requirements</a>. Carry over your semantic configuration when present; it is optional in this preview. Vector retrieval needs a valid query-time vectorizer, not just stored vectors.</td>
+</tr>
+<tr>
+<td>Chat model</td>
+<td>An existing <a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base#supported-models">supported Azure OpenAI deployment</a>. Reuse your OYD deployment only while that model/version remains available; GPT-4-family models are deprecated. Otherwise select an already-deployed supported model, such as <code>gpt-5.4-mini</code>.</td>
+</tr>
+<tr>
+<td>Access</td>
+<td>Permission to manage the new KS/KB and query the index. This example uses a Search admin key and a model API key; see the Entra ID guidance below for production.</td>
+</tr>
+</tbody></table>
+<p><strong>Cost:</strong> Search retrieval/reranking and model tokens are billable. Auto can add planning
+work; synthesis always needs a configured model. Measure quality, latency, and usage on
+your own queries rather than assuming lower cost or better answers than OYD.</p>
+<p><strong>Access-control boundary:</strong> keep any OYD filters and field mappings. The default example
+assumes all users of the application are authorized for the selected corpus. For an index
+using per-user permission metadata, set <code>USES_PER_USER_ACL = True</code> below and supply the
+verified signed-in user's Search token on every retrieve call. The helper rejects a missing
+token in that mode. Never replace per-user checks with a system prompt or an admin key.</p>
+<p>Set these in your shell or an uncommitted local <code>.env</code> next to the notebook. Use your
+actual deployment name and model family; they are not necessarily the same string.</p>
+<pre><code class="language-bash">SEARCH_ENDPOINT=https://&lt;your-search-service&gt;.search.windows.net
+SEARCH_API_KEY=&lt;your-search-admin-key&gt;
+SEARCH_INDEX_NAME=&lt;your-existing-index&gt;
+SEARCH_SEMANTIC_CONFIG=&lt;your-semantic-config-name&gt;   # optional in this preview
+# Optional: carry over your OYD filter and field mappings; use actual index field names.
+# SEARCH_FILTER is a static default; pass caller-specific filters to kb_answer per request.
+# SEARCH_FILTER=status eq 'published'
+# SEARCH_CONTENT_FIELDS=content
+# SEARCH_SOURCE_FIELDS=title,url,content
+
+AOAI_ENDPOINT=https://&lt;your-foundry-resource&gt;.openai.azure.com
+AOAI_API_KEY=&lt;your-azure-openai-key&gt;
+AOAI_GPT_DEPLOYMENT=&lt;your-supported-chat-deployment&gt;
+AOAI_GPT_MODEL=gpt-5.4-mini                          # underlying model, not deployment name
+</code></pre>
+<p>If OYD generated query vectors through <code>embedding_dependency</code> but the index has no
+vectorizer, the KB does not automatically reproduce that setup. Configure and validate
+query-time vectorization separately before cutover, or explicitly evaluate text-only
+retrieval. This notebook never changes your index.</p>
+</div><div class="nb-cell nb-markdown-cell"><h3>Install</h3>
+<p>Install the pinned <a href="https://pypi.org/project/azure-search-documents/12.1.0b2/">public PyPI preview</a>.
+It supports <code>2026-08-01-preview</code>; no extra package feed or legacy OpenAI client is needed.</p>
+<p>Preview APIs can change. Review the <a href="https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/CHANGELOG.md">SDK changelog</a>
+and <a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-migrate">API migration guide</a>
+before changing this pin.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token operator">%</span>pip install <span class="token operator">-</span><span class="token operator">-</span>quiet \
+    <span class="token string">"azure-search-documents==12.1.0b2"</span> \
+    <span class="token string">"azure-core&gt;=1.32.0"</span> \
+    <span class="token string">"python-dotenv&gt;=1.0.1"</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>Configure</h2>
+<p>Choose one question your corpus can answer and one it cannot. Each run uses unique KS/KB
+names and create-only operations, so it cannot overwrite existing objects. Keep the printed
+names if you stop before cleanup; rerunning this setup starts a new pair.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">import</span> json
+<span class="token keyword">import</span> os
+<span class="token keyword">import</span> re
+<span class="token keyword">from</span> time <span class="token keyword">import</span> perf_counter
+<span class="token keyword">from</span> uuid <span class="token keyword">import</span> uuid4
+
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>core<span class="token punctuation">.</span>credentials <span class="token keyword">import</span> AzureKeyCredential
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes <span class="token keyword">import</span> SearchIndexClient
+<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
+
+load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">env</span><span class="token punctuation">(</span>name<span class="token punctuation">,</span> <span class="token operator">*</span><span class="token punctuation">,</span> required<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> default<span class="token operator">=</span><span class="token boolean">None</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    value <span class="token operator">=</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span>name<span class="token punctuation">,</span> default<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> required <span class="token keyword">and</span> <span class="token keyword">not</span> value<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> RuntimeError<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Missing required env var: </span><span class="token interpolation"><span class="token punctuation">{</span>name<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> value
+
+
+<span class="token keyword">def</span> <span class="token function">field_names</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token punctuation">[</span>value<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> value <span class="token keyword">in</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span>name<span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">","</span><span class="token punctuation">)</span> <span class="token keyword">if</span> value<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+
+
+SEARCH_ENDPOINT <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"SEARCH_ENDPOINT"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>rstrip<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">)</span>
+SEARCH_API_KEY <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"SEARCH_API_KEY"</span><span class="token punctuation">)</span>
+SEARCH_INDEX <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"SEARCH_INDEX_NAME"</span><span class="token punctuation">)</span>
+SEMANTIC_CONFIG <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"SEARCH_SEMANTIC_CONFIG"</span><span class="token punctuation">,</span> required<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+SEARCH_FILTER <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"SEARCH_FILTER"</span><span class="token punctuation">,</span> required<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+CONTENT_FIELDS <span class="token operator">=</span> field_names<span class="token punctuation">(</span><span class="token string">"SEARCH_CONTENT_FIELDS"</span><span class="token punctuation">)</span>
+SOURCE_FIELDS <span class="token operator">=</span> field_names<span class="token punctuation">(</span><span class="token string">"SEARCH_SOURCE_FIELDS"</span><span class="token punctuation">)</span>
+
+AOAI_ENDPOINT <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_ENDPOINT"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>rstrip<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">)</span>
+AOAI_API_KEY <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_API_KEY"</span><span class="token punctuation">)</span>
+AOAI_DEPLOYMENT <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_GPT_DEPLOYMENT"</span><span class="token punctuation">)</span>
+AOAI_MODEL <span class="token operator">=</span> env<span class="token punctuation">(</span><span class="token string">"AOAI_GPT_MODEL"</span><span class="token punctuation">)</span>
+SEARCH_API_VERSION <span class="token operator">=</span> <span class="token string">"2026-08-01-preview"</span>
+
+run_id <span class="token operator">=</span> uuid4<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token builtin">hex</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">12</span><span class="token punctuation">]</span>
+KS_NAME <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"oyd-migrated-ks-</span><span class="token interpolation"><span class="token punctuation">{</span>run_id<span class="token punctuation">}</span></span><span class="token string">"</span></span>
+KB_NAME <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"oyd-migrated-kb-</span><span class="token interpolation"><span class="token punctuation">{</span>run_id<span class="token punctuation">}</span></span><span class="token string">"</span></span>
+created_ks <span class="token operator">=</span> created_kb <span class="token operator">=</span> <span class="token boolean">False</span>
+
+<span class="token comment"># Replace this with your existing OYD instructions.</span>
+SYSTEM_MESSAGE <span class="token operator">=</span> <span class="token punctuation">(</span>
+    <span class="token string">"You are a helpful assistant for our company. Answer the question using only the "</span>
+    <span class="token string">"information in the retrieved sources."</span>
+<span class="token punctuation">)</span>
+
+ABSTENTION <span class="token operator">=</span> <span class="token string">"I don't know"</span>
+QUESTION <span class="token operator">=</span> <span class="token string">"What is our return policy?"</span>
+UNSUPPORTED_QUESTION <span class="token operator">=</span> <span class="token string">"What is the current temperature inside my kitchen?"</span>
+USES_PER_USER_ACL <span class="token operator">=</span> <span class="token boolean">False</span>  <span class="token comment"># Set True for an index with per-user permission metadata.</span>
+USER_SEARCH_TOKEN <span class="token operator">=</span> <span class="token boolean">None</span>  <span class="token comment"># Obtain for the signed-in user in memory; never save it in .env.</span>
+
+search_credential <span class="token operator">=</span> AzureKeyCredential<span class="token punctuation">(</span>SEARCH_API_KEY<span class="token punctuation">)</span>
+index_client <span class="token operator">=</span> SearchIndexClient<span class="token punctuation">(</span>
+    endpoint<span class="token operator">=</span>SEARCH_ENDPOINT<span class="token punctuation">,</span> credential<span class="token operator">=</span>search_credential<span class="token punctuation">,</span> api_version<span class="token operator">=</span>SEARCH_API_VERSION
+<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Search : </span><span class="token interpolation"><span class="token punctuation">{</span>SEARCH_ENDPOINT<span class="token punctuation">}</span></span><span class="token string">  (index: </span><span class="token interpolation"><span class="token punctuation">{</span>SEARCH_INDEX<span class="token punctuation">}</span></span><span class="token string">)"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Model  : </span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_DEPLOYMENT<span class="token punctuation">}</span></span><span class="token string"> (</span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_MODEL<span class="token punctuation">}</span></span><span class="token string">)"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"New resources: </span><span class="token interpolation"><span class="token punctuation">{</span>KS_NAME<span class="token punctuation">}</span></span><span class="token string">, </span><span class="token interpolation"><span class="token punctuation">{</span>KB_NAME<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>1 · Identify the OYD call in your application</h2>
+<p>The old call uses <code>chat.completions.create</code> with an <code>azure_search</code> entry in <code>data_sources</code>.
+The reference below identifies that request shape; it is not executed by this notebook.
+Retired or unavailable OYD deployments must not block the new path. All names in the
+snippet belong to the existing application, not the setup above.</p>
+<p>Inspect <code>existing_search_parameters</code> for your original query type, vector/embedding
+settings, field mappings, filters, and authentication. Preserve them during migration.
+If OYD is still available, capture a baseline through your existing permission-enforcing
+application; do not recreate a less restrictive call just for comparison.</p>
+</div><div class="nb-cell nb-markdown-cell"><pre><code class="language-python"># Reference only: locate this call in the application you are migrating.
+oyd_response = oyd_client.chat.completions.create(
+    model=oyd_deployment,
+    messages=messages,
+    extra_body={
+        "data_sources": [
+            {"type": "azure_search", "parameters": existing_search_parameters}
+        ]
+    },
+)
+</code></pre>
+</div><div class="nb-cell nb-markdown-cell"><h2>2 · How the parameters map</h2>
+<p>Keep the index connection separate from answer behavior and per-request controls.
+These are migration starting points, not a claim that OYD and KB ranking are equivalent.</p>
+<table>
+<thead>
+<tr>
+<th>OYD setting</th>
+<th>Foundry IQ setting</th>
+<th>Lives on</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>endpoint</code></td>
+<td><code>SearchIndexClient</code> / <code>KnowledgeBaseRetrievalClient</code> endpoint</td>
+<td>client</td>
+</tr>
+<tr>
+<td><code>index_name</code></td>
+<td><code>SearchIndexKnowledgeSourceParameters(search_index_name=...)</code></td>
+<td>Knowledge Source</td>
+</tr>
+<tr>
+<td><code>semantic_configuration</code></td>
+<td><code>SearchIndexKnowledgeSourceParameters(semantic_configuration_name=...)</code></td>
+<td>Knowledge Source</td>
+</tr>
+<tr>
+<td><code>authentication</code></td>
+<td><code>AzureKeyCredential</code> (or <code>DefaultAzureCredential</code>)</td>
+<td>client</td>
+</tr>
+<tr>
+<td>System / grounding instructions</td>
+<td><code>answer_instructions</code>; test abstention separately</td>
+<td>Knowledge Base</td>
+</tr>
+<tr>
+<td>Model deployment</td>
+<td><code>deployment_name</code> plus the actual <code>model_name</code></td>
+<td>Knowledge Base model</td>
+</tr>
+<tr>
+<td><code>filter</code></td>
+<td><code>kb_answer(filter_add_on=...)</code>; pass a trusted, caller-specific filter when required</td>
+<td>retrieve source params</td>
+</tr>
+<tr>
+<td><code>fields_mapping.content_fields</code></td>
+<td><code>search_fields</code>; select retrievable citation/content fields with <code>source_data_fields</code></td>
+<td>Knowledge Source</td>
+</tr>
+<tr>
+<td><code>strictness</code></td>
+<td>No exact conversion. Evaluate <code>reranker_threshold</code> independently if needed.</td>
+<td>retrieve source params</td>
+</tr>
+<tr>
+<td><code>top_n_documents</code></td>
+<td>Top-level <code>max_output_documents</code> caps final grounding documents, but is not identical to OYD context selection.</td>
+<td>retrieve request</td>
+</tr>
+<tr>
+<td><code>query_type</code> / <code>embedding_dependency</code></td>
+<td>Review semantic configuration, existing vector fields, and a valid query-time vectorizer. Do not assume hybrid behavior.</td>
+<td>index / Knowledge Source</td>
+</tr>
+</tbody></table>
+<p>Per-source <code>max_output_documents</code> caps intermediate candidates; the top-level setting
+caps final grounding documents. The example uses a final cap of five, not the old
+50-200 candidate-pool rule. Retune with your corpus rather than translating OYD knobs
+numerically. Index scoring profiles are not honored by KB retrieve.</p>
+<p>Auto controls retrieval effort, while <code>answerSynthesis</code> controls the output. They are
+independent settings: an adaptive retrieval pipeline can still return a finished answer.</p>
+</div><div class="nb-cell nb-markdown-cell"><h2>3 · Create the Knowledge Source over your existing index</h2>
+<p>A Knowledge Source of kind <code>searchIndex</code> is a thin wrapper that points at an index you
+already have. <strong>Nothing is re-indexed, copied, or moved</strong> — it references your index in
+place. This maps the OYD <code>index_name</code> and <code>semantic_configuration</code>.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    SearchIndexFieldReference<span class="token punctuation">,</span>
+    SearchIndexKnowledgeSource<span class="token punctuation">,</span>
+    SearchIndexKnowledgeSourceParameters<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+ks_parameters <span class="token operator">=</span> SearchIndexKnowledgeSourceParameters<span class="token punctuation">(</span>
+    search_index_name<span class="token operator">=</span>SEARCH_INDEX<span class="token punctuation">,</span>
+    search_fields<span class="token operator">=</span><span class="token punctuation">[</span>SearchIndexFieldReference<span class="token punctuation">(</span>name<span class="token operator">=</span>name<span class="token punctuation">)</span> <span class="token keyword">for</span> name <span class="token keyword">in</span> CONTENT_FIELDS<span class="token punctuation">]</span><span class="token punctuation">,</span>
+    source_data_fields<span class="token operator">=</span><span class="token punctuation">[</span>SearchIndexFieldReference<span class="token punctuation">(</span>name<span class="token operator">=</span>name<span class="token punctuation">)</span> <span class="token keyword">for</span> name <span class="token keyword">in</span> SOURCE_FIELDS<span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">if</span> SEMANTIC_CONFIG<span class="token punctuation">:</span>
+    ks_parameters<span class="token punctuation">.</span>semantic_configuration_name <span class="token operator">=</span> SEMANTIC_CONFIG
+
+knowledge_source <span class="token operator">=</span> SearchIndexKnowledgeSource<span class="token punctuation">(</span>
+    name<span class="token operator">=</span>KS_NAME<span class="token punctuation">,</span>
+    description<span class="token operator">=</span><span class="token string">"Wraps the existing On Your Data search index."</span><span class="token punctuation">,</span>
+    search_index_parameters<span class="token operator">=</span>ks_parameters<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+index_client<span class="token punctuation">.</span>create_knowledge_source<span class="token punctuation">(</span>knowledge_source<span class="token punctuation">)</span>
+created_ks <span class="token operator">=</span> <span class="token boolean">True</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Knowledge Source '</span><span class="token interpolation"><span class="token punctuation">{</span>KS_NAME<span class="token punctuation">}</span></span><span class="token string">' now points at index '</span><span class="token interpolation"><span class="token punctuation">{</span>SEARCH_INDEX<span class="token punctuation">}</span></span><span class="token string">'."</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>4 · Create the KB with auto retrieval and answer synthesis</h2>
+<p>Attach your supported chat deployment, set <code>auto</code>, and enable <code>answerSynthesis</code>.
+The <a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base#create-a-knowledge-base">current KB creation guide</a>
+documents this combination for <code>2026-08-01-preview</code>.</p>
+<p>Auto starts with lightweight retrieval and can escalate up to medium effort when
+grounding is insufficient. The model is still required for synthesis. Your app receives
+a natural-language answer, but must adapt to KB references rather than OYD's citation
+shape; this is not a wire-compatible drop-in replacement.</p>
+<p>The abstention instruction below defines an exact output contract for this recipe.
+It is not an authorization control or a guarantee of factual correctness.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>indexes<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    AzureOpenAIVectorizerParameters<span class="token punctuation">,</span>
+    KnowledgeBase<span class="token punctuation">,</span>
+    KnowledgeBaseAzureOpenAIModel<span class="token punctuation">,</span>
+    KnowledgeSourceReference<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>knowledgebases<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    KnowledgeRetrievalAutoReasoningEffort<span class="token punctuation">,</span>
+    KnowledgeRetrievalOutputMode<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+answer_instructions <span class="token operator">=</span> <span class="token punctuation">(</span>
+    SYSTEM_MESSAGE
+    <span class="token operator">+</span> <span class="token string">" Use only retrieved sources and cite them with [ref_id:&lt;id&gt;]. "</span>
+    <span class="token operator">+</span> <span class="token string-interpolation"><span class="token string">f"If the sources do not answer the question, reply exactly \"</span><span class="token interpolation"><span class="token punctuation">{</span>ABSTENTION<span class="token punctuation">}</span></span><span class="token string">\" "</span></span>
+    <span class="token operator">+</span> <span class="token string">"without quotation marks, additional punctuation, or citations."</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># For production, use the Search service's managed identity instead of the model key.</span>
+model_parameters <span class="token operator">=</span> AzureOpenAIVectorizerParameters<span class="token punctuation">(</span>
+    resource_url<span class="token operator">=</span>AOAI_ENDPOINT<span class="token punctuation">,</span>
+    deployment_name<span class="token operator">=</span>AOAI_DEPLOYMENT<span class="token punctuation">,</span>
+    model_name<span class="token operator">=</span>AOAI_MODEL<span class="token punctuation">,</span>
+    api_key<span class="token operator">=</span>AOAI_API_KEY<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+knowledge_base <span class="token operator">=</span> KnowledgeBase<span class="token punctuation">(</span>
+    name<span class="token operator">=</span>KB_NAME<span class="token punctuation">,</span>
+    description<span class="token operator">=</span><span class="token string">"Migrated from Azure OpenAI On Your Data."</span><span class="token punctuation">,</span>
+    models<span class="token operator">=</span><span class="token punctuation">[</span>KnowledgeBaseAzureOpenAIModel<span class="token punctuation">(</span>azure_open_ai_parameters<span class="token operator">=</span>model_parameters<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    knowledge_sources<span class="token operator">=</span><span class="token punctuation">[</span>KnowledgeSourceReference<span class="token punctuation">(</span>name<span class="token operator">=</span>KS_NAME<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    output_mode<span class="token operator">=</span>KnowledgeRetrievalOutputMode<span class="token punctuation">.</span>ANSWER_SYNTHESIS<span class="token punctuation">,</span>
+    retrieval_reasoning_effort<span class="token operator">=</span>KnowledgeRetrievalAutoReasoningEffort<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    answer_instructions<span class="token operator">=</span>answer_instructions<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+index_client<span class="token punctuation">.</span>create_knowledge_base<span class="token punctuation">(</span>knowledge_base<span class="token punctuation">)</span>
+created_kb <span class="token operator">=</span> <span class="token boolean">True</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Created '</span><span class="token interpolation"><span class="token punctuation">{</span>KB_NAME<span class="token punctuation">}</span></span><span class="token string">' (auto + answerSynthesis, model '</span><span class="token interpolation"><span class="token punctuation">{</span>AOAI_DEPLOYMENT<span class="token punctuation">}</span></span><span class="token string">')."</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>5 · The call you make instead (Foundry IQ)</h2>
+<p>Send messages to the KB and inherit its <strong>auto + answerSynthesis</strong> defaults. Require the
+index source to succeed, retain your filter, and request references and activity.
+The helper rejects partial responses and activity errors instead of displaying an
+incomplete answer as success.</p>
+<p><code>SEARCH_FILTER</code> is the static notebook default. In an application, pass a complete
+trusted <code>filter_add_on</code> on every caller-specific request, including follow-ups and
+evaluation queries. Build it in your backend from verified caller context, not raw
+client-supplied text. It <strong>replaces</strong>, rather than appends to, the static default, so
+retain all required policy clauses. Omitting it or passing <code>None</code> keeps the default;
+blank or non-string filters are rejected rather than silently removing restrictions.</p>
+<p>Application call pattern, with both values supplied by your trusted backend:</p>
+<pre><code class="language-python">result = kb_answer(
+    messages,
+    filter_add_on=trusted_filter,
+    query_source_authorization=verified_user_search_token,
+)
+</code></pre>
+<p><code>query_source_authorization</code> forwards a verified signed-in user's Search token when
+your index requires it; this is separate from the credential authenticating the app to
+Search. Obtain the token in your trusted backend with the Search audience
+<code>https://search.azure.com/.default</code>, not from arbitrary client-supplied text.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>knowledgebases <span class="token keyword">import</span> KnowledgeBaseRetrievalClient
+<span class="token keyword">from</span> azure<span class="token punctuation">.</span>search<span class="token punctuation">.</span>documents<span class="token punctuation">.</span>knowledgebases<span class="token punctuation">.</span>models <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    KnowledgeBaseMessage<span class="token punctuation">,</span>
+    KnowledgeBaseMessageTextContent<span class="token punctuation">,</span>
+    KnowledgeBaseRetrievalRequest<span class="token punctuation">,</span>
+    SearchIndexKnowledgeSourceParams<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+retrieval_client <span class="token operator">=</span> KnowledgeBaseRetrievalClient<span class="token punctuation">(</span>
+    endpoint<span class="token operator">=</span>SEARCH_ENDPOINT<span class="token punctuation">,</span>
+    credential<span class="token operator">=</span>search_credential<span class="token punctuation">,</span>
+    knowledge_base_name<span class="token operator">=</span>KB_NAME<span class="token punctuation">,</span>
+    api_version<span class="token operator">=</span>SEARCH_API_VERSION<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">require_complete_response</span><span class="token punctuation">(</span>pipeline_response<span class="token punctuation">,</span> result<span class="token punctuation">,</span> _headers<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> pipeline_response<span class="token punctuation">.</span>http_response<span class="token punctuation">.</span>status_code <span class="token operator">==</span> <span class="token number">206</span><span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> RuntimeError<span class="token punctuation">(</span><span class="token string">"KB returned HTTP 206 Partial Content; do not display it as a complete answer."</span><span class="token punctuation">)</span>
+    activity <span class="token operator">=</span> <span class="token punctuation">[</span>entry<span class="token punctuation">.</span>as_dict<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">for</span> entry <span class="token keyword">in</span> <span class="token punctuation">(</span>result<span class="token punctuation">.</span>activity <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+    errors <span class="token operator">=</span> <span class="token punctuation">[</span>entry<span class="token punctuation">[</span><span class="token string">"error"</span><span class="token punctuation">]</span> <span class="token keyword">for</span> entry <span class="token keyword">in</span> activity <span class="token keyword">if</span> entry<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"error"</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+    <span class="token keyword">if</span> errors<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> RuntimeError<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"KB retrieval activity failed: </span><span class="token interpolation"><span class="token punctuation">{</span>errors<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> result
+
+
+<span class="token keyword">def</span> <span class="token function">kb_answer</span><span class="token punctuation">(</span>
+    messages<span class="token punctuation">,</span> <span class="token operator">*</span><span class="token punctuation">,</span> max_documents<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">,</span> reranker_threshold<span class="token operator">=</span><span class="token boolean">None</span><span class="token punctuation">,</span>
+    filter_add_on<span class="token operator">=</span><span class="token boolean">None</span><span class="token punctuation">,</span> query_source_authorization<span class="token operator">=</span><span class="token boolean">None</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> USES_PER_USER_ACL <span class="token keyword">and</span> <span class="token keyword">not</span> query_source_authorization<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string">"This index requires the verified signed-in user's Search token."</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token builtin">isinstance</span><span class="token punctuation">(</span>max_documents<span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token keyword">or</span> <span class="token keyword">not</span> <span class="token builtin">isinstance</span><span class="token punctuation">(</span>max_documents<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token keyword">or</span> max_documents <span class="token operator">&amp;</span>lt<span class="token punctuation">;</span> <span class="token number">1</span><span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string">"max_documents must be a positive integer."</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> reranker_threshold <span class="token keyword">is</span> <span class="token keyword">not</span> <span class="token boolean">None</span> <span class="token keyword">and</span> <span class="token keyword">not</span> <span class="token number">0</span> <span class="token operator">&amp;</span>lt<span class="token punctuation">;</span><span class="token operator">=</span> reranker_threshold <span class="token operator">&amp;</span>lt<span class="token punctuation">;</span><span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string">"reranker_threshold must be between 0 and 4."</span><span class="token punctuation">)</span>
+    effective_filter <span class="token operator">=</span> SEARCH_FILTER <span class="token keyword">if</span> filter_add_on <span class="token keyword">is</span> <span class="token boolean">None</span> <span class="token keyword">else</span> filter_add_on
+    <span class="token keyword">if</span> effective_filter <span class="token keyword">is</span> <span class="token keyword">not</span> <span class="token boolean">None</span> <span class="token keyword">and</span> <span class="token punctuation">(</span>
+        <span class="token keyword">not</span> <span class="token builtin">isinstance</span><span class="token punctuation">(</span>effective_filter<span class="token punctuation">,</span> <span class="token builtin">str</span><span class="token punctuation">)</span> <span class="token keyword">or</span> <span class="token keyword">not</span> effective_filter<span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string">"Provide a non-empty OData filter; omit filter_add_on or use None to retain SEARCH_FILTER."</span><span class="token punctuation">)</span>
+    request <span class="token operator">=</span> KnowledgeBaseRetrievalRequest<span class="token punctuation">(</span>
+        messages<span class="token operator">=</span><span class="token punctuation">[</span>
+            KnowledgeBaseMessage<span class="token punctuation">(</span>
+                role<span class="token operator">=</span>m<span class="token punctuation">[</span><span class="token string">"role"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> content<span class="token operator">=</span><span class="token punctuation">[</span>KnowledgeBaseMessageTextContent<span class="token punctuation">(</span>text<span class="token operator">=</span>m<span class="token punctuation">[</span><span class="token string">"content"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+            <span class="token punctuation">)</span>
+            <span class="token keyword">for</span> m <span class="token keyword">in</span> messages
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        knowledge_source_params<span class="token operator">=</span><span class="token punctuation">[</span>
+            SearchIndexKnowledgeSourceParams<span class="token punctuation">(</span>
+                knowledge_source_name<span class="token operator">=</span>KS_NAME<span class="token punctuation">,</span>
+                include_references<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                include_reference_source_data<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                always_query_source<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                fail_on_error<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                filter_add_on<span class="token operator">=</span>effective_filter<span class="token punctuation">,</span>
+                reranker_threshold<span class="token operator">=</span>reranker_threshold<span class="token punctuation">,</span>
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        max_output_documents<span class="token operator">=</span>max_documents<span class="token punctuation">,</span>
+        include_activity<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+    <span class="token keyword">return</span> retrieval_client<span class="token punctuation">.</span>retrieve<span class="token punctuation">(</span>
+        request<span class="token punctuation">,</span>
+        query_source_authorization<span class="token operator">=</span>query_source_authorization<span class="token punctuation">,</span>
+        cls<span class="token operator">=</span>require_complete_response<span class="token punctuation">,</span>
+    <span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h3>Read the answer and validate citation IDs</h3>
+<p>Read text from every response block. A supported answer should contain native
+<code>[ref_id:&lt;id&gt;]</code> markers that resolve to <code>references</code>. This check catches missing or
+invented citation IDs, not whether each claim is actually supported by its source.
+The unsupported-answer contract is exactly <code>I don't know</code>, without citations.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">def</span> <span class="token function">answer_text</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token string">"\n\n"</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span>
+        content<span class="token punctuation">.</span>text
+        <span class="token keyword">for</span> message <span class="token keyword">in</span> <span class="token punctuation">(</span>result<span class="token punctuation">.</span>response <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">for</span> content <span class="token keyword">in</span> <span class="token punctuation">(</span>message<span class="token punctuation">.</span>content <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token builtin">getattr</span><span class="token punctuation">(</span>content<span class="token punctuation">,</span> <span class="token string">"text"</span><span class="token punctuation">,</span> <span class="token boolean">None</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span><span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">check_answer</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    text <span class="token operator">=</span> answer_text<span class="token punctuation">(</span>result<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token keyword">not</span> text<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string">"KB returned no answer text."</span><span class="token punctuation">)</span>
+    cited_ids <span class="token operator">=</span> <span class="token builtin">set</span><span class="token punctuation">(</span>re<span class="token punctuation">.</span>findall<span class="token punctuation">(</span><span class="token string">r"\[ref_id:([^\]]+)\]"</span><span class="token punctuation">,</span> text<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    reference_ids <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token builtin">str</span><span class="token punctuation">(</span>ref<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">)</span> <span class="token keyword">for</span> ref <span class="token keyword">in</span> <span class="token punctuation">(</span>result<span class="token punctuation">.</span>references <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+    <span class="token keyword">if</span> cited_ids <span class="token operator">-</span> reference_ids<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Unresolved citation IDs: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">sorted</span><span class="token punctuation">(</span>cited_ids <span class="token operator">-</span> reference_ids<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> text <span class="token operator">!=</span> ABSTENTION <span class="token keyword">and</span> <span class="token keyword">not</span> cited_ids<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string">"Answer has no native citations and is not the agreed abstention."</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> text<span class="token punctuation">,</span> cited_ids
+
+
+started <span class="token operator">=</span> perf_counter<span class="token punctuation">(</span><span class="token punctuation">)</span>
+kb <span class="token operator">=</span> kb_answer<span class="token punctuation">(</span>
+    <span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> QUESTION<span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span> query_source_authorization<span class="token operator">=</span>USER_SEARCH_TOKEN
+<span class="token punctuation">)</span>
+elapsed_seconds <span class="token operator">=</span> perf_counter<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> started
+text<span class="token punctuation">,</span> cited_ids <span class="token operator">=</span> check_answer<span class="token punctuation">(</span>kb<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"\nReferences:"</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> ref <span class="token keyword">in</span> <span class="token punctuation">(</span>kb<span class="token punctuation">.</span>references <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    source <span class="token operator">=</span> ref<span class="token punctuation">.</span>source_data <span class="token keyword">or</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    label <span class="token operator">=</span> source<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"title"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> source<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"filepath"</span><span class="token punctuation">)</span> <span class="token keyword">or</span> <span class="token builtin">getattr</span><span class="token punctuation">(</span>ref<span class="token punctuation">,</span> <span class="token string">"doc_key"</span><span class="token punctuation">,</span> <span class="token boolean">None</span><span class="token punctuation">)</span> <span class="token keyword">or</span> ref<span class="token punctuation">.</span><span class="token builtin">id</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  [ref_id:</span><span class="token interpolation"><span class="token punctuation">{</span>ref<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">}</span></span><span class="token string">] </span><span class="token interpolation"><span class="token punctuation">{</span>label<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"\nElapsed: </span><span class="token interpolation"><span class="token punctuation">{</span>elapsed_seconds<span class="token punctuation">:</span><span class="token format-spec">.2f</span><span class="token punctuation">}</span></span><span class="token string">s; cited sources: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>cited_ids<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h3>Inspect the work auto actually performed</h3>
+<p>Activity distinguishes retrieval, planning when used, and answer synthesis. The August
+API reports model metadata in a nested <code>model</code> object. Print operational fields rather
+than dumping your retrieved document content.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">activity_fields <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"type"</span><span class="token punctuation">,</span> <span class="token string">"elapsedMs"</span><span class="token punctuation">,</span> <span class="token string">"inputTokens"</span><span class="token punctuation">,</span> <span class="token string">"outputTokens"</span><span class="token punctuation">,</span> <span class="token string">"model"</span><span class="token punctuation">}</span>
+activity <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>key<span class="token punctuation">:</span> value <span class="token keyword">for</span> key<span class="token punctuation">,</span> value <span class="token keyword">in</span> entry<span class="token punctuation">.</span>as_dict<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">if</span> key <span class="token keyword">in</span> activity_fields<span class="token punctuation">}</span>
+    <span class="token keyword">for</span> entry <span class="token keyword">in</span> <span class="token punctuation">(</span>kb<span class="token punctuation">.</span>activity <span class="token keyword">or</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>activity<span class="token punctuation">,</span> indent<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h3>Reading the trace</h3>
+<p>A schematic trace might contain these activities; it is not a recorded benchmark:</p>
+<pre><code class="language-text">searchIndex            retrieve from the existing index
+modelQueryPlanning     present if auto escalates to planning
+searchIndex            additional retrieval if needed
+modelAnswerSynthesis   write an answer from retrieved evidence
+</code></pre>
+<p>Do not require every auto request to have a planning step or infer quality from the
+number of references. Evaluate claim support and relevant-source coverage separately.</p>
+</div><div class="nb-cell nb-markdown-cell"><h2>6 · Check the migration on your corpus</h2>
+<p>Run one supported question and one confirmed out-of-corpus question. The cell below
+checks the supported-answer citation contract and exact abstention. Inspect the cited
+documents to judge groundedness; passing these structural checks is not a quality score.
+The negative query is an additional billable retrieval/synthesis call.</p>
+<p>If you captured an OYD baseline, compare both answers to the same independently checked source text.
+Different models, ranking behavior, or prompts make this a migration check, not a
+controlled benchmark.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">supported_text<span class="token punctuation">,</span> supported_citations <span class="token operator">=</span> check_answer<span class="token punctuation">(</span>kb<span class="token punctuation">)</span>
+<span class="token keyword">if</span> supported_text <span class="token operator">==</span> ABSTENTION<span class="token punctuation">:</span>
+    <span class="token keyword">raise</span> AssertionError<span class="token punctuation">(</span><span class="token string">"The supported question was not answered; check the corpus, filter, and query."</span><span class="token punctuation">)</span>
+
+unsupported <span class="token operator">=</span> kb_answer<span class="token punctuation">(</span>
+    <span class="token punctuation">[</span><span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> UNSUPPORTED_QUESTION<span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    query_source_authorization<span class="token operator">=</span>USER_SEARCH_TOKEN<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+unsupported_text<span class="token punctuation">,</span> unsupported_citations <span class="token operator">=</span> check_answer<span class="token punctuation">(</span>unsupported<span class="token punctuation">)</span>
+<span class="token keyword">if</span> unsupported_text <span class="token operator">!=</span> ABSTENTION <span class="token keyword">or</span> unsupported_citations<span class="token punctuation">:</span>
+    <span class="token keyword">raise</span> AssertionError<span class="token punctuation">(</span><span class="token string">"The out-of-corpus query failed the exact abstention contract."</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Supported answer: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>supported_citations<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string"> resolved citation IDs."</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Unsupported answer: </span><span class="token interpolation"><span class="token punctuation">{</span>unsupported_text<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>7 · Multi-turn</h2>
+<p>Your application owns conversation history. Send prior turns with the next request;
+a KB retrieve call does not create a persistent chat session. This message-based auto
+path can use that context without introducing an agent. Replace the follow-up below
+with a question relevant to your chosen corpus. This single-corpus example uses the
+static filter; an application must supply its trusted filter and user token again on
+every follow-up, and keep conversation history scoped to that caller and corpus.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">conversation <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> QUESTION<span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"assistant"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> answer_text<span class="token punctuation">(</span>kb<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> <span class="token string">"Can you give me more detail on that?"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+follow_up <span class="token operator">=</span> kb_answer<span class="token punctuation">(</span>conversation<span class="token punctuation">,</span> query_source_authorization<span class="token operator">=</span>USER_SEARCH_TOKEN<span class="token punctuation">)</span>
+follow_up_text<span class="token punctuation">,</span> _ <span class="token operator">=</span> check_answer<span class="token punctuation">(</span>follow_up<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>follow_up_text<span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>When to add a Foundry Prompt Agent</h2>
+<p>Use a <strong>Foundry Prompt Agent + this KB</strong> when the application grows beyond corpus chat:
+for example, looking up a policy and then calling a separate tool to submit a request.
+Keep the Search Index Knowledge Source and KB; add the agent around them rather than
+moving or re-ingesting the corpus.</p>
+<p>Follow <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect">Connect agents to Foundry IQ knowledge bases</a>
+for the <code>PromptAgentDefinition</code> example. It creates a project connection to
+<code>/knowledgebases/&lt;name&gt;/mcp?api-version=2026-08-01-preview</code> and exposes only
+<code>knowledge_base_retrieve</code> through an <code>MCPTool</code>. The Foundry project's managed identity
+needs <strong>Search Index Data Reader</strong> on your Search service. Preserve per-user permission
+forwarding when applicable.</p>
+<p>An agent can consume the KB's synthesized answer, but that adds another model layer.
+If the agent should compose the final response itself, deliberately choose extractive
+KB output for that integration. Do not silently change a shared KB used by direct-answer
+clients. MCP tool results also differ from the REST/SDK response shape.</p>
+<p>This is an alternative architecture, not a prerequisite for the direct path above.</p>
+</div><div class="nb-cell nb-markdown-cell"><h2>Common errors</h2>
+<table>
+<thead>
+<tr>
+<th>Error</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Import failure or rejected <code>auto</code></td>
+<td>Wrong SDK or API version</td>
+<td>Install <code>12.1.0b2</code>, restart the kernel if needed, and use <code>2026-08-01-preview</code> on both clients.</td>
+</tr>
+<tr>
+<td>400 for a KB without a model</td>
+<td>Auto/synthesis requires a supported model</td>
+<td>Configure the real deployment name and model family; do not switch to GA or minimal as a silent fallback.</td>
+</tr>
+<tr>
+<td>409 on create</td>
+<td>The KS/KB name already exists</td>
+<td>Inspect the existing object; do not replace create-only with an unconditional upsert.</td>
+</tr>
+<tr>
+<td>401/403 on Search</td>
+<td>Caller or project identity lacks access</td>
+<td>Verify the endpoint, network path, auth mode, and the appropriate Search role.</td>
+</tr>
+<tr>
+<td>Model access/deployment error</td>
+<td>Wrong deployment, retired model, model key, or Search managed identity</td>
+<td>Check supported model/version and network access; for Entra, grant the Search identity <strong>Cognitive Services User</strong> on the model resource.</td>
+</tr>
+<tr>
+<td>HTTP 206 or activity error</td>
+<td>Incomplete retrieval</td>
+<td>Treat as incomplete. Investigate the source failure; do not display the partial answer as success.</td>
+</tr>
+<tr>
+<td>Missing per-user token</td>
+<td>ACL forwarding is enabled in the helper</td>
+<td>Supply the verified signed-in user's Search token for each call; never disable permission enforcement as a workaround.</td>
+</tr>
+<tr>
+<td>No answer or unresolved citations</td>
+<td>Missing content, restrictive filter, field mapping, threshold, or reference handling</td>
+<td>Inspect the source configuration and cited evidence. Do not relax an authorization filter to improve recall.</td>
+</tr>
+<tr>
+<td>Existing OYD application is unavailable</td>
+<td>Legacy deployment/API is unavailable</td>
+<td>Validate the new path against source-backed expected answers; the notebook does not execute OYD.</td>
+</tr>
+</tbody></table>
+</div><div class="nb-cell nb-markdown-cell"><h2>Best practices</h2>
+<ul>
+<li><strong>Evaluate against evidence.</strong> Use representative questions with independently checked
+source answers, including unsupported and permission-denied cases. Score relevance,
+groundedness, citation accuracy, latency, and usage; citation count alone is not quality.
+See <a href="https://learn.microsoft.com/azure/ai-foundry/concepts/evaluation-approach-gen-ai">Foundry evaluation</a>.</li>
+<li><strong>Separate management from query credentials.</strong> Install <code>azure-identity</code> and use
+<code>DefaultAzureCredential()</code> on the Search clients for Entra authentication. The setup
+principal needs <strong>Search Service Contributor</strong>; the querying identity needs
+<strong>Search Index Data Reader</strong>. For outbound model calls, omit <code>api_key</code> from the KB's
+model configuration and grant the Search service's managed identity <strong>Cognitive Services
+User</strong> on the model resource. These are distinct identities and permissions.</li>
+<li><strong>Preserve document access.</strong> Pass the complete trusted <code>filter_add_on</code> for each
+caller-specific request and, for permission-aware indexes, forward the verified user's
+token on every call. An authenticated <code>citationUrl</code>
+is not a public source URL; keep the same user authorization when resolving it.</li>
+<li><strong>Measure auto before tuning.</strong> Observe whether queries escalate, and evaluate thresholds
+separately from reasoning effort. No fixed latency, cost, or quality improvement is promised.</li>
+<li><strong>Cut over deliberately.</strong> Pin the preview API/SDK, verify model lifecycle and region
+support, preserve the working application path until evaluation passes, and monitor
+errors and abstentions after rollout. OYD is not a fallback after its retirement.</li>
+</ul>
+<p>For additional knowledge sources, see <a href="/forgebook/preview/pr-115/notebook/mastering-foundry-iq/">Mastering Foundry IQ</a>.
+An agent remains optional; source count alone does not change that decision.</p>
+</div><div class="nb-cell nb-markdown-cell"><h2>Hand it to a coding agent</h2>
+<p>Use this prompt to carry the same decision into an application repository:</p>
+<pre><code class="language-text">Migrate this codebase off Azure OpenAI On Your Data (retires Oct 14, 2026) to a Foundry IQ
+Knowledge Base using auto retrieval and answerSynthesis. Start with the direct KB path
+for corpus chat; add a Foundry Prompt Agent only for additional tools/actions/workflows.
+
+1. Inspect the existing data_sources/azure_search call, model, instructions, field mappings,
+   semantic and vector configuration, filters, and per-user authorization. Preserve access.
+2. Use azure-search-documents==12.1.0b2 and explicitly select 2026-08-01-preview on clients.
+   Check index compatibility and model lifecycle. Do not re-index or deploy models silently.
+3. With approval, create a new SearchIndexKnowledgeSource over the SAME index and a KB
+   with KnowledgeRetrievalAutoReasoningEffort(), output_mode=ANSWER_SYNTHESIS, a supported
+   configured model, and answer_instructions preserving the app's grounding requirements.
+   Use create-only operations; do not overwrite existing resources.
+4. Call KnowledgeBaseRetrievalClient.retrieve with messages and source params retaining
+   caller-specific filter_add_on and permission forwarding on every call, including follow-ups.
+   Set fail_on_error=True for the required index source.
+   Inherit auto from the KB. Handle 206/failed activities as incomplete, not success.
+5. Read all response text blocks, resolve native citation IDs against references, and adapt
+   the app's citation UI. Keep conversation history in the application.
+6. Evaluate supported/unsupported questions, permissions, groundedness, latency, and usage.
+   Do not linearly convert strictness or treat reference count as a quality metric.
+7. Use Entra ID in production with separate management/query/model permissions. Clean up
+   only objects created for this migration, after explicit confirmation.
+</code></pre>
+<p>If using the companion <a href="https://github.com/farzad528/azure-openai-on-your-data-migrator">migration CLI</a>,
+check its generated API version and settings against this recipe before applying them.</p>
+</div><div class="nb-cell nb-markdown-cell"><h2>Clean up</h2>
+<p>Set <code>CLEAN_UP = True</code> only when you no longer need this run's KB and knowledge source.
+Delete the KB first, then its source. The cell only deletes objects successfully created
+in this kernel; it never deletes the existing index or model. If you keep the KB for your
+application, leave cleanup off and retain the printed names.</p>
+</div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">CLEAN_UP <span class="token operator">=</span> <span class="token boolean">False</span>
+
+<span class="token keyword">if</span> CLEAN_UP<span class="token punctuation">:</span>
+    <span class="token keyword">if</span> created_kb<span class="token punctuation">:</span>
+        index_client<span class="token punctuation">.</span>delete_knowledge_base<span class="token punctuation">(</span>KB_NAME<span class="token punctuation">)</span>
+        created_kb <span class="token operator">=</span> <span class="token boolean">False</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Deleted knowledge base '</span><span class="token interpolation"><span class="token punctuation">{</span>KB_NAME<span class="token punctuation">}</span></span><span class="token string">'"</span></span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> created_ks<span class="token punctuation">:</span>
+        index_client<span class="token punctuation">.</span>delete_knowledge_source<span class="token punctuation">(</span>KS_NAME<span class="token punctuation">)</span>
+        created_ks <span class="token operator">=</span> <span class="token boolean">False</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Deleted knowledge source '</span><span class="token interpolation"><span class="token punctuation">{</span>KS_NAME<span class="token punctuation">}</span></span><span class="token string">'"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">else</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Cleanup skipped. Retained names: </span><span class="token interpolation"><span class="token punctuation">{</span>KB_NAME<span class="token punctuation">}</span></span><span class="token string">, </span><span class="token interpolation"><span class="token punctuation">{</span>KS_NAME<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>What you have after a successful run</h2>
+<ul>
+<li><strong>Reused corpus:</strong> a Search Index Knowledge Source and KB over the unchanged index.</li>
+<li><strong>Replacement call:</strong> <code>kb_answer</code> retrieves a synthesized answer, native references,
+and activity while your application retains conversation history.</li>
+<li><strong>Cutover checks:</strong> <code>check_answer</code> and the supported/unsupported questions check citation
+resolution and abstention. Review source support and permissions separately before rollout.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://learn.microsoft.com/azure/foundry-classic/openai/concepts/use-your-data">Azure OpenAI On Your Data retirement</a></li>
+<li><a href="https://learn.microsoft.com/azure/foundry/openai/concepts/model-retirement-schedule">Azure OpenAI model retirement schedule</a></li>
+<li><a href="https://learn.microsoft.com/azure/foundry/agents/concepts/what-is-foundry-iq">What is Foundry IQ?</a></li>
+<li><a href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-search-index">Create a Knowledge Source over a search index</a></li>
+<li><a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base">Create a Knowledge Base</a></li>
+<li><a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve">Retrieve from a Knowledge Base</a></li>
+<li><a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-set-retrieval-reasoning-effort">Set retrieval reasoning effort (including auto)</a></li>
+<li><a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-answer-synthesis">Enable answer synthesis</a></li>
+<li><a href="https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect">Connect Foundry Prompt Agents to a KB</a></li>
+<li><a href="https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/CHANGELOG.md">azure-search-documents (Python SDK changelog)</a></li>
+<li><a href="https://github.com/farzad528/azure-openai-on-your-data-migrator">azure-openai-on-your-data-migrator (companion CLI)</a></li>
+</ul>
+</div></div></div></div></section><!-- Tags --><section class="mt-12 pt-8 border-t border-subtle"><h2 class="text-sm font-medium text-muted uppercase tracking-wide mb-3">Tags</h2><div class="flex flex-wrap gap-2"><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-0">iq</span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-4">retrieval</span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-3">grounding</span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-0">rag</span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-7">azure-ai-search</span><span class="px-3 py-1 text-sm rounded-full border font-medium tag-color-0">azure-openai</span></div></section></article><aside class="toc-container hidden lg:block" data-astro-cid-p33bl5ka><nav class="toc sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto" aria-label="Table of contents" data-astro-cid-p33bl5ka><h2 class="toc-title" data-astro-cid-p33bl5ka>On this page</h2><ul class="toc-list" role="list" data-astro-cid-p33bl5ka><!-- Populated by JavaScript --></ul></nav></aside><script type="module">function e(){let e=document.querySelector(`.toc-list`),t=document.querySelector(`.notebook-content`);if(!e||!t)return;let n=t.querySelectorAll(`h1, h2, h3`);if(n.length===0){let e=document.querySelector(`.toc-container`);e&&(e.style.display=`none`);return}let r=new Set;n.forEach((e,t)=>{if(!e.id){let n=e.textContent?.toLowerCase().replace(/[^a-z0-9]+/g,`-`).replace(/^-|-$/g,``)||`heading-${t}`,i=n,a=1;for(;r.has(i);)i=`${n}-${a++}`;e.id=i}r.add(e.id)});let i=document.createDocumentFragment();n.forEach(e=>{let t=document.createElement(`li`),n=document.createElement(`a`);n.href=`#${e.id}`,n.textContent=e.textContent,e.tagName.toLowerCase()===`h3`&&n.classList.add(`toc-h3`),t.appendChild(n),i.appendChild(t)}),e.appendChild(i);let a=e.querySelectorAll(`a`),o={root:null,rootMargin:`-80px 0px -80% 0px`,threshold:0},s=null,c=new IntersectionObserver(t=>{t.forEach(t=>{if(t.isIntersecting){let n=t.target.id,r=e.querySelector(`a[href="#${n}"]`);r&&r!==s&&(s?.classList.remove(`active`),r.classList.add(`active`),s=r)}})},o);n.forEach(e=>c.observe(e)),a.length>0&&(a[0].classList.add(`active`),s=a[0]),document.addEventListener(`astro:before-swap`,()=>{c.disconnect()},{once:!0})}e(),document.addEventListener(`astro:after-swap`,e);</script></div></main><footer data-pagefind-ignore class="border-t border-subtle mt-16"><div class="max-w-6xl mx-auto px-4 py-8 text-center text-muted text-sm space-y-3"><p>Built with Astro • MIT License</p><nav class="flex flex-wrap justify-center gap-x-4 gap-y-2" aria-label="Footer"><a class="hover:text-primary transition-colors" href="https://github.com/microsoft-foundry/forgebook">GitHub</a><a class="hover:text-primary transition-colors" href="https://github.com/microsoft-foundry/forgebook/blob/main/LICENSE">License</a><a class="hover:text-primary transition-colors" href="https://github.com/microsoft-foundry/forgebook/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a><a class="hover:text-primary transition-colors" href="https://github.com/microsoft-foundry/forgebook/blob/main/SECURITY.md">Security</a><a class="hover:text-primary transition-colors" href="https://github.com/microsoft-foundry/forgebook/blob/main/SUPPORT.md">Support</a><a class="hover:text-primary transition-colors" href="https://privacy.microsoft.com/privacystatement">Privacy</a><a class="hover:text-primary transition-colors" href="https://www.microsoft.com/legal/terms-of-use">Terms of Use</a><a class="hover:text-primary transition-colors" href="https://www.microsoft.com/legal/intellectualproperty/trademarks">Trademarks</a></nav></div></footer><div id="search-modal" class="search-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Search notebooks"><div class="search-panel"><div class="search-input-wrapper"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"></path></svg><input id="search-input" class="search-input" type="text" aria-label="Search notebooks" aria-controls="search-results" placeholder="Search notebooks..." autocomplete="off" autocorrect="off" spellcheck="false"></div><div id="search-results" class="search-results" aria-live="polite"><div class="search-empty">Type to search notebooks</div></div><div class="search-footer search-footer-hints"><span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span><span><kbd>↵</kbd> Open</span><span><kbd>Esc</kbd> Close</span></div></div></div><script>(function(){const base = "/forgebook/preview/pr-115/";
+
+(function() {
+  var modal = document.getElementById('search-modal');
+  var input = document.getElementById('search-input');
+  var resultsContainer = document.getElementById('search-results');
+  var pagefindInstance = null;
+  var activeIndex = -1;
+  var debounceTimer = null;
+  var lastSearch = null;
+  var searchResultClicked = false;
+
+  function trackSearchModal(action, source) {
+    if (window.__telemetry) {
+      window.__telemetry.trackEvent(action, { source: source || 'unknown' });
+    }
+  }
+
+  function openSearch(source) {
+    modal.style.display = 'flex';
+    input.value = '';
+    resultsContainer.innerHTML = '<div class="search-empty">Type to search notebooks</div>';
+    activeIndex = -1;
+    requestAnimationFrame(function() { input.focus(); });
+    document.body.style.overflow = 'hidden';
+    trackSearchModal('SearchOpen', source);
+  }
+
+  function closeSearch(source) {
+    if (modal.style.display === 'none') return;
+    if (lastSearch && !searchResultClicked && window.__telemetry) {
+      window.__telemetry.trackEvent('SearchAbandon', {
+        source: source || 'unknown',
+        query: lastSearch.query,
+        queryLength: lastSearch.queryLength,
+        resultCount: lastSearch.resultCount,
+        hasResults: lastSearch.hasResults,
+      });
+    }
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+    trackSearchModal('SearchClose', source);
+    lastSearch = null;
+    searchResultClicked = false;
+  }
+
+  async function loadPagefind() {
+    if (pagefindInstance) return pagefindInstance;
+    try {
+      pagefindInstance = await import(base + 'pagefind/pagefind.js');
+      await pagefindInstance.init();
+      return pagefindInstance;
+    } catch (e) {
+      console.warn('Pagefind not available:', e);
+      return null;
+    }
+  }
+
+  async function doSearch(query) {
+    if (!query || query.length < 2) {
+      resultsContainer.innerHTML = '<div class="search-empty">Type to search notebooks</div>';
+      activeIndex = -1;
+      return;
+    }
+
+    var pf = await loadPagefind();
+    if (!pf) {
+      resultsContainer.innerHTML = '<div class="search-empty">Search is not available</div>';
+      return;
+    }
+
+    var search = await pf.search(query);
+    lastSearch = {
+      query: query,
+      queryLength: query.length,
+      resultCount: search.results.length,
+      hasResults: search.results.length > 0,
+    };
+    searchResultClicked = false;
+
+    // Track search behavior. The raw query is an intentional recipe-demand
+    // signal used to identify net-new cookbook topics; see docs/analytics.md.
+    if (window.__telemetry) {
+      window.__telemetry.trackEvent('Search', {
+        query: query,
+        queryLength: query.length,
+        resultCount: search.results.length,
+        hasResults: search.results.length > 0,
+      });
+    }
+
+    if (search.results.length === 0) {
+      resultsContainer.innerHTML = '<div class="search-empty">No results for &ldquo;' + query.replace(/</g, '&lt;') + '&rdquo;</div>';
+      activeIndex = -1;
+      return;
+    }
+
+    // Load first 8 results
+    var sliced = search.results.slice(0, 8);
+    var items = await Promise.all(sliced.map(function(r) { return r.data(); }));
+
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var title = (item.meta && item.meta.title) || 'Untitled';
+      var excerpt = item.excerpt || '';
+      html += '<a class="search-result-item" href="' + item.url + '" data-index="' + i + '">';
+      html += '<div class="search-result-title">' + escapeHtml(title) + '</div>';
+      html += '<div class="search-result-excerpt">' + excerpt + '</div>';
+      html += '</a>';
+    }
+    resultsContainer.innerHTML = html;
+    activeIndex = -1;
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function updateActive() {
+    var items = resultsContainer.querySelectorAll('.search-result-item');
+    for (var i = 0; i < items.length; i++) {
+      if (i === activeIndex) {
+        items[i].setAttribute('data-active', '');
+        items[i].scrollIntoView({ block: 'nearest' });
+      } else {
+        items[i].removeAttribute('data-active');
+      }
+    }
+  }
+
+  // Global keyboard shortcut: Cmd+K / Ctrl+K
+  document.addEventListener('keydown', function(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (modal.style.display === 'none') {
+        openSearch('keyboard-shortcut');
+      } else {
+        closeSearch('keyboard-shortcut');
+      }
+    }
+    if (e.key === 'Escape' && modal.style.display !== 'none') {
+      e.preventDefault();
+      closeSearch('escape');
+    }
+  });
+
+  // Search button trigger
+  var btn = document.getElementById('search-button');
+  if (btn) btn.addEventListener('click', function() { openSearch('button'); });
+
+  // Track search result link clicks (mouse)
+  resultsContainer.addEventListener('click', function(e) {
+    var link = e.target.closest && e.target.closest('.search-result-item');
+    if (link && window.__telemetry) {
+      searchResultClicked = true;
+      window.__telemetry.trackEvent('SearchResultClick', {
+        query: input.value,
+        queryLength: input.value.length,
+        resultIndex: parseInt(link.getAttribute('data-index') || '0', 10),
+        resultUrl: link.getAttribute('href'),
+      });
+    }
+  });
+
+  // Close on backdrop click
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeSearch('backdrop');
+  });
+
+  // Input handling with debounce
+  input.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    var q = input.value;
+    debounceTimer = setTimeout(function() { doSearch(q); }, 200);
+  });
+
+  // Keyboard navigation within modal
+  input.addEventListener('keydown', function(e) {
+    var items = resultsContainer.querySelectorAll('.search-result-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (items.length > 0) {
+        activeIndex = Math.min(activeIndex + 1, items.length - 1);
+        updateActive();
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (items.length > 0) {
+        activeIndex = Math.max(activeIndex - 1, 0);
+        updateActive();
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0 && items[activeIndex]) {
+        var resultUrl = items[activeIndex].getAttribute('href');
+        // Track which search result was clicked and its position
+        if (window.__telemetry) {
+          searchResultClicked = true;
+          window.__telemetry.trackEvent('SearchResultClick', {
+            query: input.value,
+            queryLength: input.value.length,
+            resultIndex: activeIndex,
+            resultUrl: resultUrl,
+          });
+        }
+        window.location.href = resultUrl;
+      }
+    }
+  });
+})();
+})();</script><script type="module" src="/forgebook/preview/pr-115/_astro/BaseLayout.astro_astro_type_script_index_0_lang.Bcfa8kUz.js"></script><!-- Application Insights telemetry --><script type="module" src="/forgebook/preview/pr-115/_astro/BaseLayout.astro_astro_type_script_index_1_lang.DwxI6akY.js"></script><!-- Twemoji for consistent emoji rendering across platforms --><script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script><script>
+      // Parse emojis after page load
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof twemoji !== 'undefined') {
+          twemoji.parse(document.body, {
+            folder: 'svg',
+            ext: '.svg',
+            base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/'
+          });
+        }
+      });
+    </script><!-- WebMCP: expose Forgebook tools to browser agents (W3C spec) and legacy WebMCP widget --><script>
+      (function () {
+        var basePath = document.querySelector('meta[name="base-url"]')?.content || '/forgebook';
+
+        // --- Shared tool definitions ---
+        // Each tool works with both the W3C document.modelContext API and the
+        // jasonjmcghee/WebMCP widget fallback. The execute callback receives
+        // structured input and reuses existing client-side page state.
+
+        var tools = [
+          {
+            name: 'list_recipes',
+            title: 'List Forgebook Recipes',
+            description: 'List Microsoft Foundry Forgebook recipes with title, description, tags, and URL. Works best from the homepage.',
+            inputSchema: { type: "object", properties: {} },
+            annotations: { readOnlyHint: true },
+            execute: function () {
+              var cards = document.querySelectorAll('[data-notebook-slug]');
+              if (cards.length === 0) {
+                return "No recipe cards found on this page. Navigate to the homepage first.";
+              }
+              var recipes = [];
+              cards.forEach(function (card) {
+                recipes.push({
+                  slug: card.getAttribute('data-notebook-slug'),
+                  title: card.getAttribute('data-notebook-title') || card.querySelector('h3, h2')?.textContent?.trim(),
+                  description: card.getAttribute('data-notebook-description') || '',
+                  tags: (card.getAttribute('data-notebook-tags') || '').split(',').filter(Boolean),
+                  url: window.location.origin + basePath + '/notebook/' + card.getAttribute('data-notebook-slug') + '/'
+                });
+              });
+              return JSON.stringify(recipes, null, 2);
+            }
+          },
+          {
+            name: 'search_recipes',
+            title: 'Search Forgebook Recipes',
+            description: 'Search Microsoft Foundry Forgebook recipes by keyword (matches title, description, tags). Works best from the homepage.',
+            inputSchema: {
+              type: "object",
+              properties: {
+                query: { type: "string", description: "Search keyword" }
+              },
+              required: ["query"]
+            },
+            annotations: { readOnlyHint: true },
+            execute: function (input) {
+              var q = (input.query || '').toLowerCase();
+              var cards = document.querySelectorAll('[data-notebook-slug]');
+              var results = [];
+              cards.forEach(function (card) {
+                var title = (card.getAttribute('data-notebook-title') || card.querySelector('h3, h2')?.textContent || '').toLowerCase();
+                var desc = (card.getAttribute('data-notebook-description') || '').toLowerCase();
+                var tags = (card.getAttribute('data-notebook-tags') || '').toLowerCase();
+                if (title.includes(q) || desc.includes(q) || tags.includes(q)) {
+                  results.push({
+                    slug: card.getAttribute('data-notebook-slug'),
+                    title: card.getAttribute('data-notebook-title') || card.querySelector('h3, h2')?.textContent?.trim(),
+                    description: card.getAttribute('data-notebook-description') || '',
+                    tags: (card.getAttribute('data-notebook-tags') || '').split(',').filter(Boolean),
+                    url: window.location.origin + basePath + '/notebook/' + card.getAttribute('data-notebook-slug') + '/'
+                  });
+                }
+              });
+              return results.length > 0 ? JSON.stringify(results, null, 2) : 'No recipes matched "' + input.query + '".';
+            }
+          },
+          {
+            name: 'get_page_content',
+            title: 'Read Current Page',
+            description: 'Get the text content of the current Forgebook page (useful for reading a recipe).',
+            inputSchema: { type: "object", properties: {} },
+            annotations: { readOnlyHint: true },
+            execute: function () {
+              var article = document.querySelector('article') || document.querySelector('[data-pagefind-body]');
+              if (!article) return "No article content found on this page.";
+              var text = article.innerText || article.textContent || '';
+              if (text.length > 12000) {
+                text = text.substring(0, 12000) + '\n\n[... truncated — page has ' + text.length + ' characters total]';
+              }
+              return text;
+            }
+          },
+          {
+            name: 'navigate_to_recipe',
+            title: 'Go to Recipe',
+            description: 'Navigate the browser to a specific Forgebook recipe by slug.',
+            inputSchema: {
+              type: "object",
+              properties: {
+                slug: { type: "string", description: "The recipe slug, e.g. foundry-agent-part-1" }
+              },
+              required: ["slug"]
+            },
+            annotations: { readOnlyHint: false },
+            execute: function (input) {
+              var url = window.location.origin + basePath + '/notebook/' + input.slug + '/';
+              window.location.href = url;
+              return 'Navigating to ' + url;
+            }
+          },
+          {
+            name: 'get_current_page_info',
+            title: 'Current Page Info',
+            description: 'Get metadata about the current Forgebook page (URL, title, description, whether it is a recipe).',
+            inputSchema: { type: "object", properties: {} },
+            annotations: { readOnlyHint: true },
+            execute: function () {
+              return JSON.stringify({
+                url: window.location.href,
+                title: document.title,
+                description: document.querySelector('meta[name="description"]')?.content || '',
+                isRecipePage: !!document.querySelector('article .notebook-content'),
+                recipeTitle: document.querySelector('article h1, [data-pagefind-meta="title"]')?.textContent?.trim() || null
+              }, null, 2);
+            }
+          }
+        ];
+
+        function toToolResult(result) {
+          if (result && typeof result === 'object' && Array.isArray(result.content)) {
+            return result;
+          }
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: typeof result === 'string' ? result : JSON.stringify(result, null, 2)
+              }
+            ]
+          };
+        }
+
+        function registerNativeTools(modelContext, label) {
+          tools.forEach(function (t) {
+            try {
+              modelContext.registerTool({
+                name: t.name,
+                title: t.title,
+                description: t.description,
+                inputSchema: t.inputSchema,
+                annotations: t.annotations,
+                execute: async function (input) {
+                  return toToolResult(await Promise.resolve(t.execute(input || {})));
+                }
+              });
+            } catch (e) {
+              console.warn('[WebMCP/' + label + '] Failed to register tool "' + t.name + '":', e);
+            }
+          });
+        }
+
+        // ---------------------------------------------------------------
+        // W3C WebMCP (document.modelContext) — native browser agent API
+        // Spec: https://webmachinelearning.github.io/webmcp/
+        // ---------------------------------------------------------------
+        if (typeof document !== 'undefined' && document.modelContext && typeof document.modelContext.registerTool === 'function') {
+          registerNativeTools(document.modelContext, 'document.modelContext');
+        } else if (typeof navigator !== 'undefined' && navigator.modelContext && typeof navigator.modelContext.registerTool === 'function') {
+          // Compatibility fallback for older browser prototypes that exposed
+          // WebMCP on navigator instead of document.
+          registerNativeTools(navigator.modelContext, 'navigator.modelContext');
+        }
+
+        // ---------------------------------------------------------------
+        // Legacy WebMCP widget (jasonjmcghee/WebMCP) — fallback for
+        // environments without native browser agent support.
+        // Loaded async; tools registered on script load.
+        // ---------------------------------------------------------------
+        window.__forgebook_tools = tools;
+      })();
+    </script><script>(function(){const webmcpSrc = "/forgebook/preview/pr-115/webmcp.js";
+
+      (function () {
+        var s = document.createElement('script');
+        s.src = webmcpSrc;
+        s.onload = function () {
+          if (typeof WebMCP === 'undefined' || !window.__forgebook_tools) return;
+          var mcp = new WebMCP({
+            color: '#6366f1',
+            position: 'bottom-right',
+            size: '28px',
+            padding: '16px'
+          });
+          window.__forgebook_tools.forEach(function (t) {
+            mcp.registerTool(
+              t.name,
+              t.description,
+              t.inputSchema,
+              function (args) {
+                var result = t.execute(args || {});
+                return toToolResult(result);
+              }
+            );
+          });
+        };
+        document.head.appendChild(s);
+      })();
+    })();</script></body></html>
