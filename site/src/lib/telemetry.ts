@@ -17,6 +17,7 @@
  *   window.__telemetry?.trackEvent("MyEvent", { key: "value" });
  */
 import { ApplicationInsights, SeverityLevel } from "@microsoft/applicationinsights-web";
+import type { Metric } from "web-vitals";
 
 let appInsights: ApplicationInsights | null = null;
 
@@ -244,8 +245,9 @@ async function trackWebVitals(): Promise<void> {
   try {
     const { onLCP, onINP, onCLS, onFCP, onTTFB } = await import("web-vitals");
 
-    const send = ({ name, value, rating }: { name: string; value: number; rating: string }) => {
-      trackMetric(`WebVital_${name}`, value, { rating });
+    const send = ({ name, value, rating, navigationType, navigationURL }: Metric) => {
+      const page = navigationURL ? new URL(navigationURL, location.href).pathname : location.pathname;
+      trackMetric(`WebVital_${name}`, value, { page, rating, navigationType });
     };
 
     onLCP(send);
