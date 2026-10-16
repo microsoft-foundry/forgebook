@@ -45,6 +45,10 @@ jobs:
         working-directory: ./scripts
         run: npx tsx validate-registry.ts
 
+      - name: Validate preview App token routing
+        working-directory: ./scripts
+        run: npm run test:preview-auth
+
       - name: Build site for preview
         working-directory: ./site
         env:
