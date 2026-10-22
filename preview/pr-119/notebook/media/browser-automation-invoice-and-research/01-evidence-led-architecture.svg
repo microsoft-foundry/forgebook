@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="560" viewBox="0 0 1080 560" role="img" aria-labelledby="title description">
+  <title id="title">Evidence-led browser automation</title>
+  <desc id="description">A synthetic invoice passes through PDF extraction and code validation before form drafting. Three scoped public-site tasks run read-only with concurrency two. Both flows require actual tool evidence, session closure, and typed outputs for human review.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect width="1080" height="560" rx="20" fill="#f8fafc"/>
+  <g font-family="Segoe UI, Arial, sans-serif" fill="#0f172a">
+    <text x="40" y="48" font-size="25" font-weight="700">Validate first. Observe the browser. Verify before accepting.</text>
+    <text x="40" y="80" font-size="17" fill="#475569">Microsoft Foundry prompt agent + Playwright Workspaces remote MCP</text>
+    <g fill="#eff6ff" stroke="#2563eb" stroke-width="2">
+      <rect x="40" y="120" width="235" height="112" rx="12"/>
+      <rect x="340" y="120" width="285" height="112" rx="12"/>
+      <rect x="690" y="120" width="350" height="112" rx="12"/>
+    </g>
+    <g font-size="19" font-weight="600">
+      <text x="60" y="154">Synthetic invoice PDF</text>
+      <text x="360" y="154">Extract + validate in code</text>
+      <text x="710" y="154">Draft the controlled form</text>
+    </g>
+    <g font-size="16" fill="#334155">
+      <text x="60" y="185">Untrusted document input</text>
+      <text x="60" y="209">No credentials or real invoices</text>
+      <text x="360" y="185">Typed fields, exact amounts</text>
+      <text x="360" y="209">Reject before browser access</text>
+      <text x="710" y="185">Read nine fields + fresh marker</text>
+      <text x="710" y="209">Zero submissions; close session</text>
+    </g>
+    <g fill="#ecfdf5" stroke="#047857" stroke-width="2">
+      <rect x="40" y="282" width="235" height="112" rx="12"/>
+      <rect x="340" y="282" width="285" height="112" rx="12"/>
+      <rect x="690" y="282" width="350" height="112" rx="12"/>
+    </g>
+    <g font-size="19" font-weight="600">
+      <text x="60" y="316">Three public sources</text>
+      <text x="360" y="316">Scoped read-only research</text>
+      <text x="710" y="316">Synthesize supplied results</text>
+    </g>
+    <g font-size="16" fill="#334155">
+      <text x="60" y="347">Assigned host + source path</text>
+      <text x="60" y="371">Explicit research date window</text>
+      <text x="360" y="347">One session per source</text>
+      <text x="360" y="371">Concurrency two; retain quotes</text>
+      <text x="710" y="347">Preserve facts, dates, limitations</text>
+      <text x="710" y="371">Empty findings are valid when honest</text>
+    </g>
+    <g stroke="#475569" stroke-width="2" marker-end="url(#arrow)">
+      <path d="M280 176 H330"/>
+      <path d="M630 176 H680"/>
+      <path d="M280 338 H330"/>
+      <path d="M630 338 H680"/>
+    </g>
+    <rect x="40" y="438" width="1000" height="84" rx="12" fill="#0f172a"/>
+    <text x="60" y="470" font-size="20" font-weight="600" fill="#ffffff">Shared acceptance gate: independent evidence, not final model prose</text>
+    <text x="60" y="501" font-size="17" fill="#e2e8f0">Executed tool output + URL scope + observed state/source quotes + same-session closure</text>
+  </g>
+</svg>
