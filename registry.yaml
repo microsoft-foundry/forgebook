@@ -298,3 +298,18 @@
     - governance
     - intelligent-document-processing
     - forward-deployed-engineering
+
+- slug: browser-automation-invoice-and-research
+  path: notebooks/browser-automation-invoice-and-research.ipynb
+  title: "Browser Automation: Invoice Drafts and Web Research"
+  description: "Draft a synthetic invoice form without submitting it, then research three public sites with Microsoft Foundry, Playwright Workspaces MCP tools, and validated browser evidence."
+  authors:
+    - github: arunt14
+  tags:
+    - agents
+    - agent-service
+    - prompt-agents
+    - tools
+    - mcp
+    - structured-outputs
+    - responsible-ai

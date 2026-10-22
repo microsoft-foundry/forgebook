@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Synthetic invoice draft | BAT demo</title>
+  <style>
+    body { max-width: 760px; margin: 40px auto; padding: 0 20px; font: 16px system-ui; color: #17324d; }
+    .notice { padding: 16px; background: #eef5fa; border-left: 4px solid #0078d4; }
+    form { display: grid; gap: 14px; margin: 24px 0; }
+    label { display: grid; gap: 6px; font-weight: 600; }
+    input { padding: 10px; font: inherit; border: 1px solid #8196a8; border-radius: 4px; }
+    button { padding: 12px; font: inherit; }
+    pre { white-space: pre-wrap; background: #f2f5f8; padding: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Invoice draft</h1>
+  <p class="notice">Synthetic data only. Draft-only demonstration: no backend, persistence, or payment processing.</p>
+  <p>Browser readback marker: <code id="demo-marker">__DEMO_MARKER__</code></p>
+  <form id="invoice-form" autocomplete="off">
+    <label>Vendor<input name="vendor_name" data-testid="vendor_name"></label>
+    <label>Invoice number<input name="invoice_number" data-testid="invoice_number"></label>
+    <label>Invoice date<input name="invoice_date" data-testid="invoice_date" placeholder="YYYY-MM-DD"></label>
+    <label>Currency<input name="currency" data-testid="currency"></label>
+    <label>PO number<input name="purchase_order" data-testid="purchase_order"></label>
+    <label>Subtotal<input name="subtotal" data-testid="subtotal" inputmode="decimal"></label>
+    <label>Tax<input name="tax" data-testid="tax" inputmode="decimal"></label>
+    <label>Total<input name="total" data-testid="total" inputmode="decimal"></label>
+    <label>Due date<input name="due_date" data-testid="due_date" placeholder="YYYY-MM-DD"></label>
+    <button type="submit" data-testid="submit">Submit (test sentinel only; do not click)</button>
+  </form>
+  <h2>Read-only draft state</h2>
+  <p>Use this state to verify the filled values. Submission attempts must remain zero.</p>
+  <pre id="draft-state" data-testid="draft-state"></pre>
+  <script>
+    const form = document.getElementById("invoice-form");
+    const state = document.getElementById("draft-state");
+    let submissionAttempts = 0;
+    function render() {
+      state.textContent = JSON.stringify({
+        fields: Object.fromEntries(new FormData(form)),
+        submission_attempts: submissionAttempts,
+        demo_marker: document.getElementById("demo-marker").textContent
+      }, null, 2);
+    }
+    form.addEventListener("input", render);
+    form.addEventListener("change", render);
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      submissionAttempts += 1;
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>

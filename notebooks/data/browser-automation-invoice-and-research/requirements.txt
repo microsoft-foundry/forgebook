@@ -1,0 +1,8 @@
+azure-ai-projects==2.8.0
+azure-identity==1.26.0
+pydantic==2.13.5
+python-dotenv==1.2.3
+reportlab==5.0.1
+pytest==9.1.1
+nbformat==5.11.1
+requests==2.34.2
