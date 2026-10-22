@@ -1,0 +1,11 @@
+{
+  "vendor_name": "Contoso Office Supplies",
+  "invoice_number": "INV-10482",
+  "invoice_date": "2026-09-15",
+  "currency": "USD",
+  "subtotal": 1250.00,
+  "tax": 225.00,
+  "total": 1475.00,
+  "purchase_order": "PO-8421",
+  "due_date": "2026-10-15"
+}
