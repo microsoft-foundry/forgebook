@@ -1,0 +1,20 @@
+# Synthetic tutorial data, not an actual Microsoft or customer environment.
+application: Atlas support app
+purpose: Internal portal where employees submit and track IT tickets
+ai_capability: Summarize submitted IT tickets using a Foundry model
+environment: staging
+language: Python
+hosting: Azure Container Apps
+model_provider: Microsoft Foundry
+model: gpt-4.1
+authentication:
+  mechanism: Microsoft Entra ID
+  credential: DefaultAzureCredential
+  identity_type: system-assigned managed identity
+  identity_owner: Atlas staging container app
+  model_role: Cognitive Services OpenAI User
+  role_scope: target Foundry resource
+  client_id: not required for this system-assigned identity
+local_development:
+  credential_source: Azure CLI sign-in
+  note: Local developer access does not establish the deployed app's access.

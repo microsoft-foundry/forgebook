@@ -1,0 +1,2280 @@
+{
+  "before": {
+    "question": "For the Atlas support app in staging, how should Python authenticate to Foundry, and whose identity needs the model role?",
+    "docs": [
+      {
+        "id": "ref-0",
+        "title": "Foundry Hosted Agents (programming-language-python)",
+        "content": "# Foundry Hosted Agents (programming-language-python)\n## Deploying to Foundry\nOnce you've verified your agent locally, deploy it to Microsoft Foundry:\n1. **Provision resources** (if you don't already have a Foundry project):\n```bash\n azd provision\n```\n This creates a resource group with a Foundry instance, project, model deployment, Application Insights, and a container registry.\n2. **Deploy the agent:**\n```bash\n azd deploy\n```\n This packages your agent as a container image, pushes it to Azure Container Registry, and deploys it to Foundry Agent Service.\nThe Foundry hosting infrastructure automatically injects the following environment variables into your agent container at runtime:\n| Variable | Description| \n|  --- | ---  |\n| `FOUNDRY_PROJECT_ENDPOINT` | The endpoint URL for the Foundry project. |\n| `AZURE_AI_MODEL_DEPLOYMENT_NAME` | The azd-managed model deployment name configured during `azd ai agent init`. Python code can prefer `FOUNDRY_MODEL` locally and fall back to this hosted value. |\n| `APPLICATIONINSIGHTS_CONNECTION_STRING` | The Application Insights connection string for telemetry. |\n\nOnce deployed, your agent is accessible through its dedicated Foundry endpoint and can also be tested from the Foundry portal.",
+        "kind": "mcpServer",
+        "source_path": null,
+        "url": "https://learn.microsoft.com/agent-framework/hosting/foundry-hosted-agent#deploying-to-foundry",
+        "document_key": null,
+        "application": null,
+        "environment": null
+      },
+      {
+        "id": "ref-1",
+        "title": "Identity and access overview for Foundry Agent Service",
+        "content": "# Identity and access overview for Foundry Agent Service\n## Find the right identity guidance\nStart with the task you need to complete.\n| If you need to | Start with| \n|  --- | ---  |\n| Control who can create, configure, or manage Foundry resources and agents | [Authentication and authorization in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/authentication-authorization-foundry) and [role-based access control in Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry) |\n| Choose and configure how callers are authorized to interact with an agent at runtime | [Agent endpoint authorization](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-endpoint-authorization), then [configure agent endpoint authorization](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-agent-endpoint-authorization) |\n| Understand how Foundry represents and governs agents in Microsoft Entra ID | [Agent identity concepts](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-identity) |\n| Configure authentication for a downstream tool | [Toolbox authentication](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/tool-authentication) and the documentation for the selected tool |\n| Choose client user delegation for a downstream tool | [User delegation for tools](https://learn.microsoft.com/azure/foundry/agents/concepts/user-delegation) |\n| Configure client user delegation for a downstream tool | [Configure user delegation for tools](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-user-delegation) |\n| Understand Microsoft Entra consent, tenant policy, and consent failures for delegated access | [Microsoft Entra consent for delegated access](https://learn.microsoft.com/azure/foundry/agents/concepts/entra-delegated-access-consent) |\n| Configure authentication for a specific downstream tool | [MCP authentication](https://learn.microsoft.com/azure/foundry/agents/how-to/mcp-authentication), [Work IQ](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/work-iq), or the documentation for the selected tool |\n\n## Support depends on the agent and tool\nAuthentication support differs by tool, connection type, protocol, and channel. Each integration defines its supported identity methods and any required consent, role assignments, or connection properties.\nCheck the detailed guidance for your protocol or channel and tool before selecting an identity model. Don't assume that every tool supports every authentication or delegated-access method.",
+        "kind": "mcpServer",
+        "source_path": null,
+        "url": "https://learn.microsoft.com/azure/foundry/agents/concepts/identity-access-overview#find-the-right-identity-guidance",
+        "document_key": null,
+        "application": null,
+        "environment": null
+      },
+      {
+        "id": "ref-2",
+        "title": "Authentication and authorization in Microsoft Foundry",
+        "content": "# Authentication and authorization in Microsoft Foundry\n## Authentication methods\nFoundry supports Microsoft Entra ID (token-based, keyless) and API keys.\n### Microsoft Entra ID\nMicrosoft Entra ID uses OAuth 2.0 bearer tokens scoped to `https://ai.azure.com/.default`.\nUse Microsoft Entra ID for:\n1. Production workloads.\n2. Conditional access, multifactor authentication (MFA), and just-in-time access.\n3. Least privilege RBAC and managed identity integration.\nAdvantages: Fine-grained role assignments, per-principal auditing, controllable token lifetimes, automatic secret hygiene, and managed identities for services.\nLimitations: Higher initial setup complexity. Requires understanding of role-based access control (RBAC). For more on RBAC in Foundry, see [Role-based access control for Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).\n### API keys\nAPI keys are static secrets scoped to a Foundry resource.\nUse API keys for:\n1. Rapid prototyping.\n2. Isolated test environments where single-secret rotation is acceptable.\nAdvantages: Simple, language agnostic, and doesn't require token acquisition.\nLimitations: Can't express user identity, is difficult to scope granularly, and is harder to audit. Generally not accepted by enterprise production workloads and not recommended by Microsoft.\nFor more information on enabling keyless authentication, see [Configure key-less authentication with Microsoft Entra ID](https://learn.microsoft.com/azure/foundry/foundry-models/how-to/configure-entra-id).\n### Authenticate with Microsoft Entra ID (Python)\nThe following example shows how to authenticate with Microsoft Entra ID by using the `azure-identity` library and make a request to a Foundry endpoint:\n**Expected output**: A JSON response listing your model deployments, or an authentication error if credentials are missing or the role assignment isn't configured.\n**Reference**: [DefaultAzureCredential](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential) | [azure-identity library](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme)\n### Authenticate with an API key (Python)\nThe following example shows how to authenticate by using an API key. Use this approach for quick prototyping only; Microsoft Entra ID is recommended for production.",
+        "kind": "mcpServer",
+        "source_path": null,
+        "url": "https://learn.microsoft.com/azure/foundry/concepts/authentication-authorization-foundry#authentication-methods",
+        "document_key": null,
+        "application": null,
+        "environment": null
+      },
+      {
+        "id": "ref-3",
+        "title": "Role-based access control for Azure OpenAI in Microsoft Foundry Models (classic)",
+        "content": "# Role-based access control for Azure OpenAI in Microsoft Foundry Models (classic)\n## Azure OpenAI roles\nThis role can be found in the Azure portal under **Subscriptions** > \\***Access control (IAM)** > **Add role assignment** > search for **Cognitive Services Usages Reader**. The role must be applied at the subscription level, it does not exist at the resource level.\nIf you don't wish to use this role, the subscription **Reader** role provides equivalent access, but it also grants read access beyond the scope of what is needed for viewing quota. Model deployment via the [Foundry portal](https://ai.azure.com/?cid=learnDocs) is also partially dependent on the presence of this role.\nThis role provides little value by itself and is instead typically assigned in combination with one or more of the previously described roles.\n#### Cognitive Services Usages Reader + Cognitive Services OpenAI User\nAll the capabilities of Cognitive Services OpenAI User plus the ability to:\n\u2705 View quota allocations in [Foundry portal](https://ai.azure.com/?cid=learnDocs)\n#### Cognitive Services Usages Reader + Cognitive Services OpenAI Contributor\nAll the capabilities of Cognitive Services OpenAI Contributor plus the ability to:\n\u2705 View quota allocations in [Foundry portal](https://ai.azure.com/?cid=learnDocs)\n#### Cognitive Services Usages Reader + Cognitive Services Contributor\nAll the capabilities of Cognitive Services Contributor plus the ability to:\n\u2705 View & edit quota allocations in [Foundry portal](https://ai.azure.com/?cid=learnDocs) \u2705 Create new model deployments or edit existing model deployments (via Foundry) ",
+        "kind": "mcpServer",
+        "source_path": null,
+        "url": "https://learn.microsoft.com/azure/foundry-classic/openai/how-to/role-based-access-control#azure-openai-roles",
+        "document_key": null,
+        "application": null,
+        "environment": null
+      },
+      {
+        "id": "ref-4",
+        "title": "Set up authentication for Model Context Protocol (MCP) tools (python)",
+        "content": "# Set up authentication for Model Context Protocol (MCP) tools (python)\nMost Model Context Protocol (MCP) servers require authentication to access the server and its underlying service. Proper authentication ensures your agents can securely connect to MCP servers, invoke their tools, and access protected resources while maintaining appropriate access controls.\nIn this article, you:\n1. Choose an authentication method based on your security requirements\n2. Configure key-based, Microsoft Entra, or OAuth authentication\n3. Set up and validate your MCP server connection\nNote\nIf you don't already have an account with the MCP server publisher, create one through the publisher's website.\n## Prerequisites\nBefore you begin, you need:\n1. Access to the [Foundry portal](https://ai.azure.com/?cid=learnDocs) and a project. If you don't have one, see [Create projects in Foundry](https://learn.microsoft.com/azure/foundry/how-to/create-projects).\n2. Permissions to create project connections and configure agents. For details, see [Role-based access control in the Foundry portal](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).\n3. The remote MCP server endpoint URL you want to connect to.\n4. Credentials for your selected authentication method:\n4.1. Key-based authentication: an API key, personal access token (PAT), or other token.\n4.2. Microsoft Entra authentication: role assignments for the agent identity or project managed identity on the underlying service.\n4.3. Microsoft Entra client user delegation: a supported MCP tool and the delegated permissions required by its downstream resource.\n4.4. OAuth identity passthrough: managed OAuth configuration or an OAuth app registration (custom OAuth).",
+        "kind": "mcpServer",
+        "source_path": null,
+        "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/mcp-authentication",
+        "document_key": null,
+        "application": null,
+        "environment": null
+      },
+      {
+        "id": "ref-5",
+        "title": "Elevated-role tasks in Microsoft Foundry",
+        "content": "# Elevated-role tasks in Microsoft Foundry\n## Deploy and manage models\nMarketplace model deployments require subscription-level access because they create billing agreements. Fine-tuning requires **Foundry Owner** because it creates training jobs that consume compute and storage. Before deploying any model, verify that your subscription has sufficient quota for the target model and region \u2014 see [Manage quotas](https://learn.microsoft.com/azure/foundry/how-to/quota).\nFor step-by-step deployment instructions, see [Create model deployments](https://learn.microsoft.com/azure/foundry/foundry-models/how-to/create-model-deployments).\n## Configure security and networking\nNetwork and encryption configurations require elevated roles on multiple resources. These configurations span the Foundry resource, virtual networks, DNS zones, and Key Vault, so you typically need multiple roles.\n### Private endpoints\nPrivate endpoints restrict access to your Foundry resource to traffic from specific virtual networks. Configuring a private endpoint requires roles on three different resources.\n| Task | Minimum role | Scope | Details| \n|  --- | --- | --- | ---  |\n| Create private endpoint | **Contributor***or***Owner** | Foundry resource | [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link) |\n| Configure VNet | **Network Contributor** | Virtual network | [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link) |\n| Configure private DNS zone | **Private DNS Zone Contributor** | DNS zone | [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link) |\n\nFor step-by-step instructions, see [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link).\n### Managed virtual networks\nA managed virtual network isolates Foundry resources behind a Foundry-managed network. This setup simplifies network configuration compared to bringing your own VNet.\n| Task | Minimum role | Scope | Details| \n|  --- | --- | --- | ---  |\n| Configure managed VNet | **Owner***or***Contributor** | Foundry resource | [Managed virtual network](https://learn.microsoft.com/azure/foundry/how-to/managed-virtual-network) |\n| Assign RBAC to resources in managed VNet | **Owner***or***Role Based Access Control Administrator** | Target resources | [Managed virtual network](https://learn.microsoft.com/azure/foundry/how-to/managed-virtual-network) |\n\n### Network security perimeter\nA network security perimeter provides a centralized way to manage network access across multiple Azure resources. Add your Foundry resource to an existing perimeter to enforce consistent network rules.\n| Task | Minimum role | Scope | Details| \n|  --- | --- | --- | ---  |\n| Add Foundry to network security perimeter (preview) | **Owner**, **Contributor**, *or***Network Contributor** | Foundry resource | [Network security perimeter](https://learn.microsoft.com/azure/foundry/how-to/add-foundry-to-network-security-perimeter) |\n\n### Customer-managed keys\nBy using customer-managed keys (CMK), you can encrypt Foundry data with keys you control in Azure Key Vault. CMK requires roles on both the Key Vault and the Foundry resource because you grant the managed identity access to your key and then configure the resource to use it.",
+        "kind": "mcpServer",
+        "source_path": null,
+        "url": "https://learn.microsoft.com/azure/foundry/concepts/administrator-guide#deploy-and-manage-models",
+        "document_key": null,
+        "application": null,
+        "environment": null
+      }
+    ],
+    "activity": [
+      {
+        "type": "modelQueryPlanning",
+        "id": 0,
+        "startedAt": "2026-10-24T16:55:30.1305317Z",
+        "completedAt": "2026-10-24T16:55:33.4309893Z",
+        "inputTokens": 1004,
+        "outputTokens": 152,
+        "elapsedMs": 3300,
+        "model": {
+          "modelName": "gpt-4.1",
+          "deploymentId": "gpt-4.1"
+        }
+      },
+      {
+        "type": "mcpServer",
+        "id": 2,
+        "startedAt": "2026-10-24T16:55:33.4311243Z",
+        "completedAt": "2026-10-24T16:55:34.0806036Z",
+        "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+        "queryTime": "2026-10-24T16:55:33.4312129Z",
+        "count": 3,
+        "elapsedMs": 647,
+        "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+        "mcpServerArguments": {
+          "toolName": "microsoft_docs_search",
+          "toolArguments": {
+            "query": "Atlas support app Foundry model role identity requirements"
+          }
+        }
+      },
+      {
+        "type": "mcpServer",
+        "id": 1,
+        "startedAt": "2026-10-24T16:55:33.4311152Z",
+        "completedAt": "2026-10-24T16:55:34.1785059Z",
+        "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+        "queryTime": "2026-10-24T16:55:33.4311988Z",
+        "count": 4,
+        "elapsedMs": 745,
+        "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+        "mcpServerArguments": {
+          "toolName": "microsoft_docs_search",
+          "toolArguments": {
+            "query": "Atlas support app staging Python authentication to Foundry"
+          }
+        }
+      },
+      {
+        "type": "mcpServer",
+        "id": 3,
+        "startedAt": "2026-10-24T16:55:33.4311511Z",
+        "completedAt": "2026-10-24T16:55:34.3524144Z",
+        "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+        "queryTime": "2026-10-24T16:55:33.4312132Z",
+        "count": 5,
+        "elapsedMs": 919,
+        "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+        "mcpServerArguments": {
+          "toolName": "microsoft_docs_search",
+          "toolArguments": {
+            "query": "Foundry Python authentication methods"
+          }
+        }
+      },
+      {
+        "type": "mcpServer",
+        "id": 4,
+        "startedAt": "2026-10-24T16:55:34.0806391Z",
+        "completedAt": "2026-10-24T16:55:34.8748621Z",
+        "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+        "queryTime": "2026-10-24T16:55:34.0806847Z",
+        "count": 4,
+        "elapsedMs": 792,
+        "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+        "mcpServerArguments": {
+          "toolName": "microsoft_docs_search",
+          "toolArguments": {
+            "query": "Foundry model role access delegation Atlas support app"
+          }
+        }
+      },
+      {
+        "type": "agenticReasoning",
+        "id": 5,
+        "startedAt": "2026-10-24T16:55:34.8763563Z",
+        "completedAt": "2026-10-24T16:55:34.8763563Z",
+        "reasoningTokens": 0,
+        "retrievalReasoningEffort": {
+          "kind": "low"
+        },
+        "logicalReasoningEffort": {
+          "kind": "low"
+        }
+      }
+    ]
+  },
+  "after": {
+    "question": "For the Atlas support app in staging, how should Python authenticate to Foundry, and whose identity needs the model role?",
+    "docs": [
+      {
+        "id": "ref-3",
+        "title": "app-profile.yaml: app-profile.yaml",
+        "content": "# Synthetic tutorial data, not an actual Microsoft or customer environment.\napplication: Atlas support app\npurpose: Internal portal where employees submit and track IT tickets\nai_capability: Summarize submitted IT tickets using a Foundry model\nenvironment: staging\nlanguage: Python\nhosting: Azure Container Apps\nmodel_provider: Microsoft Foundry\nmodel: gpt-4.1\nauthentication:\n  mechanism: Microsoft Entra ID\n  credential: DefaultAzureCredential\n  identity_type: system-assigned managed identity\n  identity_owner: Atlas staging container app\n  model_role: Cognitive Services OpenAI User\n  role_scope: target Foundry resource\n  client_id: not required for this system-assigned identity\nlocal_development:\n  credential_source: Azure CLI sign-in\n  note: Local developer access does not establish the deployed app's access.",
+        "kind": "searchIndex",
+        "source_path": "team-docs/app-profile.yaml",
+        "url": null,
+        "document_key": "team-b12bf5a25d5f0a8e",
+        "application": "Atlas support app",
+        "environment": "staging"
+      },
+      {
+        "id": "ref-2",
+        "title": "team-standards.md: Atlas staging authentication",
+        "content": "## Atlas staging authentication\n\nThe Atlas support app uses its container app's system-assigned managed identity\nwhen deployed to staging. Use DefaultAzureCredential in Python. Assign Cognitive\nServices OpenAI User to that identity on the target Foundry resource. Do not\nconfigure a user-assigned identity client ID for this sample.\n\nUse Azure CLI sign-in for local development. The developer and the deployed\napplication are different principals; a successful local request does not prove\nthat the application has access.",
+        "kind": "searchIndex",
+        "source_path": "team-docs/team-standards.md",
+        "url": null,
+        "document_key": "team-ddf9e905d4e76533",
+        "application": "Atlas support app",
+        "environment": "staging"
+      },
+      {
+        "id": "ref-0",
+        "title": "Connect to an A2A agent endpoint from Foundry Agent Service (python)",
+        "content": "# Connect to an A2A agent endpoint from Foundry Agent Service (python)\n## Usage support\nThe following table shows SDK and setup support.\n| Microsoft Foundry support | Python SDK | C# SDK | JavaScript SDK | Java SDK | REST API | Basic agent setup | Standard agent setup| \n|  --- | --- | --- | --- | --- | --- | --- | ---  |\n| \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f |\n\n## Create an A2A connection\nCreate a project connection for your A2A endpoint so you can store authentication securely and reuse it across agent versions.\nFor details about supported authentication approaches, see [Agent2Agent (A2A) authentication](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-to-agent-authentication).\nIf you're connecting to a Foundry agent as the target, set the connection **target** to the target agent's A2A base path, `https://{account}.services.ai.azure.com/api/projects/{project}/agents/{agent}/endpoint/protocols/a2a`, and use the audience `https://ai.azure.com`. Don't set an agent card path. Foundry resolves the default agent card path automatically and negotiates the A2A protocol version for you. You also don't need to set the optional `send_credentials_for_agent_card` field, because Foundry doesn't require the agent card fetch to carry separate credentials. However, the target agent must have incoming A2A enabled; see [Enable incoming A2A on a Foundry agent](https://learn.microsoft.com/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint).\nChoose the authentication behavior based on whether the target agent needs the incoming user's context:\n1. For an app-only call, use the calling agent's identity.\n2. For an existing delegated integration, `UserEntraToken` can preserve the incoming Microsoft Entra user context as a compatibility path.\n3. When the target supports the agent identity acting with the user, use `AgentOnBehalfOfUser`. This authentication type is in preview. The source agent endpoint must use the `AgentBlueprint` scheme, and the incoming token must target the source agent's agent blueprint.\nFor the actor model, endpoint scheme and token audience requirements, consent, and migration between the delegated authentication types, see [Configure user delegation for tools in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-user-delegation).\nFor Foundry agent targets, A2A tasks and contexts are retained for 60 days from their most recent write. Each new write to a task or context resets its 60-day retention period. For details, see [A2A task and context retention](https://learn.microsoft.com/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint#understand-a2a-task-and-context-retention).",
+        "kind": "mcpServer",
+        "source_path": null,
+        "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/tools/agent-to-agent#usage-support",
+        "document_key": null,
+        "application": null,
+        "environment": null
+      },
+      {
+        "id": "ref-1",
+        "title": "Set up permissions for Microsoft Foundry evaluation workflows",
+        "content": "# Set up permissions for Microsoft Foundry evaluation workflows\n## Find the roles for your workflow\nFirst, assign the role in this table for the evaluation task you want to perform.\n| I want to | Assign the role to | Role | Assign at| \n|  --- | --- | --- | ---  |\n| Create continuous or scheduled evaluation rules | The project managed identity | **Foundry User** | The Foundry resource or project used for the evaluation rule |\n| Run or review portal or SDK evaluations, including agent, synthetic dataset, admin-connected model, and benchmark workflows | Your identity or application identity | **Foundry User**, or a role with equivalent permissions | The Foundry resource or project that contains the evaluation |\n| Run evaluations in CI/CD | The workload identity or service principal used by the pipeline | **Foundry User**, or a role with equivalent permissions | The Foundry resource or project that contains the evaluation |\n| Run agent evaluations with the Azure Developer CLI | Your identity | **Foundry User** | The Foundry resource |\n\nEvaluation jobs use Microsoft Entra ID. If an evaluation invokes a model deployment, assign **Foundry User** at the Foundry account scope. A project-only role assignment doesn't authorize model inference. For more information, see [Deployment type-specific permissions](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry#deployment-typespecific-permissions).\nFor the permissions included in Foundry roles and guidance for custom roles, see [Role-based access control for Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).",
+        "kind": "mcpServer",
+        "source_path": null,
+        "url": "https://learn.microsoft.com/azure/foundry/observability/how-to/evaluation-permissions#find-the-roles-for-your-workflow",
+        "document_key": null,
+        "application": null,
+        "environment": null
+      },
+      {
+        "id": "ref-4",
+        "title": "Connect agents to OpenAPI tools (python)",
+        "content": "# Connect agents to OpenAPI tools (python)\n## Configure OpenAPI authentication in the Foundry portal\nWhen you add an OpenAPI tool through **Tools** > **Custom** > **OpenAPI**, create a project connection for the tool. **Anonymous**, **API key**, and **Managed identity** authentication all require a connection, whether you configure the tool through the portal, SDK, or REST API.\nThe portal's **Managed identity** option uses the **Foundry project's managed identity**, not the Foundry account's managed identity. OpenAPI tools in toolboxes have always required project managed identity, regardless of subscription history. Account managed identity is supported only for OpenAPI tools attached directly to prompt agents in existing subscriptions. Migrate those configurations to project managed identity as soon as possible. See Managed identity support.\nAnonymous authentication means the target API doesn't require credentials. It doesn't mean you can skip creating the connection.\n| Authentication | Connection configuration| \n|  --- | ---  |\n| Anonymous | Create an OpenAPI project connection with no authentication (`authType: \"None\"`). No API key or token is required. |\n| API key | Create a project connection that stores the API key. Match the key name to the header or query parameter in the OpenAPI security scheme. See Authenticate with API key. |\n| Managed identity (project managed identity) | Create an OpenAPI project connection with `authType: \"ProjectManagedIdentity\"`, the target API endpoint, and the audience expected by that API. Assign the project's managed identity the required role on the target service. This option doesn't use the account's managed identity. |\n\n### Configure anonymous authentication\n1. Open **Tools** > **Custom** > **OpenAPI** in your Foundry project.\n2. In **Create an OpenAPI tool**, enter the tool's **Name** and **Description**.\n3. Set **Authentication method** to **Anonymous**.\n4. Under **Connection**, select an existing anonymous connection or select **Create a new connection** to create one.\n5. Enter the **OpenAPI 3.0+ schema**, and select **Create tool**.\nThe **Connection** field is required even when **Anonymous** is selected.\n[![Screenshot of anonymous OpenAPI authentication with a required Connection field and a Create a new connection button.](https://learn.microsoft.com/azure/foundry/agents/media/tools/openapi/anonymous-connection-required.png)](../../media/tools/openapi/anonymous-connection-required.png#lightbox)\n### Configure managed identity authentication",
+        "kind": "mcpServer",
+        "source_path": null,
+        "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/tools/openapi#configure-openapi-authentication-in-the-foundry-portal",
+        "document_key": null,
+        "application": null,
+        "environment": null
+      },
+      {
+        "id": "ref-5",
+        "title": "Elevated-role tasks in Microsoft Foundry",
+        "content": "# Elevated-role tasks in Microsoft Foundry\n## Troubleshoot common permission errors\nWhen developers encounter permission errors, use the task tables in this article to identify the required role. The following table maps common error messages to likely causes and resolutions.\n| Error message | Likely cause | Resolution| \n|  --- | --- | ---  |\n| `AuthorizationFailed` or `The client does not have authorization to perform action` | Missing control-plane role (**Owner**, **Contributor**, or resource-specific role) | Identify the task in this article, note the minimum role and scope, then assign the role. |\n| Agent create or update fails even with **Owner**/**Contributor** | Missing Foundry data-plane role on the project | Assign **Foundry User**, **Foundry Project Manager**, or **Foundry Owner** at the project scope. See Hosted agent setup. |\n| `Creating that role assignment requires Microsoft.Authorization/roleAssignments/write` (or equivalent) | Caller has **Foundry Project Manager** or **Foundry Account Owner**, but needs to assign roles outside the allowed **Foundry User** constraint | Use **Owner** or **Role Based Access Control Administrator** at the target resource scope (for example, ACR or Log Analytics). |\n| `ForbiddenError` on model deployment | Missing **Foundry Account Owner** on the Foundry resource | See Deploy and manage models. |\n| `LinkedAuthorizationFailed` during resource creation | Missing permissions on a linked resource (storage, Key Vault, or search) | Check Configure agent infrastructure for cross-service role requirements. |",
+        "kind": "mcpServer",
+        "source_path": null,
+        "url": "https://learn.microsoft.com/azure/foundry/concepts/administrator-guide#troubleshoot-common-permission-errors",
+        "document_key": null,
+        "application": null,
+        "environment": null
+      }
+    ],
+    "activity": [
+      {
+        "type": "modelQueryPlanning",
+        "id": 0,
+        "startedAt": "2026-10-24T16:55:35.2627046Z",
+        "completedAt": "2026-10-24T16:55:37.4511814Z",
+        "inputTokens": 1090,
+        "outputTokens": 123,
+        "elapsedMs": 2188,
+        "model": {
+          "modelName": "gpt-4.1",
+          "deploymentId": "gpt-4.1"
+        }
+      },
+      {
+        "type": "mcpServer",
+        "id": 3,
+        "startedAt": "2026-10-24T16:55:37.4514136Z",
+        "completedAt": "2026-10-24T16:55:38.035427Z",
+        "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+        "queryTime": "2026-10-24T16:55:37.4514833Z",
+        "count": 5,
+        "elapsedMs": 581,
+        "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+        "mcpServerArguments": {
+          "toolName": "microsoft_docs_search",
+          "toolArguments": {
+            "query": "Foundry model role assignment Atlas app"
+          }
+        }
+      },
+      {
+        "type": "mcpServer",
+        "id": 2,
+        "startedAt": "2026-10-24T16:55:37.451387Z",
+        "completedAt": "2026-10-24T16:55:38.0865807Z",
+        "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+        "queryTime": "2026-10-24T16:55:37.4514496Z",
+        "count": 3,
+        "elapsedMs": 633,
+        "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+        "mcpServerArguments": {
+          "toolName": "microsoft_docs_search",
+          "toolArguments": {
+            "query": "Python authentication Foundry Atlas support app"
+          }
+        }
+      },
+      {
+        "type": "searchIndex",
+        "id": 1,
+        "startedAt": "2026-10-24T16:55:37.4513337Z",
+        "completedAt": "2026-10-24T16:55:38.1703928Z",
+        "knowledgeSourceName": "learn-team-5d38917fe290-team",
+        "queryTime": "2026-10-24T16:55:37.6363488Z",
+        "count": 3,
+        "elapsedMs": 0,
+        "searchIndexArguments": {
+          "search": "Atlas support app staging Python Foundry authentication",
+          "filter": null,
+          "semanticConfigurationName": "semantic",
+          "sourceDataFields": [
+            {
+              "name": "title"
+            },
+            {
+              "name": "content"
+            },
+            {
+              "name": "id"
+            },
+            {
+              "name": "source_path"
+            },
+            {
+              "name": "application"
+            },
+            {
+              "name": "environment"
+            }
+          ],
+          "searchFields": []
+        }
+      },
+      {
+        "type": "searchIndex",
+        "id": 4,
+        "startedAt": "2026-10-24T16:55:37.8754783Z",
+        "completedAt": "2026-10-24T16:55:38.1703933Z",
+        "knowledgeSourceName": "learn-team-5d38917fe290-team",
+        "queryTime": "2026-10-24T16:55:38.1002787Z",
+        "count": 3,
+        "elapsedMs": 0,
+        "searchIndexArguments": {
+          "search": "Atlas support app staging Foundry model role identity assignment",
+          "filter": null,
+          "semanticConfigurationName": "semantic",
+          "sourceDataFields": [
+            {
+              "name": "title"
+            },
+            {
+              "name": "content"
+            },
+            {
+              "name": "id"
+            },
+            {
+              "name": "source_path"
+            },
+            {
+              "name": "application"
+            },
+            {
+              "name": "environment"
+            }
+          ],
+          "searchFields": []
+        }
+      },
+      {
+        "type": "agenticReasoning",
+        "id": 5,
+        "startedAt": "2026-10-24T16:55:38.1715621Z",
+        "completedAt": "2026-10-24T16:55:38.1715621Z",
+        "reasoningTokens": 1194,
+        "retrievalReasoningEffort": {
+          "kind": "low"
+        },
+        "logicalReasoningEffort": {
+          "kind": "low"
+        }
+      }
+    ]
+  },
+  "comparisons": {
+    "Learn only": {
+      "p": 0.004609597808153128,
+      "sources": [
+        "ref-0",
+        "ref-1",
+        "ref-2",
+        "ref-3",
+        "ref-4",
+        "ref-5"
+      ]
+    },
+    "Learn + team": {
+      "p": 0.9890130679044619,
+      "sources": [
+        "ref-3",
+        "ref-2",
+        "ref-0",
+        "ref-1",
+        "ref-4",
+        "ref-5"
+      ]
+    }
+  },
+  "results": {
+    "Application context": {
+      "decision": "answer",
+      "question": "For the Atlas support app in staging, how should Python authenticate to Foundry, and whose identity needs the model role?",
+      "answer": "Python should authenticate to Foundry using DefaultAzureCredential with the system-assigned managed identity of the Atlas staging container app [ref-3][ref-2]. The model role Cognitive Services OpenAI User must be assigned to that app's system-assigned managed identity at the target Foundry resource [ref-3][ref-2].",
+      "attempts": [
+        {
+          "effort": "low",
+          "p_sufficient": 0.9914225238216201,
+          "sources": [
+            "ref-3",
+            "ref-2",
+            "ref-0",
+            "ref-1",
+            "ref-4",
+            "ref-5"
+          ],
+          "activity": [
+            {
+              "type": "modelQueryPlanning",
+              "id": 0,
+              "startedAt": "2026-10-24T16:55:35.2627046Z",
+              "completedAt": "2026-10-24T16:55:37.4511814Z",
+              "inputTokens": 1090,
+              "outputTokens": 123,
+              "elapsedMs": 2188,
+              "model": {
+                "modelName": "gpt-4.1",
+                "deploymentId": "gpt-4.1"
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 3,
+              "startedAt": "2026-10-24T16:55:37.4514136Z",
+              "completedAt": "2026-10-24T16:55:38.035427Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:37.4514833Z",
+              "count": 5,
+              "elapsedMs": 581,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Foundry model role assignment Atlas app"
+                }
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 2,
+              "startedAt": "2026-10-24T16:55:37.451387Z",
+              "completedAt": "2026-10-24T16:55:38.0865807Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:37.4514496Z",
+              "count": 3,
+              "elapsedMs": 633,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Python authentication Foundry Atlas support app"
+                }
+              }
+            },
+            {
+              "type": "searchIndex",
+              "id": 1,
+              "startedAt": "2026-10-24T16:55:37.4513337Z",
+              "completedAt": "2026-10-24T16:55:38.1703928Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-team",
+              "queryTime": "2026-10-24T16:55:37.6363488Z",
+              "count": 3,
+              "elapsedMs": 0,
+              "searchIndexArguments": {
+                "search": "Atlas support app staging Python Foundry authentication",
+                "filter": null,
+                "semanticConfigurationName": "semantic",
+                "sourceDataFields": [
+                  {
+                    "name": "title"
+                  },
+                  {
+                    "name": "content"
+                  },
+                  {
+                    "name": "id"
+                  },
+                  {
+                    "name": "source_path"
+                  },
+                  {
+                    "name": "application"
+                  },
+                  {
+                    "name": "environment"
+                  }
+                ],
+                "searchFields": []
+              }
+            },
+            {
+              "type": "searchIndex",
+              "id": 4,
+              "startedAt": "2026-10-24T16:55:37.8754783Z",
+              "completedAt": "2026-10-24T16:55:38.1703933Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-team",
+              "queryTime": "2026-10-24T16:55:38.1002787Z",
+              "count": 3,
+              "elapsedMs": 0,
+              "searchIndexArguments": {
+                "search": "Atlas support app staging Foundry model role identity assignment",
+                "filter": null,
+                "semanticConfigurationName": "semantic",
+                "sourceDataFields": [
+                  {
+                    "name": "title"
+                  },
+                  {
+                    "name": "content"
+                  },
+                  {
+                    "name": "id"
+                  },
+                  {
+                    "name": "source_path"
+                  },
+                  {
+                    "name": "application"
+                  },
+                  {
+                    "name": "environment"
+                  }
+                ],
+                "searchFields": []
+              }
+            },
+            {
+              "type": "agenticReasoning",
+              "id": 5,
+              "startedAt": "2026-10-24T16:55:38.1715621Z",
+              "completedAt": "2026-10-24T16:55:38.1715621Z",
+              "reasoningTokens": 1194,
+              "retrievalReasoningEffort": {
+                "kind": "low"
+              },
+              "logicalReasoningEffort": {
+                "kind": "low"
+              }
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "ref-3",
+          "title": "app-profile.yaml: app-profile.yaml",
+          "content": "# Synthetic tutorial data, not an actual Microsoft or customer environment.\napplication: Atlas support app\npurpose: Internal portal where employees submit and track IT tickets\nai_capability: Summarize submitted IT tickets using a Foundry model\nenvironment: staging\nlanguage: Python\nhosting: Azure Container Apps\nmodel_provider: Microsoft Foundry\nmodel: gpt-4.1\nauthentication:\n  mechanism: Microsoft Entra ID\n  credential: DefaultAzureCredential\n  identity_type: system-assigned managed identity\n  identity_owner: Atlas staging container app\n  model_role: Cognitive Services OpenAI User\n  role_scope: target Foundry resource\n  client_id: not required for this system-assigned identity\nlocal_development:\n  credential_source: Azure CLI sign-in\n  note: Local developer access does not establish the deployed app's access.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/app-profile.yaml",
+          "url": null,
+          "document_key": "team-b12bf5a25d5f0a8e",
+          "application": "Atlas support app",
+          "environment": "staging"
+        },
+        {
+          "id": "ref-2",
+          "title": "team-standards.md: Atlas staging authentication",
+          "content": "## Atlas staging authentication\n\nThe Atlas support app uses its container app's system-assigned managed identity\nwhen deployed to staging. Use DefaultAzureCredential in Python. Assign Cognitive\nServices OpenAI User to that identity on the target Foundry resource. Do not\nconfigure a user-assigned identity client ID for this sample.\n\nUse Azure CLI sign-in for local development. The developer and the deployed\napplication are different principals; a successful local request does not prove\nthat the application has access.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/team-standards.md",
+          "url": null,
+          "document_key": "team-ddf9e905d4e76533",
+          "application": "Atlas support app",
+          "environment": "staging"
+        },
+        {
+          "id": "ref-0",
+          "title": "Connect to an A2A agent endpoint from Foundry Agent Service (python)",
+          "content": "# Connect to an A2A agent endpoint from Foundry Agent Service (python)\n## Usage support\nThe following table shows SDK and setup support.\n| Microsoft Foundry support | Python SDK | C# SDK | JavaScript SDK | Java SDK | REST API | Basic agent setup | Standard agent setup| \n|  --- | --- | --- | --- | --- | --- | --- | ---  |\n| \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f |\n\n## Create an A2A connection\nCreate a project connection for your A2A endpoint so you can store authentication securely and reuse it across agent versions.\nFor details about supported authentication approaches, see [Agent2Agent (A2A) authentication](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-to-agent-authentication).\nIf you're connecting to a Foundry agent as the target, set the connection **target** to the target agent's A2A base path, `https://{account}.services.ai.azure.com/api/projects/{project}/agents/{agent}/endpoint/protocols/a2a`, and use the audience `https://ai.azure.com`. Don't set an agent card path. Foundry resolves the default agent card path automatically and negotiates the A2A protocol version for you. You also don't need to set the optional `send_credentials_for_agent_card` field, because Foundry doesn't require the agent card fetch to carry separate credentials. However, the target agent must have incoming A2A enabled; see [Enable incoming A2A on a Foundry agent](https://learn.microsoft.com/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint).\nChoose the authentication behavior based on whether the target agent needs the incoming user's context:\n1. For an app-only call, use the calling agent's identity.\n2. For an existing delegated integration, `UserEntraToken` can preserve the incoming Microsoft Entra user context as a compatibility path.\n3. When the target supports the agent identity acting with the user, use `AgentOnBehalfOfUser`. This authentication type is in preview. The source agent endpoint must use the `AgentBlueprint` scheme, and the incoming token must target the source agent's agent blueprint.\nFor the actor model, endpoint scheme and token audience requirements, consent, and migration between the delegated authentication types, see [Configure user delegation for tools in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-user-delegation).\nFor Foundry agent targets, A2A tasks and contexts are retained for 60 days from their most recent write. Each new write to a task or context resets its 60-day retention period. For details, see [A2A task and context retention](https://learn.microsoft.com/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint#understand-a2a-task-and-context-retention).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/tools/agent-to-agent#usage-support",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-1",
+          "title": "Set up permissions for Microsoft Foundry evaluation workflows",
+          "content": "# Set up permissions for Microsoft Foundry evaluation workflows\n## Find the roles for your workflow\nFirst, assign the role in this table for the evaluation task you want to perform.\n| I want to | Assign the role to | Role | Assign at| \n|  --- | --- | --- | ---  |\n| Create continuous or scheduled evaluation rules | The project managed identity | **Foundry User** | The Foundry resource or project used for the evaluation rule |\n| Run or review portal or SDK evaluations, including agent, synthetic dataset, admin-connected model, and benchmark workflows | Your identity or application identity | **Foundry User**, or a role with equivalent permissions | The Foundry resource or project that contains the evaluation |\n| Run evaluations in CI/CD | The workload identity or service principal used by the pipeline | **Foundry User**, or a role with equivalent permissions | The Foundry resource or project that contains the evaluation |\n| Run agent evaluations with the Azure Developer CLI | Your identity | **Foundry User** | The Foundry resource |\n\nEvaluation jobs use Microsoft Entra ID. If an evaluation invokes a model deployment, assign **Foundry User** at the Foundry account scope. A project-only role assignment doesn't authorize model inference. For more information, see [Deployment type-specific permissions](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry#deployment-typespecific-permissions).\nFor the permissions included in Foundry roles and guidance for custom roles, see [Role-based access control for Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/observability/how-to/evaluation-permissions#find-the-roles-for-your-workflow",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-4",
+          "title": "Connect agents to OpenAPI tools (python)",
+          "content": "# Connect agents to OpenAPI tools (python)\n## Configure OpenAPI authentication in the Foundry portal\nWhen you add an OpenAPI tool through **Tools** > **Custom** > **OpenAPI**, create a project connection for the tool. **Anonymous**, **API key**, and **Managed identity** authentication all require a connection, whether you configure the tool through the portal, SDK, or REST API.\nThe portal's **Managed identity** option uses the **Foundry project's managed identity**, not the Foundry account's managed identity. OpenAPI tools in toolboxes have always required project managed identity, regardless of subscription history. Account managed identity is supported only for OpenAPI tools attached directly to prompt agents in existing subscriptions. Migrate those configurations to project managed identity as soon as possible. See Managed identity support.\nAnonymous authentication means the target API doesn't require credentials. It doesn't mean you can skip creating the connection.\n| Authentication | Connection configuration| \n|  --- | ---  |\n| Anonymous | Create an OpenAPI project connection with no authentication (`authType: \"None\"`). No API key or token is required. |\n| API key | Create a project connection that stores the API key. Match the key name to the header or query parameter in the OpenAPI security scheme. See Authenticate with API key. |\n| Managed identity (project managed identity) | Create an OpenAPI project connection with `authType: \"ProjectManagedIdentity\"`, the target API endpoint, and the audience expected by that API. Assign the project's managed identity the required role on the target service. This option doesn't use the account's managed identity. |\n\n### Configure anonymous authentication\n1. Open **Tools** > **Custom** > **OpenAPI** in your Foundry project.\n2. In **Create an OpenAPI tool**, enter the tool's **Name** and **Description**.\n3. Set **Authentication method** to **Anonymous**.\n4. Under **Connection**, select an existing anonymous connection or select **Create a new connection** to create one.\n5. Enter the **OpenAPI 3.0+ schema**, and select **Create tool**.\nThe **Connection** field is required even when **Anonymous** is selected.\n[![Screenshot of anonymous OpenAPI authentication with a required Connection field and a Create a new connection button.](https://learn.microsoft.com/azure/foundry/agents/media/tools/openapi/anonymous-connection-required.png)](../../media/tools/openapi/anonymous-connection-required.png#lightbox)\n### Configure managed identity authentication",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/tools/openapi#configure-openapi-authentication-in-the-foundry-portal",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-5",
+          "title": "Elevated-role tasks in Microsoft Foundry",
+          "content": "# Elevated-role tasks in Microsoft Foundry\n## Troubleshoot common permission errors\nWhen developers encounter permission errors, use the task tables in this article to identify the required role. The following table maps common error messages to likely causes and resolutions.\n| Error message | Likely cause | Resolution| \n|  --- | --- | ---  |\n| `AuthorizationFailed` or `The client does not have authorization to perform action` | Missing control-plane role (**Owner**, **Contributor**, or resource-specific role) | Identify the task in this article, note the minimum role and scope, then assign the role. |\n| Agent create or update fails even with **Owner**/**Contributor** | Missing Foundry data-plane role on the project | Assign **Foundry User**, **Foundry Project Manager**, or **Foundry Owner** at the project scope. See Hosted agent setup. |\n| `Creating that role assignment requires Microsoft.Authorization/roleAssignments/write` (or equivalent) | Caller has **Foundry Project Manager** or **Foundry Account Owner**, but needs to assign roles outside the allowed **Foundry User** constraint | Use **Owner** or **Role Based Access Control Administrator** at the target resource scope (for example, ACR or Log Analytics). |\n| `ForbiddenError` on model deployment | Missing **Foundry Account Owner** on the Foundry resource | See Deploy and manage models. |\n| `LinkedAuthorizationFailed` during resource creation | Missing permissions on a linked resource (storage, Key Vault, or search) | Check Configure agent infrastructure for cross-service role requirements. |",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/concepts/administrator-guide#troubleshoot-common-permission-errors",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        }
+      ]
+    },
+    "Platform": {
+      "decision": "handoff",
+      "question": "How does DefaultAzureCredential use managed identity for a deployed Python application?",
+      "message": "The documentation did not establish a complete answer. A support person needs to review this.",
+      "reason": "below_threshold",
+      "error_type": null,
+      "error_stage": null,
+      "attempts": [
+        {
+          "effort": "low",
+          "p_sufficient": 0.34864919387083326,
+          "sources": [
+            "ref-0",
+            "ref-1",
+            "ref-2",
+            "ref-3",
+            "ref-4",
+            "ref-5"
+          ],
+          "activity": [
+            {
+              "type": "modelQueryPlanning",
+              "id": 0,
+              "startedAt": "2026-10-24T16:56:01.8737533Z",
+              "completedAt": "2026-10-24T16:56:03.3940174Z",
+              "inputTokens": 1080,
+              "outputTokens": 82,
+              "elapsedMs": 1520,
+              "model": {
+                "modelName": "gpt-4.1",
+                "deploymentId": "gpt-4.1"
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 2,
+              "startedAt": "2026-10-24T16:56:03.3942219Z",
+              "completedAt": "2026-10-24T16:56:04.2846492Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:56:03.3943499Z",
+              "count": 4,
+              "elapsedMs": 888,
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "DefaultAzureCredential authentication flow Python managed identity"
+                }
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 1,
+              "startedAt": "2026-10-24T16:56:03.3941888Z",
+              "completedAt": "2026-10-24T16:56:04.3385636Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:56:03.3943236Z",
+              "count": 4,
+              "elapsedMs": 942,
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "DefaultAzureCredential managed identity Python"
+                }
+              }
+            },
+            {
+              "type": "agenticReasoning",
+              "id": 3,
+              "startedAt": "2026-10-24T16:56:04.339725Z",
+              "completedAt": "2026-10-24T16:56:04.339725Z",
+              "reasoningTokens": 0,
+              "retrievalReasoningEffort": {
+                "kind": "low"
+              },
+              "logicalReasoningEffort": {
+                "kind": "low"
+              }
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "ref-0",
+          "title": "Azure Identity client library for Python - version 1.26.0",
+          "content": "# Azure Identity client library for Python - version 1.26.0\n## Managed identity support\n[Managed identity authentication](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) is supported either indirectly via `DefaultAzureCredential` or directly via `ManagedIdentityCredential` for the following Azure services:\n1. [Azure App Service and Azure Functions](https://learn.microsoft.com/en-us/azure/app-service/overview-managed-identity?tabs=python)\n2. [Azure Arc](https://learn.microsoft.com/en-us/azure/azure-arc/servers/managed-identity-authentication)\n3. [Azure Cloud Shell](https://learn.microsoft.com/en-us/azure/cloud-shell/msi-authorization)\n4. [Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/use-managed-identity)\n5. [Azure Service Fabric](https://learn.microsoft.com/en-us/azure/service-fabric/concepts-managed-identity)\n6. [Azure Virtual Machines](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/how-to-use-vm-token)\n7. [Azure Virtual Machines Scale Sets](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/qs-configure-powershell-windows-vmss)\n## Cloud configuration\nCredentials default to authenticating to the Microsoft Entra endpoint for Azure Public Cloud. To access resources in other clouds, such as Azure Government or a private cloud, configure credentials with the `authority` argument. [AzureAuthorityHosts](https://aka.ms/azsdk/python/identity/docs#azure.identity.AzureAuthorityHosts) defines authorities for well-known clouds:\n```python\nfrom azure.identity import AzureAuthorityHosts\n\nDefaultAzureCredential(authority=AzureAuthorityHosts.AZURE_GOVERNMENT)\n```\nIf the authority for your cloud isn't listed in `AzureAuthorityHosts`, you can explicitly specify its URL:\n```python\nDefaultAzureCredential(authority=\"https://login.partner.microsoftonline.cn\")\n```\nAs an alternative to specifying the `authority` argument, you can also set the `AZURE_AUTHORITY_HOST` environment variable to the URL of your cloud's authority. This approach is useful when configuring multiple credentials to authenticate to the same cloud:\n```sh\nAZURE_AUTHORITY_HOST=https://login.partner.microsoftonline.cn\n```\nNot all credentials require this configuration. Credentials that authenticate through a development tool, such as `AzureCliCredential`, use that tool's configuration.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/python/api/overview/azure/identity-readme?view=azure-python#managed-identity-support",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-1",
+          "title": "Credential chains in the Azure Identity library for Python",
+          "content": "# Credential chains in the Azure Identity library for Python\n## DefaultAzureCredential overview\n[DefaultAzureCredential](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential) is an opinionated, preconfigured chain of credentials. It's designed to support many environments, along with the most common authentication flows and developer tools. In graphical form, the underlying chain looks like this:\n[![Diagram that shows DefaultAzureCredential authentication flow.](https://learn.microsoft.com/azure/developer/python/sdk/media/mermaidjs/default-azure-credential-authentication-flow-inline.svg)](../media/mermaidjs/default-azure-credential-authentication-flow-expanded.png#lightbox)\nThe order in which `DefaultAzureCredential` attempts credentials follows.\n| Order | Credential | Description | Enabled by default?| \n|  --- | --- | --- | ---  |\n| 1 | [Environment](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.environmentcredential) | Reads a collection of [environment variables](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/identity/azure-identity#environment-variables) to determine if an application service principal (application user) is configured for the app. If so, `DefaultAzureCredential` uses these values to authenticate the app to Azure. This method is most often used in server environments but can also be used when developing locally. | Yes |\n| 2 | [Workload Identity](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.workloadidentitycredential) | If the app is deployed to an Azure host with Workload Identity enabled, authenticate that account. | Yes |\n| 3 | [Managed Identity](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.managedidentitycredential) | If the app is deployed to an Azure host with Managed Identity enabled, authenticate the app to Azure using that Managed Identity. | Yes |\n| 4 | [Shared Token Cache](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.sharedtokencachecredential) | On Windows only, if the developer authenticated to Azure by logging into Visual Studio, authenticate the app to Azure using that same account. | Yes |",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/developer/python/sdk/authentication/credential-chains#defaultazurecredential-overview",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-2",
+          "title": "Create and deploy a Django web app to Azure with a user-assigned managed identity",
+          "content": "# Create and deploy a Django web app to Azure with a user-assigned managed identity\n## Examine authentication code\nAn instance of `DefaultAzureCredential` is also used to get an access token for Azure Database for PostgreSQL in `./azureproject/get_conn.py`. In this case, the token is acquired directly by calling [get_token](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential#azure-identity-defaultazurecredential-get-token) on the credential instance and passing it the appropriate `scope` value. The token is then used to set the password in the PostgreSQL connection URI.\n```python\nazure_credential = DefaultAzureCredential()\ntoken = azure_credential.get_token(\"https://ossrdbms-aad.database.windows.net\")\nconf.settings.DATABASES['default']['PASSWORD'] = token.token\n```\nTo learn more about authenticating your apps with Azure services, see [Authenticate Python apps to Azure services by using the Azure SDK for Python](https://learn.microsoft.com/azure/developer/python/sdk/authentication/overview). To learn more about `DefaultAzureCredential`, including how to customize the credential chain it evaluates for your environment, see [DefaultAzureCredential overview](https://learn.microsoft.com/azure/developer/python/sdk/authentication/credential-chains#defaultazurecredential-overview).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/developer/python/tutorial-python-managed-identity-user-assigned-cli#examine-authentication-code",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-3",
+          "title": "Authenticate Azure-hosted Python apps to Azure resources using a system-assigned managed identity",
+          "content": "# Authenticate Azure-hosted Python apps to Azure resources using a system-assigned managed identity\n## Authenticate to Azure services from your app\nWhen developing locally, you can use `DefaultAzureCredential` which discovers credentials from local developer tools. When deployed to Azure, switch to `ManagedIdentityCredential` for production scenarios:\n```python\nimport os\nfrom azure.identity import DefaultAzureCredential, ManagedIdentityCredential\nfrom azure.storage.blob import BlobServiceClient\n\n# Use ManagedIdentityCredential in Azure, DefaultAzureCredential locally\nif os.getenv(\"WEBSITE_HOSTNAME\"):\n    credential = ManagedIdentityCredential()\nelse:\n    credential = DefaultAzureCredential()\n\nblob_service_client = BlobServiceClient(\n    account_url=\"https://<account-name>.blob.core.windows.net\",\n    credential=credential\n)\n```",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/developer/python/sdk/authentication/system-assigned-managed-identity#authenticate-to-azure-services-from-your-app",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-4",
+          "title": "Authenticate Azure-hosted Python apps to Azure resources using a user-assigned managed identity",
+          "content": "# Authenticate Azure-hosted Python apps to Azure resources using a user-assigned managed identity\n## Authenticate to Azure services from your app\nThe [Azure Identity library](https://learn.microsoft.com/en-us/python/api/azure-identity) provides various *credentials*\u2014implementations of `TokenCredential` adapted to supporting different scenarios and Microsoft Entra authentication flows. Since managed identity is unavailable when running locally, the steps ahead demonstrate which credential to use in which scenario:\n1. **Local dev environment**: During **local development only**, use a class called [DefaultAzureCredential](https://learn.microsoft.com/en-us/azure/developer/python/sdk/authentication/credential-chains#defaultazurecredential-overview) for an opinionated, preconfigured chain of credentials. `DefaultAzureCredential` discovers user credentials from your local tooling or IDE, such as the Azure CLI or Visual Studio Code. It also provides flexibility and convenience for retries, wait times for responses, and support for multiple authentication options. Visit the [Authenticate to Azure services during local development](https://learn.microsoft.com/azure/developer/python/sdk/authentication/local-development-dev-accounts) article to learn more.\n2. **Azure-hosted apps**: When your app is running in Azure, use [ManagedIdentityCredential](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.managedidentitycredential?view=azure-python&preserve-view=true) to safely discover the managed identity configured for your app. Specifying this exact type of credential prevents other available credentials from being picked up unexpectedly.\n### Implement the code\nAdd the [azure-identity](https://pypi.org/project/azure-identity/) package to your application by navigating to the application project directory and running the following command:\n```terminal\npip install azure-identity\n```\nAzure services are accessed using specialized client classes from the various Azure SDK client libraries. The following code example demonstrates how to create a credential instance and use it with an Azure SDK service client. In your application code, complete the following steps to authenticate using a managed identity:\n1. Import the `ManagedIdentityCredential` class from the `azure.identity` module.\n2. Create a `ManagedIdentityCredential` object and configure either the client ID, resource ID, or object ID.\n3. Pass the `ManagedIdentityCredential` object to the Azure SDK client constructor.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/developer/python/sdk/authentication/user-assigned-managed-identity#authenticate-to-azure-services-from-your-app",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-5",
+          "title": "Part 2: Authentication needs in this example scenario",
+          "content": "# Part 2: Authentication needs in this example scenario\n## Best practices for secure development\nWhile you can set secrets as environment variables (for example, via Azure App Settings), this approach has downsides:\n1. You must manually replicate secrets in local environments.\n2. There's a risk of secrets leaking into source control.\n3. You might need extra logic to differentiate between environments.\nInstead, use the following approach:\n1. Use Key Vault to store third-party API keys and other secrets.\n2. Assign a managed identity to your deployed app.\n3. Use a service principal for local development and assign it the same access rights.\n4. Use `DefaultAzureCredential` in your code to abstract authentication logic.\n5. Avoid storing or logging any credentials.\n## Authentication flow in practice\nHere's how authentication works at runtime:\n1. Your code creates a `DefaultAzureCredential` instance.\n2. You use this credential to instantiate a client (for example, `SecretClient`, `QueueServiceClient`).\n3. When the app invokes a method (for example, `get_secret()`), the client uses the credential to authenticate the request.\n4. Azure verifies the identity and checks whether it has the correct role or policy to perform the operation.\nThis flow ensures that your app can securely access Azure services without embedding secrets in code or configuration files. It also allows you to seamlessly switch between local development and cloud deployment without changing your authentication logic.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/developer/python/walkthrough-tutorial-authentication-02#best-practices-for-secure-development",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        }
+      ]
+    },
+    "Missing record": {
+      "decision": "handoff",
+      "question": "What are the approved expiry date and approver for Atlas exception EX-17?",
+      "message": "The documentation did not establish a complete answer. A support person needs to review this.",
+      "reason": "below_threshold",
+      "error_type": null,
+      "error_stage": null,
+      "attempts": [
+        {
+          "effort": "low",
+          "p_sufficient": 0.00020342780599031665,
+          "sources": [
+            "ref-1",
+            "ref-0",
+            "ref-2"
+          ],
+          "activity": [
+            {
+              "type": "modelQueryPlanning",
+              "id": 0,
+              "startedAt": "2026-10-24T16:56:06.1226383Z",
+              "completedAt": "2026-10-24T16:56:07.6291878Z",
+              "inputTokens": 1082,
+              "outputTokens": 54,
+              "elapsedMs": 1506,
+              "model": {
+                "modelName": "gpt-4.1",
+                "deploymentId": "gpt-4.1"
+              }
+            },
+            {
+              "type": "searchIndex",
+              "id": 1,
+              "startedAt": "2026-10-24T16:56:07.6294704Z",
+              "completedAt": "2026-10-24T16:56:08.2204815Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-team",
+              "queryTime": "2026-10-24T16:56:07.8625532Z",
+              "count": 2,
+              "elapsedMs": 0,
+              "searchIndexArguments": {
+                "search": "Atlas exception EX-17 approved expiry date",
+                "filter": null,
+                "semanticConfigurationName": "semantic",
+                "sourceDataFields": [
+                  {
+                    "name": "title"
+                  },
+                  {
+                    "name": "content"
+                  },
+                  {
+                    "name": "id"
+                  },
+                  {
+                    "name": "source_path"
+                  },
+                  {
+                    "name": "application"
+                  },
+                  {
+                    "name": "environment"
+                  }
+                ],
+                "searchFields": []
+              }
+            },
+            {
+              "type": "searchIndex",
+              "id": 2,
+              "startedAt": "2026-10-24T16:56:07.9324014Z",
+              "completedAt": "2026-10-24T16:56:08.2204826Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-team",
+              "queryTime": "2026-10-24T16:56:08.1435479Z",
+              "count": 3,
+              "elapsedMs": 0,
+              "searchIndexArguments": {
+                "search": "Atlas exception EX-17 approver",
+                "filter": null,
+                "semanticConfigurationName": "semantic",
+                "sourceDataFields": [
+                  {
+                    "name": "title"
+                  },
+                  {
+                    "name": "content"
+                  },
+                  {
+                    "name": "id"
+                  },
+                  {
+                    "name": "source_path"
+                  },
+                  {
+                    "name": "application"
+                  },
+                  {
+                    "name": "environment"
+                  }
+                ],
+                "searchFields": []
+              }
+            },
+            {
+              "type": "agenticReasoning",
+              "id": 3,
+              "startedAt": "2026-10-24T16:56:08.2209256Z",
+              "completedAt": "2026-10-24T16:56:08.2209256Z",
+              "reasoningTokens": 1191,
+              "retrievalReasoningEffort": {
+                "kind": "low"
+              },
+              "logicalReasoningEffort": {
+                "kind": "low"
+              }
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "ref-1",
+          "title": "team-standards.md: Credentials and exceptions",
+          "content": "## Credentials and exceptions\n\nDo not put API keys in the application configuration. An exception request is not\nan approval. This sample contains no exception register, approver decisions, or\nexception expiry dates. Questions requiring a specific exception record must be\nreviewed by the team's owner; do not invent that record from the general standard.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/team-standards.md",
+          "url": null,
+          "document_key": "team-f4762652358b0a58",
+          "application": "Atlas support app",
+          "environment": "staging"
+        },
+        {
+          "id": "ref-0",
+          "title": "troubleshooting.md: A question asks about an unrecorded exception",
+          "content": "## A question asks about an unrecorded exception\n\nPrepare a handoff containing the question, retrieved sources, and the missing\nrecord. Do not approve an exception, infer an expiry date, or change credentials.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/troubleshooting.md",
+          "url": null,
+          "document_key": "team-c4c002bae310a63a",
+          "application": "Atlas support app",
+          "environment": "staging"
+        },
+        {
+          "id": "ref-2",
+          "title": "troubleshooting.md: A request works locally but returns 403 in staging",
+          "content": "## A request works locally but returns 403 in staging\n\nConfirm that the running Atlas staging container app has its system-assigned\nmanaged identity enabled. Check the role assignment for that identity, not the\ndeveloper who signed in locally. The sample requires Cognitive Services OpenAI\nUser on the target Foundry resource.\n\nConfirm that the app uses the intended Foundry endpoint. Allow for role-assignment\npropagation before retrying. This checklist does not prove the cause of every 403:\nnetwork restrictions and an incorrect endpoint also require investigation.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/troubleshooting.md",
+          "url": null,
+          "document_key": "team-2fb67ff1f13e797d",
+          "application": "Atlas support app",
+          "environment": "staging"
+        }
+      ]
+    }
+  },
+  "retried": {
+    "decision": "handoff",
+    "question": "What are the approved expiry date and approver for Atlas exception EX-17?",
+    "message": "The documentation did not establish a complete answer. A support person needs to review this.",
+    "reason": "below_threshold",
+    "error_type": null,
+    "error_stage": null,
+    "attempts": [
+      {
+        "effort": "low",
+        "p_sufficient": 0.0002305074532440142,
+        "sources": [
+          "ref-1",
+          "ref-0",
+          "ref-2"
+        ],
+        "activity": [
+          {
+            "type": "modelQueryPlanning",
+            "id": 0,
+            "startedAt": "2026-10-24T16:56:10.0732579Z",
+            "completedAt": "2026-10-24T16:56:11.4423497Z",
+            "inputTokens": 1082,
+            "outputTokens": 54,
+            "elapsedMs": 1368,
+            "model": {
+              "modelName": "gpt-4.1",
+              "deploymentId": "gpt-4.1"
+            }
+          },
+          {
+            "type": "searchIndex",
+            "id": 1,
+            "startedAt": "2026-10-24T16:56:11.4424736Z",
+            "completedAt": "2026-10-24T16:56:11.9174194Z",
+            "knowledgeSourceName": "learn-team-5d38917fe290-team",
+            "queryTime": "2026-10-24T16:56:11.6064255Z",
+            "count": 2,
+            "elapsedMs": 0,
+            "searchIndexArguments": {
+              "search": "Atlas exception EX-17 approved expiry date",
+              "filter": null,
+              "semanticConfigurationName": "semantic",
+              "sourceDataFields": [
+                {
+                  "name": "title"
+                },
+                {
+                  "name": "content"
+                },
+                {
+                  "name": "id"
+                },
+                {
+                  "name": "source_path"
+                },
+                {
+                  "name": "application"
+                },
+                {
+                  "name": "environment"
+                }
+              ],
+              "searchFields": []
+            }
+          },
+          {
+            "type": "searchIndex",
+            "id": 2,
+            "startedAt": "2026-10-24T16:56:11.6805556Z",
+            "completedAt": "2026-10-24T16:56:11.9174208Z",
+            "knowledgeSourceName": "learn-team-5d38917fe290-team",
+            "queryTime": "2026-10-24T16:56:11.8460816Z",
+            "count": 3,
+            "elapsedMs": 0,
+            "searchIndexArguments": {
+              "search": "Atlas exception EX-17 approver",
+              "filter": null,
+              "semanticConfigurationName": "semantic",
+              "sourceDataFields": [
+                {
+                  "name": "title"
+                },
+                {
+                  "name": "content"
+                },
+                {
+                  "name": "id"
+                },
+                {
+                  "name": "source_path"
+                },
+                {
+                  "name": "application"
+                },
+                {
+                  "name": "environment"
+                }
+              ],
+              "searchFields": []
+            }
+          },
+          {
+            "type": "agenticReasoning",
+            "id": 3,
+            "startedAt": "2026-10-24T16:56:11.9178441Z",
+            "completedAt": "2026-10-24T16:56:11.9178441Z",
+            "reasoningTokens": 1191,
+            "retrievalReasoningEffort": {
+              "kind": "low"
+            },
+            "logicalReasoningEffort": {
+              "kind": "low"
+            }
+          }
+        ]
+      },
+      {
+        "effort": "medium",
+        "p_sufficient": 0.00020342787673948085,
+        "sources": [
+          "ref-1",
+          "ref-0",
+          "ref-2"
+        ],
+        "activity": [
+          {
+            "type": "modelQueryPlanning",
+            "id": 0,
+            "startedAt": "2026-10-24T16:56:13.55859Z",
+            "completedAt": "2026-10-24T16:56:14.9203229Z",
+            "inputTokens": 1082,
+            "outputTokens": 54,
+            "elapsedMs": 1361,
+            "model": {
+              "modelName": "gpt-4.1",
+              "deploymentId": "gpt-4.1"
+            }
+          },
+          {
+            "type": "searchIndex",
+            "id": 1,
+            "startedAt": "2026-10-24T16:56:14.9204692Z",
+            "completedAt": "2026-10-24T16:56:15.5284392Z",
+            "knowledgeSourceName": "learn-team-5d38917fe290-team",
+            "queryTime": "2026-10-24T16:56:15.2356713Z",
+            "count": 2,
+            "elapsedMs": 0,
+            "searchIndexArguments": {
+              "search": "Atlas exception EX-17 approved expiry date",
+              "filter": null,
+              "semanticConfigurationName": "semantic",
+              "sourceDataFields": [
+                {
+                  "name": "title"
+                },
+                {
+                  "name": "content"
+                },
+                {
+                  "name": "id"
+                },
+                {
+                  "name": "source_path"
+                },
+                {
+                  "name": "application"
+                },
+                {
+                  "name": "environment"
+                }
+              ],
+              "searchFields": []
+            }
+          },
+          {
+            "type": "searchIndex",
+            "id": 2,
+            "startedAt": "2026-10-24T16:56:15.3054381Z",
+            "completedAt": "2026-10-24T16:56:15.5284407Z",
+            "knowledgeSourceName": "learn-team-5d38917fe290-team",
+            "queryTime": "2026-10-24T16:56:15.4517901Z",
+            "count": 3,
+            "elapsedMs": 0,
+            "searchIndexArguments": {
+              "search": "Atlas exception EX-17 approver",
+              "filter": null,
+              "semanticConfigurationName": "semantic",
+              "sourceDataFields": [
+                {
+                  "name": "title"
+                },
+                {
+                  "name": "content"
+                },
+                {
+                  "name": "id"
+                },
+                {
+                  "name": "source_path"
+                },
+                {
+                  "name": "application"
+                },
+                {
+                  "name": "environment"
+                }
+              ],
+              "searchFields": []
+            }
+          },
+          {
+            "type": "modelQueryPlanning",
+            "id": 3,
+            "startedAt": "2026-10-24T16:56:15.5292107Z",
+            "completedAt": "2026-10-24T16:56:16.7719098Z",
+            "inputTokens": 1434,
+            "outputTokens": 6,
+            "elapsedMs": 1242,
+            "model": {
+              "modelName": "gpt-4.1",
+              "deploymentId": "gpt-4.1"
+            }
+          },
+          {
+            "type": "agenticReasoning",
+            "id": 4,
+            "startedAt": "2026-10-24T16:56:16.7722611Z",
+            "completedAt": "2026-10-24T16:56:16.7722611Z",
+            "reasoningTokens": 1191,
+            "retrievalReasoningEffort": {
+              "kind": "medium"
+            },
+            "logicalReasoningEffort": {
+              "kind": "medium"
+            }
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "ref-1",
+        "title": "team-standards.md: Credentials and exceptions",
+        "content": "## Credentials and exceptions\n\nDo not put API keys in the application configuration. An exception request is not\nan approval. This sample contains no exception register, approver decisions, or\nexception expiry dates. Questions requiring a specific exception record must be\nreviewed by the team's owner; do not invent that record from the general standard.",
+        "kind": "searchIndex",
+        "source_path": "team-docs/team-standards.md",
+        "url": null,
+        "document_key": "team-f4762652358b0a58",
+        "application": "Atlas support app",
+        "environment": "staging"
+      },
+      {
+        "id": "ref-0",
+        "title": "troubleshooting.md: A question asks about an unrecorded exception",
+        "content": "## A question asks about an unrecorded exception\n\nPrepare a handoff containing the question, retrieved sources, and the missing\nrecord. Do not approve an exception, infer an expiry date, or change credentials.",
+        "kind": "searchIndex",
+        "source_path": "team-docs/troubleshooting.md",
+        "url": null,
+        "document_key": "team-c4c002bae310a63a",
+        "application": "Atlas support app",
+        "environment": "staging"
+      },
+      {
+        "id": "ref-2",
+        "title": "troubleshooting.md: A request works locally but returns 403 in staging",
+        "content": "## A request works locally but returns 403 in staging\n\nConfirm that the running Atlas staging container app has its system-assigned\nmanaged identity enabled. Check the role assignment for that identity, not the\ndeveloper who signed in locally. The sample requires Cognitive Services OpenAI\nUser on the target Foundry resource.\n\nConfirm that the app uses the intended Foundry endpoint. Allow for role-assignment\npropagation before retrying. This checklist does not prove the cause of every 403:\nnetwork restrictions and an incorrect endpoint also require investigation.",
+        "kind": "searchIndex",
+        "source_path": "team-docs/troubleshooting.md",
+        "url": null,
+        "document_key": "team-2fb67ff1f13e797d",
+        "application": "Atlas support app",
+        "environment": "staging"
+      }
+    ]
+  },
+  "frozen_comparison": {
+    "question": "For the Atlas support app in staging, how should Python authenticate to Foundry, and whose identity needs the model role?",
+    "evidence": {
+      "question": "For the Atlas support app in staging, how should Python authenticate to Foundry, and whose identity needs the model role?",
+      "docs": [
+        {
+          "id": "ref-0",
+          "title": "Foundry Hosted Agents (programming-language-python)",
+          "content": "# Foundry Hosted Agents (programming-language-python)\n## Deploying to Foundry\nOnce you've verified your agent locally, deploy it to Microsoft Foundry:\n1. **Provision resources** (if you don't already have a Foundry project):\n```bash\n azd provision\n```\n This creates a resource group with a Foundry instance, project, model deployment, Application Insights, and a container registry.\n2. **Deploy the agent:**\n```bash\n azd deploy\n```\n This packages your agent as a container image, pushes it to Azure Container Registry, and deploys it to Foundry Agent Service.\nThe Foundry hosting infrastructure automatically injects the following environment variables into your agent container at runtime:\n| Variable | Description| \n|  --- | ---  |\n| `FOUNDRY_PROJECT_ENDPOINT` | The endpoint URL for the Foundry project. |\n| `AZURE_AI_MODEL_DEPLOYMENT_NAME` | The azd-managed model deployment name configured during `azd ai agent init`. Python code can prefer `FOUNDRY_MODEL` locally and fall back to this hosted value. |\n| `APPLICATIONINSIGHTS_CONNECTION_STRING` | The Application Insights connection string for telemetry. |\n\nOnce deployed, your agent is accessible through its dedicated Foundry endpoint and can also be tested from the Foundry portal.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/agent-framework/hosting/foundry-hosted-agent#deploying-to-foundry",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-1",
+          "title": "Identity and access overview for Foundry Agent Service",
+          "content": "# Identity and access overview for Foundry Agent Service\n## Find the right identity guidance\nStart with the task you need to complete.\n| If you need to | Start with| \n|  --- | ---  |\n| Control who can create, configure, or manage Foundry resources and agents | [Authentication and authorization in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/authentication-authorization-foundry) and [role-based access control in Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry) |\n| Choose and configure how callers are authorized to interact with an agent at runtime | [Agent endpoint authorization](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-endpoint-authorization), then [configure agent endpoint authorization](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-agent-endpoint-authorization) |\n| Understand how Foundry represents and governs agents in Microsoft Entra ID | [Agent identity concepts](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-identity) |\n| Configure authentication for a downstream tool | [Toolbox authentication](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/tool-authentication) and the documentation for the selected tool |\n| Choose client user delegation for a downstream tool | [User delegation for tools](https://learn.microsoft.com/azure/foundry/agents/concepts/user-delegation) |\n| Configure client user delegation for a downstream tool | [Configure user delegation for tools](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-user-delegation) |\n| Understand Microsoft Entra consent, tenant policy, and consent failures for delegated access | [Microsoft Entra consent for delegated access](https://learn.microsoft.com/azure/foundry/agents/concepts/entra-delegated-access-consent) |\n| Configure authentication for a specific downstream tool | [MCP authentication](https://learn.microsoft.com/azure/foundry/agents/how-to/mcp-authentication), [Work IQ](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/work-iq), or the documentation for the selected tool |\n\n## Support depends on the agent and tool\nAuthentication support differs by tool, connection type, protocol, and channel. Each integration defines its supported identity methods and any required consent, role assignments, or connection properties.\nCheck the detailed guidance for your protocol or channel and tool before selecting an identity model. Don't assume that every tool supports every authentication or delegated-access method.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/concepts/identity-access-overview#find-the-right-identity-guidance",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-2",
+          "title": "Authentication and authorization in Microsoft Foundry",
+          "content": "# Authentication and authorization in Microsoft Foundry\n## Authentication methods\nFoundry supports Microsoft Entra ID (token-based, keyless) and API keys.\n### Microsoft Entra ID\nMicrosoft Entra ID uses OAuth 2.0 bearer tokens scoped to `https://ai.azure.com/.default`.\nUse Microsoft Entra ID for:\n1. Production workloads.\n2. Conditional access, multifactor authentication (MFA), and just-in-time access.\n3. Least privilege RBAC and managed identity integration.\nAdvantages: Fine-grained role assignments, per-principal auditing, controllable token lifetimes, automatic secret hygiene, and managed identities for services.\nLimitations: Higher initial setup complexity. Requires understanding of role-based access control (RBAC). For more on RBAC in Foundry, see [Role-based access control for Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).\n### API keys\nAPI keys are static secrets scoped to a Foundry resource.\nUse API keys for:\n1. Rapid prototyping.\n2. Isolated test environments where single-secret rotation is acceptable.\nAdvantages: Simple, language agnostic, and doesn't require token acquisition.\nLimitations: Can't express user identity, is difficult to scope granularly, and is harder to audit. Generally not accepted by enterprise production workloads and not recommended by Microsoft.\nFor more information on enabling keyless authentication, see [Configure key-less authentication with Microsoft Entra ID](https://learn.microsoft.com/azure/foundry/foundry-models/how-to/configure-entra-id).\n### Authenticate with Microsoft Entra ID (Python)\nThe following example shows how to authenticate with Microsoft Entra ID by using the `azure-identity` library and make a request to a Foundry endpoint:\n**Expected output**: A JSON response listing your model deployments, or an authentication error if credentials are missing or the role assignment isn't configured.\n**Reference**: [DefaultAzureCredential](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential) | [azure-identity library](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme)\n### Authenticate with an API key (Python)\nThe following example shows how to authenticate by using an API key. Use this approach for quick prototyping only; Microsoft Entra ID is recommended for production.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/concepts/authentication-authorization-foundry#authentication-methods",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-3",
+          "title": "Role-based access control for Azure OpenAI in Microsoft Foundry Models (classic)",
+          "content": "# Role-based access control for Azure OpenAI in Microsoft Foundry Models (classic)\n## Azure OpenAI roles\nThis role can be found in the Azure portal under **Subscriptions** > \\***Access control (IAM)** > **Add role assignment** > search for **Cognitive Services Usages Reader**. The role must be applied at the subscription level, it does not exist at the resource level.\nIf you don't wish to use this role, the subscription **Reader** role provides equivalent access, but it also grants read access beyond the scope of what is needed for viewing quota. Model deployment via the [Foundry portal](https://ai.azure.com/?cid=learnDocs) is also partially dependent on the presence of this role.\nThis role provides little value by itself and is instead typically assigned in combination with one or more of the previously described roles.\n#### Cognitive Services Usages Reader + Cognitive Services OpenAI User\nAll the capabilities of Cognitive Services OpenAI User plus the ability to:\n\u2705 View quota allocations in [Foundry portal](https://ai.azure.com/?cid=learnDocs)\n#### Cognitive Services Usages Reader + Cognitive Services OpenAI Contributor\nAll the capabilities of Cognitive Services OpenAI Contributor plus the ability to:\n\u2705 View quota allocations in [Foundry portal](https://ai.azure.com/?cid=learnDocs)\n#### Cognitive Services Usages Reader + Cognitive Services Contributor\nAll the capabilities of Cognitive Services Contributor plus the ability to:\n\u2705 View & edit quota allocations in [Foundry portal](https://ai.azure.com/?cid=learnDocs) \u2705 Create new model deployments or edit existing model deployments (via Foundry) ",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry-classic/openai/how-to/role-based-access-control#azure-openai-roles",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-4",
+          "title": "Set up authentication for Model Context Protocol (MCP) tools (python)",
+          "content": "# Set up authentication for Model Context Protocol (MCP) tools (python)\nMost Model Context Protocol (MCP) servers require authentication to access the server and its underlying service. Proper authentication ensures your agents can securely connect to MCP servers, invoke their tools, and access protected resources while maintaining appropriate access controls.\nIn this article, you:\n1. Choose an authentication method based on your security requirements\n2. Configure key-based, Microsoft Entra, or OAuth authentication\n3. Set up and validate your MCP server connection\nNote\nIf you don't already have an account with the MCP server publisher, create one through the publisher's website.\n## Prerequisites\nBefore you begin, you need:\n1. Access to the [Foundry portal](https://ai.azure.com/?cid=learnDocs) and a project. If you don't have one, see [Create projects in Foundry](https://learn.microsoft.com/azure/foundry/how-to/create-projects).\n2. Permissions to create project connections and configure agents. For details, see [Role-based access control in the Foundry portal](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).\n3. The remote MCP server endpoint URL you want to connect to.\n4. Credentials for your selected authentication method:\n4.1. Key-based authentication: an API key, personal access token (PAT), or other token.\n4.2. Microsoft Entra authentication: role assignments for the agent identity or project managed identity on the underlying service.\n4.3. Microsoft Entra client user delegation: a supported MCP tool and the delegated permissions required by its downstream resource.\n4.4. OAuth identity passthrough: managed OAuth configuration or an OAuth app registration (custom OAuth).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/mcp-authentication",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-5",
+          "title": "Elevated-role tasks in Microsoft Foundry",
+          "content": "# Elevated-role tasks in Microsoft Foundry\n## Deploy and manage models\nMarketplace model deployments require subscription-level access because they create billing agreements. Fine-tuning requires **Foundry Owner** because it creates training jobs that consume compute and storage. Before deploying any model, verify that your subscription has sufficient quota for the target model and region \u2014 see [Manage quotas](https://learn.microsoft.com/azure/foundry/how-to/quota).\nFor step-by-step deployment instructions, see [Create model deployments](https://learn.microsoft.com/azure/foundry/foundry-models/how-to/create-model-deployments).\n## Configure security and networking\nNetwork and encryption configurations require elevated roles on multiple resources. These configurations span the Foundry resource, virtual networks, DNS zones, and Key Vault, so you typically need multiple roles.\n### Private endpoints\nPrivate endpoints restrict access to your Foundry resource to traffic from specific virtual networks. Configuring a private endpoint requires roles on three different resources.\n| Task | Minimum role | Scope | Details| \n|  --- | --- | --- | ---  |\n| Create private endpoint | **Contributor***or***Owner** | Foundry resource | [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link) |\n| Configure VNet | **Network Contributor** | Virtual network | [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link) |\n| Configure private DNS zone | **Private DNS Zone Contributor** | DNS zone | [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link) |\n\nFor step-by-step instructions, see [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link).\n### Managed virtual networks\nA managed virtual network isolates Foundry resources behind a Foundry-managed network. This setup simplifies network configuration compared to bringing your own VNet.\n| Task | Minimum role | Scope | Details| \n|  --- | --- | --- | ---  |\n| Configure managed VNet | **Owner***or***Contributor** | Foundry resource | [Managed virtual network](https://learn.microsoft.com/azure/foundry/how-to/managed-virtual-network) |\n| Assign RBAC to resources in managed VNet | **Owner***or***Role Based Access Control Administrator** | Target resources | [Managed virtual network](https://learn.microsoft.com/azure/foundry/how-to/managed-virtual-network) |\n\n### Network security perimeter\nA network security perimeter provides a centralized way to manage network access across multiple Azure resources. Add your Foundry resource to an existing perimeter to enforce consistent network rules.\n| Task | Minimum role | Scope | Details| \n|  --- | --- | --- | ---  |\n| Add Foundry to network security perimeter (preview) | **Owner**, **Contributor**, *or***Network Contributor** | Foundry resource | [Network security perimeter](https://learn.microsoft.com/azure/foundry/how-to/add-foundry-to-network-security-perimeter) |\n\n### Customer-managed keys\nBy using customer-managed keys (CMK), you can encrypt Foundry data with keys you control in Azure Key Vault. CMK requires roles on both the Key Vault and the Foundry resource because you grant the managed identity access to your key and then configure the resource to use it.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/concepts/administrator-guide#deploy-and-manage-models",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        }
+      ],
+      "activity": [
+        {
+          "type": "modelQueryPlanning",
+          "id": 0,
+          "startedAt": "2026-10-24T16:55:30.1305317Z",
+          "completedAt": "2026-10-24T16:55:33.4309893Z",
+          "inputTokens": 1004,
+          "outputTokens": 152,
+          "elapsedMs": 3300,
+          "model": {
+            "modelName": "gpt-4.1",
+            "deploymentId": "gpt-4.1"
+          }
+        },
+        {
+          "type": "mcpServer",
+          "id": 2,
+          "startedAt": "2026-10-24T16:55:33.4311243Z",
+          "completedAt": "2026-10-24T16:55:34.0806036Z",
+          "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+          "queryTime": "2026-10-24T16:55:33.4312129Z",
+          "count": 3,
+          "elapsedMs": 647,
+          "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+          "mcpServerArguments": {
+            "toolName": "microsoft_docs_search",
+            "toolArguments": {
+              "query": "Atlas support app Foundry model role identity requirements"
+            }
+          }
+        },
+        {
+          "type": "mcpServer",
+          "id": 1,
+          "startedAt": "2026-10-24T16:55:33.4311152Z",
+          "completedAt": "2026-10-24T16:55:34.1785059Z",
+          "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+          "queryTime": "2026-10-24T16:55:33.4311988Z",
+          "count": 4,
+          "elapsedMs": 745,
+          "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+          "mcpServerArguments": {
+            "toolName": "microsoft_docs_search",
+            "toolArguments": {
+              "query": "Atlas support app staging Python authentication to Foundry"
+            }
+          }
+        },
+        {
+          "type": "mcpServer",
+          "id": 3,
+          "startedAt": "2026-10-24T16:55:33.4311511Z",
+          "completedAt": "2026-10-24T16:55:34.3524144Z",
+          "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+          "queryTime": "2026-10-24T16:55:33.4312132Z",
+          "count": 5,
+          "elapsedMs": 919,
+          "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+          "mcpServerArguments": {
+            "toolName": "microsoft_docs_search",
+            "toolArguments": {
+              "query": "Foundry Python authentication methods"
+            }
+          }
+        },
+        {
+          "type": "mcpServer",
+          "id": 4,
+          "startedAt": "2026-10-24T16:55:34.0806391Z",
+          "completedAt": "2026-10-24T16:55:34.8748621Z",
+          "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+          "queryTime": "2026-10-24T16:55:34.0806847Z",
+          "count": 4,
+          "elapsedMs": 792,
+          "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+          "mcpServerArguments": {
+            "toolName": "microsoft_docs_search",
+            "toolArguments": {
+              "query": "Foundry model role access delegation Atlas support app"
+            }
+          }
+        },
+        {
+          "type": "agenticReasoning",
+          "id": 5,
+          "startedAt": "2026-10-24T16:55:34.8763563Z",
+          "completedAt": "2026-10-24T16:55:34.8763563Z",
+          "reasoningTokens": 0,
+          "retrievalReasoningEffort": {
+            "kind": "low"
+          },
+          "logicalReasoningEffort": {
+            "kind": "low"
+          }
+        }
+      ]
+    },
+    "ungated": {
+      "outcome": "completion",
+      "text": "Python should authenticate to Foundry using Microsoft Entra ID (token-based, keyless) for production workloads, or an API key for rapid prototyping or isolated test environments, with Microsoft recommending Microsoft Entra ID for enterprise scenarios [ref-2]. The model role assignment must be granted to either the agent identity or the project managed identity, depending on which one is used for authentication [ref-4]. The required identity must have sufficient role assignments for the underlying service and model access [ref-4]."
+    },
+    "gated": {
+      "decision": "handoff",
+      "question": "For the Atlas support app in staging, how should Python authenticate to Foundry, and whose identity needs the model role?",
+      "message": "The documentation did not establish a complete answer. A support person needs to review this.",
+      "reason": "below_threshold",
+      "error_type": null,
+      "error_stage": null,
+      "attempts": [
+        {
+          "effort": "low",
+          "p_sufficient": 0.0040701626415994415,
+          "sources": [
+            "ref-0",
+            "ref-1",
+            "ref-2",
+            "ref-3",
+            "ref-4",
+            "ref-5"
+          ],
+          "activity": [
+            {
+              "type": "modelQueryPlanning",
+              "id": 0,
+              "startedAt": "2026-10-24T16:55:30.1305317Z",
+              "completedAt": "2026-10-24T16:55:33.4309893Z",
+              "inputTokens": 1004,
+              "outputTokens": 152,
+              "elapsedMs": 3300,
+              "model": {
+                "modelName": "gpt-4.1",
+                "deploymentId": "gpt-4.1"
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 2,
+              "startedAt": "2026-10-24T16:55:33.4311243Z",
+              "completedAt": "2026-10-24T16:55:34.0806036Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:33.4312129Z",
+              "count": 3,
+              "elapsedMs": 647,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Atlas support app Foundry model role identity requirements"
+                }
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 1,
+              "startedAt": "2026-10-24T16:55:33.4311152Z",
+              "completedAt": "2026-10-24T16:55:34.1785059Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:33.4311988Z",
+              "count": 4,
+              "elapsedMs": 745,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Atlas support app staging Python authentication to Foundry"
+                }
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 3,
+              "startedAt": "2026-10-24T16:55:33.4311511Z",
+              "completedAt": "2026-10-24T16:55:34.3524144Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:33.4312132Z",
+              "count": 5,
+              "elapsedMs": 919,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Foundry Python authentication methods"
+                }
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 4,
+              "startedAt": "2026-10-24T16:55:34.0806391Z",
+              "completedAt": "2026-10-24T16:55:34.8748621Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:34.0806847Z",
+              "count": 4,
+              "elapsedMs": 792,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Foundry model role access delegation Atlas support app"
+                }
+              }
+            },
+            {
+              "type": "agenticReasoning",
+              "id": 5,
+              "startedAt": "2026-10-24T16:55:34.8763563Z",
+              "completedAt": "2026-10-24T16:55:34.8763563Z",
+              "reasoningTokens": 0,
+              "retrievalReasoningEffort": {
+                "kind": "low"
+              },
+              "logicalReasoningEffort": {
+                "kind": "low"
+              }
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "ref-0",
+          "title": "Foundry Hosted Agents (programming-language-python)",
+          "content": "# Foundry Hosted Agents (programming-language-python)\n## Deploying to Foundry\nOnce you've verified your agent locally, deploy it to Microsoft Foundry:\n1. **Provision resources** (if you don't already have a Foundry project):\n```bash\n azd provision\n```\n This creates a resource group with a Foundry instance, project, model deployment, Application Insights, and a container registry.\n2. **Deploy the agent:**\n```bash\n azd deploy\n```\n This packages your agent as a container image, pushes it to Azure Container Registry, and deploys it to Foundry Agent Service.\nThe Foundry hosting infrastructure automatically injects the following environment variables into your agent container at runtime:\n| Variable | Description| \n|  --- | ---  |\n| `FOUNDRY_PROJECT_ENDPOINT` | The endpoint URL for the Foundry project. |\n| `AZURE_AI_MODEL_DEPLOYMENT_NAME` | The azd-managed model deployment name configured during `azd ai agent init`. Python code can prefer `FOUNDRY_MODEL` locally and fall back to this hosted value. |\n| `APPLICATIONINSIGHTS_CONNECTION_STRING` | The Application Insights connection string for telemetry. |\n\nOnce deployed, your agent is accessible through its dedicated Foundry endpoint and can also be tested from the Foundry portal.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/agent-framework/hosting/foundry-hosted-agent#deploying-to-foundry",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-1",
+          "title": "Identity and access overview for Foundry Agent Service",
+          "content": "# Identity and access overview for Foundry Agent Service\n## Find the right identity guidance\nStart with the task you need to complete.\n| If you need to | Start with| \n|  --- | ---  |\n| Control who can create, configure, or manage Foundry resources and agents | [Authentication and authorization in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/authentication-authorization-foundry) and [role-based access control in Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry) |\n| Choose and configure how callers are authorized to interact with an agent at runtime | [Agent endpoint authorization](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-endpoint-authorization), then [configure agent endpoint authorization](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-agent-endpoint-authorization) |\n| Understand how Foundry represents and governs agents in Microsoft Entra ID | [Agent identity concepts](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-identity) |\n| Configure authentication for a downstream tool | [Toolbox authentication](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/tool-authentication) and the documentation for the selected tool |\n| Choose client user delegation for a downstream tool | [User delegation for tools](https://learn.microsoft.com/azure/foundry/agents/concepts/user-delegation) |\n| Configure client user delegation for a downstream tool | [Configure user delegation for tools](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-user-delegation) |\n| Understand Microsoft Entra consent, tenant policy, and consent failures for delegated access | [Microsoft Entra consent for delegated access](https://learn.microsoft.com/azure/foundry/agents/concepts/entra-delegated-access-consent) |\n| Configure authentication for a specific downstream tool | [MCP authentication](https://learn.microsoft.com/azure/foundry/agents/how-to/mcp-authentication), [Work IQ](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/work-iq), or the documentation for the selected tool |\n\n## Support depends on the agent and tool\nAuthentication support differs by tool, connection type, protocol, and channel. Each integration defines its supported identity methods and any required consent, role assignments, or connection properties.\nCheck the detailed guidance for your protocol or channel and tool before selecting an identity model. Don't assume that every tool supports every authentication or delegated-access method.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/concepts/identity-access-overview#find-the-right-identity-guidance",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-2",
+          "title": "Authentication and authorization in Microsoft Foundry",
+          "content": "# Authentication and authorization in Microsoft Foundry\n## Authentication methods\nFoundry supports Microsoft Entra ID (token-based, keyless) and API keys.\n### Microsoft Entra ID\nMicrosoft Entra ID uses OAuth 2.0 bearer tokens scoped to `https://ai.azure.com/.default`.\nUse Microsoft Entra ID for:\n1. Production workloads.\n2. Conditional access, multifactor authentication (MFA), and just-in-time access.\n3. Least privilege RBAC and managed identity integration.\nAdvantages: Fine-grained role assignments, per-principal auditing, controllable token lifetimes, automatic secret hygiene, and managed identities for services.\nLimitations: Higher initial setup complexity. Requires understanding of role-based access control (RBAC). For more on RBAC in Foundry, see [Role-based access control for Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).\n### API keys\nAPI keys are static secrets scoped to a Foundry resource.\nUse API keys for:\n1. Rapid prototyping.\n2. Isolated test environments where single-secret rotation is acceptable.\nAdvantages: Simple, language agnostic, and doesn't require token acquisition.\nLimitations: Can't express user identity, is difficult to scope granularly, and is harder to audit. Generally not accepted by enterprise production workloads and not recommended by Microsoft.\nFor more information on enabling keyless authentication, see [Configure key-less authentication with Microsoft Entra ID](https://learn.microsoft.com/azure/foundry/foundry-models/how-to/configure-entra-id).\n### Authenticate with Microsoft Entra ID (Python)\nThe following example shows how to authenticate with Microsoft Entra ID by using the `azure-identity` library and make a request to a Foundry endpoint:\n**Expected output**: A JSON response listing your model deployments, or an authentication error if credentials are missing or the role assignment isn't configured.\n**Reference**: [DefaultAzureCredential](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential) | [azure-identity library](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme)\n### Authenticate with an API key (Python)\nThe following example shows how to authenticate by using an API key. Use this approach for quick prototyping only; Microsoft Entra ID is recommended for production.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/concepts/authentication-authorization-foundry#authentication-methods",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-3",
+          "title": "Role-based access control for Azure OpenAI in Microsoft Foundry Models (classic)",
+          "content": "# Role-based access control for Azure OpenAI in Microsoft Foundry Models (classic)\n## Azure OpenAI roles\nThis role can be found in the Azure portal under **Subscriptions** > \\***Access control (IAM)** > **Add role assignment** > search for **Cognitive Services Usages Reader**. The role must be applied at the subscription level, it does not exist at the resource level.\nIf you don't wish to use this role, the subscription **Reader** role provides equivalent access, but it also grants read access beyond the scope of what is needed for viewing quota. Model deployment via the [Foundry portal](https://ai.azure.com/?cid=learnDocs) is also partially dependent on the presence of this role.\nThis role provides little value by itself and is instead typically assigned in combination with one or more of the previously described roles.\n#### Cognitive Services Usages Reader + Cognitive Services OpenAI User\nAll the capabilities of Cognitive Services OpenAI User plus the ability to:\n\u2705 View quota allocations in [Foundry portal](https://ai.azure.com/?cid=learnDocs)\n#### Cognitive Services Usages Reader + Cognitive Services OpenAI Contributor\nAll the capabilities of Cognitive Services OpenAI Contributor plus the ability to:\n\u2705 View quota allocations in [Foundry portal](https://ai.azure.com/?cid=learnDocs)\n#### Cognitive Services Usages Reader + Cognitive Services Contributor\nAll the capabilities of Cognitive Services Contributor plus the ability to:\n\u2705 View & edit quota allocations in [Foundry portal](https://ai.azure.com/?cid=learnDocs) \u2705 Create new model deployments or edit existing model deployments (via Foundry) ",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry-classic/openai/how-to/role-based-access-control#azure-openai-roles",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-4",
+          "title": "Set up authentication for Model Context Protocol (MCP) tools (python)",
+          "content": "# Set up authentication for Model Context Protocol (MCP) tools (python)\nMost Model Context Protocol (MCP) servers require authentication to access the server and its underlying service. Proper authentication ensures your agents can securely connect to MCP servers, invoke their tools, and access protected resources while maintaining appropriate access controls.\nIn this article, you:\n1. Choose an authentication method based on your security requirements\n2. Configure key-based, Microsoft Entra, or OAuth authentication\n3. Set up and validate your MCP server connection\nNote\nIf you don't already have an account with the MCP server publisher, create one through the publisher's website.\n## Prerequisites\nBefore you begin, you need:\n1. Access to the [Foundry portal](https://ai.azure.com/?cid=learnDocs) and a project. If you don't have one, see [Create projects in Foundry](https://learn.microsoft.com/azure/foundry/how-to/create-projects).\n2. Permissions to create project connections and configure agents. For details, see [Role-based access control in the Foundry portal](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).\n3. The remote MCP server endpoint URL you want to connect to.\n4. Credentials for your selected authentication method:\n4.1. Key-based authentication: an API key, personal access token (PAT), or other token.\n4.2. Microsoft Entra authentication: role assignments for the agent identity or project managed identity on the underlying service.\n4.3. Microsoft Entra client user delegation: a supported MCP tool and the delegated permissions required by its downstream resource.\n4.4. OAuth identity passthrough: managed OAuth configuration or an OAuth app registration (custom OAuth).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/mcp-authentication",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-5",
+          "title": "Elevated-role tasks in Microsoft Foundry",
+          "content": "# Elevated-role tasks in Microsoft Foundry\n## Deploy and manage models\nMarketplace model deployments require subscription-level access because they create billing agreements. Fine-tuning requires **Foundry Owner** because it creates training jobs that consume compute and storage. Before deploying any model, verify that your subscription has sufficient quota for the target model and region \u2014 see [Manage quotas](https://learn.microsoft.com/azure/foundry/how-to/quota).\nFor step-by-step deployment instructions, see [Create model deployments](https://learn.microsoft.com/azure/foundry/foundry-models/how-to/create-model-deployments).\n## Configure security and networking\nNetwork and encryption configurations require elevated roles on multiple resources. These configurations span the Foundry resource, virtual networks, DNS zones, and Key Vault, so you typically need multiple roles.\n### Private endpoints\nPrivate endpoints restrict access to your Foundry resource to traffic from specific virtual networks. Configuring a private endpoint requires roles on three different resources.\n| Task | Minimum role | Scope | Details| \n|  --- | --- | --- | ---  |\n| Create private endpoint | **Contributor***or***Owner** | Foundry resource | [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link) |\n| Configure VNet | **Network Contributor** | Virtual network | [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link) |\n| Configure private DNS zone | **Private DNS Zone Contributor** | DNS zone | [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link) |\n\nFor step-by-step instructions, see [Configure private link](https://learn.microsoft.com/azure/foundry/how-to/configure-private-link).\n### Managed virtual networks\nA managed virtual network isolates Foundry resources behind a Foundry-managed network. This setup simplifies network configuration compared to bringing your own VNet.\n| Task | Minimum role | Scope | Details| \n|  --- | --- | --- | ---  |\n| Configure managed VNet | **Owner***or***Contributor** | Foundry resource | [Managed virtual network](https://learn.microsoft.com/azure/foundry/how-to/managed-virtual-network) |\n| Assign RBAC to resources in managed VNet | **Owner***or***Role Based Access Control Administrator** | Target resources | [Managed virtual network](https://learn.microsoft.com/azure/foundry/how-to/managed-virtual-network) |\n\n### Network security perimeter\nA network security perimeter provides a centralized way to manage network access across multiple Azure resources. Add your Foundry resource to an existing perimeter to enforce consistent network rules.\n| Task | Minimum role | Scope | Details| \n|  --- | --- | --- | ---  |\n| Add Foundry to network security perimeter (preview) | **Owner**, **Contributor**, *or***Network Contributor** | Foundry resource | [Network security perimeter](https://learn.microsoft.com/azure/foundry/how-to/add-foundry-to-network-security-perimeter) |\n\n### Customer-managed keys\nBy using customer-managed keys (CMK), you can encrypt Foundry data with keys you control in Azure Key Vault. CMK requires roles on both the Key Vault and the Foundry resource because you grant the managed identity access to your key and then configure the resource to use it.",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/concepts/administrator-guide#deploy-and-manage-models",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        }
+      ]
+    }
+  },
+  "accepted_answer_reruns": [
+    {
+      "decision": "answer",
+      "question": "For the Atlas support app in staging, how should Python authenticate to Foundry, and whose identity needs the model role?",
+      "answer": "Python should authenticate to Foundry in staging using DefaultAzureCredential with the system-assigned managed identity of the Atlas staging container app, via Microsoft Entra ID [ref-3][ref-2]. The identity that requires the Cognitive Services OpenAI User role is the container app's system-assigned managed identity, assigned at the target Foundry resource [ref-3][ref-2]. No client ID is required for this system-assigned identity [ref-3].",
+      "attempts": [
+        {
+          "effort": "low",
+          "p_sufficient": 0.9914225208913722,
+          "sources": [
+            "ref-3",
+            "ref-2",
+            "ref-0",
+            "ref-1",
+            "ref-4",
+            "ref-5"
+          ],
+          "activity": [
+            {
+              "type": "modelQueryPlanning",
+              "id": 0,
+              "startedAt": "2026-10-24T16:55:35.2627046Z",
+              "completedAt": "2026-10-24T16:55:37.4511814Z",
+              "inputTokens": 1090,
+              "outputTokens": 123,
+              "elapsedMs": 2188,
+              "model": {
+                "modelName": "gpt-4.1",
+                "deploymentId": "gpt-4.1"
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 3,
+              "startedAt": "2026-10-24T16:55:37.4514136Z",
+              "completedAt": "2026-10-24T16:55:38.035427Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:37.4514833Z",
+              "count": 5,
+              "elapsedMs": 581,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Foundry model role assignment Atlas app"
+                }
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 2,
+              "startedAt": "2026-10-24T16:55:37.451387Z",
+              "completedAt": "2026-10-24T16:55:38.0865807Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:37.4514496Z",
+              "count": 3,
+              "elapsedMs": 633,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Python authentication Foundry Atlas support app"
+                }
+              }
+            },
+            {
+              "type": "searchIndex",
+              "id": 1,
+              "startedAt": "2026-10-24T16:55:37.4513337Z",
+              "completedAt": "2026-10-24T16:55:38.1703928Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-team",
+              "queryTime": "2026-10-24T16:55:37.6363488Z",
+              "count": 3,
+              "elapsedMs": 0,
+              "searchIndexArguments": {
+                "search": "Atlas support app staging Python Foundry authentication",
+                "filter": null,
+                "semanticConfigurationName": "semantic",
+                "sourceDataFields": [
+                  {
+                    "name": "title"
+                  },
+                  {
+                    "name": "content"
+                  },
+                  {
+                    "name": "id"
+                  },
+                  {
+                    "name": "source_path"
+                  },
+                  {
+                    "name": "application"
+                  },
+                  {
+                    "name": "environment"
+                  }
+                ],
+                "searchFields": []
+              }
+            },
+            {
+              "type": "searchIndex",
+              "id": 4,
+              "startedAt": "2026-10-24T16:55:37.8754783Z",
+              "completedAt": "2026-10-24T16:55:38.1703933Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-team",
+              "queryTime": "2026-10-24T16:55:38.1002787Z",
+              "count": 3,
+              "elapsedMs": 0,
+              "searchIndexArguments": {
+                "search": "Atlas support app staging Foundry model role identity assignment",
+                "filter": null,
+                "semanticConfigurationName": "semantic",
+                "sourceDataFields": [
+                  {
+                    "name": "title"
+                  },
+                  {
+                    "name": "content"
+                  },
+                  {
+                    "name": "id"
+                  },
+                  {
+                    "name": "source_path"
+                  },
+                  {
+                    "name": "application"
+                  },
+                  {
+                    "name": "environment"
+                  }
+                ],
+                "searchFields": []
+              }
+            },
+            {
+              "type": "agenticReasoning",
+              "id": 5,
+              "startedAt": "2026-10-24T16:55:38.1715621Z",
+              "completedAt": "2026-10-24T16:55:38.1715621Z",
+              "reasoningTokens": 1194,
+              "retrievalReasoningEffort": {
+                "kind": "low"
+              },
+              "logicalReasoningEffort": {
+                "kind": "low"
+              }
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "ref-3",
+          "title": "app-profile.yaml: app-profile.yaml",
+          "content": "# Synthetic tutorial data, not an actual Microsoft or customer environment.\napplication: Atlas support app\npurpose: Internal portal where employees submit and track IT tickets\nai_capability: Summarize submitted IT tickets using a Foundry model\nenvironment: staging\nlanguage: Python\nhosting: Azure Container Apps\nmodel_provider: Microsoft Foundry\nmodel: gpt-4.1\nauthentication:\n  mechanism: Microsoft Entra ID\n  credential: DefaultAzureCredential\n  identity_type: system-assigned managed identity\n  identity_owner: Atlas staging container app\n  model_role: Cognitive Services OpenAI User\n  role_scope: target Foundry resource\n  client_id: not required for this system-assigned identity\nlocal_development:\n  credential_source: Azure CLI sign-in\n  note: Local developer access does not establish the deployed app's access.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/app-profile.yaml",
+          "url": null,
+          "document_key": "team-b12bf5a25d5f0a8e",
+          "application": "Atlas support app",
+          "environment": "staging"
+        },
+        {
+          "id": "ref-2",
+          "title": "team-standards.md: Atlas staging authentication",
+          "content": "## Atlas staging authentication\n\nThe Atlas support app uses its container app's system-assigned managed identity\nwhen deployed to staging. Use DefaultAzureCredential in Python. Assign Cognitive\nServices OpenAI User to that identity on the target Foundry resource. Do not\nconfigure a user-assigned identity client ID for this sample.\n\nUse Azure CLI sign-in for local development. The developer and the deployed\napplication are different principals; a successful local request does not prove\nthat the application has access.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/team-standards.md",
+          "url": null,
+          "document_key": "team-ddf9e905d4e76533",
+          "application": "Atlas support app",
+          "environment": "staging"
+        },
+        {
+          "id": "ref-0",
+          "title": "Connect to an A2A agent endpoint from Foundry Agent Service (python)",
+          "content": "# Connect to an A2A agent endpoint from Foundry Agent Service (python)\n## Usage support\nThe following table shows SDK and setup support.\n| Microsoft Foundry support | Python SDK | C# SDK | JavaScript SDK | Java SDK | REST API | Basic agent setup | Standard agent setup| \n|  --- | --- | --- | --- | --- | --- | --- | ---  |\n| \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f |\n\n## Create an A2A connection\nCreate a project connection for your A2A endpoint so you can store authentication securely and reuse it across agent versions.\nFor details about supported authentication approaches, see [Agent2Agent (A2A) authentication](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-to-agent-authentication).\nIf you're connecting to a Foundry agent as the target, set the connection **target** to the target agent's A2A base path, `https://{account}.services.ai.azure.com/api/projects/{project}/agents/{agent}/endpoint/protocols/a2a`, and use the audience `https://ai.azure.com`. Don't set an agent card path. Foundry resolves the default agent card path automatically and negotiates the A2A protocol version for you. You also don't need to set the optional `send_credentials_for_agent_card` field, because Foundry doesn't require the agent card fetch to carry separate credentials. However, the target agent must have incoming A2A enabled; see [Enable incoming A2A on a Foundry agent](https://learn.microsoft.com/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint).\nChoose the authentication behavior based on whether the target agent needs the incoming user's context:\n1. For an app-only call, use the calling agent's identity.\n2. For an existing delegated integration, `UserEntraToken` can preserve the incoming Microsoft Entra user context as a compatibility path.\n3. When the target supports the agent identity acting with the user, use `AgentOnBehalfOfUser`. This authentication type is in preview. The source agent endpoint must use the `AgentBlueprint` scheme, and the incoming token must target the source agent's agent blueprint.\nFor the actor model, endpoint scheme and token audience requirements, consent, and migration between the delegated authentication types, see [Configure user delegation for tools in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-user-delegation).\nFor Foundry agent targets, A2A tasks and contexts are retained for 60 days from their most recent write. Each new write to a task or context resets its 60-day retention period. For details, see [A2A task and context retention](https://learn.microsoft.com/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint#understand-a2a-task-and-context-retention).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/tools/agent-to-agent#usage-support",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-1",
+          "title": "Set up permissions for Microsoft Foundry evaluation workflows",
+          "content": "# Set up permissions for Microsoft Foundry evaluation workflows\n## Find the roles for your workflow\nFirst, assign the role in this table for the evaluation task you want to perform.\n| I want to | Assign the role to | Role | Assign at| \n|  --- | --- | --- | ---  |\n| Create continuous or scheduled evaluation rules | The project managed identity | **Foundry User** | The Foundry resource or project used for the evaluation rule |\n| Run or review portal or SDK evaluations, including agent, synthetic dataset, admin-connected model, and benchmark workflows | Your identity or application identity | **Foundry User**, or a role with equivalent permissions | The Foundry resource or project that contains the evaluation |\n| Run evaluations in CI/CD | The workload identity or service principal used by the pipeline | **Foundry User**, or a role with equivalent permissions | The Foundry resource or project that contains the evaluation |\n| Run agent evaluations with the Azure Developer CLI | Your identity | **Foundry User** | The Foundry resource |\n\nEvaluation jobs use Microsoft Entra ID. If an evaluation invokes a model deployment, assign **Foundry User** at the Foundry account scope. A project-only role assignment doesn't authorize model inference. For more information, see [Deployment type-specific permissions](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry#deployment-typespecific-permissions).\nFor the permissions included in Foundry roles and guidance for custom roles, see [Role-based access control for Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/observability/how-to/evaluation-permissions#find-the-roles-for-your-workflow",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-4",
+          "title": "Connect agents to OpenAPI tools (python)",
+          "content": "# Connect agents to OpenAPI tools (python)\n## Configure OpenAPI authentication in the Foundry portal\nWhen you add an OpenAPI tool through **Tools** > **Custom** > **OpenAPI**, create a project connection for the tool. **Anonymous**, **API key**, and **Managed identity** authentication all require a connection, whether you configure the tool through the portal, SDK, or REST API.\nThe portal's **Managed identity** option uses the **Foundry project's managed identity**, not the Foundry account's managed identity. OpenAPI tools in toolboxes have always required project managed identity, regardless of subscription history. Account managed identity is supported only for OpenAPI tools attached directly to prompt agents in existing subscriptions. Migrate those configurations to project managed identity as soon as possible. See Managed identity support.\nAnonymous authentication means the target API doesn't require credentials. It doesn't mean you can skip creating the connection.\n| Authentication | Connection configuration| \n|  --- | ---  |\n| Anonymous | Create an OpenAPI project connection with no authentication (`authType: \"None\"`). No API key or token is required. |\n| API key | Create a project connection that stores the API key. Match the key name to the header or query parameter in the OpenAPI security scheme. See Authenticate with API key. |\n| Managed identity (project managed identity) | Create an OpenAPI project connection with `authType: \"ProjectManagedIdentity\"`, the target API endpoint, and the audience expected by that API. Assign the project's managed identity the required role on the target service. This option doesn't use the account's managed identity. |\n\n### Configure anonymous authentication\n1. Open **Tools** > **Custom** > **OpenAPI** in your Foundry project.\n2. In **Create an OpenAPI tool**, enter the tool's **Name** and **Description**.\n3. Set **Authentication method** to **Anonymous**.\n4. Under **Connection**, select an existing anonymous connection or select **Create a new connection** to create one.\n5. Enter the **OpenAPI 3.0+ schema**, and select **Create tool**.\nThe **Connection** field is required even when **Anonymous** is selected.\n[![Screenshot of anonymous OpenAPI authentication with a required Connection field and a Create a new connection button.](https://learn.microsoft.com/azure/foundry/agents/media/tools/openapi/anonymous-connection-required.png)](../../media/tools/openapi/anonymous-connection-required.png#lightbox)\n### Configure managed identity authentication",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/tools/openapi#configure-openapi-authentication-in-the-foundry-portal",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-5",
+          "title": "Elevated-role tasks in Microsoft Foundry",
+          "content": "# Elevated-role tasks in Microsoft Foundry\n## Troubleshoot common permission errors\nWhen developers encounter permission errors, use the task tables in this article to identify the required role. The following table maps common error messages to likely causes and resolutions.\n| Error message | Likely cause | Resolution| \n|  --- | --- | ---  |\n| `AuthorizationFailed` or `The client does not have authorization to perform action` | Missing control-plane role (**Owner**, **Contributor**, or resource-specific role) | Identify the task in this article, note the minimum role and scope, then assign the role. |\n| Agent create or update fails even with **Owner**/**Contributor** | Missing Foundry data-plane role on the project | Assign **Foundry User**, **Foundry Project Manager**, or **Foundry Owner** at the project scope. See Hosted agent setup. |\n| `Creating that role assignment requires Microsoft.Authorization/roleAssignments/write` (or equivalent) | Caller has **Foundry Project Manager** or **Foundry Account Owner**, but needs to assign roles outside the allowed **Foundry User** constraint | Use **Owner** or **Role Based Access Control Administrator** at the target resource scope (for example, ACR or Log Analytics). |\n| `ForbiddenError` on model deployment | Missing **Foundry Account Owner** on the Foundry resource | See Deploy and manage models. |\n| `LinkedAuthorizationFailed` during resource creation | Missing permissions on a linked resource (storage, Key Vault, or search) | Check Configure agent infrastructure for cross-service role requirements. |",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/concepts/administrator-guide#troubleshoot-common-permission-errors",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        }
+      ]
+    },
+    {
+      "decision": "answer",
+      "question": "For the Atlas support app in staging, how should Python authenticate to Foundry, and whose identity needs the model role?",
+      "answer": "Python should use DefaultAzureCredential, authenticating with the system-assigned managed identity of the Atlas staging container app, via Microsoft Entra ID [ref-3][ref-2]. The model role Cognitive Services OpenAI User must be assigned to that managed identity on the target Foundry resource [ref-3][ref-2].",
+      "attempts": [
+        {
+          "effort": "low",
+          "p_sufficient": 0.9947798772866412,
+          "sources": [
+            "ref-3",
+            "ref-2",
+            "ref-0",
+            "ref-1",
+            "ref-4",
+            "ref-5"
+          ],
+          "activity": [
+            {
+              "type": "modelQueryPlanning",
+              "id": 0,
+              "startedAt": "2026-10-24T16:55:35.2627046Z",
+              "completedAt": "2026-10-24T16:55:37.4511814Z",
+              "inputTokens": 1090,
+              "outputTokens": 123,
+              "elapsedMs": 2188,
+              "model": {
+                "modelName": "gpt-4.1",
+                "deploymentId": "gpt-4.1"
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 3,
+              "startedAt": "2026-10-24T16:55:37.4514136Z",
+              "completedAt": "2026-10-24T16:55:38.035427Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:37.4514833Z",
+              "count": 5,
+              "elapsedMs": 581,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Foundry model role assignment Atlas app"
+                }
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 2,
+              "startedAt": "2026-10-24T16:55:37.451387Z",
+              "completedAt": "2026-10-24T16:55:38.0865807Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:37.4514496Z",
+              "count": 3,
+              "elapsedMs": 633,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Python authentication Foundry Atlas support app"
+                }
+              }
+            },
+            {
+              "type": "searchIndex",
+              "id": 1,
+              "startedAt": "2026-10-24T16:55:37.4513337Z",
+              "completedAt": "2026-10-24T16:55:38.1703928Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-team",
+              "queryTime": "2026-10-24T16:55:37.6363488Z",
+              "count": 3,
+              "elapsedMs": 0,
+              "searchIndexArguments": {
+                "search": "Atlas support app staging Python Foundry authentication",
+                "filter": null,
+                "semanticConfigurationName": "semantic",
+                "sourceDataFields": [
+                  {
+                    "name": "title"
+                  },
+                  {
+                    "name": "content"
+                  },
+                  {
+                    "name": "id"
+                  },
+                  {
+                    "name": "source_path"
+                  },
+                  {
+                    "name": "application"
+                  },
+                  {
+                    "name": "environment"
+                  }
+                ],
+                "searchFields": []
+              }
+            },
+            {
+              "type": "searchIndex",
+              "id": 4,
+              "startedAt": "2026-10-24T16:55:37.8754783Z",
+              "completedAt": "2026-10-24T16:55:38.1703933Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-team",
+              "queryTime": "2026-10-24T16:55:38.1002787Z",
+              "count": 3,
+              "elapsedMs": 0,
+              "searchIndexArguments": {
+                "search": "Atlas support app staging Foundry model role identity assignment",
+                "filter": null,
+                "semanticConfigurationName": "semantic",
+                "sourceDataFields": [
+                  {
+                    "name": "title"
+                  },
+                  {
+                    "name": "content"
+                  },
+                  {
+                    "name": "id"
+                  },
+                  {
+                    "name": "source_path"
+                  },
+                  {
+                    "name": "application"
+                  },
+                  {
+                    "name": "environment"
+                  }
+                ],
+                "searchFields": []
+              }
+            },
+            {
+              "type": "agenticReasoning",
+              "id": 5,
+              "startedAt": "2026-10-24T16:55:38.1715621Z",
+              "completedAt": "2026-10-24T16:55:38.1715621Z",
+              "reasoningTokens": 1194,
+              "retrievalReasoningEffort": {
+                "kind": "low"
+              },
+              "logicalReasoningEffort": {
+                "kind": "low"
+              }
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "ref-3",
+          "title": "app-profile.yaml: app-profile.yaml",
+          "content": "# Synthetic tutorial data, not an actual Microsoft or customer environment.\napplication: Atlas support app\npurpose: Internal portal where employees submit and track IT tickets\nai_capability: Summarize submitted IT tickets using a Foundry model\nenvironment: staging\nlanguage: Python\nhosting: Azure Container Apps\nmodel_provider: Microsoft Foundry\nmodel: gpt-4.1\nauthentication:\n  mechanism: Microsoft Entra ID\n  credential: DefaultAzureCredential\n  identity_type: system-assigned managed identity\n  identity_owner: Atlas staging container app\n  model_role: Cognitive Services OpenAI User\n  role_scope: target Foundry resource\n  client_id: not required for this system-assigned identity\nlocal_development:\n  credential_source: Azure CLI sign-in\n  note: Local developer access does not establish the deployed app's access.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/app-profile.yaml",
+          "url": null,
+          "document_key": "team-b12bf5a25d5f0a8e",
+          "application": "Atlas support app",
+          "environment": "staging"
+        },
+        {
+          "id": "ref-2",
+          "title": "team-standards.md: Atlas staging authentication",
+          "content": "## Atlas staging authentication\n\nThe Atlas support app uses its container app's system-assigned managed identity\nwhen deployed to staging. Use DefaultAzureCredential in Python. Assign Cognitive\nServices OpenAI User to that identity on the target Foundry resource. Do not\nconfigure a user-assigned identity client ID for this sample.\n\nUse Azure CLI sign-in for local development. The developer and the deployed\napplication are different principals; a successful local request does not prove\nthat the application has access.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/team-standards.md",
+          "url": null,
+          "document_key": "team-ddf9e905d4e76533",
+          "application": "Atlas support app",
+          "environment": "staging"
+        },
+        {
+          "id": "ref-0",
+          "title": "Connect to an A2A agent endpoint from Foundry Agent Service (python)",
+          "content": "# Connect to an A2A agent endpoint from Foundry Agent Service (python)\n## Usage support\nThe following table shows SDK and setup support.\n| Microsoft Foundry support | Python SDK | C# SDK | JavaScript SDK | Java SDK | REST API | Basic agent setup | Standard agent setup| \n|  --- | --- | --- | --- | --- | --- | --- | ---  |\n| \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f |\n\n## Create an A2A connection\nCreate a project connection for your A2A endpoint so you can store authentication securely and reuse it across agent versions.\nFor details about supported authentication approaches, see [Agent2Agent (A2A) authentication](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-to-agent-authentication).\nIf you're connecting to a Foundry agent as the target, set the connection **target** to the target agent's A2A base path, `https://{account}.services.ai.azure.com/api/projects/{project}/agents/{agent}/endpoint/protocols/a2a`, and use the audience `https://ai.azure.com`. Don't set an agent card path. Foundry resolves the default agent card path automatically and negotiates the A2A protocol version for you. You also don't need to set the optional `send_credentials_for_agent_card` field, because Foundry doesn't require the agent card fetch to carry separate credentials. However, the target agent must have incoming A2A enabled; see [Enable incoming A2A on a Foundry agent](https://learn.microsoft.com/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint).\nChoose the authentication behavior based on whether the target agent needs the incoming user's context:\n1. For an app-only call, use the calling agent's identity.\n2. For an existing delegated integration, `UserEntraToken` can preserve the incoming Microsoft Entra user context as a compatibility path.\n3. When the target supports the agent identity acting with the user, use `AgentOnBehalfOfUser`. This authentication type is in preview. The source agent endpoint must use the `AgentBlueprint` scheme, and the incoming token must target the source agent's agent blueprint.\nFor the actor model, endpoint scheme and token audience requirements, consent, and migration between the delegated authentication types, see [Configure user delegation for tools in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-user-delegation).\nFor Foundry agent targets, A2A tasks and contexts are retained for 60 days from their most recent write. Each new write to a task or context resets its 60-day retention period. For details, see [A2A task and context retention](https://learn.microsoft.com/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint#understand-a2a-task-and-context-retention).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/tools/agent-to-agent#usage-support",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-1",
+          "title": "Set up permissions for Microsoft Foundry evaluation workflows",
+          "content": "# Set up permissions for Microsoft Foundry evaluation workflows\n## Find the roles for your workflow\nFirst, assign the role in this table for the evaluation task you want to perform.\n| I want to | Assign the role to | Role | Assign at| \n|  --- | --- | --- | ---  |\n| Create continuous or scheduled evaluation rules | The project managed identity | **Foundry User** | The Foundry resource or project used for the evaluation rule |\n| Run or review portal or SDK evaluations, including agent, synthetic dataset, admin-connected model, and benchmark workflows | Your identity or application identity | **Foundry User**, or a role with equivalent permissions | The Foundry resource or project that contains the evaluation |\n| Run evaluations in CI/CD | The workload identity or service principal used by the pipeline | **Foundry User**, or a role with equivalent permissions | The Foundry resource or project that contains the evaluation |\n| Run agent evaluations with the Azure Developer CLI | Your identity | **Foundry User** | The Foundry resource |\n\nEvaluation jobs use Microsoft Entra ID. If an evaluation invokes a model deployment, assign **Foundry User** at the Foundry account scope. A project-only role assignment doesn't authorize model inference. For more information, see [Deployment type-specific permissions](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry#deployment-typespecific-permissions).\nFor the permissions included in Foundry roles and guidance for custom roles, see [Role-based access control for Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/observability/how-to/evaluation-permissions#find-the-roles-for-your-workflow",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-4",
+          "title": "Connect agents to OpenAPI tools (python)",
+          "content": "# Connect agents to OpenAPI tools (python)\n## Configure OpenAPI authentication in the Foundry portal\nWhen you add an OpenAPI tool through **Tools** > **Custom** > **OpenAPI**, create a project connection for the tool. **Anonymous**, **API key**, and **Managed identity** authentication all require a connection, whether you configure the tool through the portal, SDK, or REST API.\nThe portal's **Managed identity** option uses the **Foundry project's managed identity**, not the Foundry account's managed identity. OpenAPI tools in toolboxes have always required project managed identity, regardless of subscription history. Account managed identity is supported only for OpenAPI tools attached directly to prompt agents in existing subscriptions. Migrate those configurations to project managed identity as soon as possible. See Managed identity support.\nAnonymous authentication means the target API doesn't require credentials. It doesn't mean you can skip creating the connection.\n| Authentication | Connection configuration| \n|  --- | ---  |\n| Anonymous | Create an OpenAPI project connection with no authentication (`authType: \"None\"`). No API key or token is required. |\n| API key | Create a project connection that stores the API key. Match the key name to the header or query parameter in the OpenAPI security scheme. See Authenticate with API key. |\n| Managed identity (project managed identity) | Create an OpenAPI project connection with `authType: \"ProjectManagedIdentity\"`, the target API endpoint, and the audience expected by that API. Assign the project's managed identity the required role on the target service. This option doesn't use the account's managed identity. |\n\n### Configure anonymous authentication\n1. Open **Tools** > **Custom** > **OpenAPI** in your Foundry project.\n2. In **Create an OpenAPI tool**, enter the tool's **Name** and **Description**.\n3. Set **Authentication method** to **Anonymous**.\n4. Under **Connection**, select an existing anonymous connection or select **Create a new connection** to create one.\n5. Enter the **OpenAPI 3.0+ schema**, and select **Create tool**.\nThe **Connection** field is required even when **Anonymous** is selected.\n[![Screenshot of anonymous OpenAPI authentication with a required Connection field and a Create a new connection button.](https://learn.microsoft.com/azure/foundry/agents/media/tools/openapi/anonymous-connection-required.png)](../../media/tools/openapi/anonymous-connection-required.png#lightbox)\n### Configure managed identity authentication",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/tools/openapi#configure-openapi-authentication-in-the-foundry-portal",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-5",
+          "title": "Elevated-role tasks in Microsoft Foundry",
+          "content": "# Elevated-role tasks in Microsoft Foundry\n## Troubleshoot common permission errors\nWhen developers encounter permission errors, use the task tables in this article to identify the required role. The following table maps common error messages to likely causes and resolutions.\n| Error message | Likely cause | Resolution| \n|  --- | --- | ---  |\n| `AuthorizationFailed` or `The client does not have authorization to perform action` | Missing control-plane role (**Owner**, **Contributor**, or resource-specific role) | Identify the task in this article, note the minimum role and scope, then assign the role. |\n| Agent create or update fails even with **Owner**/**Contributor** | Missing Foundry data-plane role on the project | Assign **Foundry User**, **Foundry Project Manager**, or **Foundry Owner** at the project scope. See Hosted agent setup. |\n| `Creating that role assignment requires Microsoft.Authorization/roleAssignments/write` (or equivalent) | Caller has **Foundry Project Manager** or **Foundry Account Owner**, but needs to assign roles outside the allowed **Foundry User** constraint | Use **Owner** or **Role Based Access Control Administrator** at the target resource scope (for example, ACR or Log Analytics). |\n| `ForbiddenError` on model deployment | Missing **Foundry Account Owner** on the Foundry resource | See Deploy and manage models. |\n| `LinkedAuthorizationFailed` during resource creation | Missing permissions on a linked resource (storage, Key Vault, or search) | Check Configure agent infrastructure for cross-service role requirements. |",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/concepts/administrator-guide#troubleshoot-common-permission-errors",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        }
+      ]
+    },
+    {
+      "decision": "answer",
+      "question": "For the Atlas support app in staging, how should Python authenticate to Foundry, and whose identity needs the model role?",
+      "answer": "Python should use DefaultAzureCredential to authenticate to Foundry with the container app's system-assigned managed identity in staging; no client ID is required for this identity [ref-3][ref-2]. The Atlas staging container app's system-assigned identity must have the Cognitive Services OpenAI User role assigned on the target Foundry resource [ref-3][ref-2]. Local developer authentication (Azure CLI sign-in) is distinct and does not grant the deployed app access [ref-3][ref-2].",
+      "attempts": [
+        {
+          "effort": "low",
+          "p_sufficient": 0.991422524059531,
+          "sources": [
+            "ref-3",
+            "ref-2",
+            "ref-0",
+            "ref-1",
+            "ref-4",
+            "ref-5"
+          ],
+          "activity": [
+            {
+              "type": "modelQueryPlanning",
+              "id": 0,
+              "startedAt": "2026-10-24T16:55:35.2627046Z",
+              "completedAt": "2026-10-24T16:55:37.4511814Z",
+              "inputTokens": 1090,
+              "outputTokens": 123,
+              "elapsedMs": 2188,
+              "model": {
+                "modelName": "gpt-4.1",
+                "deploymentId": "gpt-4.1"
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 3,
+              "startedAt": "2026-10-24T16:55:37.4514136Z",
+              "completedAt": "2026-10-24T16:55:38.035427Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:37.4514833Z",
+              "count": 5,
+              "elapsedMs": 581,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Foundry model role assignment Atlas app"
+                }
+              }
+            },
+            {
+              "type": "mcpServer",
+              "id": 2,
+              "startedAt": "2026-10-24T16:55:37.451387Z",
+              "completedAt": "2026-10-24T16:55:38.0865807Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-learn",
+              "queryTime": "2026-10-24T16:55:37.4514496Z",
+              "count": 3,
+              "elapsedMs": 633,
+              "warning": "Some content from this tool was dropped while pruning the response to fit configured limits. Consider increasing maxOutputSize or maxOutputDocuments to retain more of this content.",
+              "mcpServerArguments": {
+                "toolName": "microsoft_docs_search",
+                "toolArguments": {
+                  "query": "Python authentication Foundry Atlas support app"
+                }
+              }
+            },
+            {
+              "type": "searchIndex",
+              "id": 1,
+              "startedAt": "2026-10-24T16:55:37.4513337Z",
+              "completedAt": "2026-10-24T16:55:38.1703928Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-team",
+              "queryTime": "2026-10-24T16:55:37.6363488Z",
+              "count": 3,
+              "elapsedMs": 0,
+              "searchIndexArguments": {
+                "search": "Atlas support app staging Python Foundry authentication",
+                "filter": null,
+                "semanticConfigurationName": "semantic",
+                "sourceDataFields": [
+                  {
+                    "name": "title"
+                  },
+                  {
+                    "name": "content"
+                  },
+                  {
+                    "name": "id"
+                  },
+                  {
+                    "name": "source_path"
+                  },
+                  {
+                    "name": "application"
+                  },
+                  {
+                    "name": "environment"
+                  }
+                ],
+                "searchFields": []
+              }
+            },
+            {
+              "type": "searchIndex",
+              "id": 4,
+              "startedAt": "2026-10-24T16:55:37.8754783Z",
+              "completedAt": "2026-10-24T16:55:38.1703933Z",
+              "knowledgeSourceName": "learn-team-5d38917fe290-team",
+              "queryTime": "2026-10-24T16:55:38.1002787Z",
+              "count": 3,
+              "elapsedMs": 0,
+              "searchIndexArguments": {
+                "search": "Atlas support app staging Foundry model role identity assignment",
+                "filter": null,
+                "semanticConfigurationName": "semantic",
+                "sourceDataFields": [
+                  {
+                    "name": "title"
+                  },
+                  {
+                    "name": "content"
+                  },
+                  {
+                    "name": "id"
+                  },
+                  {
+                    "name": "source_path"
+                  },
+                  {
+                    "name": "application"
+                  },
+                  {
+                    "name": "environment"
+                  }
+                ],
+                "searchFields": []
+              }
+            },
+            {
+              "type": "agenticReasoning",
+              "id": 5,
+              "startedAt": "2026-10-24T16:55:38.1715621Z",
+              "completedAt": "2026-10-24T16:55:38.1715621Z",
+              "reasoningTokens": 1194,
+              "retrievalReasoningEffort": {
+                "kind": "low"
+              },
+              "logicalReasoningEffort": {
+                "kind": "low"
+              }
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "ref-3",
+          "title": "app-profile.yaml: app-profile.yaml",
+          "content": "# Synthetic tutorial data, not an actual Microsoft or customer environment.\napplication: Atlas support app\npurpose: Internal portal where employees submit and track IT tickets\nai_capability: Summarize submitted IT tickets using a Foundry model\nenvironment: staging\nlanguage: Python\nhosting: Azure Container Apps\nmodel_provider: Microsoft Foundry\nmodel: gpt-4.1\nauthentication:\n  mechanism: Microsoft Entra ID\n  credential: DefaultAzureCredential\n  identity_type: system-assigned managed identity\n  identity_owner: Atlas staging container app\n  model_role: Cognitive Services OpenAI User\n  role_scope: target Foundry resource\n  client_id: not required for this system-assigned identity\nlocal_development:\n  credential_source: Azure CLI sign-in\n  note: Local developer access does not establish the deployed app's access.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/app-profile.yaml",
+          "url": null,
+          "document_key": "team-b12bf5a25d5f0a8e",
+          "application": "Atlas support app",
+          "environment": "staging"
+        },
+        {
+          "id": "ref-2",
+          "title": "team-standards.md: Atlas staging authentication",
+          "content": "## Atlas staging authentication\n\nThe Atlas support app uses its container app's system-assigned managed identity\nwhen deployed to staging. Use DefaultAzureCredential in Python. Assign Cognitive\nServices OpenAI User to that identity on the target Foundry resource. Do not\nconfigure a user-assigned identity client ID for this sample.\n\nUse Azure CLI sign-in for local development. The developer and the deployed\napplication are different principals; a successful local request does not prove\nthat the application has access.",
+          "kind": "searchIndex",
+          "source_path": "team-docs/team-standards.md",
+          "url": null,
+          "document_key": "team-ddf9e905d4e76533",
+          "application": "Atlas support app",
+          "environment": "staging"
+        },
+        {
+          "id": "ref-0",
+          "title": "Connect to an A2A agent endpoint from Foundry Agent Service (python)",
+          "content": "# Connect to an A2A agent endpoint from Foundry Agent Service (python)\n## Usage support\nThe following table shows SDK and setup support.\n| Microsoft Foundry support | Python SDK | C# SDK | JavaScript SDK | Java SDK | REST API | Basic agent setup | Standard agent setup| \n|  --- | --- | --- | --- | --- | --- | --- | ---  |\n| \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f | \u2714\ufe0f |\n\n## Create an A2A connection\nCreate a project connection for your A2A endpoint so you can store authentication securely and reuse it across agent versions.\nFor details about supported authentication approaches, see [Agent2Agent (A2A) authentication](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-to-agent-authentication).\nIf you're connecting to a Foundry agent as the target, set the connection **target** to the target agent's A2A base path, `https://{account}.services.ai.azure.com/api/projects/{project}/agents/{agent}/endpoint/protocols/a2a`, and use the audience `https://ai.azure.com`. Don't set an agent card path. Foundry resolves the default agent card path automatically and negotiates the A2A protocol version for you. You also don't need to set the optional `send_credentials_for_agent_card` field, because Foundry doesn't require the agent card fetch to carry separate credentials. However, the target agent must have incoming A2A enabled; see [Enable incoming A2A on a Foundry agent](https://learn.microsoft.com/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint).\nChoose the authentication behavior based on whether the target agent needs the incoming user's context:\n1. For an app-only call, use the calling agent's identity.\n2. For an existing delegated integration, `UserEntraToken` can preserve the incoming Microsoft Entra user context as a compatibility path.\n3. When the target supports the agent identity acting with the user, use `AgentOnBehalfOfUser`. This authentication type is in preview. The source agent endpoint must use the `AgentBlueprint` scheme, and the incoming token must target the source agent's agent blueprint.\nFor the actor model, endpoint scheme and token audience requirements, consent, and migration between the delegated authentication types, see [Configure user delegation for tools in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-user-delegation).\nFor Foundry agent targets, A2A tasks and contexts are retained for 60 days from their most recent write. Each new write to a task or context resets its 60-day retention period. For details, see [A2A task and context retention](https://learn.microsoft.com/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint#understand-a2a-task-and-context-retention).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/tools/agent-to-agent#usage-support",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-1",
+          "title": "Set up permissions for Microsoft Foundry evaluation workflows",
+          "content": "# Set up permissions for Microsoft Foundry evaluation workflows\n## Find the roles for your workflow\nFirst, assign the role in this table for the evaluation task you want to perform.\n| I want to | Assign the role to | Role | Assign at| \n|  --- | --- | --- | ---  |\n| Create continuous or scheduled evaluation rules | The project managed identity | **Foundry User** | The Foundry resource or project used for the evaluation rule |\n| Run or review portal or SDK evaluations, including agent, synthetic dataset, admin-connected model, and benchmark workflows | Your identity or application identity | **Foundry User**, or a role with equivalent permissions | The Foundry resource or project that contains the evaluation |\n| Run evaluations in CI/CD | The workload identity or service principal used by the pipeline | **Foundry User**, or a role with equivalent permissions | The Foundry resource or project that contains the evaluation |\n| Run agent evaluations with the Azure Developer CLI | Your identity | **Foundry User** | The Foundry resource |\n\nEvaluation jobs use Microsoft Entra ID. If an evaluation invokes a model deployment, assign **Foundry User** at the Foundry account scope. A project-only role assignment doesn't authorize model inference. For more information, see [Deployment type-specific permissions](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry#deployment-typespecific-permissions).\nFor the permissions included in Foundry roles and guidance for custom roles, see [Role-based access control for Microsoft Foundry](https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry).",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/observability/how-to/evaluation-permissions#find-the-roles-for-your-workflow",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-4",
+          "title": "Connect agents to OpenAPI tools (python)",
+          "content": "# Connect agents to OpenAPI tools (python)\n## Configure OpenAPI authentication in the Foundry portal\nWhen you add an OpenAPI tool through **Tools** > **Custom** > **OpenAPI**, create a project connection for the tool. **Anonymous**, **API key**, and **Managed identity** authentication all require a connection, whether you configure the tool through the portal, SDK, or REST API.\nThe portal's **Managed identity** option uses the **Foundry project's managed identity**, not the Foundry account's managed identity. OpenAPI tools in toolboxes have always required project managed identity, regardless of subscription history. Account managed identity is supported only for OpenAPI tools attached directly to prompt agents in existing subscriptions. Migrate those configurations to project managed identity as soon as possible. See Managed identity support.\nAnonymous authentication means the target API doesn't require credentials. It doesn't mean you can skip creating the connection.\n| Authentication | Connection configuration| \n|  --- | ---  |\n| Anonymous | Create an OpenAPI project connection with no authentication (`authType: \"None\"`). No API key or token is required. |\n| API key | Create a project connection that stores the API key. Match the key name to the header or query parameter in the OpenAPI security scheme. See Authenticate with API key. |\n| Managed identity (project managed identity) | Create an OpenAPI project connection with `authType: \"ProjectManagedIdentity\"`, the target API endpoint, and the audience expected by that API. Assign the project's managed identity the required role on the target service. This option doesn't use the account's managed identity. |\n\n### Configure anonymous authentication\n1. Open **Tools** > **Custom** > **OpenAPI** in your Foundry project.\n2. In **Create an OpenAPI tool**, enter the tool's **Name** and **Description**.\n3. Set **Authentication method** to **Anonymous**.\n4. Under **Connection**, select an existing anonymous connection or select **Create a new connection** to create one.\n5. Enter the **OpenAPI 3.0+ schema**, and select **Create tool**.\nThe **Connection** field is required even when **Anonymous** is selected.\n[![Screenshot of anonymous OpenAPI authentication with a required Connection field and a Create a new connection button.](https://learn.microsoft.com/azure/foundry/agents/media/tools/openapi/anonymous-connection-required.png)](../../media/tools/openapi/anonymous-connection-required.png#lightbox)\n### Configure managed identity authentication",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/agents/how-to/tools/openapi#configure-openapi-authentication-in-the-foundry-portal",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        },
+        {
+          "id": "ref-5",
+          "title": "Elevated-role tasks in Microsoft Foundry",
+          "content": "# Elevated-role tasks in Microsoft Foundry\n## Troubleshoot common permission errors\nWhen developers encounter permission errors, use the task tables in this article to identify the required role. The following table maps common error messages to likely causes and resolutions.\n| Error message | Likely cause | Resolution| \n|  --- | --- | ---  |\n| `AuthorizationFailed` or `The client does not have authorization to perform action` | Missing control-plane role (**Owner**, **Contributor**, or resource-specific role) | Identify the task in this article, note the minimum role and scope, then assign the role. |\n| Agent create or update fails even with **Owner**/**Contributor** | Missing Foundry data-plane role on the project | Assign **Foundry User**, **Foundry Project Manager**, or **Foundry Owner** at the project scope. See Hosted agent setup. |\n| `Creating that role assignment requires Microsoft.Authorization/roleAssignments/write` (or equivalent) | Caller has **Foundry Project Manager** or **Foundry Account Owner**, but needs to assign roles outside the allowed **Foundry User** constraint | Use **Owner** or **Role Based Access Control Administrator** at the target resource scope (for example, ACR or Log Analytics). |\n| `ForbiddenError` on model deployment | Missing **Foundry Account Owner** on the Foundry resource | See Deploy and manage models. |\n| `LinkedAuthorizationFailed` during resource creation | Missing permissions on a linked resource (storage, Key Vault, or search) | Check Configure agent infrastructure for cross-service role requirements. |",
+          "kind": "mcpServer",
+          "source_path": null,
+          "url": "https://learn.microsoft.com/azure/foundry/concepts/administrator-guide#troubleshoot-common-permission-errors",
+          "document_key": null,
+          "application": null,
+          "environment": null
+        }
+      ]
+    }
+  ],
+  "threshold": 0.95,
+  "rubric": {
+    "type": "noul",
+    "instructions": "Does the provided evidence contain enough information to fully answer the support question?",
+    "criteria": {
+      "true": "The evidence explicitly covers every material part of the question, applies to the relevant application, environment, product version and plan, and leaves no unresolved contradictions.",
+      "false": "A required fact is missing, the application, environment, version or plan does not match, the evidence conflicts without a resolution, or answering would require assumed knowledge."
+    }
+  },
+  "model_deployments": {
+    "scorer": "Decision-1",
+    "reply": "gpt-4.1"
+  },
+  "started_at_utc": "2026-10-24T16:55:24.421840+00:00",
+  "completed_at_utc": "2026-10-24T16:56:18.874340+00:00",
+  "execution": {
+    "mode": "live",
+    "notebook": "foundry-iq-decision-1-gate.ipynb",
+    "code_sha256": "5a57b8b326dc0f8b7fae7559f4b78041c49459ffda72b85259a84f355289b691",
+    "skipped_cells": [
+      "install: dependencies already installed in the kernel"
+    ],
+    "instrumentation": {
+      "optional_retry": "retried = answer_or_handoff(examples[\"Missing record\"], retry=True)",
+      "note": "The collapsed optional example was run in this same kernel before client closure."
+    },
+    "packages": {
+      "azure-search-documents": "12.1.0b2",
+      "azure-identity": "1.26.0",
+      "openai": "3.24.0",
+      "httpx": "0.28.1",
+      "python-dotenv": "1.2.4"
+    }
+  },
+  "team_files_sha256": {
+    "app-profile.yaml": "5ba46522f879adf15bb325259597e0637f1c69f7deaef04d13b8b0577064fc1d",
+    "team-standards.md": "7d2012a354d86f2e28594f3c691dfc18fc4cbab7e210d290ea95ce42103cb211",
+    "troubleshooting.md": "61e4e82fbf2ae3abc2ba93b4f689a472f0dba7ba7aec70e0dcaa45a7f0f59663"
+  },
+  "supporting_code_sha256": {
+    "team_data.py": "288ded8bddc58a405c65c7d94a3760840e093a9be96cae1444df3215a683602e",
+    "setup_learn.py": "1a263ea080e23ac992333479361a7a5e8bb0a11f654dd0e7ba7daaf34fa33ded",
+    "gate_helpers.py": "2ee7e1e4ffb702876970de80aee4cdc4b187521a6480fd95aa6851ded093a3a3"
+  },
+  "documentation_attribution": {
+    "publisher": "Microsoft",
+    "terms": "https://learn.microsoft.com/legal/termsofuse",
+    "articles": "Original titles and URLs are retained on mcpServer evidence items."
+  },
+  "manual_review": {
+    "path": "role-mitigation-manual-review.json",
+    "sha256": "d38ad6c81599617c245583a8cf3694c49b112f31c097b71ba1df7f084f3f3809",
+    "type": "manual authoring-assistant reading, not independent human review"
+  }
+}

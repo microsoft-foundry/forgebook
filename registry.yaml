@@ -298,3 +298,19 @@
     - governance
     - intelligent-document-processing
     - forward-deployed-engineering
+
+- slug: foundry-iq-decision-1-gate
+  path: notebooks/foundry-iq-decision-1-gate.ipynb
+  title: "Don't answer yet: an evidence gate with Foundry IQ"
+  description: "Build with Foundry IQ and Microsoft-Decision-1: retrieve platform and team context, assess sufficiency, and let application code answer or prepare review."
+  date: "2026-10-12"
+  authors:
+    - github: farzad528
+  tags:
+    - iq
+    - retrieval
+    - grounding
+    - azure-ai-search
+    - agents
+    - decision-models
+    - mcp

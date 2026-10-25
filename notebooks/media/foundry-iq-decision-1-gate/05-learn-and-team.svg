@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 350" role="img" aria-labelledby="title description">
+  <title id="title">Public documentation plus application context, with an evidence gate</title>
+  <desc id="description">Microsoft Learn MCP and indexed local team files feed Foundry IQ. Decision-1 assesses evidence sufficiency. Application code generates a cited answer only above its threshold, or returns a handoff.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#475569"/></marker>
+  </defs>
+  <rect width="1000" height="350" rx="12" fill="#f8fafc"/>
+  <g fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)">
+    <path d="M218 86 H262 V158 H300"/>
+    <path d="M218 246 H262 V190 H300"/>
+    <path d="M470 174 H520"/>
+    <path d="M700 174 H750 V93 H788"/>
+    <path d="M700 174 H750 V258 H788"/>
+  </g>
+  <g stroke="#64748b" stroke-width="1.5">
+    <rect x="25" y="45" width="193" height="82" rx="10" fill="#dbeafe"/>
+    <rect x="25" y="202" width="193" height="88" rx="10" fill="#e0e7ff"/>
+    <rect x="300" y="129" width="170" height="91" rx="10" fill="#e0f2fe"/>
+    <rect x="520" y="129" width="180" height="91" rx="10" fill="#fef3c7"/>
+    <rect x="788" y="50" width="190" height="87" rx="10" fill="#dcfce7"/>
+    <rect x="788" y="215" width="190" height="87" rx="10" fill="#ffedd5"/>
+  </g>
+  <g fill="#0f172a" text-anchor="middle" font-family="Arial, sans-serif" font-size="16">
+    <text x="121" y="78" font-weight="bold">Microsoft Learn MCP</text>
+    <text x="121" y="103" font-size="14">Platform guidance, live</text>
+    <text x="121" y="232" font-weight="bold">Local team files</text>
+    <text x="121" y="255" font-size="14">Chunk + embed + index</text>
+    <text x="121" y="276" font-size="13">App profile and runbooks</text>
+    <text x="385" y="163" font-weight="bold">Foundry IQ</text>
+    <text x="385" y="188" font-size="14">Retrieve evidence</text>
+    <text x="610" y="162" font-weight="bold">Decision-1</text>
+    <text x="610" y="187" font-size="14">P(evidence sufficient)</text>
+    <text x="883" y="83" font-weight="bold">Generate cited answer</text>
+    <text x="883" y="108" font-size="14">Only if threshold passes</text>
+    <text x="883" y="250" font-weight="bold">Prepare handoff</text>
+    <text x="883" y="275" font-size="14">No speculative generation</text>
+    <text x="500" y="331" font-size="14">The application enforces the threshold. Evidence does not grant permission to act.</text>
+  </g>
+</svg>

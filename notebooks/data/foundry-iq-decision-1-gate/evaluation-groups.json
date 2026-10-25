@@ -1,0 +1,50 @@
+{
+  "delivery_retries": {
+    "split": "dev",
+    "questions": ["q01", "q02", "q19", "q20", "q22", "q27", "q31", "q43", "q44"]
+  },
+  "signatures_and_rotation": {
+    "split": "dev",
+    "questions": ["q03", "q04", "q21", "q46", "q50", "q51", "q55", "q57", "q58"]
+  },
+  "publish_limits": {
+    "split": "dev",
+    "questions": ["q07", "q08", "q24", "q35", "q37", "q48"]
+  },
+  "bulk_replay": {
+    "split": "dev",
+    "questions": ["q28", "q36"]
+  },
+  "payload_size": {
+    "split": "test",
+    "questions": ["q05", "q06"]
+  },
+  "dlq_retention": {
+    "split": "test",
+    "questions": ["q09", "q25", "q41"]
+  },
+  "networking_and_egress": {
+    "split": "test",
+    "questions": ["q10", "q11", "q23", "q29", "q32", "q39", "q40", "q42"]
+  },
+  "plans_and_workspace_configuration": {
+    "split": "test",
+    "questions": ["q12", "q13", "q14", "q26", "q38", "q47"]
+  },
+  "endpoint_lifecycle": {
+    "split": "test",
+    "questions": ["q15", "q16", "q30", "q33"]
+  },
+  "other_incidents": {
+    "split": "test",
+    "questions": ["q17", "q18", "q34", "q45"]
+  },
+  "future_release": {
+    "split": "test",
+    "questions": ["q49"]
+  },
+  "unrelated_infrastructure": {
+    "split": "test",
+    "questions": ["q52", "q53", "q54", "q56", "q59", "q60"]
+  }
+}

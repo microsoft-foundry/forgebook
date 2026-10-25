@@ -1,0 +1,20 @@
+{
+  "scored_at": "2026-10-20T11:46:14.974492+00:00",
+  "retrieval_collected_at": "2026-10-12",
+  "retrieval_mode": "recorded",
+  "scoring_mode": "live",
+  "model": "Decision-1",
+  "scores_per_evidence_bundle": 1,
+  "rubric": {
+    "type": "noul",
+    "instructions": "Does the provided evidence contain enough information to fully answer the support question?",
+    "criteria": {
+      "true": "The evidence explicitly covers every material part of the question, applies to the relevant product version and plan, and leaves no unresolved contradictions.",
+      "false": "A required fact is missing, the version or plan does not match, the evidence conflicts without a resolution, or answering would require assumed knowledge."
+    }
+  },
+  "questions_sha256": "889fab17e0b41d870de90a715178346cd3d627e171bb8895c89833546b6eb8ee",
+  "groups_sha256": "a58373bd195c8312d79229620f963ee09c4ca1fd6ffa7e39771a865c6a4804e5",
+  "traces_sha256": "e2896f4be4912dc25e1b32567bfdcff78b160844e7441bbd8beef37dbe36d17a",
+  "corpus_sha256": "4136a11e1a751e6508da3ee264cbbcc298bf6b778d79cfdc793fe35df72e8d72"
+}

@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "collected_at": "2026-10-12",
+  "retrieval": {
+    "k": 3,
+    "efforts": [
+      "minimal",
+      "low",
+      "medium"
+    ],
+    "planner_model": "gpt-4.1"
+  },
+  "gate": {
+    "model": "Decision-1",
+    "question": {
+      "type": "noul",
+      "instructions": "Does the evidence contain enough information to fully answer the question?",
+      "criteria": {
+        "true": "The evidence directly answers every part of the question.",
+        "false": "A required part of the answer is missing, or the evidence does not apply."
+      }
+    },
+    "scores_per_decision": 3,
+    "aggregate": "median"
+  },
+  "tiers": {
+    "explain": {
+      "max_unsupported_rate_on_dev": 0.15,
+      "answer_at": 0.765,
+      "test_result": {
+        "answered": "22/40",
+        "unsupported": "2/22",
+        "coverage": "95%"
+      }
+    },
+    "customer_facing": {
+      "max_unsupported_rate_on_dev": 0.05,
+      "answer_at": 0.989,
+      "test_result": {
+        "answered": "18/40",
+        "unsupported": "0/18",
+        "coverage": "86%"
+      }
+    },
+    "remediate": {
+      "max_unsupported_rate_on_dev": 0.0,
+      "answer_at": 0.994,
+      "test_result": {
+        "answered": "13/40",
+        "unsupported": "0/13",
+        "coverage": "62%"
+      }
+    }
+  },
+  "validated_on": {
+    "dev_questions": 20,
+    "test_questions": 40,
+    "traces": 240
+  }
+}
