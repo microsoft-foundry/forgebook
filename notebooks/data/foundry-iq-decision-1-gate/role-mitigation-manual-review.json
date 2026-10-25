@@ -1,0 +1,114 @@
+{
+  "review_type": "manual",
+  "review_scope": "Every factual claim in the main accepted answer and three fixed additional accepted-path reruns, compared with each result's retained evidence. This is a human-style agent reading, not an independent human review or an automated model judge.",
+  "snapshot": "learn-live-example.json",
+  "execution_completed_at_utc": "2026-10-24T16:56:18.874340+00:00",
+  "historical_failure": {
+    "snapshot": "learn-live-example-before-role-mitigation.json",
+    "result": "results.Application context",
+    "unsupported_text": "or equivalently, Foundry User",
+    "finding": "The sample profile and team standard specify Cognitive Services OpenAI User. The retained Learn excerpt calls Foundry User the renamed Azure AI User; it does not equate Foundry User with Cognitive Services OpenAI User.",
+    "evidence_ids": ["ref-3", "ref-2", "ref-1"]
+  },
+  "checks": [
+    {
+      "result": "results.Application context",
+      "decision": "answer",
+      "claims": [
+        {
+          "claim": "Use DefaultAzureCredential with the Atlas staging container app's system-assigned managed identity.",
+          "supported": true,
+          "evidence_ids": ["ref-3", "ref-2"],
+          "basis": "The profile names the credential, identity type and owner; the staging authentication standard explicitly instructs using them."
+        },
+        {
+          "claim": "Assign Cognitive Services OpenAI User to that identity at the target Foundry resource.",
+          "supported": true,
+          "evidence_ids": ["ref-3", "ref-2"],
+          "basis": "The profile gives the exact role and scope, and the team standard repeats the assignment."
+        }
+      ],
+      "unsupported_equivalence": false,
+      "other_unsupported_claims": []
+    },
+    {
+      "result": "accepted_answer_reruns.0",
+      "decision": "answer",
+      "claims": [
+        {
+          "claim": "Use DefaultAzureCredential and Microsoft Entra ID with the Atlas staging container app's system-assigned managed identity.",
+          "supported": true,
+          "evidence_ids": ["ref-3", "ref-2"],
+          "basis": "The profile explicitly specifies Entra ID, credential, identity owner and type; the standard confirms the staging configuration."
+        },
+        {
+          "claim": "Assign Cognitive Services OpenAI User to the container app's identity on the target Foundry resource.",
+          "supported": true,
+          "evidence_ids": ["ref-3", "ref-2"],
+          "basis": "Exact assignment in both team references."
+        },
+        {
+          "claim": "No client ID is required for this system-assigned identity.",
+          "supported": true,
+          "evidence_ids": ["ref-3"],
+          "basis": "The profile says client_id is not required for this system-assigned identity."
+        }
+      ],
+      "unsupported_equivalence": false,
+      "other_unsupported_claims": []
+    },
+    {
+      "result": "accepted_answer_reruns.1",
+      "decision": "answer",
+      "claims": [
+        {
+          "claim": "Use DefaultAzureCredential with the Atlas staging container app's system-assigned managed identity via Microsoft Entra ID.",
+          "supported": true,
+          "evidence_ids": ["ref-3", "ref-2"],
+          "basis": "The profile and standard give this configuration; the profile explicitly names Microsoft Entra ID."
+        },
+        {
+          "claim": "Assign Cognitive Services OpenAI User to that managed identity on the target Foundry resource.",
+          "supported": true,
+          "evidence_ids": ["ref-3", "ref-2"],
+          "basis": "Exact role, principal and scope in both team references."
+        }
+      ],
+      "unsupported_equivalence": false,
+      "other_unsupported_claims": []
+    },
+    {
+      "result": "accepted_answer_reruns.2",
+      "decision": "answer",
+      "claims": [
+        {
+          "claim": "Use DefaultAzureCredential with the container app's system-assigned identity in staging; no client ID is required.",
+          "supported": true,
+          "evidence_ids": ["ref-3", "ref-2"],
+          "basis": "The profile explicitly specifies credential, identity, environment and no required client ID; the team standard confirms the authentication choice."
+        },
+        {
+          "claim": "Assign Cognitive Services OpenAI User to Atlas staging's container app identity on the target Foundry resource.",
+          "supported": true,
+          "evidence_ids": ["ref-3", "ref-2"],
+          "basis": "Exact assignment in the sample profile and standard."
+        },
+        {
+          "claim": "Azure CLI local developer authentication is distinct and does not grant the deployed app access.",
+          "supported": true,
+          "evidence_ids": ["ref-3", "ref-2"],
+          "basis": "The profile says local developer access does not establish deployed-app access; the standard says the developer and deployed application are different principals."
+        }
+      ],
+      "unsupported_equivalence": false,
+      "other_unsupported_claims": []
+    }
+  ],
+  "summary": {
+    "accepted_answers_checked": 4,
+    "additional_reruns_checked": 3,
+    "unsupported_equivalence_recurrences": 0,
+    "other_unsupported_claims_observed": 0,
+    "limitation": "A manual check of four generated answers on one frozen bundle verifies only these observations. It does not guarantee faithfulness for other evidence, questions or generations."
+  }
+}

@@ -287,8 +287,8 @@
 
 - slug: foundry-iq-decision-1-gate
   path: notebooks/foundry-iq-decision-1-gate.ipynb
-  title: "Gate Foundry IQ Answers with Microsoft-Decision-1"
-  description: "Add a sufficiency gate to Foundry IQ with Decision-1: per-risk-tier thresholds, a retry cascade and an agent tool. Tier customer_facing, 40 held-out questions: 0 unsupported at 86% coverage."
+  title: "Don't answer yet: an evidence gate with Foundry IQ"
+  description: "Build with Foundry IQ and Microsoft-Decision-1: retrieve platform and team context, assess sufficiency, and let application code answer or prepare review."
   date: "2026-10-12"
   authors:
     - github: farzad528
@@ -298,6 +298,5 @@
     - grounding
     - azure-ai-search
     - agents
-    - function-calling
-    - evaluation
     - decision-models
+    - mcp
