@@ -46,6 +46,10 @@
 - azure-ai-search
 - grounding
 
+# Document processing
+- content-understanding
+- intelligent-document-processing
+
 # Quality, safety, and operations
 - evaluation
 - continuous-evaluation
@@ -105,3 +109,6 @@
 - huggingface
 - nvidia
 - fireworks
+
+# Teams
+- forward-deployed-engineering

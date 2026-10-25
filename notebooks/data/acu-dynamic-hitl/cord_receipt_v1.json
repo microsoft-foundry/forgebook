@@ -1,0 +1,68 @@
+{
+  "analyzerId": "cord_receipt_v1",
+  "name": "CORD Receipt Analyzer",
+  "description": "Extracts CORD v2 receipt totals and line items for confidence calibration.",
+  "baseAnalyzerId": "prebuilt-document",
+  "config": {
+    "returnDetails": false,
+    "estimateFieldSourceAndConfidence": true
+  },
+  "fieldSchema": {
+    "name": "CordReceipt",
+    "fields": {
+      "menu": {
+        "type": "array",
+        "description": "All purchased line items in printed receipt order.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Printed product or menu item name."
+            },
+            "quantity": {
+              "type": "string",
+              "description": "Printed quantity or count for this line item."
+            },
+            "price": {
+              "type": "string",
+              "description": "Printed line-item price, preserving the receipt format."
+            }
+          }
+        }
+      },
+      "sub_total": {
+        "type": "object",
+        "description": "Receipt subtotal section.",
+        "properties": {
+          "subtotal_price": {
+            "type": "string",
+            "description": "Subtotal before service, tax, and adjustments."
+          },
+          "service_price": {
+            "type": "string",
+            "description": "Service charge amount."
+          },
+          "tax_price": {
+            "type": "string",
+            "description": "Tax amount."
+          },
+          "etc": {
+            "type": "string",
+            "description": "Other printed adjustment, discount, or fee."
+          }
+        }
+      },
+      "total": {
+        "type": "object",
+        "description": "Receipt total section.",
+        "properties": {
+          "total_price": {
+            "type": "string",
+            "description": "Final total amount."
+          }
+        }
+      }
+    }
+  }
+}

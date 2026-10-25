@@ -26,6 +26,25 @@ test.describe("Notebook Images", () => {
     ]));
   });
 
+  test("interactive explainer links resolve under the site base", async ({ page, baseURL }) => {
+    const basePath = new URL(baseURL ?? "http://localhost:4321/forgebook").pathname.replace(/\/+$/, "");
+    const explainerPath = `${basePath}/notebook/media/acu-dynamic-hitl/dynamic-hitl-explainer.html`;
+    await page.goto(`${basePath}/notebook/acu-dynamic-hitl/`);
+
+    // The notebook links with a notebook-relative path; the renderer must rewrite
+    // both the text link and the linked hero image to the same absolute URL.
+    await expect(page.getByRole("link", { name: "Open the interactive explainer" })).toHaveAttribute("href", explainerPath);
+    await expect(page.getByRole("link", { name: /The interactive explainer: Stop reviewing everything\./ })).toHaveAttribute(
+      "href",
+      explainerPath,
+    );
+
+    const response = await page.request.get(explainerPath);
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toContain("text/html");
+    expect(await response.text()).toContain("<title>Dynamic human review with Azure Content Understanding</title>");
+  });
+
   test("all images on notebook page have absolute src paths", async ({ page }) => {
     await page.goto(NOTEBOOK);
 

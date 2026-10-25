@@ -4,20 +4,18 @@ name: Deploy PR Preview
 # "Preview PR" (preview.yml) finishes, this workflow always runs against the base
 # repo's workflow definition, so it gets a write-scoped GITHUB_TOKEN — even when the
 # triggering PR came from a fork. Crucially, it never checks out or executes the PR's
-# code: it only downloads the already-built static site artifact that preview.yml
-# produced, so there's no risk of a malicious PR running arbitrary code with a
-# write-capable token (the failure mode `pull_request_target` on the whole build
-# would have exposed us to).
+# code: it checks out only the trusted gh-pages deployment branch, then downloads
+# the already-built static site artifact that preview.yml produced. No PR build
+# runs with the write-capable token (the failure mode `pull_request_target` on
+# the whole build would have exposed us to).
 #
 # Deploys are additionally gated on the PR author being a member of the
 # forgebook-contributors GitHub team, matching CONTRIBUTING.md's "curated while
 # stabilizing" publishing model. Checking team membership needs an org-scoped
 # token — the default GITHUB_TOKEN cannot read team membership even for a visible
-# ("closed" privacy) team — so this requires a maintainer-created fine-grained PAT
-# (org `read:` members/teams permission only) stored as the FORGEBOOK_TEAM_READ_TOKEN
-# repo secret. That secret is a manual one-time setup step; without it the team
-# membership check step will fail loudly rather than silently treating everyone as
-# a non-member.
+# ("closed" privacy) team. The installed forgebook-team-check App supplies a
+# short-lived members:read token. Its private key must be configured as the
+# FORGEBOOK_TEAM_CHECK_PRIVATE_KEY secret; see README.md for maintainer setup.
 on:
   workflow_run:
     workflows: ["Preview PR"]
@@ -36,8 +34,14 @@ jobs:
       pull-requests: write
       actions: read
     steps:
+      - name: Checkout trusted Pages deployment branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: gh-pages
+          persist-credentials: false
+
       - name: Download PR metadata artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: pr-metadata
           path: ./pr-meta
@@ -45,7 +49,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download built site artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: preview-dist
           path: ./site-dist
@@ -62,7 +66,7 @@ jobs:
 
       - name: Get PR author
         id: pr
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
         with:
@@ -75,14 +79,23 @@ jobs:
             });
             core.setOutput('author', pr.user.login);
 
-      # Requires the FORGEBOOK_TEAM_READ_TOKEN repo secret — see comment at top of file.
+      - name: Create team-check App token
+        id: team-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: "4244481"
+          private-key: ${{ secrets.FORGEBOOK_TEAM_CHECK_PRIVATE_KEY }}
+          # Members-only Apps require the organization installation lookup.
+          owner: ${{ github.repository_owner }}
+          permission-members: read
+
       - name: Check forgebook-contributors team membership
         id: membership
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_AUTHOR: ${{ steps.pr.outputs.author }}
         with:
-          github-token: ${{ secrets.FORGEBOOK_TEAM_READ_TOKEN }}
+          github-token: ${{ steps.team-token.outputs.token }}
           script: |
             const username = process.env.PR_AUTHOR;
             let isMember = false;
@@ -103,7 +116,7 @@ jobs:
 
       - name: Deploy preview to GitHub Pages subdirectory
         if: steps.membership.outputs.is_member == 'true'
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
         with:
           branch: gh-pages
           folder: ./site-dist
@@ -112,7 +125,7 @@ jobs:
 
       - name: Comment PR with preview URL
         if: steps.membership.outputs.is_member == 'true'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
         with:
@@ -145,7 +158,7 @@ jobs:
 
       - name: Comment PR that a maintainer needs to review before preview deploys
         if: steps.membership.outputs.is_member == 'false'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
           PR_AUTHOR: ${{ steps.pr.outputs.author }}
