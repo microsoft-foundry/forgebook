@@ -1,0 +1,46 @@
+{
+  "dataset": "Microsoft Scalable Noisy Speech Dataset (MS-SNSD)",
+  "revision": "fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742",
+  "sources": [
+    {
+      "path": "clean_train/p234_004.wav",
+      "url": "https://raw.githubusercontent.com/microsoft/MS-SNSD/fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742/clean_train/p234_004.wav",
+      "sha256": "7cf81db9f75a7c29a17e42f0795eb12216226068e023266038de97a54bd2e7d0"
+    },
+    {
+      "path": "clean_train/p234_005.wav",
+      "url": "https://raw.githubusercontent.com/microsoft/MS-SNSD/fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742/clean_train/p234_005.wav",
+      "sha256": "2e3c09f42ea558582b32949ee6cce682fe8aeade8fad2973688217f862192749"
+    },
+    {
+      "path": "clean_train/p234_006.wav",
+      "url": "https://raw.githubusercontent.com/microsoft/MS-SNSD/fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742/clean_train/p234_006.wav",
+      "sha256": "60e183d090a1a095204f3318a83094f8b57425ce7d0052c1b3cdecfb101d5f38"
+    }
+  ],
+  "speech_dataset_creator": "Cassia Valentini-Botinhao",
+  "speech_source": "https://doi.org/10.7488/ds/2117",
+  "original_corpus_creators": [
+    "Christophe Veaux",
+    "Junichi Yamagishi",
+    "Kirsten MacDonald"
+  ],
+  "original_corpus_source": "https://doi.org/10.7488/ds/1994",
+  "license": "CC-BY-4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "source_license_url": "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/license_text?sequence=11&isAllowed=y",
+  "changes": "Concatenated three complete MS-SNSD 16 kHz utterances with two 0.5-second gaps; applied a shared gain to both outputs; added seeded synthetic Gaussian white noise to the second output.",
+  "noise": {
+    "kind": "synthetic Gaussian white noise",
+    "seed": 42
+  },
+  "snr_db": 10.0,
+  "snr_measurement": "whole-recording RMS, including inserted silence",
+  "shared_gain": 1.7846382321619574,
+  "sample_rate_hz": 16000,
+  "duration_seconds": 16.1065625,
+  "outputs": {
+    "01-clean-speech.wav": "8e834d69e00f9cdd92322af2e13f2cf961ba736a83a44dd36c0a7b75176f4a8b",
+    "02-noisy-speech.wav": "adf9621dc127184f5d72eb0c1d5a86c69cdb65a5039d716e54e4b4fc4a999610"
+  }
+}
