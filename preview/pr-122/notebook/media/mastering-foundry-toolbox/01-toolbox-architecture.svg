@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1140" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<defs><marker id="ar" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" fill="#8A94A6"/></marker></defs>
+<rect x="0" y="0" width="1600" height="1140" fill="#ffffff"/>
+<rect x="60" y="40" width="1480" height="112" rx="56" ry="56" fill="#ECECFB" stroke="#C9C6F0" stroke-width="2"/>
+<text x="800" y="113" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="42" font-weight="bold" fill="#3B2F8C" text-anchor="middle">Toolboxes in Foundry</text>
+<text x="800" y="205" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="27" font-weight="normal" fill="#5A5A5A" text-anchor="middle">Consumed by</text>
+<rect x="60" y="235" width="262" height="92" rx="16" ry="16" fill="#ECEAE2" stroke="#D9D5C8" stroke-width="2"/>
+<text x="191.0" y="290" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="25" font-weight="normal" fill="#4A4A4A" text-anchor="middle">LangGraph</text>
+<rect x="364" y="235" width="262" height="92" rx="16" ry="16" fill="#ECEAE2" stroke="#D9D5C8" stroke-width="2"/>
+<text x="495.0" y="272" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="25" font-weight="normal" fill="#4A4A4A" text-anchor="middle">Microsoft Agent</text>
+<text x="495.0" y="304" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="25" font-weight="normal" fill="#4A4A4A" text-anchor="middle">Framework</text>
+<rect x="668" y="235" width="262" height="92" rx="16" ry="16" fill="#ECEAE2" stroke="#D9D5C8" stroke-width="2"/>
+<text x="799.0" y="290" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="25" font-weight="normal" fill="#4A4A4A" text-anchor="middle">GitHub Copilot</text>
+<rect x="972" y="235" width="262" height="92" rx="16" ry="16" fill="#ECEAE2" stroke="#D9D5C8" stroke-width="2"/>
+<text x="1103.0" y="290" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="25" font-weight="normal" fill="#4A4A4A" text-anchor="middle">Claude Code</text>
+<rect x="1276" y="235" width="262" height="92" rx="16" ry="16" fill="#ECEAE2" stroke="#D9D5C8" stroke-width="2"/>
+<text x="1407.0" y="272" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="25" font-weight="normal" fill="#4A4A4A" text-anchor="middle">Microsoft Copilot</text>
+<text x="1407.0" y="304" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="25" font-weight="normal" fill="#4A4A4A" text-anchor="middle">Studio</text>
+<text x="800" y="395" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="27" font-weight="normal" fill="#5A5A5A" text-anchor="middle">Tool lifecycle</text>
+<line x1="380" y1="430" x2="1210" y2="430" stroke="#8A94A6" stroke-width="3" marker-end="url(#ar)"/>
+<rect x="60" y="470" width="460" height="372" rx="24" ry="24" fill="#D7F2E4" stroke="#A9DCC4" stroke-width="2"/>
+<text x="290.0" y="520" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="31" font-weight="bold" fill="#0F5C3F" text-anchor="middle">Build</text>
+<rect x="140.0" y="548" width="300" height="66" rx="16" ry="16" fill="#FCE7EF" stroke="#E9AEC6" stroke-width="2"/>
+<text x="290.0" y="590" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="27" font-weight="bold" fill="#8A2B52" text-anchor="middle">Toolboxes</text>
+<text x="290.0" y="690" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="normal" fill="#4A4A4A" text-anchor="middle">Curated bundles of tools</text>
+<text x="290.0" y="760" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="normal" fill="#4A4A4A" text-anchor="middle">Reusable across teams + agents</text>
+<rect x="570" y="470" width="460" height="372" rx="24" ry="24" fill="#D7F2E4" stroke="#A9DCC4" stroke-width="2"/>
+<text x="800.0" y="520" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="31" font-weight="bold" fill="#0F5C3F" text-anchor="middle">Discover</text>
+<rect x="650.0" y="548" width="300" height="66" rx="16" ry="16" fill="#E6F0FB" stroke="#A9C6E8" stroke-width="2"/>
+<text x="800.0" y="590" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="27" font-weight="bold" fill="#1D4E8A" text-anchor="middle">Tool Search</text>
+<text x="800.0" y="678" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="normal" fill="#4A4A4A" text-anchor="middle">Two meta-tools</text>
+<text x="800.0" y="740" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="normal" fill="#4A4A4A" text-anchor="middle">Search on demand,</text>
+<text x="800.0" y="776" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="normal" fill="#4A4A4A" text-anchor="middle">progressive disclosure</text>
+<rect x="1080" y="470" width="460" height="372" rx="24" ry="24" fill="#D7F2E4" stroke="#A9DCC4" stroke-width="2"/>
+<text x="1310.0" y="520" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="31" font-weight="bold" fill="#0F5C3F" text-anchor="middle">Consume</text>
+<rect x="1160.0" y="548" width="300" height="66" rx="16" ry="16" fill="#FBE7D8" stroke="#E8B78F" stroke-width="2"/>
+<text x="1310.0" y="590" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="27" font-weight="bold" fill="#8A4B1D" text-anchor="middle">Unified endpoint</text>
+<text x="1310.0" y="690" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="normal" fill="#4A4A4A" text-anchor="middle">One MCP endpoint per toolbox</text>
+<text x="1310.0" y="760" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="normal" fill="#4A4A4A" text-anchor="middle">Any agent, any framework</text>
+<rect x="60" y="886" width="1480" height="104" rx="52" ry="52" fill="#DBEAFE" stroke="#AFC9EE" stroke-width="2"/>
+<text x="800" y="950" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="35" font-weight="bold" fill="#1D3F7A" text-anchor="middle">Governed by default</text>
+<text x="800" y="1070" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="27" font-weight="normal" fill="#6A6A6A" text-anchor="middle">Build once in Foundry. Use your toolbox anywhere your agents run.</text>
+</svg>

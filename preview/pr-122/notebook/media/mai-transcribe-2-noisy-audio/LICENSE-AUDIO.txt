@@ -1,0 +1,56 @@
+Audio attribution and reuse terms
+
+01-clean-speech.wav and 02-noisy-speech.wav contain speech from:
+
+Valentini-Botinhao, Cassia. (2017). Noisy speech database for training speech
+enhancement algorithms and TTS models, 2016 [sound]. University of Edinburgh.
+School of Informatics. Centre for Speech Technology Research (CSTR).
+https://doi.org/10.7488/ds/2117
+
+License: Creative Commons Attribution 4.0 International (CC BY 4.0).
+https://creativecommons.org/licenses/by/4.0/
+Original dataset license:
+https://datashare.ed.ac.uk/bitstream/handle/10283/2791/license_text?sequence=11&isAllowed=y
+
+The speech was obtained through Microsoft's MS-SNSD collection:
+https://github.com/microsoft/MS-SNSD/tree/fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742
+Files: clean_train/p234_004.wav, p234_005.wav, p234_006.wav.
+The Edinburgh dataset's speech originated in:
+Veaux, Christophe; Yamagishi, Junichi; MacDonald, Kirsten. (2017).
+CSTR VCTK Corpus: English Multi-speaker Corpus for CSTR Voice Cloning Toolkit,
+[sound]. University of Edinburgh. Centre for Speech Technology Research.
+https://doi.org/10.7488/ds/1994
+
+Changes: three complete 16 kHz utterances were concatenated with two 0.5-second
+silent gaps. A shared gain was applied to both output clips. The noisy version
+adds synthetic Gaussian white noise at 10 dB whole-recording RMS SNR (including
+the inserted gaps), using NumPy default_rng with seed 42. The noise is generated
+for this recipe; it is NOT a Microsoft environmental-noise recording.
+Both distributed audio outputs are provided under CC BY 4.0.
+No endorsement by the speakers, dataset authors, or publishers is implied.
+The repository's software license does not replace these audio terms.
+
+04-audio-waveform-detail.svg is an original visualization derived from these
+clips and is also distributed under CC BY 4.0 with the same speech attribution.
+03-benchmark-context.svg is an original summary of numeric facts retrieved from
+https://artificialanalysis.ai/speech-to-text/non-streaming on October 29, 2026.
+It is not a screenshot, reproduction of AA artwork, or an endorsement by AA.
+No Microsoft blog artwork or X post screenshot is redistributed here.
+
+The benchmark figures in 03-benchmark-context.svg are an original text-and-shape
+summary of facts retrieved from Artificial Analysis on October 29, 2026:
+https://artificialanalysis.ai/speech-to-text/non-streaming
+This is not a screenshot or reproduction of AA's chart artwork, and does not
+imply endorsement. The recipe links to AA's page for its current provider chart.
+
+MS-SNSD citation:
+Chandan K. A. Reddy, Ebrahim Beyrami, Jamie Pool, Ross Cutler,
+Sriram Srinivasan, and Johannes Gehrke. "A Scalable Noisy Speech Dataset and
+Online Subjective Test Framework." Proc. Interspeech 2019, pp. 1816-1820.
+https://www.isca-speech.org/archive/Interspeech_2019/pdfs/3087.pdf
+
+Rebuild:
+From the repository root, after installing numpy and requests:
+python notebooks\data\mai-transcribe-2-noisy-audio\prepare_audio.py
+Source URLs, hashes, transformations, and output hashes are recorded in
+notebooks/data/mai-transcribe-2-noisy-audio/audio-provenance.json.
