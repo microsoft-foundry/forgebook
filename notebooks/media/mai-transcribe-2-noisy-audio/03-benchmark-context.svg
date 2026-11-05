@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="300" viewBox="0 0 1000 300" role="img" aria-labelledby="title description">
+  <title id="title">MAI-Transcribe-2: independent benchmark context</title>
+  <desc id="description">Artificial Analysis non-streaming leaderboard retrieved October 29, 2026: 2.0 percent AA-WER, 311.1 times speed factor, and 1.67 USD per 1000 audio minutes. Not measurements from this notebook.</desc>
+  <rect width="1000" height="300" rx="18" fill="#f3f6fa"/>
+  <g font-family="Arial, sans-serif" fill="#172b4d">
+    <text x="30" y="40" font-size="24" font-weight="700">MAI-Transcribe-2 | Independent benchmark context</text>
+    <text x="30" y="67" font-size="15">Artificial Analysis non-streaming leaderboard | Retrieved October 29, 2026</text>
+    <g fill="#fff" stroke="#cad6e4">
+      <rect x="30" y="90" width="300" height="120" rx="12"/>
+      <rect x="350" y="90" width="300" height="120" rx="12"/>
+      <rect x="670" y="90" width="300" height="120" rx="12"/>
+    </g>
+    <text x="50" y="121" font-size="16">AA-WER | Lower is better</text>
+    <text x="50" y="177" font-size="40" font-weight="700">2.0%</text>
+    <text x="370" y="121" font-size="16">Speed factor | Higher is better</text>
+    <text x="370" y="177" font-size="40" font-weight="700">311.1x</text>
+    <text x="690" y="121" font-size="16">USD per 1,000 audio minutes</text>
+    <text x="690" y="177" font-size="40" font-weight="700">$1.67</text>
+    <text x="30" y="241" font-size="15">Original summary, not an AA screenshot or endorsement. Rankings, speed, and prices can change.</text>
+    <text x="30" y="269" font-size="15">Source: artificialanalysis.ai/speech-to-text/non-streaming | These are NOT this recipe's results.</text>
+  </g>
+</svg>

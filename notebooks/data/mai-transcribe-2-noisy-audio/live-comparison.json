@@ -1,0 +1,73 @@
+{
+  "created_at": "2026-10-30T04:07:15.704300+00:00",
+  "api_version": "2025-10-15",
+  "definition": {
+    "enhancedMode": {
+      "enabled": true,
+      "model": "MAI-Transcribe-2"
+    }
+  },
+  "audio_sha256": {
+    "01-clean-speech.wav": "8e834d69e00f9cdd92322af2e13f2cf961ba736a83a44dd36c0a7b75176f4a8b",
+    "02-noisy-speech.wav": "adf9621dc127184f5d72eb0c1d5a86c69cdb65a5039d716e54e4b4fc4a999610"
+  },
+  "clean_response": {
+    "durationMilliseconds": 16110,
+    "combinedPhrases": [
+      {
+        "text": "We also need a small plastic snake and a big toy frog for the kids. She can scoop these things into three red bags and we will go meet her Wednesday at the train station. When the sunlight strikes raindrops in the air, they act as a prism and form a rainbow."
+      }
+    ],
+    "phrases": [
+      {
+        "offsetMilliseconds": 0,
+        "durationMilliseconds": 16110,
+        "text": "We also need a small plastic snake and a big toy frog for the kids. She can scoop these things into three red bags and we will go meet her Wednesday at the train station. When the sunlight strikes raindrops in the air, they act as a prism and form a rainbow.",
+        "locale": "en",
+        "confidence": 0
+      }
+    ]
+  },
+  "noisy_response": {
+    "durationMilliseconds": 16110,
+    "combinedPhrases": [
+      {
+        "text": "We also need a small plastic snake and a big toy frog for the kids. She can scoop these things into three red bags and we will go meet her Wednesday at the train station. When the sunlight strikes raindrops in the air, they act as a prism and form a rainbow."
+      }
+    ],
+    "phrases": [
+      {
+        "offsetMilliseconds": 0,
+        "durationMilliseconds": 16110,
+        "text": "We also need a small plastic snake and a big toy frog for the kids. She can scoop these things into three red bags and we will go meet her Wednesday at the train station. When the sunlight strikes raindrops in the air, they act as a prism and form a rainbow.",
+        "locale": "en",
+        "confidence": 0
+      }
+    ]
+  },
+  "metrics": [
+    {
+      "file": "01-clean-speech.wav",
+      "size_bytes": 515454,
+      "audio_seconds": 16.1065625,
+      "client_elapsed_seconds": 3.397725500050001,
+      "speed_factor": 4.740395449768669,
+      "real_time_factor": 0.210952864712753,
+      "estimated_cost_usd": 0.0004474045138888889,
+      "price_usd_per_audio_hour": 0.1
+    },
+    {
+      "file": "02-noisy-speech.wav",
+      "size_bytes": 515454,
+      "audio_seconds": 16.1065625,
+      "client_elapsed_seconds": 1.9193077000090852,
+      "speed_factor": 8.391860512998388,
+      "real_time_factor": 0.11916308647540935,
+      "estimated_cost_usd": 0.0004474045138888889,
+      "price_usd_per_audio_hour": 0.1
+    }
+  ],
+  "timing_scope": "client wall time including authentication, upload, network, service, and parsing",
+  "region": "eastus",
+  "measurement_notes": "One sequential request per clip, not a statistical benchmark. First call includes cold credential acquisition. Cost is a duration-based estimate, not invoiced cost."
+}

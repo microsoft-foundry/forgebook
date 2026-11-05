@@ -298,3 +298,17 @@
     - governance
     - intelligent-document-processing
     - forward-deployed-engineering
+
+- slug: mai-transcribe-2-noisy-audio
+  path: notebooks/mai-transcribe-2-noisy-audio.ipynb
+  title: "Transcribe noisy audio with MAI-Transcribe-2"
+  description: "Compare clean and noisy speech with MAI-Transcribe-2, play both clips, and run a local Gradio transcription UI."
+  date: "2026-10-29"
+  authors:
+    - github: nicholasdbrady
+  tags:
+    - models
+    - audio
+    - speech
+    - transcription
+    - mai
