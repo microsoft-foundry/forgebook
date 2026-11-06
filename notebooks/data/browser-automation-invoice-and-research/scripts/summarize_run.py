@@ -86,9 +86,8 @@ def summarize(root: Path) -> dict:
         "usage_visible_in_top_level_responses": {
             "input_tokens": input_tokens, "output_tokens": output_tokens,
             "requests_without_usage": len(records) - len(known_usage),
-            "known_usage_model_cost_estimate_usd": round(
-                input_tokens * 0.75 / 1_000_000 + output_tokens * 4.5 / 1_000_000, 6
-            ),
+            # Deployment-specific pricing has not been configured or verified.
+            "known_usage_model_cost_estimate_usd": None,
         },
         "billing_confirmed": False,
         "cost_limitations": "Missing usage and internal browser/tool charges remain unknown, not zero.",
