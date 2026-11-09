@@ -149,6 +149,9 @@ Skip this section to remain fully offline. Setup creates or changes Azure resour
 
 The verified integration uses **Playwright Workspaces remote MCP tools through a versioned Foundry prompt agent**. It is not a hosted container or a local Playwright browser.
 
+The GA Foundry Browser Automation Tool and the Playwright Workspaces remote MCP server are separate integrations. `native-ga` uses a `PlaywrightWorkspace` connection; `workspace-mcp` uses a `RemoteTool` connection and is a preview feature. The configured `BROWSER_MODE` selects one route explicitly. Failures never trigger an automatic switch to another route. This verifier currently accepts page-provenance evidence only from `workspace-mcp`; it does not parse snapshot metadata from other routes, which therefore remain unverified.
+
+
 | Property | Required value |
 | --- | --- |
 | Workspace MCP target | HTTPS endpoint shown below |
@@ -288,9 +291,11 @@ print('\n'.join(SOURCES))
 
 ### Keep observations, interpretation, and limitations distinct
 
-`research_all` runs one task per source using a semaphore of two. `verify_site` checks the HTTPS host/path, direct URLs, date window, and explicit limitations. Evidence verification requires the direct URL, content quote, and publication/update excerpt together in one actual browser observation, and checks that session lifecycle and navigation stayed in scope.
+`research_all` runs one task per source using a semaphore of two. `verify_site` checks the HTTPS host/path, direct URLs, date window, and explicit limitations. Evidence verification requires a structured browser-observed `current_url` from a `browser_snapshot`, not a requested navigation URL or text found on the page. A finding's direct URL, content quote, and publication/update excerpt must appear together in that same snapshot; the browser session and all observed destinations must remain in scope.
 
 A finding contains `title`, `published_or_updated`, `url`, `observed_change`, `why_it_matters`, `evidence_quote`, and nullable `date_evidence_quote`. A claimed date must be within the requested window through today and match a copied Published, Updated, or Released statement. The parser supports ISO `YYYY-MM-DD` and English month-name dates with a day and four-digit year. Missing, ambiguous, or unsupported dating requires `date_not_verified`, a null date excerpt, and a limitation saying it is not a verified in-window change. Such findings receive `no_verified_findings`, not a verified-change status. Organization activity, an event date, a footer, or a catalog month alone is insufficient. Unsupported dated claims fail explicitly rather than being silently corrected.
+
+When `findings=[]`, the result must also include `limitation_evidence_quote`, copied from the observed result page. The verifier requires the quote and result URL in an in-scope, same-session snapshot. A limitation string alone does not establish that the source was inspected.
 
 `merge_research` uses a strict `Report` schema and only the supplied typed source results. It rejects altered source results or an altered window start. It must not manufacture findings to make the report look complete.
 
@@ -305,6 +310,7 @@ example_sources = [
     SiteResult(
         site=name, url=url, findings=[],
         limitations=['Illustrative offline example; no browser inspection was performed.'],
+        limitation_evidence_quote='Illustrative placeholder only; no source-page evidence is claimed.',
     )
     for name, url in zip(['Microsoft Learn: Foundry', 'Azure Updates', 'Microsoft Foundry on GitHub'], SOURCES)
 ]
