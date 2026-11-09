@@ -45,12 +45,13 @@ routes after a failure:
 
 The remote MCP service is a preview and is not recommended for production. The
 GA Browser Automation Tool and the separate remote MCP preview are distinct
-integrations and connection categories.
+integrations and connection categories. The required snapshot URL metadata has
+not been confirmed in a fresh live response; missing metadata fails verification.
 
 ## Optional authorized cloud setup
 
 Follow the notebook's full prerequisites before executing setup helpers. The
-verified route is `BROWSER_MODE=workspace-mcp`, using:
+route covered by this setup is `BROWSER_MODE=workspace-mcp`, using:
 
 ```text
 https://<region>.mcp.playwright.microsoft.com/playwrightworkspaces/<workspace-id>/mcp

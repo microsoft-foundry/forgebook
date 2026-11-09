@@ -7,6 +7,7 @@ import threading
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+from openai import APIError, APIStatusError
 import pytest
 
 from scripts.render_demo import render
@@ -170,6 +171,66 @@ def test_non_stream_failure_records_response_and_counts(tmp_path, monkeypatch):
     assert summary["browser_cases"][0]["request_delivery_status"] == "response_received"
     assert summary["browser_cases"][0]["service_response_status"] == "completed"
     assert summary["browser_cases"][0]["tool_protocol_validation_status"] == "failed"
+
+
+@pytest.mark.parametrize("kind", ["runtime", "api", "api_large", "http"])
+def test_persisted_error_fields_redact_context_and_bound_messages(tmp_path, monkeypatch, kind):
+    runner = fake_runner(tmp_path, monkeypatch, output="unused", stream=True)
+    marker = "synthetic-marker-123"
+    session = "synthetic-session-456"
+    view_url = "https://viewer.example/private/789"
+    password = "synthetic-password-012"
+    runner.expected_marker = marker
+    message = (
+        f"Browser failed marker={marker} session={session}\n"
+        f"View: {view_url}\npassword={password}\n" + ("detail " * 1200)
+    )
+    body = {"error": {
+        "code": f"error-{marker}", "detail": f"{session} {view_url} {marker}",
+    }}
+    if kind == "api_large":
+        body["error"]["extra"] = "x" * 8000
+    if kind == "runtime":
+        error = RuntimeError(message)
+    elif kind in {"api", "api_large"}:
+        error = APIError(message, request=Mock(), body=body)
+    else:
+        response = SimpleNamespace(
+            request=Mock(), status_code=503, headers={"x-request-id": "correlation"},
+        )
+        error = APIStatusError(message, response=response, body=body)
+
+    def events():
+        yield SimpleNamespace(type="response.output_item.done", item=Item({
+            "id": "create", "type": "mcp_call", "server_label": "bat_workspace",
+            "name": "create_browser_session", "status": "completed", "arguments": "{}",
+            "output": json.dumps({"structuredContent": {
+                "browserSessionId": session, "liveViewUrl": view_url,
+            }}),
+        }))
+        raise error
+
+    runner.openai.responses.with_raw_response.create.return_value.parse = (
+        lambda: nullcontext(events())
+    )
+    with pytest.raises(type(error)):
+        runner.request("probe", browser=True, input="read")
+
+    log = (tmp_path / "run-log.jsonl").read_text()
+    record = json.loads(log)
+    for secret in (marker, session, view_url, password):
+        assert secret not in log
+    assert "Browser failed" in record["exception_message"]
+    assert len(record["exception_message"]) <= 1015
+    assert len(record["exception_traceback"]) <= 6015
+    if kind == "runtime":
+        assert record["verification_error"] == record["exception_message"]
+    else:
+        assert len(record["service_error_message"]) <= 1015
+    if kind == "api":
+        assert "[REDACTED]" in record["service_error_body"]["error"]["detail"]
+    if kind == "api_large":
+        assert record["service_error_body"]["truncated"] is True
 
 
 def test_stream_terminal_only_tool_results_are_captured(tmp_path, monkeypatch):

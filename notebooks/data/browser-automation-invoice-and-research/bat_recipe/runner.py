@@ -31,15 +31,18 @@ from .browser_evidence import (
 )
 
 
+SENSITIVE_KEY = re.compile(
+    r"token|secret|password|credential|api.?key|authorization|cookie|"
+    r"live.?view|browser.?session.?id|session.?id|demo.?marker|private.?marker",
+    re.I,
+)
+
+
 def scrub(value, sensitive_values=()):
     if isinstance(value, dict):
         return {
-            key: ("[REDACTED]" if isinstance(item, str) and
-                  re.search(
-                      r"token|secret|password|credential|api.?key|authorization|cookie|"
-                      r"live.?view|browser.?session.?id|session.?id|demo.?marker|private.?marker",
-                      key, re.I,
-                  )
+            key: ("[REDACTED]" if isinstance(item, str) and isinstance(key, str)
+                  and SENSITIVE_KEY.search(key)
                   else scrub(item, sensitive_values))
             for key, item in value.items()
         }
@@ -59,6 +62,14 @@ def scrub(value, sensitive_values=()):
         value = re.sub(
             r"(?i)\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)"
             r"(\s*[:=]\s*)[^\r\n]+", r"\1\2[REDACTED]", value,
+        )
+        value = re.sub(
+            r"""(?i)(\b(?:password|passphrase|client[-_]?secret|secret|credential|"""
+            r"""api[-_]?key|(?:access|refresh|id)[-_]?token|token|"""
+            r"""browser[-_]?session[-_]?id|session[-_]?id|demo[-_]?marker|"""
+            r"""private[-_]?marker|live[-_]?view(?:[-_]?url)?)["']?\s*[:=]\s*)"""
+            r"""(?:"[^"]*"|'[^']*'|[^\s,;]+)""",
+            r"\1[REDACTED]", value,
         )
         value = re.sub(
             r"(?i)https?://\S*(?:liveview|live-view)\S*",
@@ -87,6 +98,14 @@ def bounded_exception_text(value: str, limit: int, sensitive_values=()) -> str:
     return scrubbed[:limit] + "... [truncated]"
 
 
+def bounded_error_body(value: dict, limit: int, sensitive_values=()) -> dict:
+    redacted = scrub(value, sensitive_values)
+    serialized = json.dumps(redacted, default=str)
+    if len(serialized) <= limit:
+        return redacted
+    return {"truncated": True, "excerpt": serialized[:limit] + "... [truncated]"}
+
+
 def response_value(value, key: str):
     if isinstance(value, Mapping):
         return value.get(key)
@@ -95,26 +114,30 @@ def response_value(value, key: str):
 
 def browser_sensitive_values(evidence: list[dict]) -> set[str]:
     values = set()
+
+    def collect(value):
+        if isinstance(value, str):
+            try:
+                decoded = json.loads(value)
+            except json.JSONDecodeError:
+                return
+            if isinstance(decoded, (dict, list)):
+                collect(decoded)
+        elif isinstance(value, dict):
+            for key, item in value.items():
+                if isinstance(key, str) and isinstance(item, str) and SENSITIVE_KEY.search(key):
+                    if item:
+                        values.add(item)
+                else:
+                    collect(item)
+        elif isinstance(value, list):
+            for item in value:
+                collect(item)
+
     for item in evidence:
-        if not isinstance(item, dict):
-            continue
-        try:
-            arguments = json.loads(item.get("arguments", "{}"))
-        except (json.JSONDecodeError, TypeError):
-            arguments = {}
-        if isinstance(arguments, dict):
-            session_id = arguments.get("browserSessionId")
-            if isinstance(session_id, str):
-                values.add(session_id)
-        try:
-            output = json.loads(item.get("output", ""))
-        except (json.JSONDecodeError, TypeError):
-            output = {}
-        if isinstance(output, dict):
-            for key, value in output.items():
-                if (re.search(r"live.?view|demo.?marker|private.?marker", key, re.I)
-                        and isinstance(value, str)):
-                    values.add(value)
+        if isinstance(item, dict):
+            collect(item.get("arguments"))
+            collect(item.get("output"))
     return values
 
 
@@ -282,6 +305,7 @@ class Runner:
         start = time.monotonic()
         response = None
         calls = []
+        sensitive_values = set()
         record = {"case_id": case, "status": "running", "browser_calls": 0,
                   "browser_requested": browser,
                   "browser_mode": getattr(self, "browser_mode", None),
@@ -357,7 +381,7 @@ class Runner:
             return result, calls
         except Exception as exc:
             record.update(status="failed", error_type=type(exc).__name__)
-            sensitive_values = browser_sensitive_values(calls)
+            sensitive_values.update(browser_sensitive_values(calls))
             expected_marker = getattr(self, "expected_marker", None)
             if isinstance(expected_marker, str) and expected_marker:
                 sensitive_values.add(expected_marker)
@@ -377,17 +401,26 @@ class Runner:
                     detail = exc.body.get("error", exc.body)
                     if isinstance(detail, dict):
                         record["service_error_code"] = detail.get("code")
-                record["service_error_message"] = scrub(exc.message)
+                record["service_error_message"] = bounded_exception_text(
+                    exc.message, 1000, sensitive_values,
+                )
             elif isinstance(exc, APIError):
                 if record["request_delivery_status"] != "response_received":
                     record["request_delivery_status"] = "unknown"
                 if record["service_response_status"] in {"not_received", "received"}:
                     record["service_response_status"] = "unknown"
-                record["service_error_message"] = scrub(exc.message)
+                record["service_error_message"] = bounded_exception_text(
+                    exc.message, 1000, sensitive_values,
+                )
                 if isinstance(exc.body, dict):
-                    record["service_error_body"] = scrub(exc.body)
+                    record["service_error_body"] = bounded_error_body(
+                        exc.body, 6000, sensitive_values,
+                    )
             elif isinstance(exc, (RuntimeError, ValueError)):
-                record["verification_error"] = scrub(str(exc))
+                record["verification_error"] = record["exception_message"]
+            for key in ("service_error_code", "service_reason"):
+                if isinstance(record.get(key), str):
+                    record[key] = bounded_exception_text(record[key], 1000, sensitive_values)
             if record["tool_protocol_validation_status"] == "in_progress":
                 record["tool_protocol_validation_status"] = "failed"
             if record["local_processing_status"] == "in_progress":
@@ -397,7 +430,7 @@ class Runner:
         finally:
             record["seconds"] = round(time.monotonic() - start, 2)
             with self.log_lock, (self.artifacts / "run-log.jsonl").open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(scrub(record)) + "\n")
+                handle.write(json.dumps(scrub(record, sensitive_values)) + "\n")
 
     def consume_stream(self, stream, record, calls):
         response = None
