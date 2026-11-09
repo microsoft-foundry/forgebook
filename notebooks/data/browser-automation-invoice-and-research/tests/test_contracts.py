@@ -92,6 +92,17 @@ def test_empty_site_requires_limitation():
         verify_site(result, SOURCES[0], date(2026, 9, 1))
 
 
+def test_empty_site_requires_limitation_evidence_quote():
+    result = SiteResult(
+        site="Learn", url=SOURCES[0], findings=[],
+        limitations=["No supported change was found."],
+    )
+    with pytest.raises(ValueError, match="source-backed limitation quote"):
+        verify_site(result, SOURCES[0], date(2026, 9, 1))
+    result.limitation_evidence_quote = "No matching updates appear on this page."
+    verify_site(result, SOURCES[0], date(2026, 9, 1))
+
+
 @pytest.mark.parametrize("marker", ["", "2026-08-01", "2099-01-01", "not-a-date"])
 def test_research_date_rejection(marker):
     result = SiteResult(

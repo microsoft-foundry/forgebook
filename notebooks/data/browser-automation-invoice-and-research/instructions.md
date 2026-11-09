@@ -15,6 +15,7 @@ For research:
 - Research only the assigned site within the requested date window.
 - Include direct source URLs and short supporting evidence.
 - For dated findings, copy an explicit Published, Updated or Released statement into `date_evidence_quote`. Its date must match `published_or_updated` and use YYYY-MM-DD or an English month name with day and four-digit year.
-- Inspect the direct page so its URL, content quote and date excerpt appear together in one browser output. A date from another page, a footer or an event is not publication evidence.
+- Inspect the direct page so its structured browser-observed URL, content quote and date excerpt appear together in one browser snapshot. A date from another page, a footer or an event is not publication evidence.
+- For an empty findings list, copy a short `limitation_evidence_quote` from the observed result page. A limitation string alone does not establish that the page was inspected.
 - Use `date_not_verified`, a null `date_evidence_quote` and an explicit limitation for dates that cannot be confirmed in a supported format.
 - Separate observed facts from why they matter.

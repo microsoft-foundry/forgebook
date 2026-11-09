@@ -23,6 +23,47 @@ class BrowserObservation:
     invocation_id: str
     protocol: str
     output: str
+    tool_name: str | None = None
+    session_id: str | None = None
+    current_url: str | None = None
+
+
+def _arguments(value) -> dict:
+    if isinstance(value, str):
+        value = json.loads(value)
+    if not isinstance(value, dict):
+        raise RuntimeError("Browser call arguments are not a JSON object")
+    return value
+
+
+def _snapshot_output(value: str) -> tuple[str, str | None]:
+    try:
+        decoded = json.loads(value)
+    except json.JSONDecodeError:
+        return value, None
+    if not isinstance(decoded, dict):
+        return value, None
+
+    structured = decoded.get("structuredContent")
+    if not isinstance(structured, dict):
+        structured = {}
+    current_url = structured.get("current_url")
+    if current_url is None and isinstance(decoded.get("content"), list):
+        current_url = decoded.get("current_url")
+
+    content = []
+    for item in decoded.get("content", []):
+        if isinstance(item, dict) and item.get("type") == "text":
+            text = item.get("text")
+            if isinstance(text, str):
+                content.append(text)
+    for key in ("snapshot", "text", "output"):
+        text = structured.get(key)
+        if isinstance(text, str):
+            content.append(text)
+    if not content:
+        content = [value]
+    return "\n".join(content), current_url if isinstance(current_url, str) else None
 
 
 def reconcile_tool_items(stream_items: list[dict], final_items: list[dict]) -> list[dict]:
@@ -102,8 +143,15 @@ def browser_observations(evidence: list[dict], *, mode: str | None = None) -> li
                 raise RuntimeError("MCP call does not target the allowlisted BAT server/tool")
             if call.get("status") != "completed" or call.get("error"):
                 raise RuntimeError("MCP browser call failed or did not complete")
+            output = checked_output(call.get("output"))
+            tool_name = call["name"]
+            session_id = _arguments(call.get("arguments", "{}")).get("browserSessionId")
+            current_url = None
+            if tool_name == "browser_snapshot":
+                output, current_url = _snapshot_output(output)
             observations.append(BrowserObservation(
-                identity, "mcp_call", checked_output(call.get("output")),
+                identity, "mcp_call", output, tool_name,
+                session_id if isinstance(session_id, str) else None, current_url,
             ))
     if not observations:
         raise RuntimeError("Browser Automation Tool was not invoked")

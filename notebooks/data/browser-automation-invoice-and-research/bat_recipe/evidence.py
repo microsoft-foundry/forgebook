@@ -18,13 +18,12 @@ def verify_probe(result: ProbeResult, evidence: list[dict], url: str, expected: 
         raise ValueError("Probe readback URL is off-scope")
     if result.marker != expected:
         raise ValueError("Probe marker does not match the hosted page")
-    actual_output = output_text(evidence)
+    observations = verified_snapshots(evidence, url, exact=True)
     verify_read_only_calls(evidence)
-    if expected not in actual_output:
+    if result.page_url not in {item.current_url for item in observations}:
+        raise ValueError("Probe URL is not the browser-observed page URL")
+    if not any(expected in item.output for item in observations):
         raise ValueError("Marker appears only in the model claim, not in BAT output")
-    if url not in actual_output:
-        raise ValueError("Observed page URL is absent from actual BAT output")
-    verify_workspace_sessions(evidence)
     verify_navigation_scope(evidence, url, exact=True)
 
 
@@ -56,22 +55,21 @@ def nested_objects(value):
 
 
 def verify_invoice_evidence(evidence: list[dict], invoice: Invoice, expected_marker: str,
-                            *, form_url: str | None = None) -> PageState:
-    text = output_text(evidence)
-    verify_workspace_sessions(evidence)
-    if form_url is not None:
-        verify_navigation_scope(evidence, form_url, exact=True)
+                            *, form_url: str) -> PageState:
+    observations = verified_snapshots(evidence, form_url, exact=True)
+    verify_navigation_scope(evidence, form_url, exact=True)
     latest_state = None
-    for candidate in json_objects(text):
-        for value in nested_objects(candidate):
-            if not {"fields", "submission_attempts", "demo_marker"} <= value.keys():
-                continue
-            try:
-                state = PageState.model_validate(value)
-            except ValidationError:
-                continue
-            if state.demo_marker == expected_marker:
-                latest_state = state
+    for observation in observations:
+        for candidate in json_objects(observation.output):
+            for value in nested_objects(candidate):
+                if not {"fields", "submission_attempts", "demo_marker"} <= value.keys():
+                    continue
+                try:
+                    state = PageState.model_validate(value)
+                except ValidationError:
+                    continue
+                if state.demo_marker == expected_marker:
+                    latest_state = state
     if latest_state is not None:
         verify_page_state(latest_state, invoice)
         return latest_state
@@ -80,25 +78,48 @@ def verify_invoice_evidence(evidence: list[dict], invoice: Invoice, expected_mar
 
 def verify_research_evidence(result: SiteResult, evidence: list[dict],
                              *, source: str | None = None) -> None:
-    observations = browser_observations(evidence)
-    verify_workspace_sessions(evidence)
+    assigned_source = source or result.url
+    observations = verified_snapshots(evidence, assigned_source)
     verify_navigation_scope(evidence, source or result.url)
     verify_read_only_calls(evidence)
+    if result.url not in {item.current_url for item in observations}:
+        raise ValueError("Research result URL was not observed in a browser snapshot")
     for finding in result.findings:
-        matching_outputs = [
-            item.output for item in observations
-            if finding.url in item.output and finding.evidence_quote in item.output
+        matching_observations = [
+            item for item in observations
+            if item.current_url == finding.url and finding.evidence_quote in item.output
         ]
-        if not matching_outputs:
-            raise ValueError("Research finding lacks its direct URL and quote in actual BAT output")
+        if not matching_observations:
+            raise ValueError("Research finding lacks its direct-page snapshot and quote")
         if finding.published_or_updated == "date_not_verified":
             continue
         quote = finding.date_evidence_quote
-        if not quote or not any(quote in output for output in matching_outputs):
-            raise ValueError("Research date lacks its excerpt in the same direct-source BAT output")
+        if not quote or not any(quote in item.output for item in matching_observations):
+            raise ValueError("Research date lacks its excerpt in the same direct-page snapshot")
         published = date.fromisoformat(finding.published_or_updated)
         if published not in publication_dates(quote):
             raise ValueError("Research date differs from the observed publication/update date")
+    if not result.findings:
+        quote = result.limitation_evidence_quote
+        if not quote or not any(
+            item.current_url == result.url and quote in item.output for item in observations
+        ):
+            raise ValueError("Empty research result lacks an observed limitation quote")
+
+
+def verified_snapshots(evidence: list[dict], source: str, *, exact: bool = False):
+    observations = browser_observations(evidence, mode="workspace-mcp")
+    verify_workspace_sessions(evidence)
+    snapshots = [item for item in observations if item.tool_name == "browser_snapshot"]
+    if not snapshots:
+        raise ValueError("No browser snapshot with observed location is available for verification")
+    sessions = {item.session_id for item in snapshots}
+    if None in sessions or len(sessions) != 1:
+        raise ValueError("Browser snapshots are missing a single same-task session")
+    for item in snapshots:
+        if not item.current_url or not allowed_url(item.current_url, source, exact=exact):
+            raise ValueError("Browser-observed page URL is missing or outside the assigned scope")
+    return snapshots
 
 
 def publication_dates(quote: str) -> set[date]:

@@ -16,16 +16,28 @@ def summarize(root: Path) -> dict:
         if not record.get("browser_requested", bool(record.get("browser_calls"))):
             continue
         case = record["case_id"]
+        statuses = {
+            key: record.get(key) for key in (
+                "request_delivery_status", "service_response_status",
+                "tool_protocol_validation_status", "local_processing_status",
+            )
+        }
         path = root / f"{case}-tool-evidence.json"
         if not path.exists():
-            verdict = {"case_id": case, "status": "inconclusive", "reason": "Tool artifact missing"}
+            verdict = {
+                "case_id": case, "status": "inconclusive",
+                "reason": "Tool artifact missing", **statuses,
+            }
         else:
             evidence = json.loads(path.read_text(encoding="utf-8"))
             try:
                 verify_browser_outputs(evidence, mode=record.get("browser_mode"))
                 verify_workspace_sessions(evidence)
             except (RuntimeError, ValueError) as exc:
-                verdict = {"case_id": case, "status": "inconclusive", "reason": str(exc)}
+                verdict = {
+                    "case_id": case, "status": "inconclusive",
+                    "reason": str(exc), **statuses,
+                }
             else:
                 verified = root / f"{case}-verification.json"
                 proof = json.loads(verified.read_text()) if verified.exists() else {}
@@ -36,6 +48,7 @@ def summarize(root: Path) -> dict:
                         else "requires_evidence_review"
                     ),
                     "limitations": proof.get("limitations", []),
+                    **statuses,
                 }
         browser_results.append(verdict)
     failed_requests = [record["case_id"] for record in records if record["status"] == "failed"]

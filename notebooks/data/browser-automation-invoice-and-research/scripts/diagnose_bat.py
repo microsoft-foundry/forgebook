@@ -24,13 +24,15 @@ def probe(runner: Runner, non_stream: bool) -> None:
     task = (
         f"Open only {runner.form_url}. Read the actual text in #demo-marker and "
         "return it as marker with the observed page_url. Do not click, fill, download, "
-        "submit, navigate elsewhere or invent the marker. It must come from the page."
+        "submit, navigate elsewhere or invent the marker. It must come from the page. "
+        "Use browser_snapshot output with structured current_url metadata; if the tool "
+        "does not provide that metadata, do not claim the probe is verified."
     )
     if runner.browser_mode == "workspace-mcp":
         task += (
             " Create a browser session, reuse its browserSessionId for navigation and "
             "snapshot inspection, and close that session after readback, including on failure. "
-            "The snapshot must include the observed URL and #demo-marker text."
+            "The snapshot must include structured current_url metadata and #demo-marker text."
         )
     result, evidence = runner.browser_task(
         case, task, ProbeResult,

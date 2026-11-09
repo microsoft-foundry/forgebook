@@ -1,4 +1,5 @@
 import base64
+from collections.abc import Mapping
 import hashlib
 import json
 import os
@@ -6,6 +7,7 @@ from pathlib import Path
 import re
 import threading
 import time
+import traceback
 from urllib.parse import urlsplit
 import uuid
 
@@ -29,23 +31,39 @@ from .browser_evidence import (
 )
 
 
-def scrub(value):
+def scrub(value, sensitive_values=()):
     if isinstance(value, dict):
         return {
             key: ("[REDACTED]" if isinstance(item, str) and
-                  re.search(r"token|secret|password|credential|api.?key|authorization|cookie", key, re.I)
-                  else scrub(item))
+                  re.search(
+                      r"token|secret|password|credential|api.?key|authorization|cookie|"
+                      r"live.?view|browser.?session.?id|session.?id|demo.?marker|private.?marker",
+                      key, re.I,
+                  )
+                  else scrub(item, sensitive_values))
             for key, item in value.items()
         }
     if isinstance(value, list):
-        return [scrub(item) for item in value]
+        return [scrub(item, sensitive_values) for item in value]
     if isinstance(value, str):
         try:
             decoded = json.loads(value)
         except json.JSONDecodeError:
             decoded = None
         if isinstance(decoded, (dict, list)):
-            return json.dumps(scrub(decoded))
+            return json.dumps(scrub(decoded, sensitive_values))
+        value = re.sub(
+            r"(?im)^(\s*(?:authorization|proxy-authorization|cookie|set-cookie|x-api-key)"
+            r"\s*[:=]\s*).*$", r"\1[REDACTED]", value,
+        )
+        value = re.sub(
+            r"(?i)\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)"
+            r"(\s*[:=]\s*)[^\r\n]+", r"\1\2[REDACTED]", value,
+        )
+        value = re.sub(
+            r"(?i)https?://\S*(?:liveview|live-view)\S*",
+            "[REDACTED_LIVE_VIEW_URL]", value,
+        )
         value = re.sub(r"(?i)Bearer\s+\S+", "Bearer [REDACTED]", value)
         value = re.sub(r"(?i)([?&](?:sig|token|api[-_]?key)=)[^&\s\"<>]+", r"\1[REDACTED]", value)
     if isinstance(value, str):
@@ -54,7 +72,50 @@ def scrub(value):
             r"\1[REDACTED]", value,
         )
         value = re.sub(r"eyJ[\w-]+\.eyJ[\w-]+\.[\w-]+", "[REDACTED]", value)
+        for secret in sorted(
+            (item for item in sensitive_values if isinstance(item, str) and item),
+            key=len, reverse=True,
+        ):
+            value = value.replace(secret, "[REDACTED]")
     return value
+
+
+def bounded_exception_text(value: str, limit: int, sensitive_values=()) -> str:
+    scrubbed = scrub(value, sensitive_values)
+    if len(scrubbed) <= limit:
+        return scrubbed
+    return scrubbed[:limit] + "... [truncated]"
+
+
+def response_value(value, key: str):
+    if isinstance(value, Mapping):
+        return value.get(key)
+    return getattr(value, key, None)
+
+
+def browser_sensitive_values(evidence: list[dict]) -> set[str]:
+    values = set()
+    for item in evidence:
+        if not isinstance(item, dict):
+            continue
+        try:
+            arguments = json.loads(item.get("arguments", "{}"))
+        except (json.JSONDecodeError, TypeError):
+            arguments = {}
+        if isinstance(arguments, dict):
+            session_id = arguments.get("browserSessionId")
+            if isinstance(session_id, str):
+                values.add(session_id)
+        try:
+            output = json.loads(item.get("output", ""))
+        except (json.JSONDecodeError, TypeError):
+            output = {}
+        if isinstance(output, dict):
+            for key, value in output.items():
+                if (re.search(r"live.?view|demo.?marker|private.?marker", key, re.I)
+                        and isinstance(value, str)):
+                    values.add(value)
+    return values
 
 
 class RequestBudget:
@@ -224,7 +285,11 @@ class Runner:
         record = {"case_id": case, "status": "running", "browser_calls": 0,
                   "browser_requested": browser,
                   "browser_mode": getattr(self, "browser_mode", None),
-                  "streaming": stream_response}
+                  "streaming": stream_response,
+                  "request_delivery_status": "not_started",
+                  "service_response_status": "not_received",
+                  "tool_protocol_validation_status": "not_requested",
+                  "local_processing_status": "not_started"}
         try:
             if browser:
                 parameters.update(
@@ -236,9 +301,13 @@ class Runner:
                 )
             else:
                 parameters["model"] = self.model
+            record["request_delivery_status"] = "attempted"
+            record["local_processing_status"] = "in_progress"
             raw = self.openai.responses.with_raw_response.create(
                 stream=stream_response, max_output_tokens=max_output_tokens, **parameters
             )
+            record["request_delivery_status"] = "response_received"
+            record["service_response_status"] = "received"
             record["correlation_headers"] = correlation_headers(raw.headers)
             parsed = raw.parse()
             if not stream_response:
@@ -248,6 +317,7 @@ class Runner:
                     response = self.consume_stream(stream, record, calls)
             if response is not None:
                 record["response_status"] = response.status
+                record["service_response_status"] = response.status
                 self.write(f"{case}-response-items", [
                     item.model_dump(mode="json") for item in response.output
                 ])
@@ -269,19 +339,38 @@ class Runner:
             if response is None or response.status != "completed":
                 raise RuntimeError("Response did not complete")
             self.write(f"{case}-tool-evidence", calls)
-            invocation_count = verify_browser_outputs(
-                calls, mode=getattr(self, "browser_mode", None)
-            ) if browser else 0
+            if browser:
+                record["tool_protocol_validation_status"] = "in_progress"
+                invocation_count = verify_browser_outputs(
+                    calls, mode=getattr(self, "browser_mode", None)
+                )
+                record["tool_protocol_validation_status"] = "passed"
+            else:
+                invocation_count = 0
             record.update(
                 status="completed", response_id=response.id,
                 browser_calls=invocation_count,
             )
             result = json.loads(response.output_text)
             self.write(case, result)
+            record["local_processing_status"] = "completed"
             return result, calls
         except Exception as exc:
             record.update(status="failed", error_type=type(exc).__name__)
+            sensitive_values = browser_sensitive_values(calls)
+            expected_marker = getattr(self, "expected_marker", None)
+            if isinstance(expected_marker, str) and expected_marker:
+                sensitive_values.add(expected_marker)
+            record["exception_type"] = type(exc).__name__
+            record["exception_message"] = bounded_exception_text(
+                str(exc), 1000, sensitive_values,
+            )
+            record["exception_traceback"] = bounded_exception_text(
+                traceback.format_exc(), 6000, sensitive_values,
+            )
             if isinstance(exc, APIStatusError):
+                record["request_delivery_status"] = "response_received"
+                record["service_response_status"] = "http_error"
                 record["http_status"] = exc.status_code
                 record["correlation_headers"] = correlation_headers(exc.response.headers)
                 if isinstance(exc.body, dict):
@@ -290,11 +379,19 @@ class Runner:
                         record["service_error_code"] = detail.get("code")
                 record["service_error_message"] = scrub(exc.message)
             elif isinstance(exc, APIError):
+                if record["request_delivery_status"] != "response_received":
+                    record["request_delivery_status"] = "unknown"
+                if record["service_response_status"] in {"not_received", "received"}:
+                    record["service_response_status"] = "unknown"
                 record["service_error_message"] = scrub(exc.message)
                 if isinstance(exc.body, dict):
                     record["service_error_body"] = scrub(exc.body)
             elif isinstance(exc, (RuntimeError, ValueError)):
                 record["verification_error"] = scrub(str(exc))
+            if record["tool_protocol_validation_status"] == "in_progress":
+                record["tool_protocol_validation_status"] = "failed"
+            if record["local_processing_status"] == "in_progress":
+                record["local_processing_status"] = "failed"
             self.write(f"{case}-tool-evidence", calls)
             raise
         finally:
@@ -306,7 +403,10 @@ class Runner:
         response = None
         for event in stream:
             if event.type == "response.created":
-                record["response_id"] = event.response.id
+                response_id = response_value(event.response, "id")
+                if not isinstance(response_id, str) or not response_id:
+                    raise ValueError("response.created event has no response id")
+                record["response_id"] = response_id
             elif event.type == "response.output_item.done":
                 if event.item.type not in {"message", "reasoning"}:
                     calls.append(event.item.model_dump(mode="json"))
@@ -314,8 +414,12 @@ class Runner:
                         item["type"] in CALL_ITEM_TYPES for item in calls
                     )
             elif event.type in {"error", "response.failed", "response.incomplete"}:
+                record["request_delivery_status"] = "response_received"
+                record["service_response_status"] = (
+                    "incomplete" if event.type == "response.incomplete" else "failed"
+                )
                 failed_response = getattr(event, "response", None)
-                response_id = getattr(failed_response, "id", None)
+                response_id = response_value(failed_response, "id")
                 if response_id:
                     record["response_id"] = response_id
                 final_items = getattr(failed_response, "output", [])

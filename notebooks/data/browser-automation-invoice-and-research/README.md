@@ -32,6 +32,21 @@ conversion does not rewrite them.
 Fixture and instruction paths are anchored to this directory, not the caller's
 working directory. Only this directory's ignored `.env` is loaded by live commands.
 
+## Browser routes and evidence
+
+The routes are selected explicitly with `BROWSER_MODE`; the runner never changes
+routes after a failure:
+
+| Mode | Foundry integration | Evidence behavior |
+|---|---|---|
+| `native-ga` | GA Browser Automation Tool with a `PlaywrightWorkspace` connection | The current verifier cannot establish snapshot-level URL provenance from this route; results remain unverified. |
+| `workspace-mcp` | Playwright Workspaces remote MCP preview with a `RemoteTool` connection and project managed identity | The verifier requires `browser_snapshot` tool output with structured `current_url` metadata, scoped navigation, and the same closed session. |
+| `toolbox-mcp` | Project toolbox MCP with its own configured endpoint and connection | The current verifier cannot establish snapshot-level URL provenance from this route; results remain unverified. |
+
+The remote MCP service is a preview and is not recommended for production. The
+GA Browser Automation Tool and the separate remote MCP preview are distinct
+integrations and connection categories.
+
 ## Optional authorized cloud setup
 
 Follow the notebook's full prerequisites before executing setup helpers. The
@@ -95,13 +110,16 @@ for existing evidence tests; they are not an alternate recommended live path.
 ## Review and cleanup
 
 Review `happy-draft.json` together with `happy-draft-verification.json`.
-Successful execution requires actual tool output containing the current URL,
-fresh marker, all nine values, zero submission attempts, and same-task session
-closure. Research needs source-scoped navigation, direct quotes/dates or honest
-limitations, session closure, and faithful synthesis.
+Successful execution requires a supported `browser_snapshot` response with
+structured observed `current_url` matching the exact form URL, a fresh marker,
+all nine values, zero submission attempts, and same-task session closure.
+Research needs source-scoped observed snapshots, direct quotes/dates or an
+evidence-backed limitation, session closure, and faithful synthesis.
 
 Dated findings include `date_evidence_quote`: a copied publication/update
-statement in the same browser output as the direct page URL and content quote.
+statement in the same browser snapshot as the exact browser-observed direct-page
+URL and content quote. The `current_url` must come from structured browser-tool
+metadata, not a navigation argument, agent claim, or text found on the page.
 The verifier compares its date with `published_or_updated`. It accepts labeled
 Published, Updated, or Released statements using ISO `YYYY-MM-DD` or an English
 month name with day and four-digit year, such as `Updated: September 15, 2026`.
@@ -110,6 +128,9 @@ Unsupported or ambiguous date formats require `date_not_verified`, a null
 `date_evidence_quote`, and an explicit limitation. A model-claimed date without
 matching evidence fails verification; it is not silently corrected. An undated
 finding is logged as `no_verified_findings`, not as a verified in-window change.
+An empty findings result also needs `limitation_evidence_quote` copied from an
+in-scope page observed in the same closed browser session; a limitation alone
+cannot support a no-findings result.
 
 MCP discovery, pending approval, empty output, or final model prose is not proof.
 No findings can be a truthful research outcome, not proof that no change occurred.

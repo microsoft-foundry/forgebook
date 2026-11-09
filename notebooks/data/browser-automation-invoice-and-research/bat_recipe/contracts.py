@@ -69,6 +69,7 @@ class SiteResult(Contract):
     url: str
     findings: list[Finding] = Field(max_length=1)
     limitations: list[str]
+    limitation_evidence_quote: str | None = Field(default=None, min_length=1, max_length=400)
 
 
 class Report(Contract):
@@ -149,6 +150,8 @@ def verify_site(result: SiteResult, source: str, since: date) -> None:
         raise ValueError("Source URL is off-scope")
     if not result.findings and not result.limitations:
         raise ValueError("No findings without an explicit limitation")
+    if not result.findings and not result.limitation_evidence_quote:
+        raise ValueError("No findings require a source-backed limitation quote")
     for finding in result.findings:
         if not allowed_url(finding.url, source):
             raise ValueError("Finding URL is off-scope")
