@@ -147,9 +147,7 @@ print((recipe_root / 'instructions.md').read_text(encoding='utf-8'))
 
 Skip this section to remain fully offline. Setup creates or changes Azure resources and requires authorization; no setup command is run by this notebook.
 
-The verified integration uses **Playwright Workspaces remote MCP tools through a versioned Foundry prompt agent**. It is not a hosted container or a local Playwright browser.
-
-The GA Foundry Browser Automation Tool and the Playwright Workspaces remote MCP server are separate integrations. `native-ga` uses a `PlaywrightWorkspace` connection; `workspace-mcp` uses a `RemoteTool` connection and is a preview feature. The configured `BROWSER_MODE` selects one route explicitly. Failures never trigger an automatic switch to another route. This verifier currently accepts page-provenance evidence only from `workspace-mcp`; it does not parse snapshot metadata from other routes, which therefore remain unverified.
+The `native-ga` route uses Foundry's GA Browser Automation Tool with a `PlaywrightWorkspace` connection. The separate `workspace-mcp` route uses Playwright Workspaces remote MCP with a `RemoteTool` connection and is preview. Select one route explicitly; a failure does not switch to the other. The verifier currently accepts page-provenance evidence only from `workspace-mcp`; it does not parse snapshot metadata from other routes, which therefore remain unverified. The required snapshot URL metadata has not been confirmed in a fresh live response; missing metadata fails verification.
 
 
 | Property | Required value |
