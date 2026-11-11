@@ -302,8 +302,39 @@
     "kind": "user-supplied-full-walkthrough",
     "code_cells_sha256": "b5dabb40d6d261abac78cb1cdc1e77aaa2be4d1249363aa3af08e64e043b96c8",
     "code_cells": 11,
-    "validation": "not-yet-run",
+    "validation": "executed-and-source-audited",
     "source_review": "The supplied copy replaces automated trace/source acceptance with explicit manual review.",
-    "historical_boundary": "Earlier live captures and audits above belong to their recorded revisions, not these changed snippets."
+    "historical_boundary": "Earlier live captures and audits above belong to their recorded revisions, not these changed snippets.",
+    "tested_commit": "2193d997d6b68926193606e06ab16018b70275bc",
+    "source_notebook_sha256": "11b4204b7038576fb552b976497b140ff5962259e37ac3e23c1671fbc197657d",
+    "started_at_utc": "2026-11-11T13:39:03.315237+00:00",
+    "completed_at_utc": "2026-11-11T13:42:22.160153+00:00",
+    "checkout_clean_before_execution": true,
+    "checkout_clean_after_execution": true,
+    "all_code_cells_completed": true,
+    "optional_recovery_completed": true,
+    "execution_method": "Execute all 11 unchanged snippets top-to-bottom from notebooks/ in a clean clone of the recorded commit, using a fresh agent and skill. No saved-response replay, second agent invocation, or permission change.",
+    "independent_output_audit": {
+      "supported_checks": 50,
+      "code_cell_outputs_retained": 11,
+      "tool_calls_reviewed": 6,
+      "required_calls_completed": 4,
+      "assistant_messages_reviewed": 4,
+      "fixture_rows_recomputed": 283,
+      "retrieval_references_reviewed": 22,
+      "references_matching_source_pdf": 22,
+      "distinct_pdfs_freshly_downloaded": 10,
+      "record_facts": "Latest samples for both KBs and highest sampled p95 match the committed CSVs.",
+      "quoted_action": "Verbatim in the local report transcription and freshly downloaded matching PDF.",
+      "commercial_absence_claim": "The earlier unsupported budget/procurement/confirmed-pilot absence claim was not repeated.",
+      "native_displayed_citation": {
+        "status": "unverified",
+        "returned_annotation": "file_id=0, filename=0; not a resolved document URL",
+        "boundary": "Verified SDK document metadata and PDF text do not prove native Playground citation navigation."
+      },
+      "sequencing": "The model announced parallel source lookups after resolving the customer ID. Returned MCP items do not establish start/end overlap; do not claim application-enforced tool sequencing.",
+      "provider_usage": "Provider-reported usage and CLI timing are retained privately, not independently billing-audited."
+    },
+    "raw_capture_policy": "Complete cell outputs, SDK response, conversation items, executed notebook, and fact-check ledger retained privately; not committed."
   }
 }
