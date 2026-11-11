@@ -1,0 +1,234 @@
+{
+  "kind": "sanitized-live-validation",
+  "completed_at_utc": "2026-11-10T00:18:43.981655+00:00",
+  "checkout": {
+    "method": "Fresh local clone with uncommitted candidate overlay; not a remotely committed clean clone.",
+    "baseline_commit": "9a982206db4660e229f91744914f6476e95696d7",
+    "executed_notebook_sha256": "31fd40eb0efc5abe3fedce89724f40a2b5765e13e5008703837b179a00e4d103",
+    "code_cells_sha256": "f90e173b226e3f46658d33d16cea3d07827cf7697d8f817d3b70e5b4c6e1d938",
+    "code_cells_sha256_format": "SHA-256 of UTF-8 json.dumps([{id, source}], sort_keys=True, separators=(',', ':')); source is joined cell lines.",
+    "scope": "Recorded live execution of the notebook/code hashes above. Later revisions require separate validation; this is not evidence that changed cells were rerun live."
+  },
+  "revision_review": {
+    "code_cells_sha256": "d320479943cfbecff4c94579c2ed622cdf88c11b66e817d2021c8d9928e6c61f",
+    "validation": "offline-wiring-and-saved-service-replay; no-new-live-deployment",
+    "launch_directory_validation": {
+      "repository root": "offline wiring test",
+      "notebooks/": "offline wiring test"
+    },
+    "changes": [
+      "Resolve fixture paths from the repository root and read the expected report before cloud operations.",
+      "Ask what is recorded for the account rather than what the customer is using.",
+      "Retain conversation items before response assertions and document failure recovery.",
+      "Require separate resolution and record calls, one retrieval, and nonempty completed tool results.",
+      "Validate the required skill/data calls and surface additional read-only tool diagnostics separately.",
+      "Print only the final assistant message, not concatenated progress messages.",
+      "Accept an exact quotation from the report's next-actions section rather than one canonical sentence.",
+      "Require the account-matching action passage and report reference/date to share a returned document URL.",
+      "Display the SDK-returned source link separately; do not claim the agent generated it.",
+      "Use concise tool answers in the skill instead of requiring a separate metadata-file inspection.",
+      "Replace the unrelated partial-run screenshot with a crop of the user's matching Adatum example."
+    ],
+    "saved_service_replay": {
+      "replayed_at_utc": "2026-11-11T03:02:22.456414+00:00",
+      "code_cells_sha256": "d320479943cfbecff4c94579c2ed622cdf88c11b66e817d2021c8d9928e6c61f",
+      "cells_replayed": ["inspect-trace", "check-report"],
+      "result": "passed",
+      "source_capture_date_utc": "2026-11-10",
+      "source_agent_version": "3",
+      "source_skill_version": "1",
+      "source_link_origin": "SDK-returned retrieval reference metadata, not the generated answer",
+      "quote_matches_independently_downloaded_source_pdf": true,
+      "additional_tool_diagnostic_preserved": true,
+      "new_cloud_requests": 0,
+      "scope": "Only local trace/source checks replayed on an existing live response. Updated skill and complete revised notebook have not been executed live. No denied staged file was opened."
+    },
+    "revision_boundary": "The original successful trace below belongs to checkout.code_cells_sha256 and the earlier prompt. Failed historical executions remain under output_audit. The current trace/source checks were replayed on a separate saved version-3 response; neither that replay nor the functional example is a new complete notebook execution.",
+    "publication_boundary": "No committed publish revision has been live-tested. Source provisioning remains a prerequisite; the recipe now uses only the existing-records plus matching OneLake PDF source path."
+  },
+  "functional_example": {
+    "kind": "sanitized-saved-live-response",
+    "date_utc": "2026-11-10",
+    "agent_version": "3",
+    "skill_version": "1",
+    "question": "I'm meeting Adatum Corporation tomorrow. Give me a short account brief: what's recorded for the account, what concerns deserve discussion, and the next step recommended in their account writeup. Cite your sources.",
+    "final_answer": "Customer: found \u2014 Adatum Corporation (customer_id: CUST-001) \u3010source:hsrc_932d7d1d9bbf7e55\u3011\n\nWhat\u2019s recorded\n- Knowledge bases: KB-001-01 \"Product Support KB\" (latest telemetry TS-009967, 2026-11-05 16:15:00 UTC, status Healthy, p95_latency_ms 455) and KB-001-02 \"Employee Knowledge Hub\" (latest telemetry TS-009924, 2026-11-05 12:40:00 UTC, status Healthy, p95_latency_ms 471) \u3010source:hsrc_932d7d1d9bbf7e55\u3011.\n- Highest observed p95 across account: TS-004243 (KB-001-02, idx-001-02) at 2026-10-16 19:15:00 UTC, status Degraded, p95_latency_ms 4609 \u2014 an observation of degraded latency, not a declared incident \u3010source:hsrc_932d7d1d9bbf7e55\u3011.\n\nConcerns to discuss\n- The October 16 high p95 (4609 ms) for KB-001-02 merits root-cause context (query load, index changes, or content-owner processes) and whether similar spikes occurred between 2026-10-16 and the Nov 5 healthy samples.\n- Confirm ownership of KB-001-02 and readiness to run an answer-quality review for reviewer-scoring.\n\nDocumented next step (from account writeup)\n- Report reference: FSR-CUST-001-20261105 (report date: 2026-11-05). Report: found \u3010source:hsrc_5feceb66ffc86f38\u3011.\n- Exact next-step sentence (verbatim): \"The seller would first confirm the business question and the content owner, then agree on a reviewer-scored answer-quality check.\" \u3010source:hsrc_5feceb66ffc86f38\u3011\n\nFacts vs proposals vs unknowns\n- Facts: customer_id, KB IDs, telemetry IDs/timestamps/statuses/p95 values above (citations given).\n- Proposal (from writeup): the quoted next step.\n- Unknowns: whether the Oct 16 degradation recurred or was remediated, and who is the content owner for KB-001-02 \u2014 discuss these tomorrow.",
+    "required_call_sequence": [
+      "skill",
+      "fabriciq-ontology___ask_ontology",
+      "fabriciq-ontology___ask_ontology",
+      "field-sales-reports___knowledge_base_retrieve"
+    ],
+    "required_call_errors": [],
+    "quote_matches_actual_source_pdf": true,
+    "additional_tool_diagnostic": "A view call returned a denied staged-output read. Raw output is retained privately; the replay surfaces this diagnostic separately from the required data calls.",
+    "source_link_origin": "The generated answer has an opaque file citation, not a resolved PDF URL. The revised notebook displays the matching SDK-returned reference URL separately.",
+    "configuration_boundary": "This live response used the user's saved agent version 3 with broader filesystem defaults than the notebook's read-only manifest. It is not proof of an end-to-end live run of the current manifest or changed skill.",
+    "screenshot_boundary": "The cropped Playground screenshot is a separate earlier agent-version-1 run with matching Adatum facts and the same genuine action sentence; its source panel is outside the crop."
+  },
+  "output_audit": {
+    "date_utc": "2026-11-10",
+    "status": "blocked",
+    "execution_boundary": "Three actual executions of uncommitted candidate code from the repository root. Diagnostic continuation retained all 12 code-cell outputs per attempt; any cell error fails the overall run.",
+    "attempts": [
+      {
+        "label": "audit-1",
+        "code_cells_sha256": "6b7de4cb892dceff13c67346172c5df565da93f3d82bb95f8faedf01817f849e",
+        "cells_attempted": 12,
+        "cells_with_errors": [],
+        "factual_verdict": "Failed independent review despite passing the original assertions: denied staged-file read, no actual report link, unspecified UTC/ms and unsupported severe qualifier.",
+        "references_checked": 24,
+        "references_matching_actual_pdf": 24
+      },
+      {
+        "label": "audit-2",
+        "code_cells_sha256": "90ae5f7dfc7a4a31d5cd96562d3feaf7754909bbbd6868f397f5a71d417ff958",
+        "cells_attempted": 12,
+        "cells_with_errors": ["inspect-trace", "check-report"],
+        "factual_verdict": "Upstream ontology HTTP 504. Report retrieval was never called, so the generated Report: not found claim was unsupported. The revised checks rejected the result.",
+        "references_checked": 0,
+        "references_matching_actual_pdf": 0
+      },
+      {
+        "label": "audit-3",
+        "code_cells_sha256": "196792926350dc9f9a67de6322e45eac8fd1f6f2d96acc266f2582bb5d9ace0b",
+        "cells_attempted": 12,
+        "cells_with_errors": ["inspect-trace", "check-report"],
+        "factual_verdict": "Exact-account record facts matched the fixtures, with UTC and ms. Staged-file access was denied; the final answer correctly marked Report: unavailable but lacked the exact action and actual report link. Generated meeting advice is not the documented report recommendation.",
+        "references_checked": 24,
+        "references_matching_actual_pdf": 24
+      }
+    ],
+    "source_review": {
+      "account_sample_rows_recomputed": 283,
+      "distinct_actual_source_pdfs": 10,
+      "other_account_references_excluded_per_retrieval": 21,
+      "scope": "All returned snippets matched their source PDFs after whitespace normalization. Other customers' underlying telemetry and provider billing were not independently audited."
+    },
+    "safety_boundary": "No denied harness file was opened, no access policy was bypassed, and no shared source, permission or infrastructure was changed.",
+    "raw_evidence": "Complete per-cell JSON, service/conversation JSON and claim ledgers are retained privately for the requester. They are not replaced by this sanitized summary."
+  },
+  "environment": {
+    "python": "3.12.10 ARM64",
+    "azd": "1.37.3",
+    "azd_commit": "c791087c9a8626cdc57ece00bd8ec3568e95225c",
+    "extensions": {
+      "microsoft.foundry": "1.0.0",
+      "azure.ai.agents": "1.0.0",
+      "azure.ai.projects": "1.0.0",
+      "azure.ai.skills": "1.0.0",
+      "azure.ai.connections": "1.0.0"
+    },
+    "packages": {
+      "azure-ai-projects": "2.10.0",
+      "azure-identity": "1.27.0",
+      "IPython": "9.18.1",
+      "nbclient": "0.11.0",
+      "nbformat": "5.11.1"
+    },
+    "model": "gpt-5-mini",
+    "region": "swedencentral"
+  },
+  "deployment": {
+    "agent_version": "1",
+    "skill_version": "1",
+    "harness": "microsoft_copilot_preview",
+    "toolset": {
+      "configs": [
+        {
+          "enabled": true,
+          "name": "filesystem_read"
+        }
+      ],
+      "default_config": {
+        "enabled": false
+      },
+      "type": "microsoft_copilot_toolset_preview"
+    }
+  },
+  "question": "I'm meeting Adatum Corporation tomorrow. Give me a short account brief: what they're using, what concerns deserve discussion, and the next step recommended in their account writeup. Cite your sources.",
+  "final_answer": "Customer: found \u2014 CUST-001 (Adatum Corporation)\u3010source:hsrc_932d7d1d9bbf7e55\u3011.\n\nWhat they're using (observed): KB-001-01 Product Support \u2014 latest TS-009967 (2026-11-05T16:15Z, Healthy, p95=455); KB-001-02 Employee Knowledge Hub \u2014 latest TS-009924 (2026-11-05T12:40Z, Healthy, p95=471). Single highest sampled p95: TS-004243 (KB-001-02) at 2026-10-16T19:15Z, Degraded, p95=4609\u3010source:hsrc_932d7d1d9bbf7e55\u3011.\n\nConcerns to discuss: the high outlier p95 (TS-004243) and sparse/sample-based coverage (samples are not continuous; errors/throttles noted) \u2014 treat as investigation points, not confirmed outages\u3010source:hsrc_5feceb66ffc86f38\u3011.\n\nReport and next step: writeup FSR-CUST-001-20261105 (2026-11-05). Exact quoted recommended action: \"The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric.\" Source: field-sales writeup (PDF) \u2014 [SOURCE_PDF_URL_REDACTED]\u3010source:hsrc_5feceb66ffc86f38\u3011.",
+  "final_answer_word_count_before_redaction": 98,
+  "native_annotations": [
+    {
+      "title": "[RUN_AGENT_REDACTED]-ontology",
+      "type": "url_citation",
+      "url": "[ONTOLOGY_URL_REDACTED]"
+    },
+    {
+      "title": "[RUN_AGENT_REDACTED]-ontology",
+      "type": "url_citation",
+      "url": "[ONTOLOGY_URL_REDACTED]"
+    },
+    {
+      "file_id": "0",
+      "filename": "0",
+      "type": "file_citation"
+    }
+  ],
+  "trace": [
+    {
+      "name": "skill",
+      "arguments": "{\"skill\": \"[RUN_SKILL_REDACTED]\"}",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "name": "fabriciq-ontology___ask_ontology",
+      "arguments": "{\"request\":\"Resolve the company name \\\"Adatum Corporation\\\" to a Customer entity and return the canonical customer_id. If multiple matches or no match, indicate ambiguity or absence and do NOT guess; request a customer_id. Return only the resolution information.\"}",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "name": "fabriciq-ontology___ask_ontology",
+      "arguments": "{\"request\":\"For customer_id \\\"CUST-001\\\" (Adatum Corporation) return: list of KnowledgeBases (knowledge_base_id and knowledge_base_name). For each KB, return the latest TelemetrySample (telemetry_id, index_name, event_time_utc, status, p95_latency_ms). Also return the single telemetry sample across the account with the highest p95_latency_ms (include telemetry_id, knowledge_base_id, knowledge_base_name, index_name, event_time_utc, status, p95_latency_ms). Do not return full history; only those latest-per-KB and the single highest-p95 sample. Provide citation markers for each item.\"}",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "name": "field-sales-reports___knowledge_base_retrieve",
+      "arguments": "{\"query_variants\":[\"Retrieve the account writeup for customer_id \\\"CUST-001\\\" (Adatum Corporation). Provide the writeup reference, date, the exact recommended action (quote the sentence), and sources.\"]}",
+      "status": "completed",
+      "error": null
+    }
+  ],
+  "verified_sources": {
+    "ontology_record_output": "Here are the requested results for **CUST-001 (Adatum Corporation)**. I kept only the latest telemetry sample per KB and the single highest-`p95_latency_ms` sample across the account.\n\n### Knowledge bases\n\n| knowledge_base_id | knowledge_base_name | citation |\n|---|---|---|\n| KB-001-01 | Product Support KB | [KB:KB-001-01] |\n| KB-001-02 | Employee Knowledge Hub | [KB:KB-001-02] |\n\n### Latest TelemetrySample per KB\n\n| knowledge_base_id | knowledge_base_name | telemetry_id | index_name | event_time_utc | status | p95_latency_ms | citation |\n|---|---|---|---|---|---|---:|---|\n| KB-001-01 | Product Support KB | TS-009967 | idx-001-01 | 2026-11-05T16:15:00Z | Healthy | 455 | [TS:TS-009967] |\n| KB-001-02 | Employee Knowledge Hub | TS-009924 | idx-001-02 | 2026-11-05T12:40:00Z | Healthy | 471 | [TS:TS-009924] |\n\n### Single highest `p95_latency_ms` telemetry sample across the account\n\n| knowledge_base_id | knowledge_base_name | telemetry_id | index_name | event_time_utc | status | p95_latency_ms | citation |\n|---|---|---|---|---|---|---:|---|\n| KB-001-02 | Employee Knowledge Hub | TS-004243 | idx-001-02 | 2026-10-16T19:15:00Z | Degraded | 4609 | [TS:TS-004243] |\n\nIf you want, I can also present this as a single combined table sorted by KB and section.\nCitation: \u3010source:hsrc_932d7d1d9bbf7e55\u3011",
+    "source_report_reference": "FSR-CUST-001-20261105",
+    "source_report_date": "2026-11-05",
+    "source_pdf_sha256": "78f2ea7797f14422e71512d013e7f29a27ef11546eefe38258d9df49e58f07ce",
+    "action_reference": {
+      "ref_id": 1,
+      "uri": null,
+      "sourceData": {
+        "doc_url": "[SOURCE_PDF_URL_REDACTED]",
+        "snippet": "measures to\nsum across samples.\n\nSampled resources available for a grounded demonstration\n\nKB-001-01 - Product Support KB; index idx-001-01. Latest observed document count: 5,400; storage: 0.24 GB. Observation: 2026-11-05 16:15\nUTC.\n\nKB-001-02 - Employee Knowledge Hub; index idx-001-02. Latest observed document count: 6,840; storage: 0.23 GB. Observation: 2026-11-05\n12:40 UTC.\n\nOpportunity hypothesis and next field actions - fictional\n\nThe proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric. The\nseller would first confirm the business question and the content owner, then agree on a reviewer-scored answer-quality\ncheck. A technical review would separately examine the cited samples, the intended SKU and region, and a realistic\nworkload before recommending any configuration change.\n\nExpansion remains conditional on evidence from that evaluation. The report does not recommend a particular upgrade,\nclaim compatibility from a synthetic metric name, or promise performance. It suggests revisiting the customer-wide\ninventory totals with the account team because the sampled resources need not cover that entire inventory.\n\nProvenance and retrieval guidance\n\nSource: foundry_iq_realtime_telemetry_10000.csv; managed table dbo.telemetrysample. Join this report to structured data using customer_id =\nCUST-001, not a fuzzy company-name match. KB and index references above retain source values. Source coverage ends 2026-11-05 19:00\nUTC. All named metrics are demo fields, not an asserted Foundry IQ product telemetry contract."
+      }
+    },
+    "checks": {
+      "record_output_matches_fixture_latest_and_highest_samples": true,
+      "quoted_action_matches_downloaded_pdf": true,
+      "final_answer_url_matches_action_reference_url": true,
+      "reference_and_date_match_downloaded_pdf": true
+    }
+  },
+  "fixture_sha256": {
+    "customers.csv": "cfa67ecde494d65ed48606474e798e17a7709fb848ccb85a06638abdf4c1eedc",
+    "knowledge-bases.csv": "49f94160ea6b9276beb3c778aa7e6e368764bbc04c5354b964182c5e7b969ecd",
+    "reports.jsonl": "0f084bd53a41037db99bb49419013d52c3e18192d40ac5003391243c3dd1d5ba",
+    "telemetry-samples.csv": "6e7964baee580fd38d81c1d1e6b7b003c1c9fe2717eaa4f53bda5afae1d5b0ab"
+  },
+  "limitations": [
+    "One successful stochastic model run, not an accuracy benchmark or a guarantee of future answers.",
+    "Existing evaluation services held the matching synthetic records and OneLake PDF. Portable JSONL ingestion was not separately provisioned or live-tested.",
+    "Filesystem reading was enabled, but no read-only file calls occurred in this successful trace; this does not prove that the toggle caused the improvement.",
+    "An earlier run omitted the PDF URL and quoted a different genuine action sentence. It failed the canonical-action check; raw failed runs remain private.",
+    "The native report annotation is file_id/filename 0. Source verification relied on the explicit PDF URL matching the action-containing reference and the downloaded PDF, not on that opaque token.",
+    "Source URLs are redacted, not replaced with invented public links. Raw answers, references, PDF and conversation records remain private."
+  ],
+  "redactions": [
+    "Tenant/workspace/resource identifiers and private source URLs replaced with labeled placeholders.",
+    "Resource names, conversation/message IDs, internal paths, encoded reference UIDs and raw-text annotation offsets omitted.",
+    "Final assistant message retained separately from progress messages; text is otherwise unchanged."
+  ]
+}
