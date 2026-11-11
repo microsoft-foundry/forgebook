@@ -90,7 +90,10 @@
     "saved_service_replay": {
       "replayed_at_utc": "2026-11-11T03:02:22.456414+00:00",
       "code_cells_sha256": "d320479943cfbecff4c94579c2ed622cdf88c11b66e817d2021c8d9928e6c61f",
-      "cells_replayed": ["inspect-trace", "check-report"],
+      "cells_replayed": [
+        "inspect-trace",
+        "check-report"
+      ],
       "result": "passed",
       "source_capture_date_utc": "2026-11-10",
       "source_agent_version": "3",
@@ -110,7 +113,7 @@
     "agent_version": "3",
     "skill_version": "1",
     "question": "I'm meeting Adatum Corporation tomorrow. Give me a short account brief: what's recorded for the account, what concerns deserve discussion, and the next step recommended in their account writeup. Cite your sources.",
-    "final_answer": "Customer: found \u2014 Adatum Corporation (customer_id: CUST-001) \u3010source:hsrc_932d7d1d9bbf7e55\u3011\n\nWhat\u2019s recorded\n- Knowledge bases: KB-001-01 \"Product Support KB\" (latest telemetry TS-009967, 2026-11-05 16:15:00 UTC, status Healthy, p95_latency_ms 455) and KB-001-02 \"Employee Knowledge Hub\" (latest telemetry TS-009924, 2026-11-05 12:40:00 UTC, status Healthy, p95_latency_ms 471) \u3010source:hsrc_932d7d1d9bbf7e55\u3011.\n- Highest observed p95 across account: TS-004243 (KB-001-02, idx-001-02) at 2026-10-16 19:15:00 UTC, status Degraded, p95_latency_ms 4609 \u2014 an observation of degraded latency, not a declared incident \u3010source:hsrc_932d7d1d9bbf7e55\u3011.\n\nConcerns to discuss\n- The October 16 high p95 (4609 ms) for KB-001-02 merits root-cause context (query load, index changes, or content-owner processes) and whether similar spikes occurred between 2026-10-16 and the Nov 5 healthy samples.\n- Confirm ownership of KB-001-02 and readiness to run an answer-quality review for reviewer-scoring.\n\nDocumented next step (from account writeup)\n- Report reference: FSR-CUST-001-20261105 (report date: 2026-11-05). Report: found \u3010source:hsrc_5feceb66ffc86f38\u3011.\n- Exact next-step sentence (verbatim): \"The seller would first confirm the business question and the content owner, then agree on a reviewer-scored answer-quality check.\" \u3010source:hsrc_5feceb66ffc86f38\u3011\n\nFacts vs proposals vs unknowns\n- Facts: customer_id, KB IDs, telemetry IDs/timestamps/statuses/p95 values above (citations given).\n- Proposal (from writeup): the quoted next step.\n- Unknowns: whether the Oct 16 degradation recurred or was remediated, and who is the content owner for KB-001-02 \u2014 discuss these tomorrow.",
+    "final_answer": "Customer: found — Adatum Corporation (customer_id: CUST-001) 【source:hsrc_932d7d1d9bbf7e55】\n\nWhat’s recorded\n- Knowledge bases: KB-001-01 \"Product Support KB\" (latest telemetry TS-009967, 2026-11-05 16:15:00 UTC, status Healthy, p95_latency_ms 455) and KB-001-02 \"Employee Knowledge Hub\" (latest telemetry TS-009924, 2026-11-05 12:40:00 UTC, status Healthy, p95_latency_ms 471) 【source:hsrc_932d7d1d9bbf7e55】.\n- Highest observed p95 across account: TS-004243 (KB-001-02, idx-001-02) at 2026-10-16 19:15:00 UTC, status Degraded, p95_latency_ms 4609 — an observation of degraded latency, not a declared incident 【source:hsrc_932d7d1d9bbf7e55】.\n\nConcerns to discuss\n- The October 16 high p95 (4609 ms) for KB-001-02 merits root-cause context (query load, index changes, or content-owner processes) and whether similar spikes occurred between 2026-10-16 and the Nov 5 healthy samples.\n- Confirm ownership of KB-001-02 and readiness to run an answer-quality review for reviewer-scoring.\n\nDocumented next step (from account writeup)\n- Report reference: FSR-CUST-001-20261105 (report date: 2026-11-05). Report: found 【source:hsrc_5feceb66ffc86f38】.\n- Exact next-step sentence (verbatim): \"The seller would first confirm the business question and the content owner, then agree on a reviewer-scored answer-quality check.\" 【source:hsrc_5feceb66ffc86f38】\n\nFacts vs proposals vs unknowns\n- Facts: customer_id, KB IDs, telemetry IDs/timestamps/statuses/p95 values above (citations given).\n- Proposal (from writeup): the quoted next step.\n- Unknowns: whether the Oct 16 degradation recurred or was remediated, and who is the content owner for KB-001-02 — discuss these tomorrow.",
     "required_call_sequence": [
       "skill",
       "fabriciq-ontology___ask_ontology",
@@ -142,7 +145,10 @@
         "label": "audit-2",
         "code_cells_sha256": "90ae5f7dfc7a4a31d5cd96562d3feaf7754909bbbd6868f397f5a71d417ff958",
         "cells_attempted": 12,
-        "cells_with_errors": ["inspect-trace", "check-report"],
+        "cells_with_errors": [
+          "inspect-trace",
+          "check-report"
+        ],
         "factual_verdict": "Upstream ontology HTTP 504. Report retrieval was never called, so the generated Report: not found claim was unsupported. The revised checks rejected the result.",
         "references_checked": 0,
         "references_matching_actual_pdf": 0
@@ -151,7 +157,10 @@
         "label": "audit-3",
         "code_cells_sha256": "196792926350dc9f9a67de6322e45eac8fd1f6f2d96acc266f2582bb5d9ace0b",
         "cells_attempted": 12,
-        "cells_with_errors": ["inspect-trace", "check-report"],
+        "cells_with_errors": [
+          "inspect-trace",
+          "check-report"
+        ],
         "factual_verdict": "Exact-account record facts matched the fixtures, with UTC and ms. Staged-file access was denied; the final answer correctly marked Report: unavailable but lacked the exact action and actual report link. Generated meeting advice is not the documented report recommendation.",
         "references_checked": 24,
         "references_matching_actual_pdf": 24
@@ -205,7 +214,7 @@
     }
   },
   "question": "I'm meeting Adatum Corporation tomorrow. Give me a short account brief: what they're using, what concerns deserve discussion, and the next step recommended in their account writeup. Cite your sources.",
-  "final_answer": "Customer: found \u2014 CUST-001 (Adatum Corporation)\u3010source:hsrc_932d7d1d9bbf7e55\u3011.\n\nWhat they're using (observed): KB-001-01 Product Support \u2014 latest TS-009967 (2026-11-05T16:15Z, Healthy, p95=455); KB-001-02 Employee Knowledge Hub \u2014 latest TS-009924 (2026-11-05T12:40Z, Healthy, p95=471). Single highest sampled p95: TS-004243 (KB-001-02) at 2026-10-16T19:15Z, Degraded, p95=4609\u3010source:hsrc_932d7d1d9bbf7e55\u3011.\n\nConcerns to discuss: the high outlier p95 (TS-004243) and sparse/sample-based coverage (samples are not continuous; errors/throttles noted) \u2014 treat as investigation points, not confirmed outages\u3010source:hsrc_5feceb66ffc86f38\u3011.\n\nReport and next step: writeup FSR-CUST-001-20261105 (2026-11-05). Exact quoted recommended action: \"The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric.\" Source: field-sales writeup (PDF) \u2014 [SOURCE_PDF_URL_REDACTED]\u3010source:hsrc_5feceb66ffc86f38\u3011.",
+  "final_answer": "Customer: found — CUST-001 (Adatum Corporation)【source:hsrc_932d7d1d9bbf7e55】.\n\nWhat they're using (observed): KB-001-01 Product Support — latest TS-009967 (2026-11-05T16:15Z, Healthy, p95=455); KB-001-02 Employee Knowledge Hub — latest TS-009924 (2026-11-05T12:40Z, Healthy, p95=471). Single highest sampled p95: TS-004243 (KB-001-02) at 2026-10-16T19:15Z, Degraded, p95=4609【source:hsrc_932d7d1d9bbf7e55】.\n\nConcerns to discuss: the high outlier p95 (TS-004243) and sparse/sample-based coverage (samples are not continuous; errors/throttles noted) — treat as investigation points, not confirmed outages【source:hsrc_5feceb66ffc86f38】.\n\nReport and next step: writeup FSR-CUST-001-20261105 (2026-11-05). Exact quoted recommended action: \"The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric.\" Source: field-sales writeup (PDF) — [SOURCE_PDF_URL_REDACTED]【source:hsrc_5feceb66ffc86f38】.",
   "final_answer_word_count_before_redaction": 98,
   "native_annotations": [
     {
@@ -251,7 +260,7 @@
     }
   ],
   "verified_sources": {
-    "ontology_record_output": "Here are the requested results for **CUST-001 (Adatum Corporation)**. I kept only the latest telemetry sample per KB and the single highest-`p95_latency_ms` sample across the account.\n\n### Knowledge bases\n\n| knowledge_base_id | knowledge_base_name | citation |\n|---|---|---|\n| KB-001-01 | Product Support KB | [KB:KB-001-01] |\n| KB-001-02 | Employee Knowledge Hub | [KB:KB-001-02] |\n\n### Latest TelemetrySample per KB\n\n| knowledge_base_id | knowledge_base_name | telemetry_id | index_name | event_time_utc | status | p95_latency_ms | citation |\n|---|---|---|---|---|---|---:|---|\n| KB-001-01 | Product Support KB | TS-009967 | idx-001-01 | 2026-11-05T16:15:00Z | Healthy | 455 | [TS:TS-009967] |\n| KB-001-02 | Employee Knowledge Hub | TS-009924 | idx-001-02 | 2026-11-05T12:40:00Z | Healthy | 471 | [TS:TS-009924] |\n\n### Single highest `p95_latency_ms` telemetry sample across the account\n\n| knowledge_base_id | knowledge_base_name | telemetry_id | index_name | event_time_utc | status | p95_latency_ms | citation |\n|---|---|---|---|---|---|---:|---|\n| KB-001-02 | Employee Knowledge Hub | TS-004243 | idx-001-02 | 2026-10-16T19:15:00Z | Degraded | 4609 | [TS:TS-004243] |\n\nIf you want, I can also present this as a single combined table sorted by KB and section.\nCitation: \u3010source:hsrc_932d7d1d9bbf7e55\u3011",
+    "ontology_record_output": "Here are the requested results for **CUST-001 (Adatum Corporation)**. I kept only the latest telemetry sample per KB and the single highest-`p95_latency_ms` sample across the account.\n\n### Knowledge bases\n\n| knowledge_base_id | knowledge_base_name | citation |\n|---|---|---|\n| KB-001-01 | Product Support KB | [KB:KB-001-01] |\n| KB-001-02 | Employee Knowledge Hub | [KB:KB-001-02] |\n\n### Latest TelemetrySample per KB\n\n| knowledge_base_id | knowledge_base_name | telemetry_id | index_name | event_time_utc | status | p95_latency_ms | citation |\n|---|---|---|---|---|---|---:|---|\n| KB-001-01 | Product Support KB | TS-009967 | idx-001-01 | 2026-11-05T16:15:00Z | Healthy | 455 | [TS:TS-009967] |\n| KB-001-02 | Employee Knowledge Hub | TS-009924 | idx-001-02 | 2026-11-05T12:40:00Z | Healthy | 471 | [TS:TS-009924] |\n\n### Single highest `p95_latency_ms` telemetry sample across the account\n\n| knowledge_base_id | knowledge_base_name | telemetry_id | index_name | event_time_utc | status | p95_latency_ms | citation |\n|---|---|---|---|---|---|---:|---|\n| KB-001-02 | Employee Knowledge Hub | TS-004243 | idx-001-02 | 2026-10-16T19:15:00Z | Degraded | 4609 | [TS:TS-004243] |\n\nIf you want, I can also present this as a single combined table sorted by KB and section.\nCitation: 【source:hsrc_932d7d1d9bbf7e55】",
     "source_report_reference": "FSR-CUST-001-20261105",
     "source_report_date": "2026-11-05",
     "source_pdf_sha256": "78f2ea7797f14422e71512d013e7f29a27ef11546eefe38258d9df49e58f07ce",
@@ -288,5 +297,13 @@
     "Tenant/workspace/resource identifiers and private source URLs replaced with labeled placeholders.",
     "Resource names, conversation/message IDs, internal paths, encoded reference UIDs and raw-text annotation offsets omitted.",
     "Final assistant message retained separately from progress messages; text is otherwise unchanged."
-  ]
+  ],
+  "copy_revision": {
+    "kind": "user-supplied-full-walkthrough",
+    "code_cells_sha256": "b5dabb40d6d261abac78cb1cdc1e77aaa2be4d1249363aa3af08e64e043b96c8",
+    "code_cells": 11,
+    "validation": "not-yet-run",
+    "source_review": "The supplied copy replaces automated trace/source acceptance with explicit manual review.",
+    "historical_boundary": "Earlier live captures and audits above belong to their recorded revisions, not these changed snippets."
+  }
 }
