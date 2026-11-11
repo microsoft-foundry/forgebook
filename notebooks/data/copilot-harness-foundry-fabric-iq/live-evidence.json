@@ -9,6 +9,64 @@
     "code_cells_sha256_format": "SHA-256 of UTF-8 json.dumps([{id, source}], sort_keys=True, separators=(',', ':')); source is joined cell lines.",
     "scope": "Recorded live execution of the notebook/code hashes above. Later revisions require separate validation; this is not evidence that changed cells were rerun live."
   },
+  "publication_candidate_run": {
+    "kind": "clean-clone-committed-notebook-live-execution",
+    "started_at_utc": "2026-11-11T13:16:05.414663+00:00",
+    "completed_at_utc": "2026-11-11T13:18:57.901395+00:00",
+    "tested_commit": "3941e07526b4eb90d520c38aadb3a20dd409d24f",
+    "source_notebook_sha256": "23c74815138652a2faeeeb87e90e7d2364f54eab3fe2df786985beedf94ea795",
+    "code_cells_sha256": "d320479943cfbecff4c94579c2ed622cdf88c11b66e817d2021c8d9928e6c61f",
+    "launch_directory": "notebooks/",
+    "checkout_clean_before_execution": true,
+    "checkout_clean_after_execution": true,
+    "execution": "All original code cells ran unchanged in order; stop on first failure, no additional agent invocation.",
+    "code_cells_completed": 12,
+    "code_cell_errors": [],
+    "agent_version": "1",
+    "skill_version": "1",
+    "configuration": "The notebook's read-only manifest: default tools disabled; filesystem_read enabled. No permission changes.",
+    "required_call_sequence": [
+      "skill",
+      "fabriciq-ontology___ask_ontology",
+      "fabriciq-ontology___ask_ontology",
+      "field-sales-reports___knowledge_base_retrieve"
+    ],
+    "required_call_errors": [],
+    "additional_read_calls": {
+      "count": 2,
+      "outcome": "The first view requested a smaller range; the second returned the requested output. No denied read was observed."
+    },
+    "source_path": "Existing Customer 360 ontology and matching access-controlled synthetic OneLake PDF; not a new JSONL import.",
+    "independent_output_audit": {
+      "code_cell_outputs_reviewed": 12,
+      "assistant_messages_reviewed": 3,
+      "tool_calls_reviewed": 6,
+      "account_sample_rows_recomputed": 283,
+      "returned_references": 25,
+      "references_matching_actual_pdf": 25,
+      "distinct_actual_source_pdfs_freshly_downloaded": 10,
+      "source_pdf_sha256": "78f2ea7797f14422e71512d013e7f29a27ef11546eefe38258d9df49e58f07ce",
+      "structured_record_facts": "passed",
+      "quoted_action_and_report_reference_date": "passed",
+      "source_link_origin": "SDK-returned retrieval reference metadata, not the generated answer",
+      "provider_usage": "Retained verbatim, not independently audited billing.",
+      "other_account_scope": "All returned snippets matched their source PDFs; other customers' underlying telemetry was not independently recomputed.",
+      "model_answer_qualification": {
+        "status": "overstates-source",
+        "answer_text": "No budget, procurement date, or confirmed pilot exists",
+        "source_text": "No budget, contract value, procurement date, or named individual is asserted.",
+        "review": "The sentence appears under Unknowns / not inferred, but exists is stronger than the source. These details are unrecorded/unknown, not established absent. Do not treat this sentence as a verified fact."
+      },
+      "native_displayed_citation": {
+        "status": "unverified",
+        "returned_report_annotation": "file_id=0, filename=0; not a resolved document URL",
+        "manual_playground_navigation": "not performed",
+        "boundary": "Verified SDK source metadata and independently downloaded PDF content do not establish native citation navigation."
+      }
+    },
+    "raw_evidence": "Complete executed notebook, all-cell JSON and text, raw service/conversation JSON, credential-free connection readbacks, freshly downloaded PDFs, and fact-check ledger retained privately for the requester.",
+    "provenance_boundary": "The tested commit and notebook hash identify the exact executed candidate. This evidence record and the notebook's live-run evidence paragraph were added afterward. Historical failures and saved-response replays below remain unchanged and do not become live passes."
+  },
   "revision_review": {
     "code_cells_sha256": "d320479943cfbecff4c94579c2ed622cdf88c11b66e817d2021c8d9928e6c61f",
     "validation": "offline-wiring-and-saved-service-replay; no-new-live-deployment",
@@ -41,10 +99,10 @@
       "quote_matches_independently_downloaded_source_pdf": true,
       "additional_tool_diagnostic_preserved": true,
       "new_cloud_requests": 0,
-      "scope": "Only local trace/source checks replayed on an existing live response. Updated skill and complete revised notebook have not been executed live. No denied staged file was opened."
+      "scope": "Only local trace/source checks replayed on an existing live response. At replay time, the updated skill and complete revised notebook had not been executed live. No denied staged file was opened."
     },
     "revision_boundary": "The original successful trace below belongs to checkout.code_cells_sha256 and the earlier prompt. Failed historical executions remain under output_audit. The current trace/source checks were replayed on a separate saved version-3 response; neither that replay nor the functional example is a new complete notebook execution.",
-    "publication_boundary": "No committed publish revision has been live-tested. Source provisioning remains a prerequisite; the recipe now uses only the existing-records plus matching OneLake PDF source path."
+    "publication_boundary": "Historical pre-run assessment, superseded by publication_candidate_run for the exact recorded commit. Source provisioning remains a prerequisite; the recipe uses only the existing-records plus matching OneLake PDF source path."
   },
   "functional_example": {
     "kind": "sanitized-saved-live-response",
