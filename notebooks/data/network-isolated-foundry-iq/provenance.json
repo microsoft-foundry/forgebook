@@ -1,0 +1,58 @@
+{
+  "upstream_recipe": {
+    "repository": "microsoft-foundry/forgebook",
+    "pull_request": 53,
+    "revision": "c06549384f52c0dd8e11399b41d1d4b271c82c7a"
+  },
+  "factory_revision": "dc808da9901b075bab2d2594b22512ee5164f556",
+  "factory_export_revision": "e3e1781fde931b34169e441ed66931e836d8ca10",
+  "integration_asset_revision": "af2a2e5e6a26ae11f179be37f9cca8d909cf74e2",
+  "official_samples": {
+    "repository": "microsoft-foundry/foundry-samples",
+    "revision": "be4706c76acfe44e2ae99c2818efdc4c5ab25bd9",
+    "infrastructure": "infrastructure/infrastructure-setup-bicep/15-private-network-standard-agent-setup",
+    "hosted": "samples/python/hosted-agents/agent-framework/responses/17-foundry-iq-toolbox"
+  },
+  "reviewed_on": "2026-09-23",
+  "live_validation": "not-run",
+  "azure_approval": false,
+  "deltas": [
+    "Search S2, semantic standard and local authentication disabled",
+    "Foundry/Blob/ACR trusted-service bypass disabled",
+    "Private ACR only; no developer IP exception at recipe entry point",
+    "Remove project-MI AcrPull assignment; approve actual hosted agent identity after observation",
+    "Add outputs, dedicated firewall/runners/NAT/Bastion and private ingestion shared links",
+    "Add Search MI container read and model-user grants",
+    "Native private source creation uses 2026-08-01-preview; never edits generated children",
+    "Monitoring public ingestion/query and local authentication disabled; runtime Entra telemetry remains a support gate",
+    "Move embedding/container/shared-link/role additions into a nested module with resource names as string parameters; preserve network/auth settings and implicit Standard dependency",
+    "Bind Search paired controls to explicit service, endpoint, API and POST contracts; unsupported agent and aggregate controls remain blocked",
+    "Reject authenticated redirects and preserve credential-free private transport-failure receipts without retries",
+    "Restrict native Blob source to the uploaded directory prefix, including its trailing slash",
+    "Replace unrendered Mermaid with a recipe-local SVG; retain explicit design-only and live-blocked labels"
+  ],
+  "support_gaps": [
+    "Sample 15 README excludes private tools while sample 19 has the same network injection property; reconcile with service before deploying",
+    "Private hosted invocation ingress and runtime ACR pull need live proof",
+    "Firewall platform allowlist, monitoring routing and prompt-tool egress observability need platform review",
+    "Hosted Python 3.13 adapter startup and azd deployment were not executed",
+    "Local Bicep compilation passes; ARM validation, what-if, approved target parameters and live deployment remain pending"
+  ],
+  "offline_compilation": {
+    "compiler": "Bicep 0.47.16 (3f73e1a234)",
+    "mode": "session-local official binary supplied by coordinator; no restore or Azure calls",
+    "result": "passed",
+    "errors": 0,
+    "inherited_warnings": 27,
+    "warning_counts": {
+      "BCP318": 14,
+      "BCP321": 7,
+      "no-unused-params": 1,
+      "no-unused-vars": 3,
+      "no-hardcoded-env-urls": 2
+    },
+    "warning_scope": "infra/standard/",
+    "arm_validation": "not-run",
+    "what_if": "not-run"
+  }
+}

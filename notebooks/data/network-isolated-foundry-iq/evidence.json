@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "run_alias": "offline-draft",
+  "live_run": false,
+  "observed_at": null,
+  "versions": {
+    "search_api": "2026-08-01-preview",
+    "project_sdk": "2.3.0",
+    "hosted_adapter": "1.0.0b260821",
+    "hosted_python": "3.13"
+  },
+  "controls": [
+    {
+      "control": "configuration",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "private-ingestion",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "hybrid-embeddings",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "dns-routing",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "paired-kb-retrieve",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "paired-kb-mcp",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "paired-prompt-ingress",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "paired-hosted-ingress",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "dependent-data-planes",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "prompt-grounding",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "hosted-grounding",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "authorization",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "hosted-egress",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "prompt-tool-egress",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "failure-behavior",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "repeatability",
+      "status": "BLOCKED"
+    },
+    {
+      "control": "private-image-pull",
+      "status": "BLOCKED"
+    }
+  ],
+  "publish_ready": false
+}

@@ -269,6 +269,22 @@
     - grounding
     - retrieval
 
+- slug: network-isolated-foundry-iq
+  path: notebooks/network-isolated-foundry-iq.ipynb
+  title: "Verify Private Retrieval with Foundry IQ"
+  description: "Build a disposable BYO-VNet lab for one Blob-backed knowledge base and two agents, then distinguish network isolation from authorization failures. Live verification is pending."
+  date: "2026-05-29"
+  authors:
+    - github: farzad528
+  tags:
+    - iq
+    - azure-ai-search
+    - security
+    - agents
+    - prompt-agents
+    - hosted-agents
+    - mcp
+
 - slug: llamacloud-index-v2-azure-ai-search
   path: notebooks/llamacloud-index-v2-azure-ai-search.ipynb
   title: "BYO Vector Store: LlamaCloud Index V2 → Azure AI Search"
