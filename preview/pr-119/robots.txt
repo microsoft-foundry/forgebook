@@ -1,9 +1,0 @@
-# Google only treats robots.txt as authoritative at the host root.
-# This project-site copy documents Forgebook crawl intent; for production
-# crawler control, also configure https://microsoft-foundry.github.io/robots.txt
-# or submit the sitemap directly in Search Console.
-
-User-agent: *
-Allow: /
-
-Sitemap: https://microsoft-foundry.github.io/forgebook/sitemap-index.xml
