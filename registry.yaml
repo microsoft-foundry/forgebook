@@ -299,6 +299,23 @@
     - intelligent-document-processing
     - forward-deployed-engineering
 
+- slug: copilot-harness-foundry-fabric-iq
+  path: notebooks/copilot-harness-foundry-fabric-iq.ipynb
+  title: "Build a Microsoft IQ agent with the Microsoft Copilot harness in Foundry"
+  description: "Prepare a customer-meeting brief with Fabric IQ records and Foundry IQ writeups. The Microsoft Copilot harness runs a reusable skill and its tools in Foundry Agent Service."
+  date: "2026-11-09"
+  authors:
+    - github: farzad528
+  tags:
+    - iq
+    - agents
+    - prompt-agents
+    - agent-service
+    - mcp
+    - grounding
+    - azure-ai-search
+    - identity
+
 - slug: browser-automation-invoice-and-research
   path: notebooks/browser-automation-invoice-and-research.ipynb
   title: "Browser Automation: Invoice Drafts and Web Research"
