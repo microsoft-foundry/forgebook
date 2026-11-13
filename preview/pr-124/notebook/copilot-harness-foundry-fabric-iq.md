@@ -10,6 +10,7 @@ You’ll deploy the agent with Azure Developer CLI (`azd`), ask a question throu
 - An existing Foundry project with a model deployment in a [supported region](https://learn.microsoft.com/azure/foundry/agents/concepts/limits-quotas-regions#microsoft-copilot-harness-preview).
 - azd 1.37.0 or later, with Foundry extensions agents beta.22+, projects beta.15+, and skills beta.9+. Follow the [CLI setup guide](https://learn.microsoft.com/azure/foundry/agents/quickstarts/create-web-research-agent?pivots=azd).
 - **Foundry User** access for agents and skills, and **Foundry Project Manager** access for connections.
+- A **paid F2 or higher Fabric capacity**, or **Power BI Premium per capacity (P1 or higher)** with Microsoft Fabric enabled. This is required for the agent to query Fabric IQ through the [ontology MCP server](https://learn.microsoft.com/fabric/iq/ontology/how-to-use-ontology-mcp-server#prerequisites).
 - A published Fabric ontology and a Foundry IQ knowledge base containing the example data described below.
 
 Install the packages in your notebook’s Python environment.
