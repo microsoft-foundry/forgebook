@@ -1,0 +1,24 @@
+{
+  "provenance": "Fictional Customer 360 evaluation data. This answer is hand-authored for offline wiring tests, not a live response or model-quality evidence. Bracketed labels identify fixture records, not service-generated citations. Wrong-ID test inputs are mocks, not additional imported customers.",
+  "known_id": "CUST-001",
+  "known": {
+    "answer": "Customer: found. Adatum Corporation (CUST-001) has two recorded knowledge bases: Product Support KB (KB-001-01, idx-001-01) and Employee Knowledge Hub (KB-001-02, idx-001-02). Latest samples TS-009967 and TS-009924 on 2026-11-05 are labeled Healthy; those historical labels do not establish present health. Discuss TS-004243: sampled p95 reached 4,609 ms on 2026-10-16 19:15 UTC for KB-001-02 / idx-001-02 [TS-004243]. This sparse sample does not establish an outage or its cause. Report: found. FSR-CUST-001-20261105, dated 2026-11-05, recommends: \"The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric.\" [FSR-CUST-001-20261105] That is a proposal, not completed work. Confirm the business question, content owner, current operating state, and evaluation results with the account team before discussing expansion.",
+    "ontology": {
+      "customer_id": "CUST-001",
+      "customer_name": "Adatum Corporation",
+      "knowledge_bases": [
+        {"id": "KB-001-01", "name": "Product Support KB"},
+        {"id": "KB-001-02", "name": "Employee Knowledge Hub"}
+      ],
+      "sample_count": 283,
+      "latest_sample_ids": ["TS-009967", "TS-009924"],
+      "highest_p95_sample_id": "TS-004243"
+    },
+    "retrieval": {
+      "customer_id": "CUST-001",
+      "report_reference": "FSR-CUST-001-20261105",
+      "report_date": "2026-11-05",
+      "documented_action": "The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric."
+    }
+  }
+}
