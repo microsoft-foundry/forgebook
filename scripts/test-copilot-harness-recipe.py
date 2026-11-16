@@ -435,6 +435,23 @@ class NotebookTests(unittest.TestCase):
             )
             self.assertEqual(bool(checks["problems"]), rejected)
 
+    def test_structural_checks_are_separate_from_customer_facts(self):
+        self.execute()
+        trace, answer = self.namespace["trace"], self.services.answer
+        url = CONFIG["IQ_REPORT_URL"]
+        other = dict(SOURCE_CHECKS.EXPECTED_FACTS, customer_id="CUST-002", brief_must_mention=["CUST-002"])
+        checks = SOURCE_CHECKS.verify_sample(answer, trace, REPORT_TEXT, url, facts=other)
+        self.assertEqual(checks["structural_problems"], [])
+        self.assertTrue(checks["fact_problems"])
+        self.assertEqual(checks["problems"], checks["fact_problems"])
+
+        checks = SOURCE_CHECKS.verify_sample(answer, trace, REPORT_TEXT, url, annotations=[])
+        self.assertTrue(checks["structural_problems"])
+        self.assertEqual(checks["fact_problems"], [])
+        annotations = [{"type": "url_citation", "url": url}]
+        checks = SOURCE_CHECKS.verify_sample(answer, trace, REPORT_TEXT, url, annotations=annotations)
+        self.assertEqual(checks["problems"], [])
+
     def run_search_setup(self, action, *, collision=False, upload_succeeds=True):
         requests = ModuleType("requests")
         credential = ModuleType("azure.identity")

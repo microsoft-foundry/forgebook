@@ -100,10 +100,14 @@ def main():
             },
         }]},
     })
+    metadata = {
+        key: re.search(rf"^{label}: \*\*(.+?)\*\*$", report, re.MULTILINE)[1]
+        for key, label in (("customer_id", "Customer ID"), ("report_reference", "Report reference"),
+                           ("report_date", "Report date"))
+    }
     result = request("POST", f"indexes/{index_name}/docs/index", {"value": [{
-        "@search.action": "upload", "id": "FSR-CUST-001-20261105",
-        "customer_id": "CUST-001", "report_reference": "FSR-CUST-001-20261105",
-        "report_date": "2026-11-05", "title": "Synthetic account report: Adatum Corporation",
+        "@search.action": "upload", "id": metadata["report_reference"], **metadata,
+        "title": re.search(r"^# (.+)$", report, re.MULTILINE)[1],
         "url": report_url, "content": report,
     }]})
     if not result["value"] or not all(item["status"] for item in result["value"]):

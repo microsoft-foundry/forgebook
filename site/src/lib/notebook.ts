@@ -126,7 +126,13 @@ nb.highlighter = (
     code.className = `language-${language}`;
   }
   const grammar = Prism.languages[language];
-  return grammar ? Prism.highlight(text, grammar, language) : text;
+  if (!grammar) {
+    return text;
+  }
+  // notebookjs escapes < and > before calling the highlighter; Prism escapes again,
+  // so decode first or operators such as `>` render as a literal `&gt;`.
+  const source = text.replaceAll("&lt;", "<").replaceAll("&gt;", ">");
+  return Prism.highlight(source, grammar, language);
 };
 
 export interface NotebookCell {
@@ -316,6 +322,18 @@ function rewriteNotebookLinks(html: string, notebookPath: string, basePath: stri
   );
 }
 
+/**
+ * Mark ```mermaid fences as diagram containers. The escaped source stays readable
+ * without JavaScript; the notebook page renders it client-side.
+ */
+function markMermaidBlocks(html: string): string {
+  return html.replace(
+    /<pre[^>]*>\s*<code[^>]*\bclass="[^"]*\blanguage-mermaid\b[^"]*"[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi,
+    (_match, source: string) =>
+      `<div class="notebook-mermaid" data-mermaid><pre class="mermaid-source"><code>${source}</code></pre></div>`
+  );
+}
+
 export function renderNotebook(notebookJson: unknown, notebookPath: string, basePath: string): string {
   try {
     // Reset iframe storage for this notebook
@@ -338,6 +356,8 @@ export function renderNotebook(notebookJson: unknown, notebookPath: string, base
 
     // Upgrade portable blockquote callouts to styled callout elements
     result = enhanceCallouts(result);
+
+    result = markMermaidBlocks(result);
 
     // Rewrite relative .ipynb links to site notebook pages
     return rewriteNotebookLinks(result, notebookPath, basePath);
