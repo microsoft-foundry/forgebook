@@ -53,7 +53,7 @@ azd auth login
 </tbody></table>
 <p>Keep identifiers and labels as strings. Bind <code>event_time_utc</code> as datetime, <code>storage_gb</code> and <code>error_rate_pct</code> as <strong>double</strong>, and the remaining measures as integers. The ontology lets the tool follow customers to their assets and observations without requiring the user to know the table schema. Its <code>KnowledgeBase</code> entity describes an account's search asset, <strong>not</strong> the Foundry IQ retrieval knowledge base.</p>
 <p><strong>Foundry IQ supplies report passages and source references.</strong> Index <code>account-report.md</code>, reference <code>FSR-CUST-001-20261105</code>, dated November 5, 2026, into a separate Search index. A search-index knowledge source feeds an extractive knowledge base, exposed through its native MCP endpoint. The setup preserves the report text and its public GitHub permalink in retrieval metadata. It uses minimal retrieval: Search returns grounding data, and the Copilot harness writes the brief. This single-report example does not need a second model for Search query planning or answer synthesis, or a Search-to-model role grant.</p>
-<p>The agent correlates the sources using <code>customer_id</code>; this is neither an automatic database join nor an authorization boundary. The original <code>reports.jsonl</code> and <code>live-evidence.json</code> preserve historical evaluation provenance. They are not proof that the revised public-source setup has run.</p>
+<p>The agent correlates the sources using <code>customer_id</code>; this is neither an automatic database join nor an authorization boundary. The original <code>reports.jsonl</code> and earlier records in <code>live-evidence.json</code> preserve historical evaluation provenance. Its separate public-source validation record identifies the exact tested revision.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>1. Configure your environment</h2>
 <p>Clone this repository and work from its root. Set these variables in the PowerShell session that will launch Jupyter. Prepare both sources below before running the agent cells.</p>
 <p>Choose a unique run name. When resuming, continue from the failed cell rather than replaying successful connection creation. Those commands refuse to overwrite existing connections; use a fresh run name for a separate full run.</p>
@@ -387,6 +387,7 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
 <li>Check that missing information and failed lookups are stated clearly.</li>
 </ul>
 <p>Tool outputs may contain source data and private identifiers. Review notebook outputs before sharing them. Saved historical captures and mocked tests are not evidence of a new live run.</p>
+<p><strong>Verified public-source example:</strong> on November 16, 2026, a clean GitHub checkout of commit <code>22b15faca1f672f28681c64b94586716eb88356a</code> completed all 11 unchanged code cells in 5 minutes 40 seconds, excluding source preparation. The four required calls succeeded, and the 157-word brief matched the public CSVs and report. The SDK preserved seven URL annotations; the retrieved report URL was opened and its quotation checked. Native Playground click-through was not tested. See <code>live-evidence.json</code> for hashes, measured token usage, cleanup, and validation boundaries. Runtime and charges vary; this is one observed run, not a performance or accuracy guarantee.</p>
 </div><div class="nb-cell nb-markdown-cell"><h3>Try it in the playground</h3>
 <p>Open <a href="https://ai.azure.com/">Foundry</a>, select your project and deployed agent, and paste the same question into a fresh chat.</p>
 <pre><code class="language-text">I'm meeting Adatum Corporation tomorrow. Give me a short account brief: what's recorded for the account, what concerns deserve discussion, and the next step recommended in their account writeup. Cite your sources.
@@ -402,7 +403,7 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
 </thead>
 <tbody><tr>
 <td>Customer</td>
-<td>Replace the company name in the question.</td>
+<td>Replace the company name in the question and update the Adatum-specific acceptance facts in <code>source_checks.py</code> for your sources; changing only the question will fail the sample checks.</td>
 </tr>
 <tr>
 <td>Data sources</td>

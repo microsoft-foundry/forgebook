@@ -42,7 +42,7 @@ Keep identifiers and labels as strings. Bind `event_time_utc` as datetime, `stor
 
 **Foundry IQ supplies report passages and source references.** Index `account-report.md`, reference `FSR-CUST-001-20261105`, dated November 5, 2026, into a separate Search index. A search-index knowledge source feeds an extractive knowledge base, exposed through its native MCP endpoint. The setup preserves the report text and its public GitHub permalink in retrieval metadata. It uses minimal retrieval: Search returns grounding data, and the Copilot harness writes the brief. This single-report example does not need a second model for Search query planning or answer synthesis, or a Search-to-model role grant.
 
-The agent correlates the sources using `customer_id`; this is neither an automatic database join nor an authorization boundary. The original `reports.jsonl` and `live-evidence.json` preserve historical evaluation provenance. They are not proof that the revised public-source setup has run.
+The agent correlates the sources using `customer_id`; this is neither an automatic database join nor an authorization boundary. The original `reports.jsonl` and earlier records in `live-evidence.json` preserve historical evaluation provenance. Its separate public-source validation record identifies the exact tested revision.
 
 ## 1. Configure your environment
 
@@ -442,6 +442,8 @@ Review the returned evidence alongside the brief.
 
 Tool outputs may contain source data and private identifiers. Review notebook outputs before sharing them. Saved historical captures and mocked tests are not evidence of a new live run.
 
+**Verified public-source example:** on November 16, 2026, a clean GitHub checkout of commit `22b15faca1f672f28681c64b94586716eb88356a` completed all 11 unchanged code cells in 5 minutes 40 seconds, excluding source preparation. The four required calls succeeded, and the 157-word brief matched the public CSVs and report. The SDK preserved seven URL annotations; the retrieved report URL was opened and its quotation checked. Native Playground click-through was not tested. See `live-evidence.json` for hashes, measured token usage, cleanup, and validation boundaries. Runtime and charges vary; this is one observed run, not a performance or accuracy guarantee.
+
 ### Try it in the playground
 
 Open [Foundry](https://ai.azure.com/), select your project and deployed agent, and paste the same question into a fresh chat.
@@ -456,7 +458,7 @@ Inspect the tool calls and open the report citation alongside the answer. This i
 
 | To change | Update |
 |---|---|
-| Customer | Replace the company name in the question. |
+| Customer | Replace the company name in the question and update the Adatum-specific acceptance facts in `source_checks.py` for your sources; changing only the question will fail the sample checks. |
 | Data sources | Update the connection settings and ontology bindings. Use a consistent customer ID across both sources. |
 | Investigation | Edit `SKILL.md` and redeploy. |
 | Model | Update `FOUNDRY_MODEL_DEPLOYMENT` and redeploy. |
