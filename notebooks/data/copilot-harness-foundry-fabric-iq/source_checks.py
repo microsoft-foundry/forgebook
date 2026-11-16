@@ -73,6 +73,8 @@ def inspect_trace(items):
 def verify_sample(answer, records, report_text, report_url):
     """Require supported sample facts and a matching retrieved source passage."""
     problems = []
+    if len(answer.split()) >= 250:
+        problems.append("The brief must contain fewer than 250 whitespace-separated words")
     skill = [r for r in records if r["tool"] == "skill"]
     ontology = [r for r in records if r["tool"] == "fabriciq-ontology___ask_ontology"]
     retrieval = [r for r in records if r["tool"] == "field-sales-reports___knowledge_base_retrieve"]

@@ -378,6 +378,8 @@ class NotebookTests(unittest.TestCase):
         failures = (
             json.dumps({"content": [{"type": "text", "text": '{"isError":true,"error":"403 Forbidden"}'}]}),
             json.dumps({"content": [{"type": "text", "text": '{"error":{"code":"Forbidden"}}'}]}),
+            json.dumps({"errorCode": "PermissionDenied", "message": "Synthetic denial"}),
+            json.dumps({"text": "403 Forbidden"}),
             json.dumps({"rows": []}),
             "",
         )
@@ -421,6 +423,88 @@ class NotebookTests(unittest.TestCase):
                 records[3]["output"] = output
                 checks = SOURCE_CHECKS.verify_sample(self.services.answer, records, REPORT_TEXT, CONFIG["IQ_REPORT_URL"])
                 self.assertTrue(checks["problems"])
+
+    def test_brief_word_limit_is_checked_before_success(self):
+        self.execute()
+        answer = self.services.answer
+        words = len(answer.split())
+        for count, rejected in ((249, False), (250, True)):
+            candidate = answer + " detail" * (count - words)
+            checks = SOURCE_CHECKS.verify_sample(
+                candidate, self.namespace["trace"], REPORT_TEXT, CONFIG["IQ_REPORT_URL"],
+            )
+            self.assertEqual(bool(checks["problems"]), rejected)
+
+    def run_search_setup(self, action, *, collision=False, upload_succeeds=True):
+        requests = ModuleType("requests")
+        credential = ModuleType("azure.identity")
+        credential.AzureCliCredential = Mock(return_value=SimpleNamespace(
+            get_token=Mock(return_value=SimpleNamespace(token="synthetic-test-token")),
+        ))
+
+        def response(status=200, payload=None, text=""):
+            result = SimpleNamespace(
+                status_code=status, text=text, content=b"{}" if payload is not None else b"",
+                json=lambda: payload,
+            )
+            result.raise_for_status = Mock(
+                side_effect=RuntimeError(f"Synthetic HTTP {status}") if status >= 400 else None,
+            )
+            return result
+
+        requests.get = Mock(side_effect=[
+            response(text=REPORT_TEXT),
+            response(200 if collision else 404), response(404), response(404),
+        ])
+        requests.request = Mock(side_effect=[
+            response(), response(payload={"value": [{"status": upload_succeeds}]}),
+            response(), response(),
+        ] if action == "create" else [response()])
+        modules = {name: ModuleType(name) for name in ("azure", "azure.identity")}
+        modules.update({"azure.identity": credential, "requests": requests})
+        config = {
+            **CONFIG, "AZURE_SEARCH_ENDPOINT": "https://demo-search.search.windows.net",
+        }
+        spec = importlib.util.spec_from_file_location("recipe_search_setup", DATA_DIR / "prepare-search.py")
+        module = importlib.util.module_from_spec(spec)
+        with patch.dict(sys.modules, modules), patch.dict(os.environ, config, clear=True), \
+                patch("tempfile.gettempdir", return_value=self.temp.name), \
+                patch.object(sys, "argv", ["prepare-search.py", action]), redirect_stdout(io.StringIO()):
+            spec.loader.exec_module(module)
+            self.search_transport = requests
+            module.main()
+        return requests
+
+    def test_search_setup_refuses_preexisting_objects_before_any_write(self):
+        with self.assertRaises(FileExistsError):
+            self.run_search_setup("create", collision=True)
+        self.search_transport.request.assert_not_called()
+
+    def test_search_setup_returns_grounding_without_a_second_model(self):
+        transport = self.run_search_setup("create")
+        calls = transport.request.call_args_list
+        self.assertEqual(len(calls), 4)
+        knowledge_base = calls[-1].kwargs["json"]
+        self.assertEqual(knowledge_base["outputMode"], "extractiveData")
+        self.assertEqual(knowledge_base["retrievalReasoningEffort"], {"kind": "minimal"})
+        self.assertNotIn("models", knowledge_base)
+        source_fields = calls[-2].kwargs["json"]["searchIndexParameters"]["sourceDataFields"]
+        self.assertIn({"name": "url"}, source_fields)
+        self.assertIn({"name": "content"}, source_fields)
+
+    def test_search_upload_failure_preserves_cleanup_inventory_and_stops_before_kb(self):
+        with self.assertRaisesRegex(RuntimeError, "Report upload failed"):
+            self.run_search_setup("create", upload_succeeds=False)
+        calls = self.search_transport.request.call_args_list
+        self.assertEqual(len(calls), 2)
+        self.assertTrue(all("knowledgebases/" not in str(call) for call in calls))
+        state_path = Path(self.temp.name) / "forgebook-iq" / CONFIG["IQ_RUN_NAME"] / "search-sources.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        self.assertEqual(state["created"], [f'indexes/{CONFIG["IQ_RUN_NAME"]}-reports'])
+        transport = self.run_search_setup("delete")
+        self.assertEqual(transport.request.call_args.args[0], "DELETE")
+        self.assertIn(state["created"][0], transport.request.call_args.args[1])
+        self.assertEqual(json.loads(state_path.read_text(encoding="utf-8"))["created"], [])
 
     def test_recovery_fetches_existing_conversation_without_resubmitting(self):
         recovery = MARKDOWN.split("## Troubleshooting", 1)[1]
