@@ -1,10 +1,96 @@
 {
   "kind": "sanitized-live-validation",
   "review_revision": {
-    "status": "pending-live-validation",
+    "status": "executed-and-source-audited",
+    "tested_commit": "22b15faca1f672f28681c64b94586716eb88356a",
+    "source_notebook_sha256": "010ff4fd2eb8eb03494d109c66262bfff180bb3786a584c83dcea210a6b15bfb",
     "code_cells_sha256": "7139647f12fab33bc12bc017f2b1b083a635aada5b14ddfc1f8260a38e23098a",
-    "scope": "Public synthetic report and new source setup. Historical runs below do not validate this changed revision.",
-    "native_playground_citation_navigation": "unverified"
+    "started_at_utc": "2026-11-16T18:06:53.659694+00:00",
+    "completed_at_utc": "2026-11-16T18:12:33.649960+00:00",
+    "scope": "Public synthetic inputs, new isolated source objects, literal azd commands, actual combined harness retrieval, independent source audit, and task-only cleanup.",
+    "checkout": {
+      "method": "Fresh GitHub clone pinned to the tested commit, not an overlay or saved-response replay.",
+      "line_endings": "LF",
+      "clean_before_execution": true,
+      "clean_after_execution": true,
+      "code_cells_completed": 11,
+      "code_cells_changed_for_execution": false,
+      "final_candidate_agent_invocations": 1,
+      "elapsed_seconds": 340,
+      "source_preparation_included_in_elapsed_time": false
+    },
+    "source_preparation": {
+      "fabric_capacity": "Existing active paid F4; no new capacity created.",
+      "fabric_ingestion": "Uploaded the three exact public CSVs into a new schema-enabled lakehouse; ran the unchanged published PySpark file once in a new Fabric notebook. Job completed; Delta tables and 1/2/283 row assertions verified.",
+      "ontology": "Created and read back a new ontology through the supported public definition API, with the documented keys, property bindings, double measures and two relationships.",
+      "foundry_iq": "Ran the unchanged published prepare-search.py create from the clean checkout. Created a new index, search-index knowledge source and minimal extractive KB. Native MCP returned the real report passage and source metadata.",
+      "report_url": "https://raw.githubusercontent.com/microsoft-foundry/forgebook/22b15faca1f672f28681c64b94586716eb88356a/notebooks/data/copilot-harness-foundry-fabric-iq/account-report.md",
+      "identity": "Actual combined retrieval used the documented project-managed Search connection and delegated-user Fabric connection. No keys or identity substitution.",
+      "published_helpers_sha256_format": "SHA-256 of UTF-8 LF checkout bytes.",
+      "published_helpers_sha256": {
+        "prepare-search.py": "9976a358dde57367733c4f7736f92f79859a833273b1cc20200d91e2473a6e2d",
+        "load-fabric-data.py": "d3f6e2e9f7914b13611706f9082c150e2c59b6599bd235ba5b831c7c2cf64fa9",
+        "source_checks.py": "e5e63ce8c4825d7abb8c7cf67f3ae59eb51f807052c38528851b4d105001eac2"
+      }
+    },
+    "observed_calls": [
+      "skill",
+      "fabriciq-ontology___ask_ontology",
+      "fabriciq-ontology___ask_ontology",
+      "field-sales-reports___knowledge_base_retrieve"
+    ],
+    "required_call_errors": [],
+    "independent_output_audit": {
+      "answer_words_whitespace_separated": 157,
+      "source_checks": "passed before accepted output was printed",
+      "fixture_telemetry_rows_recomputed": 283,
+      "latest_samples": ["TS-009967, 2026-11-05T16:15:00Z, Healthy, 455 ms", "TS-009924, 2026-11-05T12:40:00Z, Healthy, 471 ms"],
+      "highest_sample_per_kb": ["KB-001-01: TS-000232, 2026-10-02T21:00:00Z, Degraded, 2773 ms", "KB-001-02: TS-004243, 2026-10-16T19:15:00Z, Degraded, 4609 ms"],
+      "report": "Customer CUST-001, reference FSR-CUST-001-20261105, date 2026-11-05, exact proposed-action sentence and expected public URL matched the local report and actual retrieved sourceData.",
+      "qualifications": "Answer explicitly described sparse historical samples, did not establish persistent degradation or an SLA breach, and labeled commercial details unrecorded.",
+      "native_annotations_preserved": 7,
+      "native_report_url_annotations": 3,
+      "source_navigation": "Opened the actual retrieved public report URL in a browser and read its matching reference, date and quotation. This was not a native Playground citation click."
+    },
+    "response_usage": {
+      "input_tokens": 38234,
+      "cached_input_tokens": 28800,
+      "output_tokens": 3131,
+      "reasoning_output_tokens": 2048,
+      "boundary": "Successful Responses API usage only; not a consolidated bill for Fabric, Search, diagnostics, or earlier attempts. No dollar total was measured."
+    },
+    "authorization_diagnosis": {
+      "earlier_candidate": "08c37b890bf9f32c594839df0f15514beb1c557e",
+      "observation": "Two earlier agent invocations reached Fabric and Search, but Search-to-model answer synthesis returned 401. The fail-closed checker rejected both partial briefs.",
+      "temporary_grant": "A specifically approved Cognitive Services User grant to the Search identity on the model resource was created and read back. The synthesis failure persisted during bounded diagnostics; the grant was then removed and absence verified before the successful extractive run.",
+      "resolution": "User approved documented minimal extractive retrieval. The harness performs final synthesis; this source setup makes no Search model call and requires no Search-to-model grant.",
+      "reviewer_tool_enumeration_403": "Not reproduced under the documented project-managed connection in this run. The separate 401 diagnosis does not establish the cause of the reviewer's original 403."
+    },
+    "offline_checks": {
+      "focused_regressions": 26,
+      "actual_lf_checkout": "passed",
+      "actual_crlf_checkout": "passed",
+      "historical_raw_crlf_hashes": "preserved and reproduced separately from the new canonical LF hashes"
+    },
+    "cleanup": {
+      "status": "deleted-and-absence-verified",
+      "conversations": 3,
+      "agents": 3,
+      "skills": 3,
+      "connections": 6,
+      "search_objects": 6,
+      "fabric_items": 3,
+      "temporary_role_assignments": 1,
+      "boundary": "Deleted only recorded objects created for this validation and verified 404 readbacks. Existing workspace, F4 capacity, Search service, model deployment and Foundry project were not deleted; their normal charges and service retention policies still apply."
+    },
+    "native_playground_citation_navigation": "unverified",
+    "limitations": [
+      "One successful stochastic final-candidate invocation, not an accuracy benchmark or a guarantee of later answers.",
+      "Fabric bindings were recreated through supported public APIs, not a recorded click-by-click portal session.",
+      "A printed or independently opened source URL does not prove native Playground citation navigation.",
+      "Raw service captures, generated deployment configuration, resource identifiers and cleanup receipts are retained privately, not committed."
+    ],
+    "provenance_boundary": "The tested commit pins the exact executed notebook and setup helpers. This evidence record and prose-only validation/adaptation notes were added afterward; executable cells and helper source remain unchanged from that commit. Earlier records below retain their original scope."
   },
   "canonical_fixture_sha256_format": "SHA-256 of UTF-8 text with CRLF normalized to LF, preserving the final newline. The historical fixture_sha256 values below are unchanged raw CRLF execution-byte hashes, not canonical hashes.",
   "canonical_fixture_sha256": {
