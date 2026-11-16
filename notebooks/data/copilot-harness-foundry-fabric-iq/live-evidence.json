@@ -1,5 +1,19 @@
 {
   "kind": "sanitized-live-validation",
+  "review_revision": {
+    "status": "pending-live-validation",
+    "code_cells_sha256": "dc2fc375b46e733f64a0a29b465729906f7fb141cdae1ba9f865ac00c69dfe3d",
+    "scope": "Public synthetic report and new source setup. Historical runs below do not validate this changed revision.",
+    "native_playground_citation_navigation": "unverified"
+  },
+  "canonical_fixture_sha256_format": "SHA-256 of UTF-8 text with CRLF normalized to LF, preserving the final newline. The historical fixture_sha256 values below are unchanged raw CRLF execution-byte hashes, not canonical hashes.",
+  "canonical_fixture_sha256": {
+    "customers.csv": "3dbff1dd4db73ca1973fe3fdfc04b74503b99fdabf7df2e0626d5741ec11e274",
+    "knowledge-bases.csv": "50a7c436c3e9c8b69ed389104e7e0c5150d2ca578fbafa895ab99863a9ce4190",
+    "reports.jsonl": "6ae5129557ad87cdf15fa56b1356326d55757fa768a3bc6cb13011e462ee22f6",
+    "telemetry-samples.csv": "49d5609bef2557fe525298ca413ff41d64913c3241bd3bcc984c9397e05711cb",
+    "account-report.md": "0b1be8586aa12c393742748fcc06db127354d02b1b8549dffe79eaa4721d0a85"
+  },
   "completed_at_utc": "2026-11-10T00:18:43.981655+00:00",
   "checkout": {
     "method": "Fresh local clone with uncommitted candidate overlay; not a remotely committed clean clone.",

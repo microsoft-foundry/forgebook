@@ -7,6 +7,7 @@ Requires IPython (included with the notebook's Jupyter environment).
 import ast
 import csv
 import hashlib
+import importlib.util
 import io
 import json
 import os
@@ -53,8 +54,13 @@ CONFIG = {
     ),
     "FABRIC_WORKSPACE_ID": "00000000-0000-0000-0000-000000000002",
     "FABRIC_ONTOLOGY_ID": "00000000-0000-0000-0000-000000000003",
+    "IQ_REPORT_URL": "https://raw.githubusercontent.com/example/public-demo/fixture/account-report.md",
 }
 TOOL_NAMES = ("skill", "fabriciq-ontology___ask_ontology", "field-sales-reports___knowledge_base_retrieve")
+REPORT_TEXT = (DATA_DIR / "account-report.md").read_text(encoding="utf-8")
+CHECK_SPEC = importlib.util.spec_from_file_location("recipe_source_checks", DATA_DIR / "source_checks.py")
+SOURCE_CHECKS = importlib.util.module_from_spec(CHECK_SPEC)
+CHECK_SPEC.loader.exec_module(SOURCE_CHECKS)
 
 
 class FakeItem:
@@ -63,6 +69,9 @@ class FakeItem:
 
     def model_dump(self):
         return self.values
+
+    def __getattr__(self, name):
+        return self.values[name]
 
 
 class FakeServices:
@@ -88,6 +97,19 @@ class FakeServices:
         self.progress = "Synthetic progress, not the final answer."
         self.function_data = False
         self.tool_error = None
+        self.payloads = [
+            "Skill loaded successfully.",
+            json.dumps({"customer_id": "CUST-001", "customer_name": "Adatum Corporation"}),
+            json.dumps({
+                **FIXTURE["known"]["ontology"],
+                "sampled_latencies_ms": [455, 471, 4609],
+            }),
+            json.dumps([{"type": "text", "text": json.dumps({
+                "kind": "reference", "ref_id": 0, "sourceData": {
+                    "content": REPORT_TEXT, "url": CONFIG["IQ_REPORT_URL"],
+                },
+            })}]),
+        ]
         self.questions = {}
         self.openai = SimpleNamespace(
             conversations=SimpleNamespace(
@@ -130,7 +152,10 @@ class FakeServices:
             output=[
                 SimpleNamespace(
                     type="message", role="assistant",
-                    content=[SimpleNamespace(type="output_text", text=text)],
+                    content=[FakeItem(type="output_text", text=text, annotations=[{
+                        "type": "url_citation", "url": CONFIG["IQ_REPORT_URL"],
+                        "title": "Synthetic report",
+                    }])],
                 )
                 for text in (self.progress, self.answer)
             ],
@@ -154,7 +179,7 @@ class FakeServices:
                 "type": kind, "name": name, "arguments": json.dumps({"query": query}),
                 "call_id": call_id, "status": "completed", "error": error,
             }
-            output = f"Synthetic result {index}, not live evidence."
+            output = self.payloads[index]
             if kind == "mcp_call":
                 values["output"] = output
             else:
@@ -207,7 +232,8 @@ class NotebookTests(unittest.TestCase):
         records = []
         while text:
             record, end = json.JSONDecoder().raw_decode(text)
-            records.append(record)
+            if "tool" in record:
+                records.append(record)
             text = text[end:].lstrip()
         return records
 
@@ -334,15 +360,67 @@ class NotebookTests(unittest.TestCase):
                     TOOL_NAMES[0], TOOL_NAMES[1], TOOL_NAMES[1], TOOL_NAMES[2],
                 ])
                 for index, record in enumerate(records):
-                    self.assertEqual(record["output"], f"Synthetic result {index}, not live evidence.")
+                    self.assertEqual(record["output"], self.services.payloads[index])
                 self.assertEqual(json.loads(records[1]["arguments"])["query"], "Adatum Corporation")
                 self.assertEqual(json.loads(records[2]["arguments"])["query"], "CUST-001")
 
     def test_trace_keeps_errors_visible_for_manual_review(self):
         self.services.tool_error = {"code": "mcp_upstream_timeout", "message": "Synthetic timeout"}
-        records = self.printed_trace()
+        with self.assertRaisesRegex(AssertionError, "Required source checks failed"):
+            self.execute()
+        records = self.namespace["trace"]
         self.assertEqual(records[1]["error"], self.services.tool_error)
-        self.assertIn("Synthetic result", records[1]["output"])
+        self.assertEqual(records[1]["source_state"], "unavailable")
+        self.assertIn("PARTIAL / UNVERIFIED", self.output)
+        self.assertNotIn("sample source checks passed", self.output)
+
+    def test_completed_response_rejects_embedded_errors_empty_results_and_missing_calls(self):
+        failures = (
+            json.dumps({"content": [{"type": "text", "text": '{"isError":true,"error":"403 Forbidden"}'}]}),
+            json.dumps({"content": [{"type": "text", "text": '{"error":{"code":"Forbidden"}}'}]}),
+            json.dumps({"rows": []}),
+            "",
+        )
+        for output in failures:
+            with self.subTest(output=output):
+                self.services.payloads[2] = output
+                with self.assertRaisesRegex(AssertionError, "Required source checks failed"):
+                    self.execute()
+                self.assertIn("UNVERIFIED candidate", self.output)
+                expected_state = "no-match" if output == '{"rows": []}' else "unavailable"
+                self.assertEqual(self.namespace["trace"][2]["source_state"], expected_state)
+        self.services = FakeServices()
+        self.execute()
+        for missing in range(4):
+            records = [r for i, r in enumerate(self.namespace["trace"]) if i != missing]
+            checks = SOURCE_CHECKS.verify_sample(self.services.answer, records, REPORT_TEXT, CONFIG["IQ_REPORT_URL"])
+            self.assertTrue(checks["problems"], f"Missing required call {missing} accepted")
+
+    def test_mcp_calls_without_call_ids_and_native_annotations_survive(self):
+        self.execute()
+        raw = self.namespace["trace_items"]
+        for item in raw:
+            if item["type"] == "mcp_call":
+                del item["call_id"]
+        records = SOURCE_CHECKS.inspect_trace(raw)
+        checks = SOURCE_CHECKS.verify_sample(self.services.answer, records, REPORT_TEXT, CONFIG["IQ_REPORT_URL"])
+        self.assertEqual(checks["problems"], [])
+        self.assertEqual(self.namespace["native_annotations"][0]["url"], CONFIG["IQ_REPORT_URL"])
+
+    def test_source_reference_must_match_local_quote_account_and_expected_url(self):
+        self.execute()
+        original = self.services.payloads[3]
+        for output in (
+            original.replace(CONFIG["IQ_REPORT_URL"], "https://example.com/unrelated"),
+            original.replace("reviewer-scored", "unverified"),
+            original.replace("CUST-001", "CUST-999"),
+            json.dumps({"text": self.services.answer}),
+        ):
+            with self.subTest(output=output):
+                records = [dict(r) for r in self.namespace["trace"]]
+                records[3]["output"] = output
+                checks = SOURCE_CHECKS.verify_sample(self.services.answer, records, REPORT_TEXT, CONFIG["IQ_REPORT_URL"])
+                self.assertTrue(checks["problems"])
 
     def test_recovery_fetches_existing_conversation_without_resubmitting(self):
         recovery = MARKDOWN.split("## Troubleshooting", 1)[1]
@@ -365,15 +443,25 @@ class NotebookTests(unittest.TestCase):
         evidence = json.loads((DATA_DIR / "live-evidence.json").read_text(encoding="utf-8"))
         code = [{"id": name, "source": source} for name, source in CELLS.items()]
         digest = hashlib.sha256(json.dumps(code, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-        self.assertEqual(evidence["copy_revision"]["code_cells_sha256"], digest)
+        self.assertEqual(evidence["review_revision"]["code_cells_sha256"], digest)
+        self.assertNotEqual(evidence["copy_revision"]["code_cells_sha256"], digest)
         self.assertNotEqual(evidence["publication_candidate_run"]["code_cells_sha256"], digest)
         self.assertEqual(evidence["output_audit"]["status"], "blocked")
         self.assertEqual(evidence["publication_candidate_run"]["independent_output_audit"]
                          ["model_answer_qualification"]["status"], "overstates-source")
         self.assertEqual(evidence["publication_candidate_run"]["independent_output_audit"]
                          ["native_displayed_citation"]["status"], "unverified")
-        for name, expected in evidence["fixture_sha256"].items():
-            self.assertEqual(hashlib.sha256((DATA_DIR / name).read_bytes()).hexdigest(), expected)
+        for name, expected in evidence["canonical_fixture_sha256"].items():
+            contents = (DATA_DIR / name).read_text(encoding="utf-8")
+            for newline in ("\n", "\r\n"):
+                with self.subTest(file=name, checkout_line_endings=repr(newline)):
+                    checkout = contents.replace("\n", newline).encode("utf-8")
+                    canonical = checkout.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
+                    self.assertEqual(hashlib.sha256(canonical).hexdigest(), expected)
+        for name, historical_crlf_hash in evidence["fixture_sha256"].items():
+            # Preserve the old execution's byte hashes, not claim they used canonical LF.
+            historical_bytes = (DATA_DIR / name).read_text(encoding="utf-8").replace("\n", "\r\n").encode("utf-8")
+            self.assertEqual(hashlib.sha256(historical_bytes).hexdigest(), historical_crlf_hash)
         serialized = json.dumps(evidence)
         self.assertNotRegex(serialized, r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}")
         for private_value in ("services.ai.azure.com", "search.windows.net", "blob.fabric.microsoft.com"):
