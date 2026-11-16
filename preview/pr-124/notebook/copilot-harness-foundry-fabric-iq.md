@@ -12,7 +12,7 @@ You’ll deploy the agent with Azure Developer CLI (`azd`), ask a question throu
 - **Foundry User** access for agents and skills, and **Foundry Project Manager** access for connections.
 - A **paid F2 or higher Fabric capacity**, or **Power BI Premium per capacity (P1 or higher)** with Microsoft Fabric enabled. This is required for the agent to query Fabric IQ through the [ontology MCP server](https://learn.microsoft.com/fabric/iq/ontology/how-to-use-ontology-mcp-server#prerequisites).
 - A Fabric workspace where you can create a lakehouse, notebook, and ontology (Contributor or higher), with ontology MCP enabled for your tenant.
-- An existing Azure AI Search service with semantic ranker and agentic retrieval available. For source setup, your signed-in user needs **Search Service Contributor**, **Search Index Data Contributor**, and **Search Index Data Reader**. The project identity needs **Search Index Data Reader**; the Search service identity needs **Cognitive Services User** on the Foundry resource used for answer synthesis. Have the resource owner configure these prerequisites; this notebook does not change IAM.
+- An existing Azure AI Search service with semantic ranker and knowledge-base retrieval available. For source setup, your signed-in user needs **Search Service Contributor**, **Search Index Data Contributor**, and **Search Index Data Reader**. The project identity needs **Search Index Data Reader**. Have the resource owner configure these prerequisites; this notebook does not change IAM.
 
 Install the packages in your notebook’s Python environment.
 
@@ -40,7 +40,7 @@ The example uses fictional customer **Adatum Corporation (`CUST-001`)**, its two
 
 Keep identifiers and labels as strings. Bind `event_time_utc` as datetime, `storage_gb` and `error_rate_pct` as **double**, and the remaining measures as integers. The ontology lets the tool follow customers to their assets and observations without requiring the user to know the table schema. Its `KnowledgeBase` entity describes an account's search asset, **not** the Foundry IQ retrieval knowledge base.
 
-**Foundry IQ supplies report passages and source references.** Index `account-report.md`, reference `FSR-CUST-001-20261105`, dated November 5, 2026, into a separate Search index. A search-index knowledge source feeds an answer-synthesis knowledge base, exposed through its native MCP endpoint. The setup preserves the report text and its public GitHub permalink in retrieval metadata.
+**Foundry IQ supplies report passages and source references.** Index `account-report.md`, reference `FSR-CUST-001-20261105`, dated November 5, 2026, into a separate Search index. A search-index knowledge source feeds an extractive knowledge base, exposed through its native MCP endpoint. The setup preserves the report text and its public GitHub permalink in retrieval metadata. It uses minimal retrieval: Search returns grounding data, and the Copilot harness writes the brief. This single-report example does not need a second model for Search query planning or answer synthesis, or a Search-to-model role grant.
 
 The agent correlates the sources using `customer_id`; this is neither an automatic database join nor an authorization boundary. The original `reports.jsonl` and `live-evidence.json` preserve historical evaluation provenance. They are not proof that the revised public-source setup has run.
 
@@ -48,7 +48,7 @@ The agent correlates the sources using `customer_id`; this is neither an automat
 
 Clone this repository and work from its root. Set these variables in the PowerShell session that will launch Jupyter. Prepare both sources below before running the agent cells.
 
-Choose a unique run name and reuse it when resuming the notebook.
+Choose a unique run name. When resuming, continue from the failed cell rather than replaying successful connection creation. Those commands refuse to overwrite existing connections; use a fresh run name for a separate full run.
 
 ```powershell
 $env:IQ_RUN_NAME = 'customer-iq-<unique-suffix>'
@@ -56,11 +56,8 @@ $env:FOUNDRY_PROJECT_ID = '/subscriptions/<subscription>/resourceGroups/<group>/
 $env:FOUNDRY_PROJECT_ENDPOINT = 'https://<account>.services.ai.azure.com/api/projects/<project>'
 $env:FOUNDRY_MODEL_DEPLOYMENT = '<existing-model-deployment>'
 $env:AZURE_SEARCH_ENDPOINT = 'https://<search>.search.windows.net'
-$env:FOUNDRY_OPENAI_ENDPOINT = 'https://<account>.openai.azure.com'
-$env:FOUNDRY_MODEL_NAME = '<model-name-behind-the-deployment>'
 $env:FABRIC_WORKSPACE_ID = '<workspace-guid>'
-$revision = git rev-parse HEAD
-$env:IQ_REPORT_URL = "https://raw.githubusercontent.com/microsoft-foundry/forgebook/$revision/notebooks/data/copilot-harness-foundry-fabric-iq/account-report.md"
+[Environment]::SetEnvironmentVariable('IQ_REPORT_URL', ('https://raw.githubusercontent.com/microsoft-foundry/forgebook/{0}/notebooks/data/copilot-harness-foundry-fabric-iq/account-report.md' -f (git rev-parse HEAD)))
 ```
 
 Use a public commit containing the report; a local-only commit has no usable source permalink. For a fork, use that repository's Raw permalink instead.
@@ -69,7 +66,7 @@ Use a public commit containing the report; a local-only commit has no usable sou
 
 Create a new ontology in the same workspace. Add the three lakehouse tables as data sources, create the three entities and single-column keys from the mapping above, and bind every property to its matching column. Add the two one-to-many relationships using `customer.customer_id = knowledgebase.customer_id` and `knowledgebase.knowledge_base_id = telemetrysample.knowledge_base_id`. Name them `hasKnowledgeBase` and `hasTelemetrySample`, directed from parent to child. Save, refresh the data if necessary, and verify the entity instances before continuing. Follow the supported [data-binding steps](https://learn.microsoft.com/fabric/iq/ontology/how-to-bind-data) and [ontology MCP setup](https://learn.microsoft.com/fabric/iq/ontology/how-to-use-ontology-mcp-server). Copy the ontology item ID, not a semantic-model ID.
 
-**Prepare Foundry IQ.** Run the supplied script from the repository root. It uploads the public report text, configures semantic search, creates a search-index knowledge source with reference fields, and creates the answer-synthesis KB. It changes no roles or existing objects and records this run's objects for cleanup. See the [knowledge-source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-search-index) and [knowledge-base](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base) guides.
+**Prepare Foundry IQ.** Run the supplied script from the repository root. It uploads the public report text, configures semantic search, creates a search-index knowledge source with reference fields, and creates the minimal, extractive KB. It changes no roles or existing objects and records this run's objects for cleanup. The MCP connection uses `2026-08-01-preview`; see the [knowledge-source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-search-index), [knowledge-base](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base), and [MCP retrieval](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve#call-the-mcp-endpoint) guides.
 
 ```powershell
 python notebooks\data\copilot-harness-foundry-fabric-iq\prepare-search.py create
@@ -229,7 +226,9 @@ description: Prepare a sourced customer meeting brief from records and an accoun
    document links from retrieval metadata.
    Describe degraded samples as historical observations. Do not infer
    adoption, current incidents, severity thresholds, or completed
-   remediation. Treat unrecorded commercial details as unknown.
+   remediation. Do not label a sampled maximum as a severe event,
+   incident, or SLA breach; report only the observed value and date.
+   Treat unrecorded commercial details as unknown.
 
 5. Report customer and report availability separately.
    Use "not found" only after a successful lookup returns no match.
@@ -469,6 +468,7 @@ The generated files are in the printed `PROJECT_DIR`. Keep `azure.yaml` and `ski
 | Problem | Check |
 |---|---|
 | Search returns 403, including during MCP tool enumeration | Inspect the actual connection authentication type/audience and target, project identity principal and Search Index Data Reader service scope, role propagation, and Search network rules. An existing Reader role alone does not establish the cause. Capture the error and request ID privately; do not add broad roles or switch identities without diagnosing it. |
+| Retrieval unexpectedly attempts Search answer synthesis | Check that the run-specific KB has `outputMode: extractiveData`, `retrievalReasoningEffort: minimal`, and no model configuration. This recipe leaves synthesis to the harness. Connecting a different, model-backed KB adds a separate Search-to-model authorization requirement; a project Reader role on Search does not satisfy it. |
 | Fabric returns 401 or 403 | Signed-in user, Fabric license, item permissions, and delegated scopes. |
 | Fabric returns 504 | Inspect the conversation for an upstream timeout, then retry after the service recovers. |
 | Harness or SDK configuration is rejected | CLI extensions, Python packages, supported model, and region. |
