@@ -2,7 +2,8 @@
 
 These inspect returned evidence; they neither dispatch tools nor enforce order.
 Structural checks always run. Fact checks compare the brief and tool results with
-EXPECTED_FACTS. To brief a different customer, edit EXPECTED_FACTS and the question.
+EXPECTED_FACTS. To brief a different customer, edit EXPECTED_FACTS; the notebook
+builds its question from customer_name.
 """
 
 import json
@@ -28,10 +29,14 @@ EXPECTED_FACTS = {
     "brief_must_mention": ["CUST-001", "TS-004243", "FSR-CUST-001-20261105", "2026-11-05"],
 }
 
+# MCP server labels in the agent manifest; the harness prefixes tool names with them.
+ONTOLOGY_SERVER_LABEL = "fabriciq-ontology"
+KB_SERVER_LABEL = "field-sales-reports"
+
 TOOLS = {
     "skill": "skill",
-    "Fabric IQ": "fabriciq-ontology___ask_ontology",
-    "Foundry IQ": "field-sales-reports___knowledge_base_retrieve",
+    "Fabric IQ": f"{ONTOLOGY_SERVER_LABEL}___ask_ontology",
+    "Foundry IQ": f"{KB_SERVER_LABEL}___knowledge_base_retrieve",
 }
 MAX_WORDS = 250
 

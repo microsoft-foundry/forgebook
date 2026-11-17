@@ -260,11 +260,21 @@ class NotebookTests(unittest.TestCase):
                 self.services.openai.responses.create.assert_not_called()
 
     def test_rejects_invalid_run_name_before_cloud_operations(self):
-        for name in ("", "Uppercase", "-leading", "a" * 42, "has spaces"):
+        for name in ("Uppercase", "-leading", "a" * 42, "has spaces"):
             with self.subTest(name=name), patch.dict(CONFIG, IQ_RUN_NAME=name):
                 with self.assertRaisesRegex(AssertionError, "run name"):
                     self.execute()
                 self.assertEqual(self.services.commands, [])
+
+    def test_lists_every_missing_variable_before_cloud_operations(self):
+        absent = ("FABRIC_ONTOLOGY_ID", "FOUNDRY_IQ_KB_MCP_URL")
+        reduced = {key: value for key, value in CONFIG.items() if key not in absent}
+        with patch.dict(os.environ, {**reduced, "IQ_RUN_NAME": " "}, clear=True):
+            with self.assertRaises(RuntimeError) as raised:
+                exec(CELLS["setup"], {"__builtins__": __builtins__})
+        for name in (*absent, "IQ_RUN_NAME"):
+            self.assertIn(name, str(raised.exception))
+        self.assertEqual(self.services.commands, [])
 
     def test_requires_azd_before_cloud_operations(self):
         with patch.dict(os.environ, CONFIG), patch("shutil.which", return_value=None):
@@ -324,6 +334,8 @@ class NotebookTests(unittest.TestCase):
         )
         self.assertIn("what's recorded for the account", self.namespace["question"])
         self.assertNotIn("CUST-", self.namespace["question"])
+        self.assertNotIn("Adatum", CELLS["ask-question"])
+        self.assertIn(self.namespace["EXPECTED_FACTS"]["customer_name"], self.namespace["question"])
 
     def test_records_conversation_before_failed_invocation(self):
         self.services.fail_response = True

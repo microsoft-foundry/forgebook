@@ -1,6 +1,11 @@
 {
   "kind": "sanitized-live-validation",
   "review_revision": {
+    "status": "pending-live-run",
+    "code_cells_sha256": "9b55335af6b5a1f2885d1107288b40e289d9fdd020b358c66bb25ad3c0834b08",
+    "scope": "Final review fixes: missing-variable check, question built from EXPECTED_FACTS, shared MCP server labels, and skill section headings."
+  },
+  "prior_review_revision": {
     "status": "executed-from-fresh-clone",
     "tested_commit": "16e1c98202ec27d38adf0d211c64cd5122f8eeb1",
     "source_notebook_sha256": "a9dc579dd7ff81564e48e4c31cb876fa471da15f9fb1a415d9fe1b758439d60f",
@@ -85,7 +90,7 @@
     "final_answer": "Summary (brief)\nAdatum Corporation — customer_id: CUST-001 (domain adatum.com). Customer record: found. [1]\n\nRecorded facts (selected)\n- KB-001-01 (Product Support KB): TS-009967 — 2026-11-05T16:15:00Z — Healthy — p95 455 ms. [1]\n- KB-001-02 (Employee Knowledge Hub): TS-009924 — 2026-11-05T12:40:00Z — Healthy — p95 471 ms. [1]\n- Highest sampled p95: TS-004243 (KB-001-02) — 2026-10-16T19:15:00Z — Degraded — p95 4609 ms. [1]\n\nProposed next step (report)\nReport FSR-CUST-001-20261105 (2026-11-05) available. Proposed next step: \"The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric.\" [2]\n\nAvailability\n- Customer: found (CUST-001). [1]\n- Report: available (FSR-CUST-001-20261105). [2]",
     "final_answer_formatting": "Verbatim model text from this run. Only the inline source markers were replaced with [1] (Fabric IQ ontology) and [2] (account report); the recipe shows it as a blockquote with bold headings."
   },
-  "prior_review_revision": {
+  "earlier_review_revision": {
     "status": "executed-and-source-audited",
     "tested_commit": "22b15faca1f672f28681c64b94586716eb88356a",
     "source_notebook_sha256": "010ff4fd2eb8eb03494d109c66262bfff180bb3786a584c83dcea210a6b15bfb",
