@@ -481,20 +481,26 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
 <span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span>answer<span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><p>Your brief should look similar to this:</p>
 <blockquote>
-<p><strong>Summary (brief)</strong></p>
-<p>Adatum Corporation — customer_id: CUST-001 (domain adatum.com). Customer record: found. [1]</p>
-<p><strong>Recorded facts (selected)</strong></p>
+<p><strong>Adatum Corporation — CUST-001</strong></p>
+<p><strong>Recorded facts</strong></p>
 <ul>
-<li>KB-001-01 (Product Support KB): TS-009967 — 2026-11-05T16:15:00Z — Healthy — p95 455 ms. [1]</li>
-<li>KB-001-02 (Employee Knowledge Hub): TS-009924 — 2026-11-05T12:40:00Z — Healthy — p95 471 ms. [1]</li>
-<li>Highest sampled p95: TS-004243 (KB-001-02) — 2026-10-16T19:15:00Z — Degraded — p95 4609 ms. [1]</li>
+<li>Customer record: CUST-001 (Adatum Corporation). [1]</li>
+<li>KnowledgeBases: KB-001-01 (Product Support KB, idx-001-01) — latest sample TS-009967 (2026-11-05T16:15:00Z), status Healthy, p95 455 ms; KB-001-02 (Employee Knowledge Hub, idx-001-02) — latest sample TS-009924 (2026-11-05T12:40:00Z), status Healthy, p95 471 ms. [1]</li>
+<li>Highest sampled p95 observed: TS-004243 (KB-001-02, idx-001-02) on 2026-10-16T19:15:00Z, status Degraded, p95 4,609 ms (historical sample). [1]</li>
 </ul>
-<p><strong>Proposed next step (report)</strong></p>
-<p>Report FSR-CUST-001-20261105 (2026-11-05) available. Proposed next step: "The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric." [2]</p>
+<p><strong>Concerns to discuss</strong></p>
+<ul>
+<li>The historical high p95 (4,609 ms) for KB-001-02 merits investigation (scope, recurrence, and remediation).</li>
+<li>Telemetry samples are sparse; they do not establish current health or adoption. Discuss data coverage and recent monitoring cadence. [1] [2]</li>
+</ul>
+<p><strong>Proposed next step</strong></p>
+<ul>
+<li>Report reference FSR-CUST-001-20261105 (2026-11-05). Proposed next step (verbatim): "The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric." [2]</li>
+</ul>
 <p><strong>Availability</strong></p>
 <ul>
-<li>Customer: found (CUST-001). [1]</li>
-<li>Report: available (FSR-CUST-001-20261105). [2]</li>
+<li>Customer record: found (CUST-001). [1]</li>
+<li>Account report: found — FSR-CUST-001-20261105 (2026-11-05). [2]</li>
 </ul>
 </blockquote>
 <p>The response carries the citations as <code>url_citation</code> annotations: [1] points to your Fabric IQ ontology in the Fabric portal, and [2] points to <code>account-report.md</code> at the commit in <code>IQ_REPORT_URL</code>.</p>

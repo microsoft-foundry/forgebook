@@ -525,24 +525,23 @@ print(answer)
 
 Your brief should look similar to this:
 
-> **Summary (brief)**
+> **Adatum Corporation — CUST-001**
 >
-> Adatum Corporation — customer_id: CUST-001 (domain adatum.com). Customer record: found. [1]
+> **Recorded facts**
+> - Customer record: CUST-001 (Adatum Corporation). [1]
+> - KnowledgeBases: KB-001-01 (Product Support KB, idx-001-01) — latest sample TS-009967 (2026-11-05T16:15:00Z), status Healthy, p95 455 ms; KB-001-02 (Employee Knowledge Hub, idx-001-02) — latest sample TS-009924 (2026-11-05T12:40:00Z), status Healthy, p95 471 ms. [1]
+> - Highest sampled p95 observed: TS-004243 (KB-001-02, idx-001-02) on 2026-10-16T19:15:00Z, status Degraded, p95 4,609 ms (historical sample). [1]
 >
-> **Recorded facts (selected)**
+> **Concerns to discuss**
+> - The historical high p95 (4,609 ms) for KB-001-02 merits investigation (scope, recurrence, and remediation).
+> - Telemetry samples are sparse; they do not establish current health or adoption. Discuss data coverage and recent monitoring cadence. [1] [2]
 >
-> - KB-001-01 (Product Support KB): TS-009967 — 2026-11-05T16:15:00Z — Healthy — p95 455 ms. [1]
-> - KB-001-02 (Employee Knowledge Hub): TS-009924 — 2026-11-05T12:40:00Z — Healthy — p95 471 ms. [1]
-> - Highest sampled p95: TS-004243 (KB-001-02) — 2026-10-16T19:15:00Z — Degraded — p95 4609 ms. [1]
->
-> **Proposed next step (report)**
->
-> Report FSR-CUST-001-20261105 (2026-11-05) available. Proposed next step: "The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric." [2]
+> **Proposed next step**
+> - Report reference FSR-CUST-001-20261105 (2026-11-05). Proposed next step (verbatim): "The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric." [2]
 >
 > **Availability**
->
-> - Customer: found (CUST-001). [1]
-> - Report: available (FSR-CUST-001-20261105). [2]
+> - Customer record: found (CUST-001). [1]
+> - Account report: found — FSR-CUST-001-20261105 (2026-11-05). [2]
 
 The response carries the citations as `url_citation` annotations: [1] points to your Fabric IQ ontology in the Fabric portal, and [2] points to `account-report.md` at the commit in `IQ_REPORT_URL`.
 
