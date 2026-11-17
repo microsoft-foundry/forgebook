@@ -1,19 +1,17 @@
-Say you're a product manager meeting a customer tomorrow. Before the call, you want answers to three questions: What's on record for this account? What concerns are worth raising? What did the latest account writeup recommend as the next step?
+Say you're a product manager for an AI search platform, and tomorrow you're meeting Adatum Corporation, one of your customers. To prepare, you'd normally piece together two kinds of context by hand:
 
-Today, answering them usually means two trips. The numbers, such as which knowledge bases the customer runs and how they've performed, live in your data platform. The story, such as the field report and its proposed next step, lives in documents. You check both and stitch the answer together yourself.
+- **What your systems record about the account:** which knowledge bases Adatum runs, and how their latency and health have looked over recent weeks.
+- **What your team has written about the account:** the latest field report, and the next step it proposes.
 
-This recipe builds an agent that does that prep for you. You ask one plain-English question, for example *"I'm meeting Adatum Corporation tomorrow. Give me a short account brief."*, and get back a short brief in which every fact links to the record or report it came from. Section 5 shows a real brief from a test run.
+The first lives in structured business data. The second lives in documents. This recipe builds an agent that gathers both and writes you a short, cited brief:
 
-The agent combines two sources:
+- **Fabric IQ** answers questions over the customer records through an ontology, a business-friendly model of customers, their knowledge bases, and telemetry.
+- **Foundry IQ** retrieves the relevant passages from account reports.
+- An **investigation skill** tells the **Microsoft Copilot harness** in Foundry how to combine the two: find the customer, pull their records, fetch the matching report, and cite every source.
 
-- **Fabric IQ for the records.** An ontology in Microsoft Fabric describes your tables in business terms (a customer *has* knowledge bases, and each knowledge base *has* telemetry samples), so the agent can ask about a customer without knowing the table schema.
-- **Foundry IQ for the documents.** A knowledge base in Azure AI Search retrieves passages from account reports, along with a link to the source.
+You deploy the agent with Azure Developer CLI (`azd`), ask a question through the Python SDK, and check the tool calls and sources behind the answer. The pattern carries over to any skill: the skill tells the agent which steps to take, and the trace proves it took them.
 
-A **skill**, a short set of written instructions, tells the **Microsoft Copilot harness** agent in Foundry how to use them together: find the customer in Fabric IQ, look up that customer's records, retrieve the matching report from Foundry IQ, then write the brief.
-
-**What you'll do:** load the sample data, deploy the agent with Azure Developer CLI (`azd`), ask the question from Python, and check the trace to confirm that the agent used both sources. The same pattern works for any skill: the skill tells the agent which steps to take, and the trace shows it took them.
-
-**Who this is for:** teams that already run Microsoft Fabric and Microsoft Foundry and want to give product managers, account managers, or field teams a sourced brief before customer meetings.
+**Who this is for:** teams that already run Microsoft Fabric and Microsoft Foundry.
 
 | | |
 |---|---|
