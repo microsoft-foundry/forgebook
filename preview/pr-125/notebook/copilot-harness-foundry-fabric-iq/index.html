@@ -110,6 +110,10 @@ azd auth login
 </tr>
 </tbody></table>
 <p>The ontology lets the agent follow a customer to its assets and their telemetry without knowing the table schema. Here, <code>KnowledgeBase</code> is a customer's search asset, not the Foundry IQ knowledge base the agent retrieves from.</p>
+<p>After setup, the ontology graph in Fabric shows the three entities and the two relationships the agent traverses:</p>
+<p><img src="/forgebook/preview/pr-125/notebook/media/copilot-harness-foundry-fabric-iq/03-fabric-iq-ontology-graph.png" alt="Fabric IQ ontology graph with Customer linked to KnowledgeBase through hasKnowledgeBase, and KnowledgeBase linked to TelemetrySample through hasTelemetrySample"></p>
+<p>Each entity property is bound to a lakehouse column. The <code>Customer</code> entity uses <code>customer_id</code> as its key, and every property reads from the <code>customer</code> table:</p>
+<p><img src="/forgebook/preview/pr-125/notebook/media/copilot-harness-foundry-fabric-iq/04-fabric-iq-customer-bindings.png" alt="Customer entity configuration in Fabric IQ showing customer_id as the entity type key and six properties bound to the customer lakehouse table"></p>
 <p><strong>Foundry IQ holds the account report and its source link.</strong> The setup indexes <code>account-report.md</code> (reference <code>FSR-CUST-001-20261105</code>, dated November 5, 2026) into its own Search index, then creates a search-index knowledge source and an extractive knowledge base with minimal retrieval. Search returns grounding passages with their source URL, and the Copilot harness writes the brief, so you don't need a second model for Search query planning or answer synthesis.</p>
 <p>The agent correlates the two sources by <code>customer_id</code>. It's a shared key, not a database join.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>1. Configure your environment</h2>
@@ -510,6 +514,8 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
 <li><code>field-sales-reports___knowledge_base_retrieve</code>: returns the account report passage for <code>CUST-001</code>.</li>
 </ol>
 <p>Each record shows <code>"status": "completed"</code>, <code>"error": null</code>, and <code>"source_state": "available"</code>.</p>
+<p>The agent's <strong>Traces</strong> tab in the Foundry portal shows the same sequence. Select a tool call to see the request the agent sent and what the source returned. Here, the first ontology call resolves the company name to <code>CUST-001</code>:</p>
+<p><img src="/forgebook/preview/pr-125/notebook/media/copilot-harness-foundry-fabric-iq/06-agent-trace-ontology-call.png" alt="Foundry trace for one conversation listing the skill, two Fabric IQ ask_ontology calls, and the Foundry IQ knowledge_base_retrieve call, with the first ontology call's request and its CUST-001 match expanded"></p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">for</span> record <span class="token keyword">in</span> trace<span class="token punctuation">:</span>
     <span class="token keyword">print</span><span class="token punctuation">(</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>record<span class="token punctuation">,</span> indent<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
 
@@ -528,7 +534,8 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
 <p>Open <a href="https://ai.azure.com/">Foundry</a>, select your project and the deployed agent, and paste the same question into a new chat:</p>
 <pre><code class="language-text">I'm meeting Adatum Corporation tomorrow. Give me a short account brief: what's recorded for the account, what concerns deserve discussion, and the next step recommended in their account writeup. Cite your sources.
 </code></pre>
-<p>The reply shows numbered citations under the answer. Select one to open the Fabric IQ ontology or the account report in a new tab.</p>
+<p>The reply shows numbered citations under the answer. Select one to open the Fabric IQ ontology or the account report in a new tab. The reply can open with the agent's progress notes, and the playground places citation numbers inline, sometimes in the middle of a word.</p>
+<p><img src="/forgebook/preview/pr-125/notebook/media/copilot-harness-foundry-fabric-iq/05-agent-playground-brief.png" alt="Agent playground with the Fabric IQ tool, harness tools, investigation skill, and knowledge base configured, showing the Adatum Corporation brief and numbered citations to the ontology and the synthetic account report"></p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Adapt the recipe</h2>
 <p>To brief a different customer, edit <code>EXPECTED_FACTS</code> at the top of <code>source_checks.py</code> and the company name in the question. The structural checks don't change.</p>
 <table>
