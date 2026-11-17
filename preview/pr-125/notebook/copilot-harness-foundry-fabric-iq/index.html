@@ -28,11 +28,11 @@
 </tr>
 <tr>
 <td><strong>Time</strong></td>
-<td>About 7 minutes: about 3.5 minutes of scripted Fabric and Search setup and about 3 minutes to run the notebook. A first-time install of the Python packages and <code>azd</code> extensions adds about 3.5 minutes.</td>
+<td>~7 min (+~3.5 min first-time install)</td>
 </tr>
 <tr>
 <td><strong>Est. cost per run</strong></td>
-<td>About $0.01 of model tokens per question with gpt-5-mini (about 48,000 input and 3,400 output tokens). Your existing services bill by the hour while they run: Fabric capacity (F2 is about $0.40/hour at pay-as-you-go list price; varies by region), so pause it when you're done, and your Azure AI Search tier. At this volume, agentic retrieval with minimal reasoning effort is covered by Search's default free token allowance. See <a href="https://azure.microsoft.com/pricing/details/microsoft-fabric/">Fabric pricing</a> and <a href="https://learn.microsoft.com/azure/search/agentic-retrieval-overview#region-availability,-limits,-and-billing">agentic retrieval billing</a>.</td>
+<td>~$0.01/question (gpt-5-mini) + Fabric and Search hourly rates; pause F2 when done</td>
 </tr>
 <tr>
 <td><strong>Preview features</strong></td>
@@ -43,16 +43,9 @@
 <td>Python 3.12, azure-ai-projects 2.10.0, azure-identity 1.27.0, azd 1.37.3 with the azure.ai.agents 1.1.0, azure.ai.projects 1.1.0, and azure.ai.skills 1.0.0 extensions, and a gpt-5-mini deployment</td>
 </tr>
 </tbody></table>
-<p><img src="/forgebook/preview/pr-125/notebook/media/copilot-harness-foundry-fabric-iq/02-microsoft-iq-meeting-brief-architecture.png" alt="Customer meeting brief architecture: a Microsoft Copilot harness agent in Foundry uses an investigation skill, queries structured business data through a Fabric IQ ontology, retrieves account reports through Foundry IQ, and correlates both sources by customer_id to produce a sourced brief."></p>
+<p>Pricing: <a href="https://azure.microsoft.com/pricing/details/microsoft-fabric/">Microsoft Fabric</a> · <a href="https://learn.microsoft.com/azure/search/agentic-retrieval-overview#region-availability,-limits,-and-billing">Foundry IQ agentic retrieval billing</a>. At this volume, agentic retrieval with minimal reasoning effort is covered by Search's free token allowance.</p>
 </div><div class="nb-cell nb-markdown-cell"><h3>How it works</h3>
-<div class="notebook-mermaid" data-mermaid><pre class="mermaid-source"><code>flowchart LR
-    Q["Meeting-prep question"] --&gt; H["Copilot harness agent&lt;br/&gt;+ investigation skill"]
-    H -- ask_ontology --&gt; F["Fabric IQ ontology MCP"]
-    F --&gt; L[("Lakehouse entities&lt;br/&gt;Customer · KnowledgeBase · TelemetrySample")]
-    H -- knowledge_base_retrieve --&gt; K["Foundry IQ knowledge base MCP"]
-    K --&gt; S[("Azure AI Search index&lt;br/&gt;account report")]
-    H --&gt; B["Cited brief, under 250 words"]
-</code></pre></div>
+<p><img src="/forgebook/preview/pr-125/notebook/media/copilot-harness-foundry-fabric-iq/02-microsoft-iq-meeting-brief-architecture.png" alt="Customer meeting brief architecture: a Microsoft Copilot harness agent in Foundry uses an investigation skill, queries structured business data through a Fabric IQ ontology, retrieves account reports through Foundry IQ, and correlates both sources by customer_id to produce a sourced brief."></p>
 <p>The skill tells the agent to resolve the customer in Fabric IQ, look up that customer's records by ID, and then retrieve the matching report from Foundry IQ. The agent writes the brief from both results and keeps the report's citation.</p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Prerequisites</h2>
 <ul>
@@ -79,9 +72,9 @@ azd extension install azure.ai.skills --version 1.0.0
 az login
 azd auth login
 </code></pre>
-<p>The Copilot harness, Fabric ontology MCP server, and Foundry IQ agentic retrieval are in preview, and availability varies by region, model, capacity, and tenant. Check the linked support pages before you provision anything.</p>
+<p>Preview availability varies by region, model, capacity, and tenant, so check the linked support pages before you provision anything.</p>
 <p>This recipe uses public sample data. See <strong>Before production</strong> for what to change before you use real customer data.</p>
-<p>The recipe creates a lakehouse, a load notebook, an ontology, a Search index, knowledge source, and knowledge base, two connections, an agent, and a skill inside services you already have. Spark, capacity, semantic ranking, and model calls are billed.</p>
+<p>The recipe creates a lakehouse, a load notebook, an ontology, a Search index, knowledge source, and knowledge base, two connections, an agent, and a skill inside services you already have.</p>
 </div><div class="nb-cell nb-markdown-cell"><h3>The example data</h3>
 <p>The sample customer is the fictional <strong>Adatum Corporation (<code>CUST-001</code>)</strong>. All inputs are in <code>notebooks/data/copilot-harness-foundry-fabric-iq/</code>; you don't need any private files or a preconfigured knowledge base.</p>
 <p><strong>Fabric IQ holds the structured records and what they mean.</strong> The setup loads three CSV files into Delta tables in a new lakehouse, then binds the tables to an ontology:</p>
@@ -163,6 +156,7 @@ export FOUNDRY_IQ_KB_MCP_URL='&lt;FOUNDRY_IQ_KB_MCP_URL printed by the script&gt
 python -m notebook
 </code></pre>
 <p>Open <code>notebooks/copilot-harness-foundry-fabric-iq.ipynb</code> and run the cells in order. The <code>!azd</code> lines use IPython's shell syntax. If a cell fails, fix the cause and continue from that cell; don't rerun connection cells that already succeeded.</p>
+<p>This first cell reads your environment, checks the run name and tools, and derives the names of everything the recipe creates. If a variable is missing, it lists every missing one at once.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python"><span class="token keyword">import</span> json
 <span class="token keyword">import</span> os
 <span class="token keyword">import</span> re
@@ -170,6 +164,18 @@ python -m notebook
 <span class="token keyword">import</span> sys
 <span class="token keyword">import</span> tempfile
 <span class="token keyword">from</span> pathlib <span class="token keyword">import</span> Path
+
+REQUIRED_VARIABLES <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token string">"IQ_RUN_NAME"</span><span class="token punctuation">,</span> <span class="token string">"FOUNDRY_PROJECT_ID"</span><span class="token punctuation">,</span> <span class="token string">"FOUNDRY_PROJECT_ENDPOINT"</span><span class="token punctuation">,</span>
+    <span class="token string">"FOUNDRY_MODEL_DEPLOYMENT"</span><span class="token punctuation">,</span> <span class="token string">"FOUNDRY_IQ_KB_MCP_URL"</span><span class="token punctuation">,</span> <span class="token string">"IQ_REPORT_URL"</span><span class="token punctuation">,</span>
+    <span class="token string">"FABRIC_WORKSPACE_ID"</span><span class="token punctuation">,</span> <span class="token string">"FABRIC_ONTOLOGY_ID"</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+missing <span class="token operator">=</span> <span class="token punctuation">[</span>name <span class="token keyword">for</span> name <span class="token keyword">in</span> REQUIRED_VARIABLES <span class="token keyword">if</span> <span class="token keyword">not</span> os<span class="token punctuation">.</span>environ<span class="token punctuation">.</span>get<span class="token punctuation">(</span>name<span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">)</span><span class="token punctuation">.</span>strip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token keyword">if</span> missing<span class="token punctuation">:</span>
+    <span class="token keyword">raise</span> RuntimeError<span class="token punctuation">(</span>
+        <span class="token string">"Set these environment variables in the shell that launches Jupyter, "</span>
+        <span class="token string">"then restart the kernel: "</span> <span class="token operator">+</span> <span class="token string">", "</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span>missing<span class="token punctuation">)</span>
+    <span class="token punctuation">)</span>
 
 PROJECT_ID <span class="token operator">=</span> os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">"FOUNDRY_PROJECT_ID"</span><span class="token punctuation">]</span>
 PROJECT_ENDPOINT <span class="token operator">=</span> os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">"FOUNDRY_PROJECT_ENDPOINT"</span><span class="token punctuation">]</span><span class="token punctuation">.</span>rstrip<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">)</span>
@@ -187,7 +193,9 @@ DATA_DIR <span class="token operator">=</span> Path<span class="token punctuatio
     DATA_DIR <span class="token operator">=</span> Path<span class="token punctuation">(</span><span class="token string">"notebooks/data/copilot-harness-foundry-fabric-iq/"</span><span class="token punctuation">)</span>
 <span class="token keyword">assert</span> <span class="token punctuation">(</span>DATA_DIR <span class="token operator">/</span> <span class="token string">"account-report.md"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>is_file<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"Run from the repository root or notebooks directory."</span>
 sys<span class="token punctuation">.</span>path<span class="token punctuation">.</span>insert<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token builtin">str</span><span class="token punctuation">(</span>DATA_DIR<span class="token punctuation">.</span>resolve<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">from</span> source_checks <span class="token keyword">import</span> EXPECTED_FACTS<span class="token punctuation">,</span> inspect_trace<span class="token punctuation">,</span> verify_sample
+<span class="token keyword">from</span> source_checks <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    EXPECTED_FACTS<span class="token punctuation">,</span> KB_SERVER_LABEL<span class="token punctuation">,</span> ONTOLOGY_SERVER_LABEL<span class="token punctuation">,</span> inspect_trace<span class="token punctuation">,</span> verify_sample<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
 
 report_text <span class="token operator">=</span> <span class="token punctuation">(</span>DATA_DIR <span class="token operator">/</span> <span class="token string">"account-report.md"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>read_text<span class="token punctuation">(</span>encoding<span class="token operator">=</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span>
 
@@ -287,7 +295,7 @@ description: Prepare a sourced customer meeting brief from records and an accoun
 
 3. Once the customer ID is known and the record lookup has completed,
    call Foundry IQ knowledge_base_retrieve on the configured
-   field-sales-reports KB. Include the exact customer_id in query_variants.
+   </span><span class="token interpolation"><span class="token punctuation">{</span>KB_SERVER_LABEL<span class="token punctuation">}</span></span><span class="token string"> KB. Include the exact customer_id in query_variants.
    Request the report reference, date, proposed next-step sentence,
    report citation, and reference source data. Retrieve once.
    If the record lookup fails or returns no match for a supplied ID,
@@ -295,8 +303,9 @@ description: Prepare a sourced customer meeting brief from records and an accoun
    The ontology's KnowledgeBase records describe the account and do
    not change the configured retrieval target.
 
-4. Write a brief of fewer than 250 words covering the recorded facts,
-   historical concerns to discuss, and the report's proposed next step.
+4. Write a brief of fewer than 250 words. Start with one bold line naming
+   the customer and customer ID, then use these bold headings in order:
+   Recorded facts, Concerns to discuss, Proposed next step, Availability.
    Include customer ID, record IDs and dates, report reference and date,
    and returned citations. Quote the proposed next step verbatim in
    double quotes.
@@ -361,14 +370,14 @@ services:
           - name: filesystem_read
             enabled: true
       - type: mcp
-        server_label: field-sales-reports
+        server_label: </span><span class="token interpolation"><span class="token punctuation">{</span>KB_SERVER_LABEL<span class="token punctuation">}</span></span><span class="token string">
         server_url: </span><span class="token interpolation"><span class="token punctuation">{</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>KB_URL<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">
         project_connection_id: </span><span class="token interpolation"><span class="token punctuation">{</span>KB_CONNECTION<span class="token punctuation">}</span></span><span class="token string">
         allowed_tools:
           - knowledge_base_retrieve
         require_approval: never
       - type: fabric_iq_preview
-        server_label: fabriciq-ontology
+        server_label: </span><span class="token interpolation"><span class="token punctuation">{</span>ONTOLOGY_SERVER_LABEL<span class="token punctuation">}</span></span><span class="token string">
         server_url: </span><span class="token interpolation"><span class="token punctuation">{</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>ONTOLOGY_URL<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">
         project_connection_id: </span><span class="token interpolation"><span class="token punctuation">{</span>ONTOLOGY_CONNECTION<span class="token punctuation">}</span></span><span class="token string">
         require_approval: never
@@ -414,7 +423,7 @@ openai <span class="token operator">=</span> project<span class="token punctuati
 </ul>
 <p>If any check fails, the cell prints the problems and labels the answer partial and unverified instead of presenting it as a brief.</p>
 </div><div class="nb-cell nb-code-cell"><div class="nb-input"><pre class="language-python"><code class="language-python" data-language="python">question <span class="token operator">=</span> <span class="token punctuation">(</span>
-    <span class="token string">"I'm meeting Adatum Corporation tomorrow. Give me a short account brief: "</span>
+    <span class="token string-interpolation"><span class="token string">f"I'm meeting </span><span class="token interpolation"><span class="token punctuation">{</span>EXPECTED_FACTS<span class="token punctuation">[</span><span class="token string">'customer_name'</span><span class="token punctuation">]</span><span class="token punctuation">}</span></span><span class="token string"> tomorrow. Give me a short account brief: "</span></span>
     <span class="token string">"what's recorded for the account, what concerns deserve discussion, "</span>
     <span class="token string">"and the next step recommended in their account writeup. Cite your sources."</span>
 <span class="token punctuation">)</span>
@@ -424,6 +433,7 @@ conversation <span class="token operator">=</span> openai<span class="token punc
 <span class="token keyword">with</span> <span class="token punctuation">(</span>WORK_ROOT <span class="token operator">/</span> <span class="token string">"conversations.txt"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token builtin">open</span><span class="token punctuation">(</span><span class="token string">"a"</span><span class="token punctuation">,</span> encoding<span class="token operator">=</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span> <span class="token keyword">as</span> inventory<span class="token punctuation">:</span>
     inventory<span class="token punctuation">.</span>write<span class="token punctuation">(</span>conversation<span class="token punctuation">.</span><span class="token builtin">id</span> <span class="token operator">+</span> <span class="token string">"\n"</span><span class="token punctuation">)</span>
 
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Question: </span><span class="token interpolation"><span class="token punctuation">{</span>question<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Conversation: </span><span class="token interpolation"><span class="token punctuation">{</span>conversation<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
 
 response <span class="token operator">=</span> openai<span class="token punctuation">.</span>responses<span class="token punctuation">.</span>create<span class="token punctuation">(</span>
@@ -490,7 +500,7 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
 <p>The response carries the citations as <code>url_citation</code> annotations: [1] points to your Fabric IQ ontology in the Fabric portal, and [2] points to <code>account-report.md</code> at the commit in <code>IQ_REPORT_URL</code>.</p>
 <p>Wording varies between runs; the IDs, dates, quoted next step, and citation shouldn't.</p>
 <details>
-<summary>What a failed check looks like</summary><p>In one test run, the lakehouse SQL analytics endpoint hadn't synced the new tables yet, so the ontology couldn't query the customer records. The model filled in the recorded facts from the account report instead. The answer read well, but the checks rejected it because those facts didn't come from Fabric IQ:</p>
+<summary>What a failed check looks like</summary><p>If the lakehouse SQL endpoint hasn't synced, the ontology can't return records, and the model may fill gaps from the report. The checks reject that answer because the facts didn't come from Fabric IQ:</p>
 <pre><code class="language-json">{
   "result": "PARTIAL / UNVERIFIED",
   "sources": {"skill": "available", "Fabric IQ": "available", "Foundry IQ": "available"},
@@ -503,7 +513,7 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
   ]
 }
 </code></pre>
-<p>The cell then prints the answer under <code>UNVERIFIED candidate answer (not an accepted brief):</code>. <code>prepare-fabric.py</code> now waits for the endpoint to sync, and the same checks catch any run where a fact comes from the wrong source.</p>
+<p>The cell then prints the answer under <code>UNVERIFIED candidate answer (not an accepted brief):</code>. <code>prepare-fabric.py</code> waits for sync to prevent this.</p>
 </details></div><div class="nb-cell nb-markdown-cell"><h2>6. Inspect the tool calls and sources</h2>
 <p>The trace shows what the harness did: it loaded the skill, resolved the company name with Fabric IQ, looked up the records for <code>CUST-001</code>, and retrieved the account report through Foundry IQ. The checks fail on missing calls and on errors nested inside tool results, and they report an empty result separately from an unavailable source.</p>
 <p>In a passing run, the trace lists these calls in order. The model can repeat a call, such as loading the skill twice. The checks pass as long as every call succeeds and each tool first appears in this order:</p>
@@ -531,13 +541,16 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
 </ul>
 <p>Tool outputs can contain source data and internal identifiers. Review cell outputs before you share them.</p>
 </div><div class="nb-cell nb-markdown-cell"><h3>Try it in the playground</h3>
-<p>Open <a href="https://ai.azure.com/">Foundry</a>, select your project and the deployed agent, and paste the same question into a new chat:</p>
+<p>Open <a href="https://ai.azure.com/">Foundry</a>, select your project and the deployed agent, and paste the question that the ask cell printed into a new chat:</p>
 <pre><code class="language-text">I'm meeting Adatum Corporation tomorrow. Give me a short account brief: what's recorded for the account, what concerns deserve discussion, and the next step recommended in their account writeup. Cite your sources.
 </code></pre>
-<p>The reply shows numbered citations under the answer. Select one to open the Fabric IQ ontology or the account report in a new tab. The reply can open with the agent's progress notes, and the playground places citation numbers inline, sometimes in the middle of a word.</p>
+<p>The reply shows numbered citations under the answer. Select one to open the Fabric IQ ontology or the account report in a new tab. The reply can open with the agent's progress notes.</p>
+<blockquote class="notebook-callout notebook-callout-note" data-callout="note" aria-label="Note callout">
+<div class="notebook-callout-title"><span class="notebook-callout-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><path fill="currentColor" d="M12.002 1.999c5.523 0 10.001 4.478 10.001 10.002c0 5.523-4.478 10.001-10.001 10.001C6.478 22.002 2 17.524 2 12.001C2 6.477 6.478 1.999 12.002 1.999m0 1.5a8.502 8.502 0 1 0 0 17.003a8.502 8.502 0 0 0 0-17.003M12 10.5a.75.75 0 0 1 .75.75v5a.75.75 0 0 1-1.5 0v-5a.75.75 0 0 1 .75-.75M12 9a1 1 0 1 0 0-2a1 1 0 0 0 0 2"></path></svg></span><strong>Note</strong></div><p>The preview playground can place a citation number in the middle of a word. This is a playground rendering issue; the SDK response carries the same citations as <code>url_citation</code> annotations.</p>
+</blockquote>
 <p><img src="/forgebook/preview/pr-125/notebook/media/copilot-harness-foundry-fabric-iq/05-agent-playground-brief.png" alt="Agent playground with the Fabric IQ tool, harness tools, investigation skill, and knowledge base configured, showing the Adatum Corporation brief and numbered citations to the ontology and the synthetic account report"></p>
 </div><div class="nb-cell nb-markdown-cell"><h2>Adapt the recipe</h2>
-<p>To brief a different customer, edit <code>EXPECTED_FACTS</code> at the top of <code>source_checks.py</code> and the company name in the question. The structural checks don't change.</p>
+<p>To brief a different customer, edit <code>EXPECTED_FACTS</code> at the top of <code>source_checks.py</code>. The question is built from <code>EXPECTED_FACTS["customer_name"]</code>, and the structural checks don't change.</p>
 <table>
 <thead>
 <tr>
@@ -547,7 +560,7 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
 </thead>
 <tbody><tr>
 <td>Customer</td>
-<td><code>EXPECTED_FACTS</code> and the question. Add the customer's rows to the three CSV files and replace <code>account-report.md</code> with their report, then rerun both prepare scripts with a new run name.</td>
+<td><code>EXPECTED_FACTS</code>. Add the customer's rows to the three CSV files and replace <code>account-report.md</code> with their report, then rerun both prepare scripts with a new run name.</td>
 </tr>
 <tr>
 <td>Data sources</td>
@@ -556,6 +569,10 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
 <tr>
 <td>Investigation</td>
 <td><code>SKILL.md</code>, then redeploy.</td>
+</tr>
+<tr>
+<td>Tool names</td>
+<td><code>KB_SERVER_LABEL</code> and <code>ONTOLOGY_SERVER_LABEL</code> in <code>source_checks.py</code>. The skill, manifest, and trace checks all read them.</td>
 </tr>
 <tr>
 <td>Model</td>
@@ -625,7 +642,8 @@ checks <span class="token operator">=</span> verify_sample<span class="token pun
 <li><strong>Search runs as the project managed identity.</strong> The agent can retrieve any document that identity can read in the knowledge base, no matter who asks the question.</li>
 <li><strong><code>customer_id</code> isn't a security boundary.</strong> It correlates Fabric records with report passages; it doesn't stop the agent from retrieving another customer's documents.</li>
 <li><strong>Both tools use <code>require_approval: never</code>.</strong> That suits read-only sample sources. Require approval for tools that reach sensitive data or can make changes.</li>
-<li><strong>The two tools authenticate differently by design.</strong> Fabric IQ ontologies accept only the user's delegated token, so Fabric enforces each user's own item and data permissions. Foundry IQ connections use the project managed identity, so Search can't tell which user asked. For production, keep Fabric on delegated access. For Search, either give each customer or audience its own index and knowledge base, or turn on document-level access control and pass each user's token at query time. Confirm that your agent host forwards that token before you rely on per-user trimming. See <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/fabric-iq#authentication-and-security">Fabric IQ authentication</a>, <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect#enforce-document-level-permissions">Foundry IQ document permissions</a>, and <a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve#enforce-permissions-at-query-time-preview">query-time permission enforcement</a>.</li>
+<li><strong>Why the tools authenticate differently.</strong> Fabric IQ ontologies accept only the user's delegated token, so Fabric enforces each user's own item and data permissions. Foundry IQ connections use the project managed identity, so Search can't tell which user asked. See <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/fabric-iq#authentication-and-security">Fabric IQ authentication</a>.</li>
+<li><strong>For production,</strong> keep Fabric on delegated access. For Search, either give each customer or audience its own index and knowledge base, or turn on document-level access control and pass each user's token at query time. Confirm that your agent host forwards that token before you rely on per-user trimming. See <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect#enforce-document-level-permissions">Foundry IQ document permissions</a> and <a href="https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve#enforce-permissions-at-query-time-preview">query-time permission enforcement</a>.</li>
 </ul>
 </blockquote>
 </div><div class="nb-cell nb-markdown-cell"><h2>Clean up</h2>
@@ -644,6 +662,12 @@ python notebooks/data/copilot-harness-foundry-fabric-iq/prepare-fabric.py delete
 </code></pre>
 <p>Keep the inventory under the temporary <code>forgebook-iq/&lt;run&gt;/</code> folder until both scripts finish; they read it to find what to delete. Then remove that folder.</p>
 <p>Don't delete the workspace, capacity, Search service, model deployment, or Foundry project, and don't run <code>azd down</code>; the recipe uses services you already had. Those services keep billing at their normal rates. <strong>Pause the Fabric capacity</strong> in the Azure portal when you're done, because it bills by the hour while it runs.</p>
+</div><div class="nb-cell nb-markdown-cell"><h2>Next steps</h2>
+<ul>
+<li><strong>Brief a second customer.</strong> Add their records and report, update <code>EXPECTED_FACTS</code>, and rerun with a new run name. See <strong>Adapt the recipe</strong>.</li>
+<li><strong>Turn on document-level access control.</strong> Let Foundry IQ trim retrieval to what each user may read. See <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect#enforce-document-level-permissions">enforce document-level permissions</a>.</li>
+<li><strong>Add an approval-gated tool.</strong> Give the agent a tool that writes, such as one that drafts a follow-up, and set <code>require_approval: always</code> so a person approves each call. See <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/tools/model-context-protocol">MCP tools in Foundry</a>.</li>
+</ul>
 </div><div class="nb-cell nb-markdown-cell"><h2>References</h2>
 <ul>
 <li><a href="https://learn.microsoft.com/azure/foundry/agents/how-to/use-tools-skills-copilot-harness?pivots=azd">Microsoft Copilot harness guide</a></li>
