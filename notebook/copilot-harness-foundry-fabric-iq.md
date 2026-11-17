@@ -1,54 +1,106 @@
-Build an agent that prepares a customer meeting brief using **Fabric IQ** for customer records and **Foundry IQ** for account reports. A reusable skill defines the investigation, and the **Microsoft Copilot harness** runs the skill and calls the tools.
+Say you're a product manager for an AI search platform, and tomorrow you're meeting Adatum Corporation, one of your customers. To prepare, you'd normally piece together two kinds of context by hand:
 
-You’ll deploy the agent with Azure Developer CLI (`azd`), ask a question through the Python SDK, and inspect the sources behind its answer.
+- **What your systems record about the account:** which knowledge bases Adatum runs, and how their latency and health have looked over recent weeks.
+- **What your team has written about the account:** the latest field report, and the next step it proposes.
+
+The first lives in structured business data. The second lives in documents. This recipe builds an agent that gathers both and writes you a short, cited brief:
+
+- **Fabric IQ** answers questions over the customer records through an ontology, a business-friendly model of customers, their knowledge bases, and telemetry.
+- **Foundry IQ** retrieves the relevant passages from account reports.
+- An **investigation skill** tells the **Microsoft Copilot harness** in Foundry how to combine the two: find the customer, pull their records, fetch the matching report, and cite every source.
+
+You deploy the agent with Azure Developer CLI (`azd`), ask a question through the Python SDK, and check the tool calls and sources behind the answer. The pattern carries over to any skill: the skill tells the agent which steps to take, and the trace proves it took them.
+
+**Who this is for:** teams that already run Microsoft Fabric and Microsoft Foundry.
+
+| | |
+|---|---|
+| **Last verified** | November 17, 2026 |
+| **Difficulty** | Intermediate |
+| **Time** | \~7 min (+\~3.5 min first-time install) |
+| **Est. cost per run** | \~$0.01/question (gpt-5-mini) + Fabric and Search hourly rates; pause F2 when done |
+| **Preview features** | Microsoft Copilot harness, Fabric IQ ontology MCP server, and Foundry IQ agentic retrieval (MCP `api-version=2026-08-01-preview`) |
+| **Tested with** | Python 3.12, azure-ai-projects 2.10.0, azure-identity 1.27.0, azd 1.37.3 with the azure.ai.agents 1.1.0, azure.ai.projects 1.1.0, and azure.ai.skills 1.0.0 extensions, and a gpt-5-mini deployment |
+
+Pricing: [Microsoft Fabric](https://azure.microsoft.com/pricing/details/microsoft-fabric/) · [Foundry IQ agentic retrieval billing](https://learn.microsoft.com/azure/search/agentic-retrieval-overview#region-availability,-limits,-and-billing). At this volume, agentic retrieval with minimal reasoning effort is covered by Search's free token allowance.
+
+### How it works
 
 ![Customer meeting brief architecture: a Microsoft Copilot harness agent in Foundry uses an investigation skill, queries structured business data through a Fabric IQ ontology, retrieves account reports through Foundry IQ, and correlates both sources by customer_id to produce a sourced brief.](media/copilot-harness-foundry-fabric-iq/02-microsoft-iq-meeting-brief-architecture.png)
 
+The skill tells the agent to resolve the customer in Fabric IQ, look up that customer's records by ID, and then retrieve the matching report from Foundry IQ. The agent writes the brief from both results and keeps the report's citation.
+
 ## Prerequisites
 
-- Python 3.10 or later and Jupyter.
 - An existing Foundry project with a model deployment in a [supported region](https://learn.microsoft.com/azure/foundry/agents/concepts/limits-quotas-regions#microsoft-copilot-harness-preview).
-- azd 1.37.0 or later, with Foundry extensions agents beta.22+, projects beta.15+, and skills beta.9+. Follow the [CLI setup guide](https://learn.microsoft.com/azure/foundry/agents/quickstarts/create-web-research-agent?pivots=azd).
 - **Foundry User** access for agents and skills, and **Foundry Project Manager** access for connections.
-- A **paid F2 or higher Fabric capacity**, or **Power BI Premium per capacity (P1 or higher)** with Microsoft Fabric enabled. This is required for the agent to query Fabric IQ through the [ontology MCP server](https://learn.microsoft.com/fabric/iq/ontology/how-to-use-ontology-mcp-server#prerequisites).
-- A Fabric workspace where you can create a lakehouse, notebook, and ontology (Contributor or higher), with ontology MCP enabled for your tenant.
-- An existing Azure AI Search service with semantic ranker and knowledge-base retrieval available. For source setup, your signed-in user needs **Search Service Contributor**, **Search Index Data Contributor**, and **Search Index Data Reader**. The project identity needs **Search Index Data Reader**. Have the resource owner configure these prerequisites; this notebook does not change IAM.
+- A **paid F2 or higher Fabric capacity**, or **Power BI Premium per capacity (P1 or higher)** with Microsoft Fabric enabled. The agent needs it to query Fabric IQ through the [ontology MCP server](https://learn.microsoft.com/fabric/iq/ontology/how-to-use-ontology-mcp-server#prerequisites). F2 and P1 are the minimums to use the feature, not performance guarantees; see the [ontology sizing guidance](https://learn.microsoft.com/fabric/iq/ontology/overview).
+- A Fabric workspace on that capacity where you're a Contributor or higher, with ontology MCP enabled for your tenant.
+- An existing Azure AI Search service with semantic ranker and knowledge-base retrieval available. To create the sources, your signed-in user needs **Search Service Contributor**, **Search Index Data Contributor**, and **Search Index Data Reader**. The Foundry project's managed identity needs **Search Index Data Reader**. Ask the resource owner to assign these roles; the recipe doesn't change role assignments.
+- Python 3.10 or later, the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli), and Git.
 
-Install the packages in your notebook’s Python environment.
+Install the tested versions. With PowerShell:
 
-```shell
-python -m pip install "azure-ai-projects>=2.9.0" azure-identity requests notebook ipykernel
+```powershell
+python -m pip install azure-ai-projects==2.10.0 azure-identity==1.27.0 requests==2.34.2 notebook==7.6.5 ipykernel==7.4.0
+Invoke-RestMethod https://aka.ms/install-azd.ps1 -OutFile install-azd.ps1
+./install-azd.ps1 -Version 1.37.3
+```
+
+With bash:
+
+```bash
+python -m pip install azure-ai-projects==2.10.0 azure-identity==1.27.0 requests==2.34.2 notebook==7.6.5 ipykernel==7.4.0
+curl -fsSL https://aka.ms/install-azd.sh | bash -s -- --version 1.37.3
+```
+
+Then install the Foundry extensions and sign in:
+
+```bash
+azd extension install azure.ai.agents --version 1.1.0
+azd extension install azure.ai.projects --version 1.1.0
+azd extension install azure.ai.skills --version 1.0.0
 az login
 azd auth login
 ```
 
-The Copilot harness, Fabric ontology MCP, and agentic retrieval features used here are **preview**. Availability varies by region, model, capacity, and tenant rollout; verify the linked support pages before provisioning. This is a public-data evaluation, not a production-ready authorization or reliability design.
+Preview availability varies by region, model, capacity, and tenant, so check the linked support pages before you provision anything.
 
-This recipe creates a lakehouse, ingestion notebook, ontology, Search index/source/KB, connections, agent, and skill in existing services. Spark, capacity, semantic retrieval, and model calls incur charges. F2/P1 are eligibility minimums, not performance guarantees; the [ontology sizing guidance](https://learn.microsoft.com/fabric/iq/ontology/overview) is separate.
+This recipe uses public sample data. See **Before production** for what to change before you use real customer data.
 
-### Prepare the example data
+The recipe creates a lakehouse, a load notebook, an ontology, a Search index, knowledge source, and knowledge base, two connections, an agent, and a skill inside services you already have.
 
-The example uses fictional customer **Adatum Corporation (`CUST-001`)**, its two knowledge bases, 283 sparse historical telemetry samples, and a redistributable synthetic account report. All inputs are in `notebooks/data/copilot-harness-foundry-fabric-iq/`; no restricted PDF or preconfigured knowledge base is needed.
+### The example data
 
-**Fabric IQ supplies structured records and their business meaning.** First ingest the CSVs into Delta tables in a new Fabric lakehouse, then bind those supported tables to the ontology. Raw CSV files are not directly bindable.
+The sample customer is the fictional **Adatum Corporation (`CUST-001`)**. All inputs are in `notebooks/data/copilot-harness-foundry-fabric-iq/`; you don't need any private files or a preconfigured knowledge base.
 
-| File | Entity and relationship |
-|---|---|
-| `customers.csv` | Lakehouse table `dbo.customer`; entity `Customer`, keyed by `customer_id`. |
-| `knowledge-bases.csv` | `dbo.knowledgebase`; entity `KnowledgeBase`, keyed by `knowledge_base_id`. Link `Customer → hasKnowledgeBase → KnowledgeBase` using `customer_id`. |
-| `telemetry-samples.csv` | `dbo.telemetrysample`; entity `TelemetrySample`, keyed by `telemetry_id`. Link `KnowledgeBase → hasTelemetrySample → TelemetrySample` using `knowledge_base_id`. |
+**Fabric IQ holds the structured records and what they mean.** The setup loads three CSV files into Delta tables in a new lakehouse, then binds the tables to an ontology:
 
-Keep identifiers and labels as strings. Bind `event_time_utc` as datetime, `storage_gb` and `error_rate_pct` as **double**, and the remaining measures as integers. The ontology lets the tool follow customers to their assets and observations without requiring the user to know the table schema. Its `KnowledgeBase` entity describes an account's search asset, **not** the Foundry IQ retrieval knowledge base.
+| File | Lakehouse table | Ontology entity and relationship |
+|---|---|---|
+| `customers.csv` | `dbo.customer` (1 row) | `Customer`, keyed by `customer_id` |
+| `knowledge-bases.csv` | `dbo.knowledgebase` (2 rows) | `KnowledgeBase`, keyed by `knowledge_base_id`. `Customer → hasKnowledgeBase → KnowledgeBase` on `customer_id` |
+| `telemetry-samples.csv` | `dbo.telemetrysample` (283 rows) | `TelemetrySample`, keyed by `telemetry_id`. `KnowledgeBase → hasTelemetrySample → TelemetrySample` on `knowledge_base_id` |
 
-**Foundry IQ supplies report passages and source references.** Index `account-report.md`, reference `FSR-CUST-001-20261105`, dated November 5, 2026, into a separate Search index. A search-index knowledge source feeds an extractive knowledge base, exposed through its native MCP endpoint. The setup preserves the report text and its public GitHub permalink in retrieval metadata. It uses minimal retrieval: Search returns grounding data, and the Copilot harness writes the brief. This single-report example does not need a second model for Search query planning or answer synthesis, or a Search-to-model role grant.
+The ontology lets the agent follow a customer to its assets and their telemetry without knowing the table schema. Here, `KnowledgeBase` is a customer's search asset, not the Foundry IQ knowledge base the agent retrieves from.
 
-The agent correlates the sources using `customer_id`; this is neither an automatic database join nor an authorization boundary. The original `reports.jsonl` and earlier records in `live-evidence.json` preserve historical evaluation provenance. Its separate public-source validation record identifies the exact tested revision.
+After setup, the ontology graph in Fabric shows the three entities and the two relationships the agent traverses:
+
+![Fabric IQ ontology graph with Customer linked to KnowledgeBase through hasKnowledgeBase, and KnowledgeBase linked to TelemetrySample through hasTelemetrySample](media/copilot-harness-foundry-fabric-iq/03-fabric-iq-ontology-graph.png)
+
+Each entity property is bound to a lakehouse column. The `Customer` entity uses `customer_id` as its key, and every property reads from the `customer` table:
+
+![Customer entity configuration in Fabric IQ showing customer_id as the entity type key and six properties bound to the customer lakehouse table](media/copilot-harness-foundry-fabric-iq/04-fabric-iq-customer-bindings.png)
+
+**Foundry IQ holds the account report and its source link.** The setup indexes `account-report.md` (reference `FSR-CUST-001-20261105`, dated November 5, 2026) into its own Search index, then creates a search-index knowledge source and an extractive knowledge base with minimal retrieval. Search returns grounding passages with their source URL, and the Copilot harness writes the brief, so you don't need a second model for Search query planning or answer synthesis.
+
+The agent correlates the two sources by `customer_id`. It's a shared key, not a database join.
 
 ## 1. Configure your environment
 
-Clone this repository and work from its root. Set these variables in the PowerShell session that will launch Jupyter. Prepare both sources below before running the agent cells.
+Clone this repository, work from its root, and set these variables in the shell that will launch Jupyter. Pick a unique run name; every object the recipe creates is named after it. Connection creation refuses to overwrite existing connections, so use a new run name for each full run.
 
-Choose a unique run name. When resuming, continue from the failed cell rather than replaying successful connection creation. Those commands refuse to overwrite existing connections; use a fresh run name for a separate full run.
+With PowerShell:
 
 ```powershell
 $env:IQ_RUN_NAME = 'customer-iq-<unique-suffix>'
@@ -57,26 +109,65 @@ $env:FOUNDRY_PROJECT_ENDPOINT = 'https://<account>.services.ai.azure.com/api/pro
 $env:FOUNDRY_MODEL_DEPLOYMENT = '<existing-model-deployment>'
 $env:AZURE_SEARCH_ENDPOINT = 'https://<search>.search.windows.net'
 $env:FABRIC_WORKSPACE_ID = '<workspace-guid>'
-[Environment]::SetEnvironmentVariable('IQ_REPORT_URL', ('https://raw.githubusercontent.com/microsoft-foundry/forgebook/{0}/notebooks/data/copilot-harness-foundry-fabric-iq/account-report.md' -f (git rev-parse HEAD)))
+$env:IQ_REPORT_URL = "https://raw.githubusercontent.com/microsoft-foundry/forgebook/$(git rev-parse HEAD)/notebooks/data/copilot-harness-foundry-fabric-iq/account-report.md"
 ```
 
-Use a public commit containing the report; a local-only commit has no usable source permalink. For a fork, use that repository's Raw permalink instead.
+With bash:
 
-**Prepare Fabric.** In your paid-capacity workspace, create a **new schema-enabled Lakehouse** named for this run. Upload the three CSV files to `Files/iq-brief/`. Create a PySpark notebook, attach that lakehouse as its default, paste and run the complete `load-fabric-data.py` file. It writes `dbo.customer` (1 row), `dbo.knowledgebase` (2), and `dbo.telemetrysample` (283), refusing to overwrite tables. Keep the notebook and lakehouse IDs for cleanup; stop its interactive Spark session after it finishes.
+```bash
+export IQ_RUN_NAME='customer-iq-<unique-suffix>'
+export FOUNDRY_PROJECT_ID='/subscriptions/<subscription>/resourceGroups/<group>/providers/Microsoft.CognitiveServices/accounts/<account>/projects/<project>'
+export FOUNDRY_PROJECT_ENDPOINT='https://<account>.services.ai.azure.com/api/projects/<project>'
+export FOUNDRY_MODEL_DEPLOYMENT='<existing-model-deployment>'
+export AZURE_SEARCH_ENDPOINT='https://<search>.search.windows.net'
+export FABRIC_WORKSPACE_ID='<workspace-guid>'
+export IQ_REPORT_URL="https://raw.githubusercontent.com/microsoft-foundry/forgebook/$(git rev-parse HEAD)/notebooks/data/copilot-harness-foundry-fabric-iq/account-report.md"
+```
 
-Create a new ontology in the same workspace. Add the three lakehouse tables as data sources, create the three entities and single-column keys from the mapping above, and bind every property to its matching column. Add the two one-to-many relationships using `customer.customer_id = knowledgebase.customer_id` and `knowledgebase.knowledge_base_id = telemetrysample.knowledge_base_id`. Name them `hasKnowledgeBase` and `hasTelemetrySample`, directed from parent to child. Save, refresh the data if necessary, and verify the entity instances before continuing. Follow the supported [data-binding steps](https://learn.microsoft.com/fabric/iq/ontology/how-to-bind-data) and [ontology MCP setup](https://learn.microsoft.com/fabric/iq/ontology/how-to-use-ontology-mcp-server). Copy the ontology item ID, not a semantic-model ID.
+`IQ_REPORT_URL` must point to a commit that's public on GitHub, because it becomes the report's citation link. If you work from a fork, use your fork's raw URL.
 
-**Prepare Foundry IQ.** Run the supplied script from the repository root. It uploads the public report text, configures semantic search, creates a search-index knowledge source with reference fields, and creates the minimal, extractive KB. It changes no roles or existing objects and records this run's objects for cleanup. The MCP connection uses `2026-08-01-preview`; see the [knowledge-source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-search-index), [knowledge-base](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base), and [MCP retrieval](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve#call-the-mcp-endpoint) guides.
+**Prepare Fabric IQ.** The script checks that the workspace is on an active paid capacity, then creates a lakehouse, uploads the CSV files, runs a Spark notebook that loads `load-fabric-data.py` into Delta tables, and creates the bound ontology. It records every item it creates so `delete` can remove them later. It took about 3.5 minutes in testing, most of it Spark startup.
+
+```powershell
+python notebooks\data\copilot-harness-foundry-fabric-iq\prepare-fabric.py create
+$env:FABRIC_ONTOLOGY_ID = '<FABRIC_ONTOLOGY_ID printed by the script>'
+```
+
+```bash
+python notebooks/data/copilot-harness-foundry-fabric-iq/prepare-fabric.py create
+export FABRIC_ONTOLOGY_ID='<FABRIC_ONTOLOGY_ID printed by the script>'
+```
+
+<details>
+<summary>Prefer the Fabric portal? Set up the lakehouse and ontology by hand.</summary>
+
+1. Create a schema-enabled lakehouse and upload the three CSV files to `Files/iq-brief/`.
+2. Create a PySpark notebook with that lakehouse as its default, paste in `load-fabric-data.py`, and run it. It writes the three tables and refuses to overwrite existing ones.
+3. Create an ontology in the same workspace. Add the three tables as data sources, create the `Customer`, `KnowledgeBase`, and `TelemetrySample` entities with the keys in the table above, and bind each property to its column. Bind identifiers and labels as strings, `event_time_utc` as datetime, `storage_gb` and `error_rate_pct` as double, and the other measures as integers.
+4. Add the one-to-many relationships `hasKnowledgeBase` (`customer.customer_id = knowledgebase.customer_id`) and `hasTelemetrySample` (`knowledgebase.knowledge_base_id = telemetrysample.knowledge_base_id`), from parent to child.
+5. Save, check the entity instances, and copy the ontology item ID (not a semantic model ID) into `FABRIC_ONTOLOGY_ID`.
+
+See [bind data to an ontology](https://learn.microsoft.com/fabric/iq/ontology/how-to-bind-data) and [use the ontology MCP server](https://learn.microsoft.com/fabric/iq/ontology/how-to-use-ontology-mcp-server).
+
+</details>
+
+**Prepare Foundry IQ.** The script uploads the report, configures semantic search, and creates the knowledge source and the extractive knowledge base. It changes no roles or existing objects, and it records what it creates for cleanup. It took about 15 seconds in testing. See the [knowledge source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-search-index), [knowledge base](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base), and [MCP retrieval](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve#call-the-mcp-endpoint) guides.
 
 ```powershell
 python notebooks\data\copilot-harness-foundry-fabric-iq\prepare-search.py create
 $env:FOUNDRY_IQ_KB_MCP_URL = '<FOUNDRY_IQ_KB_MCP_URL printed by the script>'
-$env:FABRIC_ONTOLOGY_ID = '<new-ontology-item-guid>'
-
 python -m notebook
 ```
 
-Run the following cells in order. The `!azd` commands use IPython’s notebook shell syntax.
+```bash
+python notebooks/data/copilot-harness-foundry-fabric-iq/prepare-search.py create
+export FOUNDRY_IQ_KB_MCP_URL='<FOUNDRY_IQ_KB_MCP_URL printed by the script>'
+python -m notebook
+```
+
+Open `notebooks/copilot-harness-foundry-fabric-iq.ipynb` and run the cells in order. The `!azd` lines use IPython's shell syntax. If a cell fails, fix the cause and continue from that cell; don't rerun connection cells that already succeeded.
+
+This first cell reads your environment, checks the run name and tools, and derives the names of everything the recipe creates. If a variable is missing, it lists every missing one at once.
 
 ```python
 import json
@@ -87,19 +178,37 @@ import sys
 import tempfile
 from pathlib import Path
 
+REQUIRED_VARIABLES = [
+    "IQ_RUN_NAME", "FOUNDRY_PROJECT_ID", "FOUNDRY_PROJECT_ENDPOINT",
+    "FOUNDRY_MODEL_DEPLOYMENT", "FOUNDRY_IQ_KB_MCP_URL", "IQ_REPORT_URL",
+    "FABRIC_WORKSPACE_ID", "FABRIC_ONTOLOGY_ID",
+]
+missing = [name for name in REQUIRED_VARIABLES if not os.environ.get(name, "").strip()]
+if missing:
+    raise RuntimeError(
+        "Set these environment variables in the shell that launches Jupyter, "
+        "then restart the kernel: " + ", ".join(missing)
+    )
+
 PROJECT_ID = os.environ["FOUNDRY_PROJECT_ID"]
 PROJECT_ENDPOINT = os.environ["FOUNDRY_PROJECT_ENDPOINT"].rstrip("/")
 MODEL = os.environ["FOUNDRY_MODEL_DEPLOYMENT"]
 KB_URL = os.environ["FOUNDRY_IQ_KB_MCP_URL"]
 AGENT = os.environ["IQ_RUN_NAME"]
 REPORT_URL = os.environ["IQ_REPORT_URL"]
+MCP_API_VERSION = "2026-08-01-preview"
+assert f"api-version={MCP_API_VERSION}" in KB_URL, (
+    "Use the FOUNDRY_IQ_KB_MCP_URL printed by prepare-search.py."
+)
 
 DATA_DIR = Path("data/copilot-harness-foundry-fabric-iq/")
 if not DATA_DIR.is_dir():
     DATA_DIR = Path("notebooks/data/copilot-harness-foundry-fabric-iq/")
 assert (DATA_DIR / "account-report.md").is_file(), "Run from the repository root or notebooks directory."
 sys.path.insert(0, str(DATA_DIR.resolve()))
-from source_checks import inspect_trace, verify_sample
+from source_checks import (
+    EXPECTED_FACTS, KB_SERVER_LABEL, ONTOLOGY_SERVER_LABEL, inspect_trace, verify_sample,
+)
 
 report_text = (DATA_DIR / "account-report.md").read_text(encoding="utf-8")
 
@@ -132,7 +241,7 @@ print(f"Connections: {KB_CONNECTION}, {ONTOLOGY_CONNECTION}")
 print(f"Local project: {PROJECT_DIR}")
 ```
 
-Initialize the local azd project using your existing Foundry project and model.
+Initialize a local azd project that points at your existing Foundry project and model.
 
 ```python
 if not (PROJECT_DIR / "azure.yaml").is_file():
@@ -143,16 +252,14 @@ if not (PROJECT_DIR / "azure.yaml").is_file():
 
 ## 2. Connect Fabric IQ and Foundry IQ
 
-The two connections use different identities.
+The two connections authenticate differently:
 
 | Tool | Identity | Required access |
 |---|---|---|
-| Foundry IQ | Foundry project managed identity | **Search Index Data Reader** on the Search service. Document access uses this shared project identity. |
-| Fabric IQ | Signed-in user’s Entra identity | Fabric license, item and data access, and delegated `Item.Execute.All` and `Item.Read.All` scopes. |
+| Foundry IQ | Foundry project managed identity | **Search Index Data Reader** on the Search service |
+| Fabric IQ | The signed-in user's Microsoft Entra identity | Fabric license, access to the items and data, and delegated `Item.Execute.All` and `Item.Read.All` scopes |
 
-Configure Fabric delegation using the [user delegation guide](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-user-delegation) and [ontology authentication guide](https://learn.microsoft.com/fabric/iq/ontology/how-to-use-ontology-mcp-server).
-
-**Authorization:** this shared project identity can retrieve any document it can access. Passing `customer_id` only correlates records; it does not isolate customers. Use this isolated, public single-customer source for the exercise. For sensitive multi-customer data, isolate sources/identities or implement and verify end-to-end query-time document authorization, including propagation of the user's authorization context. Do not assume the harness, a prompt filter, or a customer ID enforces it. See [Foundry IQ document permissions](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect#enforce-document-level-permissions).
+Configure Fabric delegation with the [user delegation guide](https://learn.microsoft.com/azure/foundry/agents/how-to/configure-user-delegation) and the [ontology authentication guide](https://learn.microsoft.com/fabric/iq/ontology/how-to-use-ontology-mcp-server). **Before production** explains what each identity means for real customer data.
 
 Create the Foundry IQ connection.
 
@@ -176,11 +283,13 @@ Create the Fabric IQ connection.
 assert _exit_code == 0, "Check the Fabric connection and user delegation."
 ```
 
-Confirm both connections in Foundry. If a command times out, check whether its connection was created before retrying.
+Both connections now appear in your Foundry project. If a command times out, check whether the connection exists before you retry.
 
 ## 3. Write the investigation skill
 
-The skill resolves the customer, gathers records and the matching report, and defines how to present the brief. Keeping this procedure in `SKILL.md` lets users ask ordinary meeting-preparation questions.
+The skill tells the agent how to investigate: resolve the customer, gather records and the matching report, and present the brief. Because the procedure lives in `SKILL.md`, you can ask ordinary meeting-prep questions without spelling out the steps.
+
+> **Tip:** A skill guides the model, but it doesn't enforce tool order. The harness decides which tools to call and when. That's why Section 5 checks the trace, meaning which tools ran, in what order, and what each returned, and not just the final answer.
 
 ```python
 skill_text = f'''---
@@ -209,7 +318,7 @@ description: Prepare a sourced customer meeting brief from records and an accoun
 
 3. Once the customer ID is known and the record lookup has completed,
    call Foundry IQ knowledge_base_retrieve on the configured
-   field-sales-reports KB. Include the exact customer_id in query_variants.
+   {KB_SERVER_LABEL} KB. Include the exact customer_id in query_variants.
    Request the report reference, date, proposed next-step sentence,
    report citation, and reference source data. Retrieve once.
    If the record lookup fails or returns no match for a supplied ID,
@@ -217,8 +326,9 @@ description: Prepare a sourced customer meeting brief from records and an accoun
    The ontology's KnowledgeBase records describe the account and do
    not change the configured retrieval target.
 
-4. Write a brief of fewer than 250 words covering the recorded facts,
-   historical concerns to discuss, and the report's proposed next step.
+4. Write a brief of fewer than 250 words. Start with one bold line naming
+   the customer and customer ID, then use these bold headings in order:
+   Recorded facts, Concerns to discuss, Proposed next step, Availability.
    Include customer ID, record IDs and dates, report reference and date,
    and returned citations. Quote the proposed next step verbatim in
    double quotes.
@@ -249,9 +359,7 @@ print(skill_text)
 
 ## 4. Configure and deploy the agent
 
-The manifest selects the Copilot harness, attaches the skill, and connects both IQ tools. It enables read-only file access and the two data tools.
-
-Foundry IQ retrieves from the single KB configured in `KB_URL`. The tool approval setting below is intended for approved, read-only evaluation sources.
+The manifest selects the Copilot harness, attaches the skill, and connects both IQ tools. It enables read-only file access and turns off the rest of the Copilot toolset. Foundry IQ retrieves from the single knowledge base in `KB_URL`.
 
 ```python
 manifest = f'''# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
@@ -291,14 +399,14 @@ services:
           - name: filesystem_read
             enabled: true
       - type: mcp
-        server_label: field-sales-reports
+        server_label: {KB_SERVER_LABEL}
         server_url: {json.dumps(KB_URL)}
         project_connection_id: {KB_CONNECTION}
         allowed_tools:
           - knowledge_base_retrieve
         require_approval: never
       - type: fabric_iq_preview
-        server_label: fabriciq-ontology
+        server_label: {ONTOLOGY_SERVER_LABEL}
         server_url: {json.dumps(ONTOLOGY_URL)}
         project_connection_id: {ONTOLOGY_CONNECTION}
         require_approval: never
@@ -311,7 +419,7 @@ services:
 print(manifest)
 ```
 
-Deploy the skill and agent. Each deployment creates new versions.
+Deploy the skill and the agent. Each deployment creates new versions of both.
 
 ```python
 !azd --cwd "{PROJECT_DIR}" deploy --all --no-prompt
@@ -321,7 +429,7 @@ assert _exit_code == 0, "Deployment failed. Inspect the CLI output."
 assert _exit_code == 0, "Could not read the deployed agent."
 ```
 
-Check that the deployed agent uses the Copilot harness and references the published skill version.
+Confirm that the deployed agent uses the Copilot harness and references your skill.
 
 ```python
 deployed = json.loads(DEPLOYED_PATH.read_text(encoding="utf-8-sig"))
@@ -341,7 +449,7 @@ print(json.dumps({
 
 ## 5. Ask for an account brief
 
-Create an agent-scoped SDK client using your Azure CLI identity.
+Create an agent-scoped SDK client with your Azure CLI identity.
 
 ```python
 from azure.ai.projects import AIProjectClient
@@ -356,11 +464,16 @@ project = AIProjectClient(
 openai = project.get_openai_client(agent_name=AGENT)
 ```
 
-Create a conversation and send the question. Save the conversation ID for troubleshooting and cleanup. The sample checker inspects actual tool results before labeling the brief successful; completion alone is not evidence that either source worked. It is an acceptance check for Adatum, not a general factual verifier.
+Create a conversation and send the question. The cell saves the conversation ID for troubleshooting and cleanup, then runs two sets of checks from `source_checks.py` before it prints the brief:
+
+- **Structural checks** work for any customer. The skill, Fabric IQ, and Foundry IQ were each called, in that order, and returned results. A lookup that ran but found no match is reported separately from one that failed. The answer must also carry at least one URL citation and stay under 250 words.
+- **Customer-fact checks** compare the Fabric IQ results, the retrieved report passage, and the brief with `EXPECTED_FACTS` at the top of `source_checks.py`: the customer ID, record IDs, report reference and date, and the quoted next step.
+
+If any check fails, the cell prints the problems and labels the answer partial and unverified instead of presenting it as a brief.
 
 ```python
 question = (
-    "I'm meeting Adatum Corporation tomorrow. Give me a short account brief: "
+    f"I'm meeting {EXPECTED_FACTS['customer_name']} tomorrow. Give me a short account brief: "
     "what's recorded for the account, what concerns deserve discussion, "
     "and the next step recommended in their account writeup. Cite your sources."
 )
@@ -370,6 +483,7 @@ conversation = openai.conversations.create()
 with (WORK_ROOT / "conversations.txt").open("a", encoding="utf-8") as inventory:
     inventory.write(conversation.id + "\n")
 
+print(f"Question: {question}")
 print(f"Conversation: {conversation.id}")
 
 response = openai.responses.create(
@@ -403,23 +517,84 @@ answer_parts = [part.model_dump() for part in messages[-1].content]
 native_annotations = [a for part in answer_parts for a in part.get("annotations", [])]
 trace_items = [item.model_dump() for item in items]
 trace = inspect_trace(trace_items)
-checks = verify_sample(answer, trace, report_text, REPORT_URL)
+checks = verify_sample(
+    answer, trace, report_text, REPORT_URL, annotations=native_annotations,
+)
 if checks["problems"]:
     print(json.dumps({"result": "PARTIAL / UNVERIFIED", **checks}, indent=2))
     print("UNVERIFIED candidate answer (not an accepted brief):\n" + answer)
     raise AssertionError("Required source checks failed; inspect trace before retrying.")
 
-print("Required calls and sample source checks passed; review each fact and citation below.")
+print(
+    "Structural checks and customer-fact checks for "
+    f"{EXPECTED_FACTS['customer_name']} passed; review each fact and citation below."
+)
 print(answer)
 ```
 
-**Expected result, not a captured live answer:** Adatum (`CUST-001`) has Product Support KB and Employee Knowledge Hub. The latest samples are `TS-009967` (2026-11-05 16:15 UTC, 455 ms) and `TS-009924` (2026-11-05 12:40 UTC, 471 ms). `TS-004243` records the highest p95 among the account's sampled intervals: 4,609 ms on 2026-10-16 at 19:15 UTC, historically Degraded, not proof of a current incident.
+Your brief should look similar to this:
 
-The report is `FSR-CUST-001-20261105`, dated 2026-11-05. Its quoted next step is: "The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric." Budget, adoption, and remediation remain unknown unless separately evidenced.
+> **Adatum Corporation — CUST-001**
+>
+> **Recorded facts**
+> - Customer record: CUST-001 (Adatum Corporation). [1]
+> - KnowledgeBases: KB-001-01 (Product Support KB, idx-001-01) — latest sample TS-009967 (2026-11-05T16:15:00Z), status Healthy, p95 455 ms; KB-001-02 (Employee Knowledge Hub, idx-001-02) — latest sample TS-009924 (2026-11-05T12:40:00Z), status Healthy, p95 471 ms. [1]
+> - Highest sampled p95 observed: TS-004243 (KB-001-02, idx-001-02) on 2026-10-16T19:15:00Z, status Degraded, p95 4,609 ms (historical sample). [1]
+>
+> **Concerns to discuss**
+> - The historical high p95 (4,609 ms) for KB-001-02 merits investigation (scope, recurrence, and remediation).
+> - Telemetry samples are sparse; they do not establish current health or adoption. Discuss data coverage and recent monitoring cadence. [1] [2]
+>
+> **Proposed next step**
+> - Report reference FSR-CUST-001-20261105 (2026-11-05). Proposed next step (verbatim): "The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric." [2]
+>
+> **Availability**
+> - Customer record: found (CUST-001). [1]
+> - Account report: found — FSR-CUST-001-20261105 (2026-11-05). [2]
+
+The response carries the citations as `url_citation` annotations: [1] points to your Fabric IQ ontology in the Fabric portal, and [2] points to `account-report.md` at the commit in `IQ_REPORT_URL`.
+
+Wording varies between runs; the IDs, dates, quoted next step, and citation shouldn't.
+
+<details>
+<summary>What a failed check looks like</summary>
+
+If the lakehouse SQL endpoint hasn't synced, the ontology can't return records, and the model may fill gaps from the report. The checks reject that answer because the facts didn't come from Fabric IQ:
+
+```json
+{
+  "result": "PARTIAL / UNVERIFIED",
+  "sources": {"skill": "available", "Fabric IQ": "available", "Foundry IQ": "available"},
+  "structural_problems": [],
+  "fact_problems": [
+    "Fabric IQ did not resolve Adatum Corporation to CUST-001",
+    "Separate CUST-001-scoped record lookup and retrieval are required",
+    "Missing structured source evidence: TS-004243",
+    "..."
+  ]
+}
+```
+
+The cell then prints the answer under `UNVERIFIED candidate answer (not an accepted brief):`. `prepare-fabric.py` waits for sync to prevent this.
+
+</details>
 
 ## 6. Inspect the tool calls and sources
 
-The trace shows what the harness actually did: skill loading, Fabric IQ name resolution, a separate `CUST-001` record lookup, and Foundry IQ retrieval. A skill guides the model; it does **not** enforce tool sequencing. The checker rejects missing calls and explicit nested tool errors, labels successful empty rowsets separately from unavailable sources, and requires the sample facts and supporting report reference.
+The trace shows what the harness did: it loaded the skill, resolved the company name with Fabric IQ, looked up the records for `CUST-001`, and retrieved the account report through Foundry IQ. The checks fail on missing calls and on errors nested inside tool results, and they report an empty result separately from an unavailable source.
+
+In a passing run, the trace lists these calls in order. The model can repeat a call, such as loading the skill twice. The checks pass as long as every call succeeds and each tool first appears in this order:
+
+1. `skill`: loads the investigation skill.
+2. `fabriciq-ontology___ask_ontology`: resolves Adatum Corporation to `CUST-001`.
+3. `fabriciq-ontology___ask_ontology`: returns the knowledge bases and telemetry samples for `CUST-001`.
+4. `field-sales-reports___knowledge_base_retrieve`: returns the account report passage for `CUST-001`.
+
+Each record shows `"status": "completed"`, `"error": null`, and `"source_state": "available"`.
+
+The agent's **Traces** tab in the Foundry portal shows the same sequence. Select a tool call to see the request the agent sent and what the source returned. Here, the first ontology call resolves the company name to `CUST-001`:
+
+![Foundry trace for one conversation listing the skill, two Fabric IQ ask_ontology calls, and the Foundry IQ knowledge_base_retrieve call, with the first ontology call's request and its CUST-001 match expanded](media/copilot-harness-foundry-fabric-iq/06-agent-trace-ontology-call.png)
 
 ```python
 for record in trace:
@@ -431,37 +606,40 @@ print(json.dumps({
 }, indent=2))
 ```
 
-Review the returned evidence alongside the brief.
+Review the returned evidence alongside the brief:
 
-- Confirm both IQ tools used `CUST-001`.
-- Compare the KB names and dated telemetry observations with the Fabric results.
-- The checker matches the quotation to the local public report and a retrieved `sourceData` passage tied to the same customer, report/date, and expected URL. It does not substitute the answer's prose for retrieved evidence.
-- Open the `sourceData.url` from a matching reference and confirm the report/date and quoted passage. A Search `citationUrl` can instead be an authenticated indexed-document lookup, not the original document URL; preserve both when present.
-- Inspect the preserved `native_annotations` and citation marker in the final answer. The source check does **not** prove that Foundry Playground rendered a clickable native citation or that clicking it navigated to the correct report. Verify that manually; do not infer it from a URL printed by Python.
-- Check that missing information and failed lookups are stated clearly.
+- Both IQ tools used `CUST-001`.
+- The knowledge-base names and dated telemetry samples match the Fabric IQ results.
+- The `sourceData.url` of the matching reference opens the report, and the report reference, date, and quoted passage match. A Search `citationUrl` can point to an authenticated indexed-document lookup instead of the original document, so keep both.
+- The brief states missing information and failed lookups plainly.
 
-Tool outputs may contain source data and private identifiers. Review notebook outputs before sharing them. Saved historical captures and mocked tests are not evidence of a new live run.
-
-**Verified public-source example:** on November 16, 2026, a clean GitHub checkout of commit `22b15faca1f672f28681c64b94586716eb88356a` completed all 11 unchanged code cells in 5 minutes 40 seconds, excluding source preparation. The four required calls succeeded, and the 157-word brief matched the public CSVs and report. The SDK preserved seven URL annotations; the retrieved report URL was opened and its quotation checked. Native Playground click-through was not tested. See `live-evidence.json` for hashes, measured token usage, cleanup, and validation boundaries. Runtime and charges vary; this is one observed run, not a performance or accuracy guarantee.
+Tool outputs can contain source data and internal identifiers. Review cell outputs before you share them.
 
 ### Try it in the playground
 
-Open [Foundry](https://ai.azure.com/), select your project and deployed agent, and paste the same question into a fresh chat.
+Open [Foundry](https://ai.azure.com/), select your project and the deployed agent, and paste the question that the ask cell printed into a new chat:
 
 ```text
 I'm meeting Adatum Corporation tomorrow. Give me a short account brief: what's recorded for the account, what concerns deserve discussion, and the next step recommended in their account writeup. Cite your sources.
 ```
 
-Inspect the tool calls and open the report citation alongside the answer. This is an optional additional invocation with usage charges. Native Playground citation navigation must be checked in your environment; it is not established by the Python checks.
+The reply shows numbered citations under the answer. Select one to open the Fabric IQ ontology or the account report in a new tab. The reply can open with the agent's progress notes.
+
+> **Note:** The preview playground can place a citation number in the middle of a word. This is a playground rendering issue; the SDK response carries the same citations as `url_citation` annotations.
+
+![Agent playground with the Fabric IQ tool, harness tools, investigation skill, and knowledge base configured, showing the Adatum Corporation brief and numbered citations to the ontology and the synthetic account report](media/copilot-harness-foundry-fabric-iq/05-agent-playground-brief.png)
 
 ## Adapt the recipe
 
+To brief a different customer, edit `EXPECTED_FACTS` at the top of `source_checks.py`. The question is built from `EXPECTED_FACTS["customer_name"]`, and the structural checks don't change.
+
 | To change | Update |
 |---|---|
-| Customer | Replace the company name in the question and update the Adatum-specific acceptance facts in `source_checks.py` for your sources; changing only the question will fail the sample checks. |
-| Data sources | Update the connection settings and ontology bindings. Use a consistent customer ID across both sources. |
-| Investigation | Edit `SKILL.md` and redeploy. |
-| Model | Update `FOUNDRY_MODEL_DEPLOYMENT` and redeploy. |
+| Customer | `EXPECTED_FACTS`. Add the customer's rows to the three CSV files and replace `account-report.md` with their report, then rerun both prepare scripts with a new run name. |
+| Data sources | The connection settings and ontology bindings. Keep one customer ID consistent across both sources. |
+| Investigation | `SKILL.md`, then redeploy. |
+| Tool names | `KB_SERVER_LABEL` and `ONTOLOGY_SERVER_LABEL` in `source_checks.py`. The skill, manifest, and trace checks all read them. |
+| Model | `FOUNDRY_MODEL_DEPLOYMENT`, then redeploy. |
 
 The generated files are in the printed `PROJECT_DIR`. Keep `azure.yaml` and `skills/<skill-name>/SKILL.md` to reuse the configuration and procedure.
 
@@ -469,17 +647,18 @@ The generated files are in the printed `PROJECT_DIR`. Keep `azure.yaml` and `ski
 
 | Problem | Check |
 |---|---|
-| Search returns 403, including during MCP tool enumeration | Inspect the actual connection authentication type/audience and target, project identity principal and Search Index Data Reader service scope, role propagation, and Search network rules. An existing Reader role alone does not establish the cause. Capture the error and request ID privately; do not add broad roles or switch identities without diagnosing it. |
-| Retrieval unexpectedly attempts Search answer synthesis | Check that the run-specific KB has `outputMode: extractiveData`, `retrievalReasoningEffort: minimal`, and no model configuration. This recipe leaves synthesis to the harness. Connecting a different, model-backed KB adds a separate Search-to-model authorization requirement; a project Reader role on Search does not satisfy it. |
-| Fabric returns 401 or 403 | Signed-in user, Fabric license, item permissions, and delegated scopes. |
-| Fabric returns 504 | Inspect the conversation for an upstream timeout, then retry after the service recovers. |
-| Harness or SDK configuration is rejected | CLI extensions, Python packages, supported model, and region. |
-| Report is missing | Inspect source state: only a successful empty lookup means no match; a failed/missing call means unavailable. Confirm the new KB contains the report and its source-data fields. |
-| Source checks fail | Keep the answer labeled partial/unverified. Inspect the paired outputs and preserved references; do not remove checks to make the answer pass. |
-| Lakehouse or ontology data is absent | Confirm typed Delta tables, SQL endpoint synchronization, property/key bindings, and relationship direction. Refresh the ontology after upstream changes. |
-| Connection creation fails | Inspect the named connection before rerunning the command. |
+| `prepare-fabric.py` stops at the capacity check | Resume a paused capacity, or move the workspace to a paid F2+ or P1+ capacity. Trial capacities aren't supported. |
+| Search returns 403, including while listing MCP tools | Check the connection's authentication type, audience, and target; the project identity's **Search Index Data Reader** assignment on the Search service; role propagation; and Search network rules. Capture the error and request ID before you change roles or identities. |
+| Retrieval tries to synthesize an answer in Search | The knowledge base should have `outputMode: extractiveData`, `retrievalReasoningEffort: minimal`, and no model. A model-backed knowledge base needs its own Search-to-model role assignment. |
+| Fabric returns 401 or 403 | The signed-in user, Fabric license, item permissions, and delegated scopes. |
+| Fabric returns 504 | Look for an upstream timeout in the conversation, then retry after the service recovers. |
+| The harness or SDK rejects the configuration | The azd extension versions, Python packages, model, and region. |
+| The report is missing | Only a lookup that ran and returned nothing means "not found"; a failed or missing call means "unavailable." Confirm the knowledge base contains the report and its source fields. |
+| Checks fail | Keep the answer labeled partial and unverified. Inspect the trace and references; don't remove checks to make the answer pass. |
+| Lakehouse or ontology data is missing | The Delta tables, SQL endpoint sync, key and property bindings, and relationship direction. Refresh the ontology after upstream changes. |
+| Connection creation fails | Inspect the named connection before you rerun the command. |
 
-Retrieve an existing conversation’s items after a failed request.
+To fetch an existing conversation's items after a failed request without sending the question again:
 
 ```python
 items = list(openai.conversations.items.list(
@@ -488,19 +667,48 @@ items = list(openai.conversations.items.list(
 ))
 ```
 
+## Before production
+
+> **Important:** This walkthrough uses one public, single-customer report. Change these before you connect real customer data.
+>
+> - **Search runs as the project managed identity.** The agent can retrieve any document that identity can read in the knowledge base, no matter who asks the question.
+> - **`customer_id` isn't a security boundary.** It correlates Fabric records with report passages; it doesn't stop the agent from retrieving another customer's documents.
+> - **Both tools use `require_approval: never`.** That suits read-only sample sources. Require approval for tools that reach sensitive data or can make changes.
+> - **Why the tools authenticate differently.** Fabric IQ ontologies accept only the user's delegated token, so Fabric enforces each user's own item and data permissions. Foundry IQ connections use the project managed identity, so Search can't tell which user asked. See [Fabric IQ authentication](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/fabric-iq#authentication-and-security).
+> - **For production,** keep Fabric on delegated access. For Search, either give each customer or audience its own index and knowledge base, or turn on document-level access control and pass each user's token at query time. Confirm that your agent host forwards that token before you rely on per-user trimming. See [Foundry IQ document permissions](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect#enforce-document-level-permissions) and [query-time permission enforcement](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve#enforce-permissions-at-query-time-preview).
+
+
 ## Clean up
 
-Use the printed resource names and `conversations.txt` to delete this run’s conversations, agent and skill versions, and connections in Foundry. Remove the generated local directory when you finish.
+Run this in the same kernel to delete this run's conversations, agent, skill, and connections. Deleting a prompt agent removes all of its versions.
 
-Delete the newly created Fabric ingestion notebook, ontology, and lakehouse by their recorded IDs, after stopping any interactive Spark session. Delete only this run's Search KB, knowledge source, and index using its inventory:
+```python
+for conversation_id in (WORK_ROOT / "conversations.txt").read_text(encoding="utf-8").split():
+    openai.conversations.delete(conversation_id)
 
-```powershell
-python notebooks\data\copilot-harness-foundry-fabric-iq\prepare-search.py delete
+!azd --cwd "{PROJECT_DIR}" ai agent delete {AGENT} --force --no-prompt
+!azd --cwd "{PROJECT_DIR}" ai skill delete {SKILL} --force --no-prompt
+!azd --cwd "{PROJECT_DIR}" ai connection delete {KB_CONNECTION} --force --no-prompt --project-endpoint "{PROJECT_ENDPOINT}"
+!azd --cwd "{PROJECT_DIR}" ai connection delete {ONTOLOGY_CONNECTION} --force --no-prompt --project-endpoint "{PROJECT_ENDPOINT}"
 ```
 
-The Search script keeps its private inventory under the temporary `forgebook-iq/<run>/` directory, including after a partial setup. Do not delete that inventory before cleaning up. If an API request times out, inspect the named object before retrying; an unacknowledged create might have succeeded.
+Then, from the repository root in the same shell, delete the Search and Fabric items the prepare scripts recorded. Each script deletes only what it created and confirms each item is gone.
 
-Because this recipe uses existing services, do not delete the workspace, capacity, Search service, model, or Foundry project. Avoid `azd down` or resource-group deletion. Existing paid services continue to incur their normal charges after these exercise objects are removed.
+```bash
+python notebooks/data/copilot-harness-foundry-fabric-iq/prepare-search.py delete
+python notebooks/data/copilot-harness-foundry-fabric-iq/prepare-fabric.py delete
+```
+
+Keep the inventory under the temporary `forgebook-iq/<run>/` folder until both scripts finish; they read it to find what to delete. Then remove that folder.
+
+Don't delete the workspace, capacity, Search service, model deployment, or Foundry project, and don't run `azd down`; the recipe uses services you already had. Those services keep billing at their normal rates. **Pause the Fabric capacity** in the Azure portal when you're done, because it bills by the hour while it runs.
+
+## Next steps
+
+- **Brief a second customer.** Add their records and report, update `EXPECTED_FACTS`, and rerun with a new run name. See **Adapt the recipe**.
+- **Turn on document-level access control.** Let Foundry IQ trim retrieval to what each user may read. See [enforce document-level permissions](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect#enforce-document-level-permissions).
+- **Add an approval-gated tool.** Give the agent a tool that writes, such as one that drafts a follow-up, and set `require_approval: always` so a person approves each call. See [MCP tools in Foundry](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/model-context-protocol).
+
 
 ## References
 
