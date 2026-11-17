@@ -111,6 +111,35 @@ function tagColor(tag: string): string {
   </div>
 </BaseLayout>
 
+<script>
+  async function renderMermaidDiagrams() {
+    const blocks = Array.from(document.querySelectorAll<HTMLElement>(".notebook-mermaid[data-mermaid]"));
+    if (blocks.length === 0) return;
+
+    const { default: mermaid } = await import("mermaid");
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "strict",
+      theme: document.documentElement.classList.contains("dark") ? "dark" : "default",
+    });
+
+    for (const [index, block] of blocks.entries()) {
+      const source = block.querySelector("code")?.textContent ?? "";
+      try {
+        const { svg } = await mermaid.render(`notebook-mermaid-${index}`, source);
+        block.innerHTML = svg;
+        block.setAttribute("role", "img");
+        block.setAttribute("aria-label", "Diagram");
+        block.removeAttribute("data-mermaid");
+      } catch (error) {
+        console.warn("Mermaid diagram failed to render; showing source instead.", error);
+      }
+    }
+  }
+
+  void renderMermaidDiagrams();
+</script>
+
 <style is:global>
   .notebook-content pre {
     background:
@@ -370,6 +399,17 @@ function tagColor(tag: string): string {
 
   .notebook-content blockquote.notebook-callout code {
     font-style: normal;
+  }
+
+  .notebook-content .notebook-mermaid {
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    text-align: center;
+  }
+
+  .notebook-content .notebook-mermaid svg {
+    height: auto;
+    max-width: 100%;
   }
 
   @media (max-width: 640px) {

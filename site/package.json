@@ -27,6 +27,7 @@
     "marked": "^18.1.0",
     "marked-footnote": "^1.4.0",
     "marked-highlight": "^2.2.4",
+    "mermaid": "^11.17.2",
     "notebookjs": "^0.8.3",
     "prismjs": "^1.30.0",
     "typescript": "^6.0.3",

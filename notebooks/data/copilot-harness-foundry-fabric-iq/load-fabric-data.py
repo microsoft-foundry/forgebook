@@ -15,13 +15,14 @@ string_columns = {
 }
 double_columns = {"storage_gb", "error_rate_pct"}
 inputs = [
-    ("customers.csv", "customer", 1),
-    ("knowledge-bases.csv", "knowledgebase", 2),
-    ("telemetry-samples.csv", "telemetrysample", 283),
+    ("customers.csv", "customer"),
+    ("knowledge-bases.csv", "knowledgebase"),
+    ("telemetry-samples.csv", "telemetrysample"),
 ]
 spark.conf.set("spark.sql.session.timeZone", "UTC")
-for filename, table, expected_rows in inputs:
+for filename, table in inputs:
     path = f"Files/iq-brief/{filename}"
+    expected_rows = spark.read.text(path).where("trim(value) != ''").count() - 1
     columns = spark.read.option("header", True).csv(path).columns
     fields = []
     for column in columns:

@@ -1,12 +1,44 @@
-"""Fail-closed acceptance checks for this public, single-customer example.
+"""Fail-closed acceptance checks for the account-brief recipe.
 
 These inspect returned evidence; they neither dispatch tools nor enforce order.
-Keep the original SDK objects and native annotations for independent inspection.
+Structural checks always run. Fact checks compare the brief and tool results with
+EXPECTED_FACTS. To brief a different customer, edit EXPECTED_FACTS; the notebook
+builds its question from customer_name.
 """
 
 import json
 import re
 from urllib.parse import urlparse
+
+
+EXPECTED_FACTS = {
+    "customer_name": "Adatum Corporation",
+    "customer_id": "CUST-001",
+    # Values the ID-scoped Fabric IQ result must contain (commas are ignored).
+    "structured_evidence": [
+        "KB-001-01", "KB-001-02", "Product Support KB", "Employee Knowledge Hub",
+        "TS-009967", "TS-009924", "TS-004243", "455", "471", "4609",
+    ],
+    "report_reference": "FSR-CUST-001-20261105",
+    "report_date": "2026-11-05",
+    "next_step_quote": (
+        "The proposed next step is a small set of approved support scenarios "
+        "with a reviewer-scored answer-quality rubric."
+    ),
+    # Values the brief itself must state.
+    "brief_must_mention": ["CUST-001", "TS-004243", "FSR-CUST-001-20261105", "2026-11-05"],
+}
+
+# MCP server labels in the agent manifest; the harness prefixes tool names with them.
+ONTOLOGY_SERVER_LABEL = "fabriciq-ontology"
+KB_SERVER_LABEL = "field-sales-reports"
+
+TOOLS = {
+    "skill": "skill",
+    "Fabric IQ": f"{ONTOLOGY_SERVER_LABEL}___ask_ontology",
+    "Foundry IQ": f"{KB_SERVER_LABEL}___knowledge_base_retrieve",
+}
+MAX_WORDS = 250
 
 
 def walk(value):
@@ -70,45 +102,60 @@ def inspect_trace(items):
     return records
 
 
-def verify_sample(answer, records, report_text, report_url):
-    """Require supported sample facts and a matching retrieved source passage."""
+def check_structure(answer, records, annotations=None):
+    """Customer-independent checks: required calls, their states, order, citations, length."""
     problems = []
-    if len(answer.split()) >= 250:
-        problems.append("The brief must contain fewer than 250 whitespace-separated words")
-    skill = [r for r in records if r["tool"] == "skill"]
-    ontology = [r for r in records if r["tool"] == "fabriciq-ontology___ask_ontology"]
-    retrieval = [r for r in records if r["tool"] == "field-sales-reports___knowledge_base_retrieve"]
+    if len(answer.split()) >= MAX_WORDS:
+        problems.append(f"The brief must contain fewer than {MAX_WORDS} whitespace-separated words")
     sources = {}
-    for label, calls in (("skill", skill), ("Fabric IQ", ontology), ("Foundry IQ", retrieval)):
-        sources[label] = "unavailable" if not calls else calls[-1]["source_state"]
-        if not calls or any(call["source_state"] != "available" for call in calls):
-            problems.append(f"{label}: required call/result missing, failed, or returned no match")
-    name_calls = [r for r in ontology if "Adatum" in str(r["arguments"])]
-    id_calls = [r for r in ontology if "CUST-001" in str(r["arguments"])]
-    if not name_calls or "CUST-001" not in str(name_calls[0]["output"]):
-        problems.append("Fabric IQ did not resolve Adatum to CUST-001")
-    if not id_calls or not retrieval or "CUST-001" not in str(retrieval[-1]["arguments"]):
-        problems.append("Separate ID-scoped record lookup and retrieval are required")
-    if skill and name_calls and id_calls and retrieval:
-        if not (records.index(skill[0]) < records.index(name_calls[0])
-                < records.index(id_calls[0]) < records.index(retrieval[0])):
-            problems.append("Observed calls did not follow the example investigation")
-    structured = " ".join(str(r["output"]) for r in id_calls)
-    required = (
-        "CUST-001", "KB-001-01", "KB-001-02", "Product Support KB", "Employee Knowledge Hub",
-        "TS-009967", "TS-009924", "TS-004243", "455", "471", "4609",
-    )
-    for fact in required:
-        if fact not in structured.replace(",", ""):
+    firsts = []
+    for label, tool in TOOLS.items():
+        calls = [r for r in records if r["tool"] == tool]
+        states = [call["source_state"] for call in calls]
+        sources[label] = states[-1] if states else "not called"
+        if not calls:
+            problems.append(f"{label}: required call is missing")
+        elif "unavailable" in states:
+            problems.append(f"{label}: call failed or returned an error (source unavailable)")
+        elif "no-match" in states:
+            problems.append(f"{label}: call succeeded but found no matching record (no match)")
+        if calls:
+            firsts.append(records.index(calls[0]))
+    if len(firsts) == len(TOOLS) and firsts != sorted(firsts):
+        problems.append("Expected the skill, then Fabric IQ, then Foundry IQ")
+    if annotations is not None and not any(
+        a.get("type") == "url_citation" and urlparse(a.get("url", "")).scheme == "https"
+        for a in annotations
+    ):
+        problems.append("The brief has no native url_citation annotation")
+    return {"sources": sources, "problems": problems}
+
+
+def check_facts(answer, records, report_text, report_url, facts=EXPECTED_FACTS):
+    """Customer-specific checks driven by EXPECTED_FACTS."""
+    problems = []
+    customer_id = facts["customer_id"]
+    name_token = facts["customer_name"].split()[0]
+    ontology = [r for r in records if r["tool"] == TOOLS["Fabric IQ"]]
+    retrieval = [r for r in records if r["tool"] == TOOLS["Foundry IQ"]]
+    name_calls = [r for r in ontology if name_token in str(r["arguments"])]
+    id_calls = [r for r in ontology if customer_id in str(r["arguments"])]
+    if not name_calls or customer_id not in str(name_calls[0]["output"]):
+        problems.append(f"Fabric IQ did not resolve {facts['customer_name']} to {customer_id}")
+    if not id_calls or not retrieval or customer_id not in str(retrieval[-1]["arguments"]):
+        problems.append(f"Separate {customer_id}-scoped record lookup and retrieval are required")
+    if name_calls and id_calls and retrieval:
+        if not (records.index(name_calls[0]) < records.index(id_calls[0]) < records.index(retrieval[0])):
+            problems.append("Resolve the name, then look up the ID, then retrieve the report")
+    structured = " ".join(str(r["output"]) for r in id_calls).replace(",", "")
+    for fact in [customer_id, *facts["structured_evidence"]]:
+        if fact.replace(",", "") not in structured:
             problems.append(f"Missing structured source evidence: {fact}")
-    quote = (
-        "The proposed next step is a small set of approved support scenarios "
-        "with a reviewer-scored answer-quality rubric."
-    )
+    quote = facts["next_step_quote"]
     normalized_answer = answer.replace("\u201c", '"').replace("\u201d", '"')
     if f'"{quote}"' not in normalized_answer or quote not in report_text:
         problems.append("Next-step quotation differs from the published report")
-    for fact in ("CUST-001", "TS-004243", "FSR-CUST-001-20261105", "2026-11-05"):
+    for fact in facts["brief_must_mention"]:
         if fact not in answer:
             problems.append(f"Missing required brief fact: {fact}")
     references = []
@@ -119,10 +166,23 @@ def verify_sample(answer, records, report_text, report_url):
             data = node["sourceData"]
             passage = " ".join(str(data.get(key, "")) for key in ("content", "snippet"))
             url = data.get("url") or data.get("doc_url") or data.get("docUrl")
-            if (quote in passage and "CUST-001" in passage
-                    and "FSR-CUST-001-20261105" in passage and "2026-11-05" in passage):
-                if url == report_url and urlparse(url).scheme == "https":
-                    references.append(node)
+            if (quote in passage and customer_id in passage
+                    and facts["report_reference"] in passage and facts["report_date"] in passage
+                    and url == report_url and urlparse(url).scheme == "https"):
+                references.append(node)
     if not references:
         problems.append("No retrieved reference ties the quote, account, report/date, and expected source URL together")
-    return {"sources": sources, "problems": problems, "supporting_references": references}
+    return {"problems": problems, "supporting_references": references}
+
+
+def verify_sample(answer, records, report_text, report_url, annotations=None, facts=EXPECTED_FACTS):
+    """Run both layers; any problem means the brief is not verified."""
+    structure = check_structure(answer, records, annotations)
+    fact_checks = check_facts(answer, records, report_text, report_url, facts)
+    return {
+        "sources": structure["sources"],
+        "structural_problems": structure["problems"],
+        "fact_problems": fact_checks["problems"],
+        "problems": structure["problems"] + fact_checks["problems"],
+        "supporting_references": fact_checks["supporting_references"],
+    }

@@ -260,11 +260,21 @@ class NotebookTests(unittest.TestCase):
                 self.services.openai.responses.create.assert_not_called()
 
     def test_rejects_invalid_run_name_before_cloud_operations(self):
-        for name in ("", "Uppercase", "-leading", "a" * 42, "has spaces"):
+        for name in ("Uppercase", "-leading", "a" * 42, "has spaces"):
             with self.subTest(name=name), patch.dict(CONFIG, IQ_RUN_NAME=name):
                 with self.assertRaisesRegex(AssertionError, "run name"):
                     self.execute()
                 self.assertEqual(self.services.commands, [])
+
+    def test_lists_every_missing_variable_before_cloud_operations(self):
+        absent = ("FABRIC_ONTOLOGY_ID", "FOUNDRY_IQ_KB_MCP_URL")
+        reduced = {key: value for key, value in CONFIG.items() if key not in absent}
+        with patch.dict(os.environ, {**reduced, "IQ_RUN_NAME": " "}, clear=True):
+            with self.assertRaises(RuntimeError) as raised:
+                exec(CELLS["setup"], {"__builtins__": __builtins__})
+        for name in (*absent, "IQ_RUN_NAME"):
+            self.assertIn(name, str(raised.exception))
+        self.assertEqual(self.services.commands, [])
 
     def test_requires_azd_before_cloud_operations(self):
         with patch.dict(os.environ, CONFIG), patch("shutil.which", return_value=None):
@@ -324,6 +334,8 @@ class NotebookTests(unittest.TestCase):
         )
         self.assertIn("what's recorded for the account", self.namespace["question"])
         self.assertNotIn("CUST-", self.namespace["question"])
+        self.assertNotIn("Adatum", CELLS["ask-question"])
+        self.assertIn(self.namespace["EXPECTED_FACTS"]["customer_name"], self.namespace["question"])
 
     def test_records_conversation_before_failed_invocation(self):
         self.services.fail_response = True
@@ -435,6 +447,23 @@ class NotebookTests(unittest.TestCase):
             )
             self.assertEqual(bool(checks["problems"]), rejected)
 
+    def test_structural_checks_are_separate_from_customer_facts(self):
+        self.execute()
+        trace, answer = self.namespace["trace"], self.services.answer
+        url = CONFIG["IQ_REPORT_URL"]
+        other = dict(SOURCE_CHECKS.EXPECTED_FACTS, customer_id="CUST-002", brief_must_mention=["CUST-002"])
+        checks = SOURCE_CHECKS.verify_sample(answer, trace, REPORT_TEXT, url, facts=other)
+        self.assertEqual(checks["structural_problems"], [])
+        self.assertTrue(checks["fact_problems"])
+        self.assertEqual(checks["problems"], checks["fact_problems"])
+
+        checks = SOURCE_CHECKS.verify_sample(answer, trace, REPORT_TEXT, url, annotations=[])
+        self.assertTrue(checks["structural_problems"])
+        self.assertEqual(checks["fact_problems"], [])
+        annotations = [{"type": "url_citation", "url": url}]
+        checks = SOURCE_CHECKS.verify_sample(answer, trace, REPORT_TEXT, url, annotations=annotations)
+        self.assertEqual(checks["problems"], [])
+
     def run_search_setup(self, action, *, collision=False, upload_succeeds=True):
         requests = ModuleType("requests")
         credential = ModuleType("azure.identity")
@@ -528,6 +557,7 @@ class NotebookTests(unittest.TestCase):
         code = [{"id": name, "source": source} for name, source in CELLS.items()]
         digest = hashlib.sha256(json.dumps(code, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         self.assertEqual(evidence["review_revision"]["code_cells_sha256"], digest)
+        self.assertNotEqual(evidence["prior_review_revision"]["code_cells_sha256"], digest)
         self.assertNotEqual(evidence["copy_revision"]["code_cells_sha256"], digest)
         self.assertNotEqual(evidence["publication_candidate_run"]["code_cells_sha256"], digest)
         self.assertEqual(evidence["output_audit"]["status"], "blocked")
