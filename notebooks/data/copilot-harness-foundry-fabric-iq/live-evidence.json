@@ -1,9 +1,46 @@
 {
   "kind": "sanitized-live-validation",
   "review_revision": {
-    "status": "pending-live-run",
+    "status": "executed-from-fresh-clone",
+    "tested_commit": "f8e9f54dbf557b97d17dc46a2ae212525d667fc4",
+    "source_notebook_sha256": "0907c82dbe3eb030c6abcd5cc66b74f88f1bee22fb80d391ee9a783f5e619c64",
     "code_cells_sha256": "9b55335af6b5a1f2885d1107288b40e289d9fdd020b358c66bb25ad3c0834b08",
-    "scope": "Final review fixes: missing-variable check, question built from EXPECTED_FACTS, shared MCP server labels, and skill section headings."
+    "date": "2026-11-17",
+    "scope": "Fresh clone, published setup scripts, literal azd commands, actual combined harness retrieval, structural and EXPECTED_FACTS checks, and task-only cleanup after the final review fixes (missing-variable check, question built from EXPECTED_FACTS, server-label constants, brief headings in the skill). The sample brief in the markdown was filled from this run afterward; code cells are unchanged. The Playground check was not repeated; see prior_review_revision.",
+    "timing_seconds": {
+      "prepare_fabric": 167,
+      "prepare_search": 20,
+      "notebook_11_code_cells": 192,
+      "cleanup": 60
+    },
+    "observed_calls": [
+      "skill",
+      "fabriciq-ontology___ask_ontology",
+      "fabriciq-ontology___ask_ontology",
+      "field-sales-reports___knowledge_base_retrieve"
+    ],
+    "source_checks": {
+      "structural_problems": 0,
+      "fact_problems": 0
+    },
+    "answer_words_whitespace_separated": 141,
+    "native_annotations": {
+      "url_citation": 8,
+      "fabric_ontology": 5,
+      "account_report": 3
+    },
+    "response_usage": {
+      "input_tokens": 37211,
+      "cached_input_tokens": 27776,
+      "output_tokens": 2481,
+      "reasoning_output_tokens": 1472,
+      "model": "gpt-5-mini",
+      "estimated_model_cost_usd": 0.008,
+      "boundary": "Model tokens for the one successful Responses API call at gpt-5-mini list prices; excludes Fabric capacity and Search service hours."
+    },
+    "cleanup": "CLEANUP VERIFIED: run conversations, agent, skill, two connections, Search index, knowledge source and knowledge base, Fabric lakehouse, notebook and ontology read back as 404; shared project, Search service and workspace returned 200.",
+    "final_answer": "**Adatum Corporation — CUST-001**\n\n**Recorded facts**\n- Customer record: CUST-001 (Adatum Corporation). [1]\n- KnowledgeBases: KB-001-01 (Product Support KB, idx-001-01) — latest sample TS-009967 (2026-11-05T16:15:00Z), status Healthy, p95 455 ms; KB-001-02 (Employee Knowledge Hub, idx-001-02) — latest sample TS-009924 (2026-11-05T12:40:00Z), status Healthy, p95 471 ms. [1]\n- Highest sampled p95 observed: TS-004243 (KB-001-02, idx-001-02) on 2026-10-16T19:15:00Z, status Degraded, p95 4,609 ms (historical sample). [1]\n\n**Concerns to discuss**\n- The historical high p95 (4,609 ms) for KB-001-02 merits investigation (scope, recurrence, and remediation).\n- Telemetry samples are sparse; they do not establish current health or adoption. Discuss data coverage and recent monitoring cadence. [1] [2]\n\n**Proposed next step**\n- Report reference FSR-CUST-001-20261105 (2026-11-05). Proposed next step (verbatim): \"The proposed next step is a small set of approved support scenarios with a reviewer-scored answer-quality rubric.\" [2]\n\n**Availability**\n- Customer record: found (CUST-001). [1]\n- Account report: found — FSR-CUST-001-20261105 (2026-11-05). [2]",
+    "final_answer_formatting": "Verbatim model text from this run. Only the inline source markers were replaced with [1] (Fabric IQ ontology) and [2] (account report); the recipe shows it as a blockquote."
   },
   "prior_review_revision": {
     "status": "executed-from-fresh-clone",
