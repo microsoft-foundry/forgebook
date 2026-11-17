@@ -269,6 +269,17 @@ def main():
             raise TimeoutError("SQL analytics endpoint is still provisioning; rerun create later.")
         time.sleep(15)
 
+    # Fabric IQ reads the tables through the SQL analytics endpoint. Spark-created
+    # tables can be missing there until a metadata sync runs, so force one:
+    # https://learn.microsoft.com/fabric/data-engineering/sql-analytics-endpoint-metadata-sync
+    synced = fabric("POST", f"{base}/sqlEndpoints/{endpoint['id']}/refreshMetadata", {}) or {}
+    statuses = {t["tableName"].lower(): t["status"] for t in synced.get("value", [])}
+    unsynced = [f"dbo.{table}" for _, table, *_ in TABLES
+                if statuses.get(f"dbo.{table}") not in {"Success", "NotRun"}]
+    if unsynced:
+        raise RuntimeError(f"SQL analytics endpoint did not sync {unsynced}: {statuses}")
+    print(f"SQL analytics endpoint lists all 3 tables ({time.monotonic() - started:.0f}s)")
+
     ontology_name = f"{lake_name}_ontology"
     ontology = create("ontology", {
         "displayName": ontology_name, "type": "Ontology",
