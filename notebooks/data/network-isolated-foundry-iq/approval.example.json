@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "approved": false,
+  "new_disposable_lab": true,
+  "cost_approval_reference": null,
+  "support_review_reference": null,
+  "plan_digest": null,
+  "expires_at": null,
+  "cleanup_approved": false
+}
