@@ -545,6 +545,7 @@ class NotebookTests(unittest.TestCase):
         code = [{"id": name, "source": source} for name, source in CELLS.items()]
         digest = hashlib.sha256(json.dumps(code, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         self.assertEqual(evidence["review_revision"]["code_cells_sha256"], digest)
+        self.assertNotEqual(evidence["prior_review_revision"]["code_cells_sha256"], digest)
         self.assertNotEqual(evidence["copy_revision"]["code_cells_sha256"], digest)
         self.assertNotEqual(evidence["publication_candidate_run"]["code_cells_sha256"], digest)
         self.assertEqual(evidence["output_audit"]["status"], "blocked")
