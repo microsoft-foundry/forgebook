@@ -9,6 +9,8 @@ test.describe("Notebook Callouts", () => {
     const callout = page.locator('.notebook-content blockquote.notebook-callout[data-callout="tip"]').first();
     await expect(callout).toBeVisible();
     await expect(callout.locator(".notebook-callout-title")).toHaveText(/Tip/);
+    await expect(callout).toHaveCSS("border-top-width", "0px");
+    await expect(callout).toHaveCSS("border-left-width", "0px");
     await expect(callout).toContainText("If you do not have a source image yet");
     await expect(callout.locator("p").first()).not.toContainText(/^Tip:/);
   });
