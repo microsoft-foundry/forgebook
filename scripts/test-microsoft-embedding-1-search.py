@@ -1,4 +1,8 @@
-"""Offline execution and safety checks for the embedding/Search notebook."""
+"""Offline execution and safety checks for the embedding/Search notebook.
+
+Run ``python scripts/test-microsoft-embedding-1-search.py`` from the repo root
+with nbformat and the notebook's SDK dependencies installed. Services are faked.
+"""
 
 from __future__ import annotations
 
@@ -34,7 +38,7 @@ ALLOWED_OUTPUT_LINES = [
     re.compile(pattern)
     for pattern in (
         r"SDK imports ready; using 1,536-dimensional dense vectors\.",
-        r"Corpus: \d+ synthetic passages; query: '[a-z ]+'",
+        r"Corpus: 6 fictional policy passages; query: 'Can I get reimbursed for a delayed flight\?'",
         r"Embedding helper ready\.",
         r"Search index definition ready\.",
         r"Index visibility check ready\.",
@@ -92,6 +96,8 @@ class OfflineTransport(HttpTransport):
     def __init__(self):
         self.requests = []
         self.reject_delete = False
+        self.omit_body_etag = False
+        self.header_etag = None
 
     def __enter__(self):
         return self
@@ -130,8 +136,12 @@ class OfflineTransport(HttpTransport):
         if request.url.startswith("https://search.example.test/"):
             if request.method == "POST":
                 index = json.loads(request.body)
-                index["@odata.etag"] = '"created"'
-                return OfflineResponse(request, 201, index)
+                if not self.omit_body_etag:
+                    index["@odata.etag"] = '"created"'
+                response = OfflineResponse(request, 201, index)
+                if self.header_etag:
+                    response.headers["ETag"] = self.header_etag
+                return response
             if request.method == "DELETE":
                 if self.reject_delete:
                     return OfflineResponse(
@@ -152,11 +162,15 @@ class FakeCloud:
         self.search_calls = []
         self.fail_creation = False
         self.missing_etag = False
+        self.body_etag = '"created"'
+        self.header_etag = None
         self.fail_deletion = False
+        self.fail_inference = False
         self.fail_upload = False
         self.never_visible = False
         self.count_calls = 0
         self.delete_conditions = []
+        self.deletion_etags = []
 
     def inference_client(self, **_kwargs):
         cloud = self
@@ -164,10 +178,12 @@ class FakeCloud:
         class FakeInference(FakeContext):
             def get_embeddings(self, **kwargs):
                 cloud.embedding_calls.append(kwargs)
+                if cloud.fail_inference:
+                    raise ServiceRequestError("Simulated inference failure")
                 item = kwargs["inputs"][0]
-                if item["kind"] == "query" or "shoreline" in item["content"]:
+                if item["kind"] == "query" or "air trip disruption" in item["content"]:
                     position = 0
-                elif "dunes" in item["content"]:
+                elif "baggage" in item["content"]:
                     position = 1
                 else:
                     position = 2
@@ -197,16 +213,21 @@ class FakeCloud:
         cloud = self
 
         class FakeIndexClient(FakeContext):
-            def create_index(self, index):
+            def create_index(self, index, **kwargs):
                 if cloud.fail_creation:
                     raise RuntimeError("Index already exists")
                 if not cloud.missing_etag:
-                    index["@odata.etag"] = '"created"'
+                    index["@odata.etag"] = cloud.body_etag
                 cloud.created.append(index)
+                headers = {"ETag": cloud.header_etag} if cloud.header_etag else {}
+                kwargs["raw_response_hook"](
+                    SimpleNamespace(http_response=SimpleNamespace(status_code=201, headers=headers))
+                )
                 return index
 
             def delete_index(self, index, *, match_condition):
                 cloud.delete_conditions.append(match_condition)
+                cloud.deletion_etags.append(index.e_tag)
                 if cloud.fail_deletion:
                     raise ServiceRequestError("Simulated deletion failure")
                 cloud.deleted.append(index.name)
@@ -286,13 +307,13 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         namespace, output = execute_offline(cloud)
 
         self.assertIn("Keyword hits: 0", output)
-        self.assertIn("Expected passage 'lake' found at rank 1 of 2.", output)
+        self.assertIn("Expected passage 'travel' found at rank 1 of 3.", output)
         self.assertIn("Temporary index deleted.", output)
         self.assertEqual(unsafe_output_lines(output), [])
-        self.assertEqual(len(cloud.embedding_calls), 4)
+        self.assertEqual(len(cloud.embedding_calls), 7)
         self.assertEqual(
             [call["inputs"][0]["kind"] for call in cloud.embedding_calls],
-            ["text", "text", "text", "query"],
+            ["text"] * 6 + ["query"],
         )
         for call in cloud.embedding_calls:
             self.assertEqual(len(call["inputs"]), 1)
@@ -307,6 +328,7 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         self.assertRegex(index.name, r"^forgebook-embedding-[0-9a-f]{12}$")
         self.assertEqual(cloud.deleted, [index.name])
         self.assertEqual(cloud.delete_conditions, [MatchConditions.IfNotModified])
+        self.assertEqual(cloud.deletion_etags, ['"created"'])
         definition = index.as_dict()
         field = next(field for field in definition["fields"] if field["name"] == "content_vector")
         self.assertEqual(field["type"], "Collection(Edm.Single)")
@@ -323,7 +345,7 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         self.assertEqual(cloud.search_calls[0]["search_mode"], "all")
         vector_query = cloud.search_calls[1]["vector_queries"][0].as_dict()
         self.assertEqual(vector_query["fields"], "content_vector")
-        self.assertEqual(vector_query["k"], 2)
+        self.assertEqual(vector_query["k"], 3)
         self.assertTrue(vector_query["exhaustive"])
         self.assertEqual(len(vector_query["vector"]), 1536)
 
@@ -339,9 +361,9 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         canaries = [
             "Authorization: Bearer synthetic-test-token",
             "api-key: TEST-ONLY-KEY-DO-NOT-USE",
-            "Vector result IDs: ['lake'] sig=synthetic%2Fsignature&se=2030-01-01",
+            "Vector result IDs: ['travel'] sig=synthetic%2Fsignature&se=2030-01-01",
             "Temporary index: forgebook-embedding-000000000000 https://search.example.test",
-            "Reported input tokens: 62 /subscriptions/synthetic-placeholder",
+            "Reported input tokens: 148 /subscriptions/synthetic-placeholder",
         ]
         for canary in canaries:
             with self.subTest(canary=canary):
@@ -363,12 +385,66 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         self.assertFalse(cloud.created)
         self.assertFalse(cloud.deleted)
 
+    def test_inference_failure_stops_before_creating_an_index(self):
+        cloud = FakeCloud()
+        cloud.fail_inference = True
+        with self.assertRaisesRegex(ServiceRequestError, "inference failure"):
+            execute_offline(cloud)
+        self.assertFalse(cloud.created)
+        self.assertFalse(cloud.deleted)
+
     def test_missing_etag_never_deletes_the_created_index(self):
         cloud = FakeCloud()
         cloud.missing_etag = True
-        with self.assertRaisesRegex(RuntimeError, "No ETag returned for temporary index"):
+        with self.assertRaisesRegex(RuntimeError, "No usable creation ETag.*verify ownership and delete manually") as caught:
             execute_offline(cloud)
         self.assertEqual(len(cloud.created), 1)
+        self.assertIn(cloud.created[0].name, str(caught.exception))
+        self.assertFalse(cloud.documents)
+        self.assertFalse(cloud.delete_conditions)
+        self.assertFalse(cloud.deleted)
+
+    def test_wildcard_etag_never_allows_unconditional_cleanup(self):
+        for source in ("body", "header"):
+            with self.subTest(source=source):
+                cloud = FakeCloud()
+                if source == "body":
+                    cloud.body_etag = "*"
+                else:
+                    cloud.missing_etag = True
+                    cloud.header_etag = "*"
+                with self.assertRaisesRegex(RuntimeError, "No usable creation ETag.*delete manually"):
+                    execute_offline(cloud)
+                self.assertFalse(cloud.documents)
+                self.assertFalse(cloud.delete_conditions)
+                self.assertFalse(cloud.deleted)
+
+    def test_header_only_etag_is_used_for_conditional_cleanup(self):
+        transport = OfflineTransport()
+        transport.omit_body_etag = True
+        transport.header_etag = '"created-header"'
+        cloud = FakeCloud()
+        cloud.index_client = lambda **kwargs: SearchIndexClient(
+            endpoint=kwargs["endpoint"],
+            credential=OfflineCredential(),
+            transport=transport,
+        )
+
+        _, output = execute_offline(cloud)
+
+        self.assertIn("Temporary index deleted.", output)
+        index_request, deletion_request = transport.requests
+        self.assertEqual(index_request.method, "POST")
+        self.assertEqual(deletion_request.method, "DELETE")
+        self.assertEqual(deletion_request.headers["If-Match"], '"created-header"')
+
+    def test_conflicting_creation_etags_require_manual_cleanup(self):
+        cloud = FakeCloud()
+        cloud.header_etag = '"different"'
+        with self.assertRaisesRegex(RuntimeError, "Conflicting creation ETags.*verify ownership and delete manually") as caught:
+            execute_offline(cloud)
+        self.assertIn(cloud.created[0].name, str(caught.exception))
+        self.assertFalse(cloud.documents)
         self.assertFalse(cloud.delete_conditions)
         self.assertFalse(cloud.deleted)
 
@@ -435,15 +511,14 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         bad_results = [
             result(output=object()),
             result(warnings=["truncated"]),
-            result(model="another-model"),
-            result(output_data_kind="float16"),
+            result(data=None),
             result(data=[]),
             result(data=[SimpleNamespace(index=0)]),
-            result(data=[item(contentKind="query")]),
-            result(data=[item(vectorKind="multi")]),
             result(data=[item(truncated=True)]),
+            result(data=[item(embedding=[])]),
             result(data=[item(embedding=[1.0])]),
             result(data=[item(embedding=[math.nan] * 1536)]),
+            result(data=[item(embedding=[math.inf] * 1536)]),
             result(data=[item(embedding=[0.0] * 1536)]),
         ]
         for response in bad_results:
@@ -467,6 +542,23 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
             credential=credential,
             transport=transport,
         ) as inference:
+            response = inference.get_embeddings(
+                model=namespace["MODEL"],
+                inputs=[{"kind": "query", "content": "sample query"}],
+                vector_kind="dense",
+                dimensions=1536,
+                output_data_kind="float32",
+                encoding_format="float",
+                delivery="inline",
+            )
+            self.assertEqual(response.model, namespace["MODEL"])
+            self.assertEqual(response.output_data_kind, "float32")
+            self.assertEqual(len(response.data), 1)
+            self.assertIsInstance(response.data[0], MultimodalDenseEmbedding)
+            self.assertEqual(response.data[0].index, 0)
+            self.assertEqual(response.data[0].content_kind, "query")
+            self.assertEqual(response.data[0].vector_kind, "dense")
+            self.assertFalse(response.data[0].truncated)
             vector, tokens = namespace["embed_text"](inference, "sample query", "query")
         self.assertEqual(len(vector), 1536)
         self.assertEqual(tokens, 5)
@@ -480,7 +572,7 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
             self.assertEqual(index.e_tag, '"created"')
             search.delete_index(index, match_condition=MatchConditions.IfNotModified)
 
-        embedding_request, index_request, deletion_request = transport.requests
+        _, embedding_request, index_request, deletion_request = transport.requests
         self.assertEqual(
             json.loads(embedding_request.body),
             {
