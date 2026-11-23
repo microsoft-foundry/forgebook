@@ -288,12 +288,10 @@ function tagColor(tag: string): string {
 
   .notebook-content blockquote.notebook-callout {
     --callout-bg: #f7f7fb;
-    --callout-border: #8b8ca7;
     --callout-title: #44445f;
     --callout-text: var(--neutral-fg-1);
     background-color: var(--callout-bg);
-    border: 1px solid color-mix(in srgb, var(--callout-border) 55%, transparent);
-    border-left: 0.25rem solid var(--callout-border);
+    border: 0;
     border-radius: 0.75rem;
     color: var(--callout-text);
     font-style: normal;
@@ -305,61 +303,51 @@ function tagColor(tag: string): string {
 
   .notebook-content blockquote.notebook-callout[data-callout="note"] {
     --callout-bg: #f4ebff;
-    --callout-border: #7c3aed;
     --callout-title: #5b21b6;
   }
 
   .notebook-content blockquote.notebook-callout[data-callout="tip"] {
     --callout-bg: #eef8ef;
-    --callout-border: #1f9d3a;
     --callout-title: #12722a;
   }
 
   .notebook-content blockquote.notebook-callout[data-callout="important"] {
     --callout-bg: #eaf3ff;
-    --callout-border: #2563eb;
     --callout-title: #1d4ed8;
   }
 
   .notebook-content blockquote.notebook-callout[data-callout="caution"] {
     --callout-bg: #fff1f2;
-    --callout-border: #dc2626;
     --callout-title: #b91c1c;
   }
 
   .notebook-content blockquote.notebook-callout[data-callout="warning"] {
     --callout-bg: #fff7ed;
-    --callout-border: #ea580c;
     --callout-title: #c2410c;
   }
 
   .dark .notebook-content blockquote.notebook-callout[data-callout="note"] {
     --callout-bg: #2b2142;
-    --callout-border: #a78bfa;
     --callout-title: #ddd6fe;
   }
 
   .dark .notebook-content blockquote.notebook-callout[data-callout="tip"] {
     --callout-bg: #132d1a;
-    --callout-border: #4ade80;
     --callout-title: #bbf7d0;
   }
 
   .dark .notebook-content blockquote.notebook-callout[data-callout="important"] {
     --callout-bg: #14253f;
-    --callout-border: #60a5fa;
     --callout-title: #bfdbfe;
   }
 
   .dark .notebook-content blockquote.notebook-callout[data-callout="caution"] {
     --callout-bg: #3a1719;
-    --callout-border: #f87171;
     --callout-title: #fecaca;
   }
 
   .dark .notebook-content blockquote.notebook-callout[data-callout="warning"] {
     --callout-bg: #341f10;
-    --callout-border: #fb923c;
     --callout-title: #fed7aa;
   }
 
