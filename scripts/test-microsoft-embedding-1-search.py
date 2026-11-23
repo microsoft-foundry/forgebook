@@ -47,7 +47,12 @@ ALLOWED_OUTPUT_LINES = [
         r"Temporary index: forgebook-embedding-[0-9a-f]{12}",
         r"Keyword hits: \d+",
         r"Vector result IDs: \[(?:'[a-z]+'(?:, '[a-z]+')*)?\]",
+        r"Top passage: Travel disruption expenses",
+        r"When an air trip disruption leaves an employee stranded overnight, the company covers reasonable hotel and meal expenses\. Submit receipts to the travel team within 30 days\.",
+        r"Top passage rank: 1",
         r"Expected passage '[a-z]+' found at rank \d+ of \d+\.",
+        r"Expected passage '[a-z]+' was not in the top \d+\.",
+        r"The vector query returned no passages\.",
         r"  [a-z]+: Search score \d+\.\d{4}",
         r"Temporary index deleted\.",
     )
@@ -163,7 +168,6 @@ class FakeCloud:
         self.fail_creation = False
         self.missing_etag = False
         self.body_etag = '"created"'
-        self.header_etag = None
         self.fail_deletion = False
         self.fail_inference = False
         self.fail_upload = False
@@ -171,6 +175,8 @@ class FakeCloud:
         self.count_calls = 0
         self.delete_conditions = []
         self.deletion_etags = []
+        self.keyword_override = None
+        self.vector_override = None
 
     def inference_client(self, **_kwargs):
         cloud = self
@@ -215,14 +221,10 @@ class FakeCloud:
         class FakeIndexClient(FakeContext):
             def create_index(self, index, **kwargs):
                 if cloud.fail_creation:
-                    raise RuntimeError("Index already exists")
+                    raise ServiceRequestError("Simulated uncertain creation")
                 if not cloud.missing_etag:
                     index["@odata.etag"] = cloud.body_etag
                 cloud.created.append(index)
-                headers = {"ETag": cloud.header_etag} if cloud.header_etag else {}
-                kwargs["raw_response_hook"](
-                    SimpleNamespace(http_response=SimpleNamespace(status_code=201, headers=headers))
-                )
                 return index
 
             def delete_index(self, index, *, match_condition):
@@ -252,6 +254,8 @@ class FakeCloud:
             def search(self, **kwargs):
                 cloud.search_calls.append(kwargs)
                 if kwargs["search_text"] is not None:
+                    if cloud.keyword_override is not None:
+                        return cloud.keyword_override
                     terms = kwargs["search_text"].lower().split()
                     return [
                         document
@@ -259,6 +263,8 @@ class FakeCloud:
                         if all(term in document["content"].lower() for term in terms)
                     ][: kwargs["top"]]
 
+                if cloud.vector_override is not None:
+                    return cloud.vector_override
                 query = kwargs["vector_queries"][0].vector
                 ranked = sorted(
                     cloud.documents,
@@ -308,6 +314,9 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
 
         self.assertIn("Keyword hits: 0", output)
         self.assertIn("Expected passage 'travel' found at rank 1 of 3.", output)
+        self.assertIn("Top passage: Travel disruption expenses", output)
+        self.assertIn(cloud.documents[0]["content"], output)
+        self.assertIn("Top passage rank: 1", output)
         self.assertIn("Temporary index deleted.", output)
         self.assertEqual(unsafe_output_lines(output), [])
         self.assertEqual(len(cloud.embedding_calls), 7)
@@ -380,10 +389,29 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
     def test_failed_creation_does_not_delete_an_existing_index(self):
         cloud = FakeCloud()
         cloud.fail_creation = True
-        with self.assertRaisesRegex(RuntimeError, "already exists"):
+        with self.assertRaisesRegex(RuntimeError, "uncertain; verify ownership before manual cleanup") as caught:
             execute_offline(cloud)
+        self.assertIsInstance(caught.exception.__cause__, ServiceRequestError)
         self.assertFalse(cloud.created)
         self.assertFalse(cloud.deleted)
+
+    def test_relevance_outcomes_are_informational(self):
+        cloud = FakeCloud()
+        cloud.keyword_override = [{"id": "unrelated"}]
+        cloud.vector_override = [{"id": "other", "title": "Another policy", "content": "Other text.", "@search.score": 0.4}]
+        _, output = execute_offline(cloud)
+        self.assertIn("Keyword hits: 1", output)
+        self.assertIn("Top passage: Another policy\nOther text.\nTop passage rank: 1", output)
+        self.assertIn("Expected passage 'travel' was not in the top 3.", output)
+        self.assertEqual(cloud.deleted, [cloud.created[0].name])
+
+    def test_empty_vector_results_are_informational(self):
+        cloud = FakeCloud()
+        cloud.vector_override = []
+        _, output = execute_offline(cloud)
+        self.assertIn("The vector query returned no passages.", output)
+        self.assertIn("Expected passage 'travel' was not in the top 3.", output)
+        self.assertEqual(cloud.deleted, [cloud.created[0].name])
 
     def test_inference_failure_stops_before_creating_an_index(self):
         cloud = FakeCloud()
@@ -405,21 +433,15 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         self.assertFalse(cloud.deleted)
 
     def test_wildcard_etag_never_allows_unconditional_cleanup(self):
-        for source in ("body", "header"):
-            with self.subTest(source=source):
-                cloud = FakeCloud()
-                if source == "body":
-                    cloud.body_etag = "*"
-                else:
-                    cloud.missing_etag = True
-                    cloud.header_etag = "*"
-                with self.assertRaisesRegex(RuntimeError, "No usable creation ETag.*delete manually"):
-                    execute_offline(cloud)
-                self.assertFalse(cloud.documents)
-                self.assertFalse(cloud.delete_conditions)
-                self.assertFalse(cloud.deleted)
+        cloud = FakeCloud()
+        cloud.body_etag = "*"
+        with self.assertRaisesRegex(RuntimeError, "No usable creation ETag.*delete manually"):
+            execute_offline(cloud)
+        self.assertFalse(cloud.documents)
+        self.assertFalse(cloud.delete_conditions)
+        self.assertFalse(cloud.deleted)
 
-    def test_header_only_etag_is_used_for_conditional_cleanup(self):
+    def test_header_only_etag_requires_manual_cleanup(self):
         transport = OfflineTransport()
         transport.omit_body_etag = True
         transport.header_etag = '"created-header"'
@@ -430,23 +452,11 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
             transport=transport,
         )
 
-        _, output = execute_offline(cloud)
-
-        self.assertIn("Temporary index deleted.", output)
-        index_request, deletion_request = transport.requests
-        self.assertEqual(index_request.method, "POST")
-        self.assertEqual(deletion_request.method, "DELETE")
-        self.assertEqual(deletion_request.headers["If-Match"], '"created-header"')
-
-    def test_conflicting_creation_etags_require_manual_cleanup(self):
-        cloud = FakeCloud()
-        cloud.header_etag = '"different"'
-        with self.assertRaisesRegex(RuntimeError, "Conflicting creation ETags.*verify ownership and delete manually") as caught:
+        with self.assertRaisesRegex(RuntimeError, "No usable creation ETag.*delete manually"):
             execute_offline(cloud)
-        self.assertIn(cloud.created[0].name, str(caught.exception))
-        self.assertFalse(cloud.documents)
-        self.assertFalse(cloud.delete_conditions)
-        self.assertFalse(cloud.deleted)
+        self.assertEqual(len(transport.requests), 1)
+        index_request = transport.requests[0]
+        self.assertEqual(index_request.method, "POST")
 
     def test_failed_cleanup_reports_index_and_chains_original_failure(self):
         cloud = FakeCloud()
