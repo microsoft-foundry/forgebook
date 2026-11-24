@@ -334,7 +334,7 @@
 - slug: microsoft-embedding-1-azure-ai-search
   path: notebooks/microsoft-embedding-1-azure-ai-search.ipynb
   title: "Use Microsoft Embedding 1 with Foundry IQ (Azure AI Search)"
-  description: "Generate text embeddings with the Azure Cosmos DB inference endpoint, then push and query them in a Foundry IQ (Azure AI Search) vector index."
+  description: "Generate Microsoft Embedding 1 vectors through Azure Cosmos DB inference and compare keyword, vector, and hybrid search in Foundry IQ (Azure AI Search)."
   authors:
     - github: farzad528
   tags:
