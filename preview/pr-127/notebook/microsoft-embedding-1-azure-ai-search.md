@@ -100,7 +100,7 @@ print(f"Corpus: {len(documents)} fictional policy passages; query: {query_text!r
 
 ## Generate one dense vector per request
 
-The [model API](https://learn.microsoft.com/azure/cosmos-db/gen-ai/microsoft-embedding-1#api-reference) accepts one text or query input per request. Use `kind="text"` for passages and `kind="query"` for the question, with the same model and dimensions for both. Start with 1,536 dimensions; the model also supports 1,024 and 2,048. Measure quality, latency, and cost on your data.
+The [model API](https://learn.microsoft.com/azure/cosmos-db/gen-ai/microsoft-embedding-1#api-reference) accepts one text or query input per request. Use `kind="text"` for passages and `kind="query"` for the question, with the same model and dimensions for both. Start with 1,536 dimensions; the model also supports 1,024 and 2,048. Measure quality, latency, and cost on your data. For more on supported dimensions and published benchmarks, see the [Microsoft Embedding 1 announcement on the Azure Cosmos DB Blog](https://devblogs.microsoft.com/cosmosdb/microsoft-embedding-one/).
 
 Request inline float32 output for Search. Inputs longer than 8,192 tokens can be truncated; chunk and evaluate real documents separately.
 
@@ -295,5 +295,3 @@ Copy `embed_text` and `make_index` with their imports and `MODEL` and `DIMENSION
 | Invalid embedding or dimensions | Use the same model and dimensions for passages, index, and query; inspect warnings securely. |
 | Upload failure or indexing timeout | Check service diagnostics and quotas; cleanup is attempted for the created index. |
 | Missing or changed creation ETag, lost creation response, or failed cleanup | Verify ownership of the printed index before deleting it manually. Never delete an index merely because its name matches. |
-
-An interrupted kernel or lost creation response may leave an index behind. Conditional index deletion cannot protect concurrent document changes. Delete any **services or resource groups you created solely for your own test** separately; do not delete shared resources.
