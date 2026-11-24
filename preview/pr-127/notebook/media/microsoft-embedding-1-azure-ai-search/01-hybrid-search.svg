@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" role="img" aria-labelledby="title description">
+  <title id="title">Find a policy by wording or meaning</title>
+  <desc id="description">Keyword search matches policy codes and words. Azure Cosmos DB inference embeds the question for vector search. Foundry IQ (Azure AI Search) combines both rankings in a hybrid query.</desc>
+  <rect x="2" y="2" width="996" height="296" rx="20" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <g font-family="system-ui, Segoe UI, sans-serif" fill="#0f172a">
+    <text x="34" y="53" font-size="32" font-weight="700">Find a policy by wording or meaning</text>
+    <text x="34" y="86" font-size="20">Microsoft Embedding 1 with Foundry IQ (Azure AI Search)</text>
+    <rect x="34" y="121" width="331" height="61" rx="10" fill="#e0f2fe" stroke="#0369a1"/>
+    <text x="51" y="147" font-size="22" font-weight="650">Keyword search</text>
+    <text x="51" y="170" font-size="17">Match terms like SEC-07.</text>
+    <rect x="34" y="207" width="331" height="61" rx="10" fill="#dcfce7" stroke="#15803d"/>
+    <text x="51" y="233" font-size="22" font-weight="650">Vector search</text>
+    <text x="51" y="256" font-size="17">Use Cosmos DB embeddings.</text>
+    <path d="M365 151h75l54 43M365 237h75l54-43h62m-11-8 11 8-11 8" fill="none" stroke="#334155" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="558" y="139" width="408" height="110" rx="12" fill="#ede9fe" stroke="#6d28d9"/>
+    <text x="582" y="176" font-size="25" font-weight="700">Hybrid search</text>
+    <text x="582" y="207" font-size="19">Combine both rankings with</text>
+    <text x="582" y="232" font-size="19">Reciprocal Rank Fusion (RRF).</text>
+  </g>
+</svg>
