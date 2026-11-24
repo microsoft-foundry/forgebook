@@ -1,4 +1,4 @@
-When users mix paraphrased questions with exact policy codes, start with hybrid search. This recipe generates Microsoft Embedding 1 (preview) vectors through an **Azure Cosmos DB inference endpoint** and hands them to **Foundry IQ (Azure AI Search)**. Compare keyword, vector, and hybrid search over the same six fictional policies to see what each mode retrieves.
+A question can name one policy but describe another. Use hybrid search to give both the policy code and the meaning of the question a vote. This recipe generates Microsoft Embedding 1 (preview) vectors through an **Azure Cosmos DB inference endpoint** and compares keyword, vector, and hybrid search across six fictional policies in **Foundry IQ (Azure AI Search)**.
 
 ![Diagram: keyword search matches words and policy codes, vector search matches meaning, and hybrid search combines their rankings.](media/microsoft-embedding-1-azure-ai-search/01-hybrid-search.svg)
 
@@ -8,7 +8,7 @@ When users mix paraphrased questions with exact policy codes, start with hybrid 
 
 **Difficulty:** Intermediate. **Time:** Allow about 20–40 minutes for first-time setup and role propagation and about 5 minutes to run the notebook once resources are ready. **Cost:** Eight embedding requests and six Search queries, plus two Search queries if you enable the optional semantic ranker. See [model pricing](https://learn.microsoft.com/azure/cosmos-db/gen-ai/microsoft-embedding-1#pricing) and [Search pricing](https://azure.microsoft.com/pricing/details/search/). A paid Search service can accrue charges even when idle.
 
-**Live verification:** The outputs below are from a fresh kernel on November 24, 2026, with the optional semantic step enabled. The temporary index suffix is redacted. This two-query smoke test verifies the integration, not retrieval quality on other data.
+**Last verified:** 2026-11-24
 
 ## Prerequisites
 
@@ -27,7 +27,7 @@ When users mix paraphrased questions with exact policy codes, start with hybrid 
 
 Microsoft Embedding 1 [supports](https://learn.microsoft.com/azure/cosmos-db/gen-ai/microsoft-embedding-1#model-specifications) 1,024, 1,536, 2,048, and 2,560 dimensions (the model default). Start with 1,536: at the same precision it uses 40% less raw vector storage than 2,560. Measure the relevance tradeoff on your data. The [Azure Cosmos DB Blog announcement](https://devblogs.microsoft.com/cosmosdb/microsoft-embedding-one/) reports external benchmarks; this recipe does not reproduce them.
 
-Run the numbered cells in order. If a cloud step fails, the notebook closes the clients and attempts to remove its index. Rerun from Configuration to start a new test.
+Run the numbered cells in order. A failure during setup or upload triggers cleanup. After upload, you can retry an embedding or query cell without rebuilding the index. Run Step 6 when you're done, even if a query fails.
 
 ```python
 import math
@@ -53,7 +53,7 @@ MODEL = "microsoft-embedding-1-large"
 DIMENSIONS = 1536
 TEXT_ANALYZER = "en.microsoft"
 TOP_K = 3
-SEMANTIC_K = 50
+VECTOR_K = 50
 SEMANTIC_CONFIG = "policy-text"
 EMBEDDING_SCOPE = "https://dbinference.azure.com/.default"
 SEARCH_SCOPE = "https://search.azure.com/.default"
@@ -67,7 +67,7 @@ if "resources" in globals():
 resources = ExitStack()
 
 @contextmanager
-def cloud_step():
+def setup_step():
     try:
         yield
     except BaseException as exc:
@@ -77,18 +77,12 @@ def cloud_step():
 print(f"Configuration: {DIMENSIONS} dimensions; top {TOP_K} results.")
 ```
 
-```text
-Configuration: 1536 dimensions; top 3 results.
-```
-
-The same dimension is used for passages, questions, and the index field. The baselines show up to three hits each.
-
 ## Step 0: Verify access
 
 Check both token scopes and make a Search call without printing endpoints, tokens, or the names of existing indexes. A token proves sign-in, not permission to call the embedding endpoint; Step 1 tests that role.
 
 ```python
-with cloud_step():
+with setup_step():
     endpoints = {"EMBEDDING_ENDPOINT": EMBEDDING_ENDPOINT, "AZURE_SEARCH_ENDPOINT": SEARCH_ENDPOINT}
     missing = [name for name, value in endpoints.items() if not value]
     if missing:
@@ -106,32 +100,24 @@ with cloud_step():
     print("Search index access OK.")
 ```
 
-```text
-Embedding token OK.
-Search token OK.
-Search index access OK.
-```
-
-The identity can list Search indexes. Write access is checked when the notebook creates the index and uploads documents.
-
 ## Step 1: Embed one policy passage
 
 The [model API](https://learn.microsoft.com/azure/cosmos-db/gen-ai/microsoft-embedding-1#api-reference) accepts one input per request. Use `kind="text"` for passages and `kind="query"` for questions; both use the same model and dimensions. Run the first passage on its own, then reuse its vector in Step 3 rather than paying to embed it twice.
 
 ```python
 documents = [
-    {"id": "travel", "title": "Travel disruption expenses",
-     "content": "Policy TRV-12. When an air trip disruption leaves an employee stranded overnight, the company covers reasonable hotel and meal expenses. Submit receipts to the travel team within 30 days."},
-    {"id": "baggage", "title": "Lost baggage",
-     "content": "Policy TRV-18. Employees whose checked baggage is lost during business travel may claim essential replacement items with receipts."},
-    {"id": "booking", "title": "Changing a booking",
-     "content": "Policy TRV-24. Use the booking portal to change an itinerary when a business meeting moves. A manager must approve higher fares."},
-    {"id": "equipment", "title": "Remote work equipment",
-     "content": "Policy IT-04. Remote employees may request a laptop and monitor from the IT catalog; equipment must be returned when employment ends."},
-    {"id": "leave", "title": "Annual leave",
-     "content": "Policy HR-09. Employees request annual leave through the HR portal. Managers approve requests based on team coverage."},
-    {"id": "security", "title": "Lost devices",
-     "content": "Policy SEC-07. Report a lost company device to the security team within one day, even if it is recovered later."},
+    {"id": "travel", "policy_code": "TRV-12", "title": "Travel disruption expenses",
+     "content": "When an air trip disruption leaves an employee stranded overnight, the company covers reasonable hotel and meal expenses. Submit receipts to the travel team within 30 days."},
+    {"id": "baggage", "policy_code": "TRV-18", "title": "Lost baggage",
+     "content": "Employees whose checked baggage is lost during business travel may claim essential replacement items with receipts."},
+    {"id": "booking", "policy_code": "TRV-24", "title": "Changing a booking",
+     "content": "Use the booking portal to change an itinerary when a business meeting moves. A manager must approve higher fares."},
+    {"id": "equipment", "policy_code": "IT-04", "title": "Remote work equipment",
+     "content": "Remote employees may request a laptop and monitor from the IT catalog; equipment must be returned when employment ends."},
+    {"id": "leave", "policy_code": "HR-09", "title": "Annual leave",
+     "content": "Employees request annual leave through the HR portal. Managers approve requests based on team coverage."},
+    {"id": "security", "policy_code": "SEC-07", "title": "Lost devices",
+     "content": "Report a lost company device to the security team within one day, even if it is recovered later."},
 ]
 
 def embed_text(client, text: str, kind: str) -> tuple[list[float], int | None]:
@@ -154,20 +140,14 @@ def embed_text(client, text: str, kind: str) -> tuple[list[float], int | None]:
         raise ValueError(f"Expected an untruncated, nonzero, finite vector with {DIMENSIONS} dimensions.")
     return vector, response.usage.prompt_tokens if response.usage else None
 
-with cloud_step():
+with setup_step():
     first_vector, first_tokens = embed_text(inference, documents[0]["content"], "text")
     print(f"First passage: {len(first_vector)} dimensions; input tokens: {first_tokens}.")
 ```
 
-```text
-First passage: 1536 dimensions; input tokens: 39.
-```
-
-The endpoint returned the requested vector length and reported token usage for the passage.
-
 ## Step 2: Create a temporary index
 
-Use the [Microsoft English analyzer](https://learn.microsoft.com/azure/search/index-add-language-analyzers) for the prose in `title` and `content`. The [vector field](https://learn.microsoft.com/azure/search/vector-search-how-to-create-index) uses the matching dimension, cosine similarity, and `stored=True` so Search can preserve vectors during partial updates. The index also defines which text fields the optional ranker can read.
+Use the [Microsoft English analyzer](https://learn.microsoft.com/azure/search/index-add-language-analyzers) for `title` and `content`. Use the keyword analyzer for `policy_code` so a code such as `TRV-18` stays a single term. Keep codes separate from the embedded prose. The cosine [vector field](https://learn.microsoft.com/azure/search/vector-search-how-to-create-index) matches the embedding dimensions and uses `stored=True` so Search can preserve vectors during partial updates.
 
 ```python
 def make_index(name: str) -> SearchIndex:
@@ -175,6 +155,7 @@ def make_index(name: str) -> SearchIndex:
         name=name,
         fields=[
             SimpleField(name="id", type=SearchFieldDataType.String, key=True),
+            SearchableField(name="policy_code", type=SearchFieldDataType.String, analyzer_name="keyword"),
             SearchableField(name="title", type=SearchFieldDataType.String, analyzer_name=TEXT_ANALYZER),
             SearchableField(name="content", type=SearchFieldDataType.String, analyzer_name=TEXT_ANALYZER),
             SimpleField(name="embedding_model", type=SearchFieldDataType.String),
@@ -204,7 +185,7 @@ def delete_owned_index(index_client, index):
         raise RuntimeError(f"Could not delete {index.name}; verify ownership before manual cleanup.") from exc
     print("Temporary index deleted.")
 
-with cloud_step():
+with setup_step():
     index_name = f"embedding1-cookbook-{uuid.uuid4().hex[:12]}"
     print(f"Temporary index: {index_name}")
     try:
@@ -216,22 +197,15 @@ with cloud_step():
         raise RuntimeError(f"No usable creation ETag for {index_name}; verify ownership before manual cleanup.")
     resources.callback(delete_owned_index, index_client, created_index)
     search = resources.enter_context(SearchClient(endpoint=SEARCH_ENDPOINT, index_name=index_name, credential=credential))
-    print("Index created with English text fields and a cosine vector field.")
+    print("Index created with text, policy-code, and vector fields.")
 ```
-
-```text
-Temporary index: embedding1-cookbook-<random suffix>
-Index created with English text fields and a cosine vector field.
-```
-
-The index name changes with each run. Keep it handy if cleanup fails.
 
 ## Step 3: Upload the policies
 
 Reuse the first vector and embed the other five policies. Check every upload result and wait for all six documents to be available before querying.
 
 ```python
-with cloud_step():
+with setup_step():
     passage_embeddings = [(first_vector, first_tokens)]
     passage_embeddings += [embed_text(inference, doc["content"], "text") for doc in documents[1:]]
     payload = [
@@ -252,193 +226,122 @@ with cloud_step():
     print(f"{len(uploaded)} uploaded; {count} searchable.")
 ```
 
-```text
-6 uploaded; 6 searchable.
-```
-
-All six policies are available in the index before the queries run.
-
 ## Step 4: Embed two questions
 
-Try a paraphrase and a question containing the policy identifier `SEC-07`. Use `kind="query"` so the model treats each as a search query rather than a passage to store.
+Embed both questions with `kind="query"`. The first asks about delayed-flight reimbursement with no policy code; `TRV-12` covers it. The second explicitly asks about `TRV-18` (lost baggage), even though its hotel wording points to `TRV-12`. For that question, judge relevance by whether the search retrieves the named policy, not the policy that covers hotels.
 
 ```python
 queries = [
-    ("Paraphrase", "Can I get reimbursed for a delayed flight?"),
-    ("Policy code", "What does SEC-07 require?"),
+    ("Paraphrase", "Can I get reimbursed for a delayed flight?", None),
+    ("Policy code", "Does TRV-18 cover hotel expenses after a delayed flight?", "TRV-18"),
 ]
 
-with cloud_step():
-    query_embeddings = {label: embed_text(inference, text, "query") for label, text in queries}
-    token_counts = [tokens for _, tokens in passage_embeddings] + [tokens for _, tokens in query_embeddings.values()]
-    print(f"Embedded {len(query_embeddings)} questions at {DIMENSIONS} dimensions.")
-    if all(tokens is not None for tokens in token_counts):
-        print(f"Reported input tokens across all embedding requests: {sum(token_counts)}.")
-    else:
-        print("Input token usage was not reported for every request; check Azure billing.")
+query_embeddings = {label: embed_text(inference, question, "query") for label, question, _ in queries}
+token_counts = [tokens for _, tokens in passage_embeddings] + [tokens for _, tokens in query_embeddings.values()]
+print(f"Embedded {len(query_embeddings)} questions at {DIMENSIONS} dimensions.")
+if all(tokens is not None for tokens in token_counts):
+    print(f"Reported input tokens across all embedding requests: {sum(token_counts)}.")
+else:
+    print("Input token usage was not reported for every request; check Azure billing.")
 ```
-
-```text
-Embedded 2 questions at 1536 dimensions.
-Reported input tokens across all embedding requests: 205.
-```
-
-The 205 input tokens include both questions and all six policies.
 
 ## Step 5a: Run keyword search
 
-Use the default keyword mode (`any`) over the English text fields. Count the returned hits and note their IDs. In this example `top` limits the displayed results to three, so the count is not a total-match count.
+Use the question for keyword search over the English text fields. If the application already knows a policy code, query that code in `policy_code` instead. Here the code is supplied with the sample question; a policy picker could provide it in an app. Keyword and hybrid search use the same lexical input.
 
 ```python
-with cloud_step():
-    keyword = {
-        label: list(search.search(search_text=text, search_fields=["title", "content"], select=["id"], top=TOP_K))
-        for label, text in queries
-    }
-    for label, hits in keyword.items():
-        print(f"{label}: {len(hits)} keyword results; {[hit['id'] for hit in hits]}")
-```
+def keyword_args(question: str, code: str | None) -> dict:
+    if code:
+        return {"search_text": f'"{code}"', "search_fields": ["policy_code"]}
+    return {"search_text": question, "search_fields": ["title", "content"]}
 
-```text
-Paraphrase: 0 keyword results; []
-Policy code: 1 keyword results; ['security']
+keyword = {
+    label: list(search.search(**keyword_args(question, code), select=["id"], top=TOP_K))
+    for label, question, code in queries
+}
+for label, hits in keyword.items():
+    print(f"{label} keyword matches (up to {TOP_K}): {[hit['id'] for hit in hits]}")
 ```
-
-Keyword search found the policy-code match but missed the paraphrased travel question.
 
 ## Step 5b: Run vector search
 
-Use exhaustive cosine search for this tiny corpus. For this single cosine query, convert [Search's vector score](https://learn.microsoft.com/azure/search/vector-search-ranking#scores-in-a-vector-search-results) back to cosine similarity as `2 - 1 / score`. Do not apply that formula to keyword, hybrid, or reranker scores.
+Use exhaustive cosine search for this tiny corpus. All vector and hybrid queries request the same number of vector candidates and display up to three hits. Compare IDs and ranks; don't compare scores across retrieval modes.
 
 ```python
-def vector_query(vector: list[float], k: int = TOP_K) -> VectorizedQuery:
-    return VectorizedQuery(vector=vector, fields="content_vector", k_nearest_neighbors=k, exhaustive=True)
+def vector_query(vector: list[float]) -> VectorizedQuery:
+    return VectorizedQuery(vector=vector, fields="content_vector", k_nearest_neighbors=VECTOR_K, exhaustive=True)
 
-def retrieve(search, question: str, vector: list[float], *, semantic: bool = False) -> list[dict]:
-    options = {"search_fields": ["title", "content"]}
-    if semantic:
-        options.update(query_type="semantic", semantic_configuration_name=SEMANTIC_CONFIG)
-    return list(search.search(
-        search_text=question, vector_queries=[vector_query(vector, SEMANTIC_K if semantic else TOP_K)],
-        select=["id", "title", "content"], top=TOP_K, **options,
-    ))
-
-with cloud_step():
-    vector_hits = {}
-    for label, _ in queries:
-        vector, _ = query_embeddings[label]
-        hits = list(search.search(vector_queries=[vector_query(vector)], select=["id"], top=TOP_K))
-        vector_hits[label] = hits
-        print(f"{label}:")
-        for hit in hits:
-            score = hit["@search.score"]
-            print(f"  {hit['id']}: score {score:.4f}, cosine {2 - 1 / score:.4f}")
+vector_hits = {}
+for label, _, _ in queries:
+    vector, _ = query_embeddings[label]
+    hits = list(search.search(vector_queries=[vector_query(vector)], select=["id"], top=TOP_K))
+    vector_hits[label] = hits
+    print(f"{label} vector matches: {[hit['id'] for hit in hits]}")
 ```
-
-```text
-Paraphrase:
-  travel: score 0.6965, cosine 0.5643
-  baggage: score 0.6625, cosine 0.4906
-  booking: score 0.6128, cosine 0.3681
-Policy code:
-  security: score 0.6669, cosine 0.5006
-  leave: score 0.5782, cosine 0.2706
-  equipment: score 0.5728, cosine 0.2541
-```
-
-Vector search ranked the relevant policy first for both questions in this run. The scores are not probabilities or relevance labels.
 
 ## Step 5c: Run hybrid search
 
-Send text and vector in one request. Search combines the two rankings with [Reciprocal Rank Fusion (RRF)](https://learn.microsoft.com/azure/search/hybrid-search-ranking). Start here when your users need both wording and meaning, but compare the top IDs against the baselines: an RRF score isn't comparable to a cosine or keyword score.
+Send the same lexical input and the same vector used in the baselines. [Reciprocal Rank Fusion (RRF)](https://learn.microsoft.com/azure/search/hybrid-search-ranking) can lift a policy that appears in both lists. Compare the top hits: does adding the lexical signal move the named lost-baggage policy above the hotel policy, while still finding the policy for the paraphrase? This comparison illustrates a ranking tradeoff, not a relevance benchmark.
 
 ```python
-def top_id(hits):
-    return hits[0]["id"] if hits else "(no match)"
+def hybrid_search(search, question: str, vector: list[float], *, code: str | None = None,
+                  semantic: bool = False) -> list[dict]:
+    options = keyword_args(question, code)
+    if semantic:
+        options.update(semantic_query=question, semantic_configuration_name=SEMANTIC_CONFIG)
+    return list(search.search(
+        **options, vector_queries=[vector_query(vector)],
+        select=["id", "policy_code", "title", "content"], top=TOP_K,
+    ))
 
-with cloud_step():
-    hybrid = {}
-    for label, text in queries:
-        vector, _ = query_embeddings[label]
-        hits = retrieve(search, text, vector)
-        hybrid[label] = hits
-        print(f"{label}: " + ", ".join(f"{h['id']} (RRF {h['@search.score']:.4f})" for h in hits))
+hybrid = {
+    label: hybrid_search(search, question, query_embeddings[label][0], code=code)
+    for label, question, code in queries
+}
 
-    print("| Mode | Paraphrase | Policy code |")
-    print("| --- | --- | --- |")
+for label, question, _ in queries:
+    print(question)
     for mode, results in (("Keyword", keyword), ("Vector", vector_hits), ("Hybrid", hybrid)):
-        print(f"| {mode} | " + " | ".join(top_id(results[label]) for label, _ in queries) + " |")
-    if hybrid["Paraphrase"]:
-        hit = hybrid["Paraphrase"][0]
-        print(f"Top paraphrase match: {hit['title']}")
-        print(hit["content"])
+        hits = results[label]
+        top_id = hits[0]["id"] if hits else "(no match)"
+        print(f"  {mode}: {top_id}")
+    if hybrid[label]:
+        hit = hybrid[label][0]
+        print(f"  {hit['policy_code']}: {hit['title']}. {hit['content']}")
 ```
-
-```text
-Paraphrase: travel (RRF 0.0167), baggage (RRF 0.0164), booking (RRF 0.0161)
-Policy code: security (RRF 0.0333), leave (RRF 0.0164), equipment (RRF 0.0161)
-```
-
-| Mode | Paraphrase | Policy code |
-| --- | --- | --- |
-| Keyword | (no match) | security |
-| Vector | travel | security |
-| Hybrid | travel | security |
-
-```text
-Top paraphrase match: Travel disruption expenses
-Policy TRV-12. When an air trip disruption leaves an employee stranded overnight, the company covers reasonable hotel and meal expenses. Submit receipts to the travel team within 30 days.
-```
-
-Hybrid recovered the paraphrase like vector search did, and `security` ranked first in both inputs to RRF for the policy-code query. Hybrid did not improve the top hit over vector alone on these two questions. Test labeled queries to see when fusing the two rankings helps your application.
 
 ## Step 5d: Optionally add semantic ranking
 
-Set `RUN_SEMANTIC_RANKER=1` before starting the kernel only if semantic ranking is already enabled on your service and you're comfortable with its [separate billing](https://learn.microsoft.com/azure/search/semantic-how-to-enable-disable). The ranker reorders the hybrid candidates based on their text. The optional query asks for up to 50 vector candidates following [semantic hybrid query guidance](https://learn.microsoft.com/azure/search/hybrid-search-how-to-query); this six-document index can supply at most six.
+Set `RUN_SEMANTIC_RANKER=1` before starting the kernel only if semantic ranking is already enabled and you're comfortable with its [separate billing](https://learn.microsoft.com/azure/search/semantic-how-to-enable-disable). Both hybrid calls use the same candidate settings, including the [recommended 50 vector candidates](https://learn.microsoft.com/azure/search/hybrid-search-how-to-query) for semantic ranking. The `semantic_query` adds the original question for reranking without changing the keyword or vector inputs. Reranking can move a different policy ahead of the code match; use a filter if that match is required.
 
 ```python
-with cloud_step():
-    if RUN_SEMANTIC:
-        for label, text in queries:
-            vector, _ = query_embeddings[label]
-            reranked = retrieve(search, text, vector, semantic=True)
-            print(f"{label} after semantic ranking: {[hit['id'] for hit in reranked]}")
-    else:
-        print("Semantic ranking skipped (opt-in).")
+if RUN_SEMANTIC:
+    for label, question, code in queries:
+        vector, _ = query_embeddings[label]
+        reranked = hybrid_search(search, question, vector, code=code, semantic=True)
+        print(f"{label} after semantic ranking: {[hit['id'] for hit in reranked]}")
+else:
+    print("Semantic ranking skipped (opt-in).")
 ```
-
-```text
-Paraphrase after semantic ranking: ['travel', 'booking', 'baggage']
-Policy code after semantic ranking: ['security', 'travel', 'booking']
-```
-
-The optional semantic query kept both top matches but changed the lower-ranked hits. It also used a larger candidate pool than the baseline, so the change isn't attributable to reranking alone. Without the opt-in, this cell prints `Semantic ranking skipped (opt-in).`
 
 ## Step 6: Clean up
 
-Delete the temporary index and close the Azure clients. This is the only resource the notebook creates. If creation or deletion wasn't confirmed, verify ownership before manual cleanup. This cell also works after a handled failure.
+Run this cell when you're done or if you stop after a query error. It deletes the temporary index and closes the Azure clients. If index ownership or deletion wasn't confirmed, verify ownership before manual cleanup.
 
 ```python
 resources.close()
 print("Azure clients closed.")
 ```
 
-```text
-Temporary index deleted.
-Azure clients closed.
-```
-
-If cleanup already ran after a handled failure, you won't see the deletion message again.
-
 ## Make it yours
 
-Copy the Configuration cell, `embed_text`, `vector_query`, and `retrieve`. Keep the model, vector type, dimensions, and index metric consistent when you index and query.
+Reuse `embed_text`, `keyword_args`, `vector_query`, and `hybrid_search` with the configuration values above. Keep the model, dimensions, and index metric consistent. Use hybrid when the lexical signal improves results on labeled questions; keep vector-only where it meets your needs.
 
 | Sample choice | Change for your application |
 | --- | --- |
 | Six fictional policies | Chunk your documents. Inputs over 8,192 tokens can be truncated. Re-embed when text changes. |
-| English analyzer and embedded policy codes | Pick the language analyzer for your corpus. If a query must match an exact code, add a dedicated filterable code field and use an equality filter; hybrid alone isn't a guarantee. |
-| 1,536-dimensional float32 vectors | Test another supported dimension in a separate index and re-embed the corpus. [`Collection(Edm.Half)`](https://learn.microsoft.com/azure/search/vector-search-how-to-assign-narrow-data-types) is a way to reduce raw storage after testing its quality impact. |
+| English analyzer and separate policy codes | Pick the language analyzer for your corpus. Pass a known code as the lexical input. For mandatory exact matches, make the code field filterable and use an equality filter; hybrid ranks matches but doesn't restrict the result set. |
+| 1,536-dimensional float32 vectors | For this model, [`Collection(Edm.Half)`](https://learn.microsoft.com/azure/search/vector-search-how-to-assign-narrow-data-types) halves raw bytes per vector, not total index size. The [model produces float16 values natively](https://learn.microsoft.com/azure/cosmos-db/gen-ai/microsoft-embedding-1), so casting the widened float32 values back to float16 doesn't lose precision. |
 | Exhaustive search, three displayed results | Measure approximate HNSW recall against exhaustive search on a labeled sample. Tune candidate count and query latency separately from the number of hits you display. |
 | CLI identity for a local notebook | Use an explicitly configured managed identity in Azure and assign the same scoped roles. |
 
