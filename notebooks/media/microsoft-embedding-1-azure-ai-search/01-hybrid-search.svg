@@ -7,7 +7,7 @@
     <text x="34" y="86" font-size="20">Microsoft Embedding 1 with Foundry IQ (Azure AI Search)</text>
     <rect x="34" y="121" width="331" height="61" rx="10" fill="#e0f2fe" stroke="#0369a1"/>
     <text x="51" y="147" font-size="22" font-weight="650">Keyword search</text>
-    <text x="51" y="170" font-size="17">Match terms like SEC-07.</text>
+    <text x="51" y="170" font-size="17">Match terms like TRV-18.</text>
     <rect x="34" y="207" width="331" height="61" rx="10" fill="#dcfce7" stroke="#15803d"/>
     <text x="51" y="233" font-size="22" font-weight="650">Vector search</text>
     <text x="51" y="256" font-size="17">Use Cosmos DB embeddings.</text>

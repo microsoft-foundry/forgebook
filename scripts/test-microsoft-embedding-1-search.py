@@ -42,19 +42,16 @@ ALLOWED_OUTPUT_LINES = [
         r"(?:Embedding token|Search token|Search index access) OK\.",
         r"First passage: \d+ dimensions; input tokens: (?:\d+|None)\.",
         r"Temporary index: embedding1-cookbook-[a-f0-9]{12}",
-        r"Index created with English text fields and a cosine vector field\.",
+        r"Index created with text, policy-code, and vector fields\.",
         r"\d+ uploaded; \d+ searchable\.",
         r"Embedded \d+ questions at \d+ dimensions\.",
         r"Reported input tokens across all embedding requests: \d+\.",
-        r"(?:Paraphrase|Policy code): \d+ keyword results; \[(?:'[a-z]+'(?:, '[a-z]+')*)?\]",
-        r"(?:Paraphrase|Policy code):",
-        r"  [a-z]+: score \d+\.\d{4}, cosine -?\d+\.\d{4}",
-        r"(?:Paraphrase|Policy code): (?:[a-z]+ \(RRF \d+\.\d{4}\)(?:, [a-z]+ \(RRF \d+\.\d{4}\))*)?",
-        r"\| Mode \| Paraphrase \| Policy code \|",
-        r"\| --- \| --- \| --- \|",
-        r"\| (?:Keyword|Vector|Hybrid) \| (?:[a-z]+|\(no match\)) \| (?:[a-z]+|\(no match\)) \|",
-        r"Top paraphrase match: Travel disruption expenses",
-        r"Policy TRV-12\. When an air trip disruption leaves an employee stranded overnight, the company covers reasonable hotel and meal expenses\. Submit receipts to the travel team within 30 days\.",
+        r"(?:Paraphrase|Policy code) (?:keyword matches \(up to 3\)|vector matches): \[(?:'[a-z]+'(?:, '[a-z]+')*)?\]",
+        r"Can I get reimbursed for a delayed flight\?",
+        r"Does TRV-18 cover hotel expenses after a delayed flight\?",
+        r"  (?:Keyword|Vector|Hybrid): (?:[a-z]+|\(no match\))",
+        r"  TRV-12: Travel disruption expenses\. When an air trip disruption leaves an employee stranded overnight, the company covers reasonable hotel and meal expenses\. Submit receipts to the travel team within 30 days\.",
+        r"  TRV-18: Lost baggage\. Employees whose checked baggage is lost during business travel may claim essential replacement items with receipts\.",
         r"Semantic ranking skipped \(opt-in\)\.",
         r"(?:Paraphrase|Policy code) after semantic ranking: \[(?:'[a-z]+'(?:, '[a-z]+')*)?\]",
         r"Temporary index deleted\.",
@@ -200,9 +197,7 @@ class FakeCloud:
                 if cloud.fail_inference:
                     raise ServiceRequestError("Simulated inference failure")
                 item = kwargs["inputs"][0]
-                if "SEC-07" in item["content"]:
-                    position = 3
-                elif item["kind"] == "query" or "air trip disruption" in item["content"]:
+                if item["kind"] == "query" or "air trip disruption" in item["content"]:
                     position = 0
                 elif "baggage" in item["content"]:
                     position = 1
@@ -262,6 +257,10 @@ class FakeCloud:
         cloud = self
 
         class FakeSearchClient(FakeContext):
+            def __exit__(self, *_args):
+                cloud.closed.append("search")
+                return False
+
             def upload_documents(self, documents):
                 cloud.documents = documents
                 return [
@@ -279,14 +278,14 @@ class FakeCloud:
                     raise ServiceRequestError("Simulated search failure")
                 text = kwargs.get("search_text")
                 vector_queries = kwargs.get("vector_queries")
+                code_matches = [
+                    doc for doc in cloud.documents
+                    if kwargs.get("search_fields") == ["policy_code"] and text == f'"{doc["policy_code"]}"'
+                ]
                 if text is not None and not vector_queries:
                     if cloud.keyword_override is not None:
                         return cloud.keyword_override
-                    return [
-                        document
-                        for document in cloud.documents
-                        if "SEC-07" in text and "SEC-07" in document["content"]
-                    ][: kwargs["top"]]
+                    return code_matches[: kwargs["top"]]
 
                 if text is not None and cloud.hybrid_override is not None:
                     return cloud.hybrid_override
@@ -298,10 +297,10 @@ class FakeCloud:
                     key=lambda doc: sum(a * b for a, b in zip(query, doc["content_vector"])),
                     reverse=True,
                 )
-                hits = ranked[: kwargs["top"]]
                 if text is not None:
-                    return [{**doc, "@search.score": 0.0328} for doc in hits]
-                return [{**doc, "@search.score": score} for doc, score in zip(hits, [1.0, 0.5, 0.5])]
+                    # Stub the lexical promotion; Azure ranking is verified separately.
+                    ranked = code_matches + [doc for doc in ranked if doc not in code_matches]
+                return ranked[: kwargs["top"]]
 
         return FakeSearchClient()
 
@@ -312,7 +311,7 @@ def notebook_cells():
     return [cell for cell in notebook.cells if cell.cell_type == "code"]
 
 
-def execute_offline(cloud, *, semantic=False, overrides=None):
+def execute_offline(cloud, *, semantic=False, overrides=None, retry_query=None):
     namespace = {"__name__": "__notebook__"}
     output = io.StringIO()
     environment = {
@@ -334,7 +333,14 @@ def execute_offline(cloud, *, semantic=False, overrides=None):
         stack.enter_context(patch("time.sleep"))
         stack.enter_context(contextlib.redirect_stdout(output))
         for index, cell in enumerate(notebook_cells(), start=1):
-            exec(compile(cell.source, f"{NOTEBOOK.name}:cell-{index}", "exec"), namespace)
+            code = compile(cell.source, f"{NOTEBOOK.name}:cell-{index}", "exec")
+            try:
+                exec(code, namespace)
+            except ServiceRequestError as exc:
+                if retry_query is None:
+                    raise
+                retry_query(exc)
+                exec(code, namespace)
     return namespace, output.getvalue()
 
 
@@ -355,12 +361,12 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         cloud = FakeCloud()
         namespace, output = execute_offline(cloud)
 
-        self.assertIn("Paraphrase: 0 keyword results; []", output)
-        self.assertIn("| Keyword | (no match) | security |", output)
-        self.assertIn("| Hybrid | travel | security |", output)
-        self.assertIn("Top paraphrase match: Travel disruption expenses", output)
+        self.assertIn("Paraphrase keyword matches (up to 3): []", output)
+        self.assertIn("  Keyword: baggage\n  Vector: travel\n  Hybrid: baggage", output)
+        self.assertIn("  Keyword: (no match)\n  Vector: travel\n  Hybrid: travel", output)
+        self.assertIn("TRV-12: Travel disruption expenses.", output)
+        self.assertIn("TRV-18: Lost baggage.", output)
         self.assertIn(cloud.documents[0]["content"], output)
-        self.assertIn("travel: score 1.0000, cosine 1.0000", output)
         self.assertIn("Semantic ranking skipped (opt-in).", output)
         self.assertIn("Temporary index deleted.", output)
         self.assertEqual(unsafe_output_lines(output), [])
@@ -385,6 +391,7 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         self.assertEqual(cloud.deleted, [index.name])
         self.assertEqual(cloud.delete_conditions, [MatchConditions.IfNotModified])
         self.assertEqual(cloud.deletion_etags, ['"created"'])
+        self.assertEqual(cloud.closed, ["search", "index"])
         definition = index.as_dict()
         field = next(field for field in definition["fields"] if field["name"] == "content_vector")
         self.assertEqual(field["type"], "Collection(Edm.Single)")
@@ -400,31 +407,45 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         fields = {item["name"]: item for item in definition["fields"]}
         self.assertEqual(fields["title"]["analyzer"], "en.microsoft")
         self.assertEqual(fields["content"]["analyzer"], "en.microsoft")
+        self.assertEqual(fields["policy_code"]["analyzer"], "keyword")
         self.assertEqual(len(cloud.search_calls), 6)
         self.assertEqual(cloud.search_calls[0]["search_text"], namespace["queries"][0][1])
         self.assertNotIn("search_mode", cloud.search_calls[0])
         self.assertNotIn("vector_queries", cloud.search_calls[0])
+        self.assertEqual(cloud.search_calls[1]["search_text"], '"TRV-18"')
+        self.assertEqual(cloud.search_calls[1]["search_fields"], ["policy_code"])
+        self.assertNotIn("TRV-18", cloud.embedding_calls[1]["inputs"][0]["content"])
+        self.assertIn("TRV-18", cloud.embedding_calls[-1]["inputs"][0]["content"])
         self.assertNotIn("search_text", cloud.search_calls[2])
         vector_query = cloud.search_calls[2]["vector_queries"][0].as_dict()
         self.assertEqual(vector_query["fields"], "content_vector")
-        self.assertEqual(vector_query["k"], 3)
+        self.assertEqual(vector_query["k"], 50)
         self.assertTrue(vector_query["exhaustive"])
         self.assertEqual(len(vector_query["vector"]), 1536)
-        self.assertEqual(cloud.search_calls[4]["search_text"], cloud.search_calls[0]["search_text"])
-        self.assertEqual(cloud.search_calls[4]["vector_queries"][0].as_dict(), vector_query)
-        self.assertNotIn("query_type", cloud.search_calls[4])
+        for lexical_call, vector_call, hybrid_call in zip(
+            cloud.search_calls[:2], cloud.search_calls[2:4], cloud.search_calls[4:]
+        ):
+            for key in ("search_text", "search_fields", "top"):
+                self.assertEqual(hybrid_call[key], lexical_call[key])
+            self.assertEqual(hybrid_call["top"], vector_call["top"])
+            self.assertEqual(hybrid_call["vector_queries"][0].as_dict(), vector_call["vector_queries"][0].as_dict())
+            self.assertNotIn("filter", hybrid_call)
+            self.assertNotIn("semantic_query", hybrid_call)
 
     def test_semantic_opt_in_adds_reranking_without_changing_plain_hybrid(self):
         cloud = FakeCloud()
-        _, output = execute_offline(cloud, semantic=True)
+        namespace, output = execute_offline(cloud, semantic=True)
         self.assertEqual(len(cloud.search_calls), 8)
         self.assertIn("Paraphrase after semantic ranking:", output)
-        for normal, semantic in zip(cloud.search_calls[4:6], cloud.search_calls[6:]):
-            self.assertNotIn("query_type", normal)
-            self.assertEqual(semantic["query_type"], "semantic")
+        for (_, question, _), normal, semantic in zip(
+            namespace["queries"], cloud.search_calls[4:6], cloud.search_calls[6:]
+        ):
+            self.assertEqual(semantic["semantic_query"], question)
             self.assertEqual(semantic["semantic_configuration_name"], "policy-text")
-            self.assertEqual(semantic["search_text"], normal["search_text"])
-            self.assertEqual(semantic["vector_queries"][0].as_dict()["k"], 50)
+            self.assertEqual(
+                {key: value for key, value in semantic.items() if not key.startswith("semantic_")},
+                normal,
+            )
 
     def test_missing_endpoint_fails_before_service_calls(self):
         cloud = FakeCloud()
@@ -433,27 +454,41 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         self.assertFalse(cloud.embedding_calls)
         self.assertFalse(cloud.created)
 
-    def test_search_failure_before_teardown_still_deletes_index_and_closes_clients(self):
+    def test_search_failure_can_be_retried_without_rebuilding_the_index(self):
         cloud = FakeCloud()
         cloud.fail_query = True
-        with self.assertRaisesRegex(ServiceRequestError, "search failure"):
-            execute_offline(cloud)
+
+        def retry_query(exc):
+            self.assertIn("search failure", str(exc))
+            self.assertFalse(cloud.deleted)
+            self.assertFalse(cloud.closed)
+            self.assertEqual(len(cloud.embedding_calls), 8)
+            cloud.fail_query = False
+
+        execute_offline(cloud, retry_query=retry_query)
+        self.assertFalse(cloud.fail_query)
+        self.assertEqual(len(cloud.created), 1)
+        self.assertEqual(len(cloud.embedding_calls), 8)
         self.assertEqual(cloud.deleted, [cloud.created[0].name])
-        self.assertEqual(cloud.closed, ["index"])
+        self.assertEqual(cloud.closed, ["search", "index"])
 
     def test_public_notebook_has_no_saved_outputs(self):
-        cells = notebook_cells()
-        self.assertTrue(cells)
-        for cell in cells:
+        notebook = nbformat.read(NOTEBOOK, as_version=4)
+        for cell in (cell for cell in notebook.cells if cell.cell_type == "code"):
             self.assertEqual(cell.outputs, [])
             self.assertIsNone(cell.execution_count)
             self.assertNotIn("execution", cell.metadata)
+        markdown = "\n".join(cell.source for cell in notebook.cells if cell.cell_type == "markdown")
+        text_blocks = re.findall(r"```text\n(.*?)```", markdown, re.S)
+        self.assertEqual(len(text_blocks), 1)
+        self.assertTrue(text_blocks[0].lstrip().startswith("python -m pip install"))
+        self.assertNotIn("| Mode |", markdown)
 
     def test_output_allowlist_rejects_secret_canaries(self):
         canaries = [
             "Authorization: Bearer synthetic-test-token",
             "api-key: TEST-ONLY-KEY-DO-NOT-USE",
-            "Paraphrase: 1 keyword results; ['travel'] sig=synthetic%2Fsignature&se=2030-01-01",
+            "Paraphrase keyword matches (up to 3): ['travel'] sig=synthetic%2Fsignature&se=2030-01-01",
             "Temporary index: embedding1-cookbook-000000000000 https://search.example.test",
             "Reported input tokens across all embedding requests: 148. /subscriptions/synthetic-placeholder",
         ]
@@ -481,19 +516,18 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
     def test_relevance_outcomes_are_informational(self):
         cloud = FakeCloud()
         cloud.keyword_override = [{"id": "unrelated"}]
-        cloud.vector_override = [{"id": "other", "title": "Another policy", "content": "Other text.", "@search.score": 0.4}]
+        cloud.vector_override = [{"id": "other", "policy_code": "ZZ-01", "title": "Another policy", "content": "Other text."}]
         cloud.hybrid_override = cloud.vector_override
         _, output = execute_offline(cloud)
-        self.assertIn("| Keyword | unrelated | unrelated |", output)
-        self.assertIn("Top paraphrase match: Another policy\nOther text.", output)
-        self.assertIn("| Hybrid | other | other |", output)
+        self.assertIn("  Keyword: unrelated\n  Vector: other\n  Hybrid: other", output)
+        self.assertIn("  ZZ-01: Another policy. Other text.", output)
         self.assertEqual(cloud.deleted, [cloud.created[0].name])
 
     def test_empty_vector_results_are_informational(self):
         cloud = FakeCloud()
         cloud.vector_override = []
         _, output = execute_offline(cloud)
-        self.assertIn("| Vector | (no match) | (no match) |", output)
+        self.assertEqual(output.count("  Vector: (no match)"), 2)
         self.assertEqual(cloud.deleted, [cloud.created[0].name])
 
     def test_inference_failure_stops_before_creating_an_index(self):
