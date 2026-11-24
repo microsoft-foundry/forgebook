@@ -268,7 +268,7 @@ with AzureCliCredential() as credential:
 
 Inspect the returned passages rather than assuming a particular rank. A match here shows how the integration handles one paraphrased question; it does not establish that the model is better than another model or that a traveler is entitled to reimbursement.
 
-One earlier live run of the same passages and query returned the results below. It recorded the top ID, but did not print the passage; the title and text shown here are reconstructed from the input corpus. The updated output and cleanup code have been checked offline, not rerun live.
+An end-to-end run against Azure Cosmos DB inference and Foundry IQ (Azure AI Search) printed the results below, including the top passage. The temporary index was deleted and verified absent after the run.
 
 ```text
 Embedded 6 passages and one query; vector dimensions: 1536.

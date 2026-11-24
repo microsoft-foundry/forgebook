@@ -236,7 +236,7 @@ search_endpoint <span class="token operator">=</span> os<span class="token punct
                 <span class="token keyword">raise</span> RuntimeError<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Could not delete </span><span class="token interpolation"><span class="token punctuation">{</span>index_name<span class="token punctuation">}</span></span><span class="token string">; verify ownership and delete manually."</span></span><span class="token punctuation">)</span> <span class="token keyword">from</span> exc
             <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Temporary index deleted."</span><span class="token punctuation">)</span></code></pre></div></div><div class="nb-cell nb-markdown-cell"><h2>Interpret and adapt</h2>
 <p>Inspect the returned passages rather than assuming a particular rank. A match here shows how the integration handles one paraphrased question; it does not establish that the model is better than another model or that a traveler is entitled to reimbursement.</p>
-<p>One earlier live run of the same passages and query returned the results below. It recorded the top ID, but did not print the passage; the title and text shown here are reconstructed from the input corpus. The updated output and cleanup code have been checked offline, not rerun live.</p>
+<p>An end-to-end run against Azure Cosmos DB inference and Foundry IQ (Azure AI Search) printed the results below, including the top passage. The temporary index was deleted and verified absent after the run.</p>
 <pre><code class="language-text">Embedded 6 passages and one query; vector dimensions: 1536.
 Reported input tokens: 148
 Keyword hits: 0
