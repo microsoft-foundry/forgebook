@@ -46,14 +46,15 @@ ALLOWED_OUTPUT_LINES = [
         r"\d+ uploaded; \d+ searchable\.",
         r"Embedded \d+ questions at \d+ dimensions\.",
         r"Reported input tokens across all embedding requests: \d+\.",
-        r"(?:Paraphrase|Policy code) (?:keyword matches \(up to 3\)|vector matches): \[(?:'[a-z]+'(?:, '[a-z]+')*)?\]",
+        r"(?:Paraphrase|Policy code) (?:keyword matches \(up to 3\)|vector matches): \[(?:'[A-Z]+-\d{2}'(?:, '[A-Z]+-\d{2}')*)?\]",
         r"Can I get reimbursed for a delayed flight\?",
-        r"Does TRV-18 cover hotel expenses after a delayed flight\?",
-        r"  (?:Keyword|Vector|Hybrid): (?:[a-z]+|\(no match\))",
+        r"Does trv-18 cover hotel expenses after a delayed flight\?",
+        r"  (?:Keyword|Vector|Hybrid): \[(?:'[A-Z]+-\d{2}'(?:, '[A-Z]+-\d{2}')*)?\]",
         r"  TRV-12: Travel disruption expenses\. When an air trip disruption leaves an employee stranded overnight, the company covers reasonable hotel and meal expenses\. Submit receipts to the travel team within 30 days\.",
         r"  TRV-18: Lost baggage\. Employees whose checked baggage is lost during business travel may claim essential replacement items with receipts\.",
+        r"  TRV-24: Changing a booking\. Use the booking portal to change an itinerary when a business meeting moves\. A manager must approve higher fares\.",
         r"Semantic ranking skipped \(opt-in\)\.",
-        r"(?:Paraphrase|Policy code) after semantic ranking: \[(?:'[a-z]+'(?:, '[a-z]+')*)?\]",
+        r"(?:Paraphrase|Policy code) after semantic ranking: \[(?:'[A-Z]+-\d{2}'(?:, '[A-Z]+-\d{2}')*)?\]",
         r"Temporary index deleted\.",
         r"Azure clients closed\.",
     )
@@ -362,8 +363,12 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         namespace, output = execute_offline(cloud)
 
         self.assertIn("Paraphrase keyword matches (up to 3): []", output)
-        self.assertIn("  Keyword: baggage\n  Vector: travel\n  Hybrid: baggage", output)
-        self.assertIn("  Keyword: (no match)\n  Vector: travel\n  Hybrid: travel", output)
+        self.assertIn(
+            "  Keyword: ['TRV-18']\n  Vector: ['TRV-12', 'TRV-18', 'TRV-24']\n"
+            "  Hybrid: ['TRV-18', 'TRV-12', 'TRV-24']",
+            output,
+        )
+        self.assertIn("  Keyword: []\n  Vector: ['TRV-12',", output)
         self.assertIn("TRV-12: Travel disruption expenses.", output)
         self.assertIn("TRV-18: Lost baggage.", output)
         self.assertIn(cloud.documents[0]["content"], output)
@@ -408,6 +413,7 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         self.assertEqual(fields["title"]["analyzer"], "en.microsoft")
         self.assertEqual(fields["content"]["analyzer"], "en.microsoft")
         self.assertEqual(fields["policy_code"]["analyzer"], "keyword")
+        self.assertTrue(fields["policy_code"]["filterable"])
         self.assertEqual(len(cloud.search_calls), 6)
         self.assertEqual(cloud.search_calls[0]["search_text"], namespace["queries"][0][1])
         self.assertNotIn("search_mode", cloud.search_calls[0])
@@ -415,7 +421,7 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         self.assertEqual(cloud.search_calls[1]["search_text"], '"TRV-18"')
         self.assertEqual(cloud.search_calls[1]["search_fields"], ["policy_code"])
         self.assertNotIn("TRV-18", cloud.embedding_calls[1]["inputs"][0]["content"])
-        self.assertIn("TRV-18", cloud.embedding_calls[-1]["inputs"][0]["content"])
+        self.assertIn("trv-18", cloud.embedding_calls[-1]["inputs"][0]["content"])
         self.assertNotIn("search_text", cloud.search_calls[2])
         vector_query = cloud.search_calls[2]["vector_queries"][0].as_dict()
         self.assertEqual(vector_query["fields"], "content_vector")
@@ -437,7 +443,7 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         namespace, output = execute_offline(cloud, semantic=True)
         self.assertEqual(len(cloud.search_calls), 8)
         self.assertIn("Paraphrase after semantic ranking:", output)
-        for (_, question, _), normal, semantic in zip(
+        for (_, question), normal, semantic in zip(
             namespace["queries"], cloud.search_calls[4:6], cloud.search_calls[6:]
         ):
             self.assertEqual(semantic["semantic_query"], question)
@@ -446,6 +452,14 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
                 {key: value for key, value in semantic.items() if not key.startswith("semantic_")},
                 normal,
             )
+
+    def test_keyword_input_extracts_complete_codes_and_normalizes_case(self):
+        lexical = load_definitions("keyword_args")["keyword_args"]
+        for question in ("Does trv-18 apply?", "Does TrV-18 apply?", "Does TRV-18 apply?"):
+            with self.subTest(question=question):
+                self.assertEqual(lexical(question), {"search_text": '"TRV-18"', "search_fields": ["policy_code"]})
+        question = "Which policy applies to TRV-180?"
+        self.assertEqual(lexical(question), {"search_text": question, "search_fields": ["title", "content"]})
 
     def test_missing_endpoint_fails_before_service_calls(self):
         cloud = FakeCloud()
@@ -488,7 +502,7 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         canaries = [
             "Authorization: Bearer synthetic-test-token",
             "api-key: TEST-ONLY-KEY-DO-NOT-USE",
-            "Paraphrase keyword matches (up to 3): ['travel'] sig=synthetic%2Fsignature&se=2030-01-01",
+            "Paraphrase keyword matches (up to 3): ['TRV-12'] sig=synthetic%2Fsignature&se=2030-01-01",
             "Temporary index: embedding1-cookbook-000000000000 https://search.example.test",
             "Reported input tokens across all embedding requests: 148. /subscriptions/synthetic-placeholder",
         ]
@@ -515,11 +529,11 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
 
     def test_relevance_outcomes_are_informational(self):
         cloud = FakeCloud()
-        cloud.keyword_override = [{"id": "unrelated"}]
+        cloud.keyword_override = [{"policy_code": "ZZ-02"}]
         cloud.vector_override = [{"id": "other", "policy_code": "ZZ-01", "title": "Another policy", "content": "Other text."}]
         cloud.hybrid_override = cloud.vector_override
         _, output = execute_offline(cloud)
-        self.assertIn("  Keyword: unrelated\n  Vector: other\n  Hybrid: other", output)
+        self.assertIn("  Keyword: ['ZZ-02']\n  Vector: ['ZZ-01']\n  Hybrid: ['ZZ-01']", output)
         self.assertIn("  ZZ-01: Another policy. Other text.", output)
         self.assertEqual(cloud.deleted, [cloud.created[0].name])
 
@@ -527,7 +541,7 @@ class EmbeddingSearchNotebookTests(unittest.TestCase):
         cloud = FakeCloud()
         cloud.vector_override = []
         _, output = execute_offline(cloud)
-        self.assertEqual(output.count("  Vector: (no match)"), 2)
+        self.assertEqual(output.count("  Vector: []"), 2)
         self.assertEqual(cloud.deleted, [cloud.created[0].name])
 
     def test_inference_failure_stops_before_creating_an_index(self):
