@@ -8,6 +8,7 @@ A question can name one policy but describe another. Use hybrid search to give b
 
 **Difficulty:** Intermediate. **Time:** Allow about 20–40 minutes for first-time setup and role propagation and about 5 minutes to run the notebook once resources are ready. **Cost:** Eight embedding requests and six Search queries, plus two Search queries if you enable the optional semantic ranker. See [model pricing](https://learn.microsoft.com/azure/cosmos-db/gen-ai/microsoft-embedding-1#pricing) and [Search pricing](https://azure.microsoft.com/pricing/details/search/). A paid Search service can accrue charges even when idle.
 
+**Recipe contact:** [@farzad528](https://github.com/farzad528)  
 **Last verified:** 2026-11-24
 
 ## Prerequisites
@@ -32,6 +33,7 @@ Run the numbered cells in order. A failure during setup or upload triggers clean
 ```python
 import math
 import os
+import re
 import time
 import uuid
 from contextlib import ExitStack, contextmanager
@@ -70,9 +72,10 @@ resources = ExitStack()
 def setup_step():
     try:
         yield
-    except BaseException as exc:
-        resources.__exit__(type(exc), exc, exc.__traceback__)
-        raise
+    except BaseException:
+        # Keep the setup error in the traceback if cleanup also fails.
+        with resources:
+            raise
 
 print(f"Configuration: {DIMENSIONS} dimensions; top {TOP_K} results.")
 ```
@@ -155,7 +158,7 @@ def make_index(name: str) -> SearchIndex:
         name=name,
         fields=[
             SimpleField(name="id", type=SearchFieldDataType.String, key=True),
-            SearchableField(name="policy_code", type=SearchFieldDataType.String, analyzer_name="keyword"),
+            SearchableField(name="policy_code", type=SearchFieldDataType.String, analyzer_name="keyword", filterable=True),
             SearchableField(name="title", type=SearchFieldDataType.String, analyzer_name=TEXT_ANALYZER),
             SearchableField(name="content", type=SearchFieldDataType.String, analyzer_name=TEXT_ANALYZER),
             SimpleField(name="embedding_model", type=SearchFieldDataType.String),
@@ -228,15 +231,15 @@ with setup_step():
 
 ## Step 4: Embed two questions
 
-Embed both questions with `kind="query"`. The first asks about delayed-flight reimbursement with no policy code; `TRV-12` covers it. The second explicitly asks about `TRV-18` (lost baggage), even though its hotel wording points to `TRV-12`. For that question, judge relevance by whether the search retrieves the named policy, not the policy that covers hotels.
+Embed both questions with `kind="query"`. The first is a paraphrase with no policy code. The second names `TRV-18` (lost baggage) but asks about hotel expenses. To ground an answer, look for `TRV-18` first and `TRV-12` (travel disruption expenses) anywhere in the top three.
 
 ```python
 queries = [
-    ("Paraphrase", "Can I get reimbursed for a delayed flight?", None),
-    ("Policy code", "Does TRV-18 cover hotel expenses after a delayed flight?", "TRV-18"),
+    ("Paraphrase", "Can I get reimbursed for a delayed flight?"),
+    ("Policy code", "Does trv-18 cover hotel expenses after a delayed flight?"),
 ]
 
-query_embeddings = {label: embed_text(inference, question, "query") for label, question, _ in queries}
+query_embeddings = {label: embed_text(inference, question, "query") for label, question in queries}
 token_counts = [tokens for _, tokens in passage_embeddings] + [tokens for _, tokens in query_embeddings.values()]
 print(f"Embedded {len(query_embeddings)} questions at {DIMENSIONS} dimensions.")
 if all(tokens is not None for tokens in token_counts):
@@ -247,79 +250,79 @@ else:
 
 ## Step 5a: Run keyword search
 
-Use the question for keyword search over the English text fields. If the application already knows a policy code, query that code in `policy_code` instead. Here the code is supplied with the sample question; a policy picker could provide it in an app. Keyword and hybrid search use the same lexical input.
+Look for the first policy code in the question. If found, search the `policy_code` field using its uppercase form, since the keyword analyzer preserves case. Otherwise, search the English text fields. Keyword and hybrid search use the same lexical input.
 
 ```python
-def keyword_args(question: str, code: str | None) -> dict:
-    if code:
+def keyword_args(question: str) -> dict:
+    match = re.search(r"\b[A-Z]{2,3}-\d{2}\b", question, flags=re.IGNORECASE | re.ASCII)
+    if match:
+        code = match.group().upper()
         return {"search_text": f'"{code}"', "search_fields": ["policy_code"]}
     return {"search_text": question, "search_fields": ["title", "content"]}
 
 keyword = {
-    label: list(search.search(**keyword_args(question, code), select=["id"], top=TOP_K))
-    for label, question, code in queries
+    label: list(search.search(**keyword_args(question), select=["policy_code"], top=TOP_K))
+    for label, question in queries
 }
 for label, hits in keyword.items():
-    print(f"{label} keyword matches (up to {TOP_K}): {[hit['id'] for hit in hits]}")
+    print(f"{label} keyword matches (up to {TOP_K}): {[hit['policy_code'] for hit in hits]}")
 ```
 
 ## Step 5b: Run vector search
 
-Use exhaustive cosine search for this tiny corpus. All vector and hybrid queries request the same number of vector candidates and display up to three hits. Compare IDs and ranks; don't compare scores across retrieval modes.
+Use exhaustive cosine search for this tiny corpus. All vector and hybrid queries request the same number of vector candidates and display up to three hits. Compare policy codes and ranks; don't compare scores across retrieval modes.
 
 ```python
 def vector_query(vector: list[float]) -> VectorizedQuery:
     return VectorizedQuery(vector=vector, fields="content_vector", k_nearest_neighbors=VECTOR_K, exhaustive=True)
 
 vector_hits = {}
-for label, _, _ in queries:
+for label, _ in queries:
     vector, _ = query_embeddings[label]
-    hits = list(search.search(vector_queries=[vector_query(vector)], select=["id"], top=TOP_K))
+    hits = list(search.search(vector_queries=[vector_query(vector)], select=["policy_code"], top=TOP_K))
     vector_hits[label] = hits
-    print(f"{label} vector matches: {[hit['id'] for hit in hits]}")
+    print(f"{label} vector matches: {[hit['policy_code'] for hit in hits]}")
 ```
 
 ## Step 5c: Run hybrid search
 
-Send the same lexical input and the same vector used in the baselines. [Reciprocal Rank Fusion (RRF)](https://learn.microsoft.com/azure/search/hybrid-search-ranking) can lift a policy that appears in both lists. Compare the top hits: does adding the lexical signal move the named lost-baggage policy above the hotel policy, while still finding the policy for the paraphrase? This comparison illustrates a ranking tradeoff, not a relevance benchmark.
+Send the same lexical input and vector used in the baselines. [Reciprocal Rank Fusion (RRF)](https://learn.microsoft.com/azure/search/hybrid-search-ranking) puts `TRV-18` first here because it's the only keyword match and all six policies are vector candidates, so only `TRV-18` scores in both lists. On a larger index, a policy outside the vector top `k` gets only its keyword contribution and isn't guaranteed that boost.
+
+In the live run, vector search ranked the hotel policy (`TRV-12`) first for the code question. Hybrid put the named baggage policy (`TRV-18`) first and kept `TRV-12` second, giving you both passages to explain which policy covers hotel expenses. Hybrid and vector search tied on the paraphrase. This two-query smoke test shows how the ranking changes, not how often hybrid improves relevance.
 
 ```python
-def hybrid_search(search, question: str, vector: list[float], *, code: str | None = None,
-                  semantic: bool = False) -> list[dict]:
-    options = keyword_args(question, code)
+def hybrid_search(search, question: str, vector: list[float], *, semantic: bool = False) -> list[dict]:
+    options = keyword_args(question)
     if semantic:
         options.update(semantic_query=question, semantic_configuration_name=SEMANTIC_CONFIG)
     return list(search.search(
         **options, vector_queries=[vector_query(vector)],
-        select=["id", "policy_code", "title", "content"], top=TOP_K,
+        select=["policy_code", "title", "content"], top=TOP_K,
     ))
 
 hybrid = {
-    label: hybrid_search(search, question, query_embeddings[label][0], code=code)
-    for label, question, code in queries
+    label: hybrid_search(search, question, query_embeddings[label][0])
+    for label, question in queries
 }
 
-for label, question, _ in queries:
+for label, question in queries:
     print(question)
     for mode, results in (("Keyword", keyword), ("Vector", vector_hits), ("Hybrid", hybrid)):
-        hits = results[label]
-        top_id = hits[0]["id"] if hits else "(no match)"
-        print(f"  {mode}: {top_id}")
-    if hybrid[label]:
-        hit = hybrid[label][0]
+        print(f"  {mode}: {[hit['policy_code'] for hit in results[label]]}")
+    for hit in hybrid[label]:
         print(f"  {hit['policy_code']}: {hit['title']}. {hit['content']}")
 ```
 
 ## Step 5d: Optionally add semantic ranking
 
-Set `RUN_SEMANTIC_RANKER=1` before starting the kernel only if semantic ranking is already enabled and you're comfortable with its [separate billing](https://learn.microsoft.com/azure/search/semantic-how-to-enable-disable). Both hybrid calls use the same candidate settings, including the [recommended 50 vector candidates](https://learn.microsoft.com/azure/search/hybrid-search-how-to-query) for semantic ranking. The `semantic_query` adds the original question for reranking without changing the keyword or vector inputs. Reranking can move a different policy ahead of the code match; use a filter if that match is required.
+Set `RUN_SEMANTIC_RANKER=1` before starting the kernel only if semantic ranking is already enabled and you're comfortable with its [separate billing](https://learn.microsoft.com/azure/search/semantic-how-to-enable-disable). Both hybrid calls use the same candidate settings, including the [recommended 50 vector candidates](https://learn.microsoft.com/azure/search/hybrid-search-how-to-query) for semantic ranking. The `semantic_query` adds the original question for reranking without changing the keyword or vector inputs. In this run, reranking moved `TRV-12` back to first for the code question. Use an equality filter when the named policy is the only eligible result.
 
 ```python
 if RUN_SEMANTIC:
-    for label, question, code in queries:
+    for label, question in queries:
         vector, _ = query_embeddings[label]
-        reranked = hybrid_search(search, question, vector, code=code, semantic=True)
-        print(f"{label} after semantic ranking: {[hit['id'] for hit in reranked]}")
+        reranked = hybrid_search(search, question, vector, semantic=True)
+        print(f"{label} after semantic ranking: {[hit['policy_code'] for hit in reranked]}")
 else:
     print("Semantic ranking skipped (opt-in).")
 ```
@@ -340,10 +343,12 @@ Reuse `embed_text`, `keyword_args`, `vector_query`, and `hybrid_search` with the
 | Sample choice | Change for your application |
 | --- | --- |
 | Six fictional policies | Chunk your documents. Inputs over 8,192 tokens can be truncated. Re-embed when text changes. |
-| English analyzer and separate policy codes | Pick the language analyzer for your corpus. Pass a known code as the lexical input. For mandatory exact matches, make the code field filterable and use an equality filter; hybrid ranks matches but doesn't restrict the result set. |
+| English analyzer and separate policy codes | Pick the language analyzer and code pattern for your corpus. Use the code as a lexical signal when you want related policies to remain eligible. |
 | 1,536-dimensional float32 vectors | For this model, [`Collection(Edm.Half)`](https://learn.microsoft.com/azure/search/vector-search-how-to-assign-narrow-data-types) halves raw bytes per vector, not total index size. The [model produces float16 values natively](https://learn.microsoft.com/azure/cosmos-db/gen-ai/microsoft-embedding-1), so casting the widened float32 values back to float16 doesn't lose precision. |
 | Exhaustive search, three displayed results | Measure approximate HNSW recall against exhaustive search on a labeled sample. Tune candidate count and query latency separately from the number of hits you display. |
 | CLI identity for a local notebook | Use an explicitly configured managed identity in Azure and assign the same scoped roles. |
+
+If only the named policy is eligible, pass `filter="policy_code eq 'TRV-18'"` to `search.search()`. The filter excludes other policies, including `TRV-12`; use hybrid without the filter when you want both passages for grounding.
 
 For larger corpora, bound concurrent embedding requests, respect `Retry-After`, and use [bounded Search upload batches](https://learn.microsoft.com/azure/search/search-how-to-large-index). Measure recall at your chosen `k`, latency, and total cost on labeled questions before deploying. For images or multi-vector output, see the [model documentation](https://learn.microsoft.com/azure/cosmos-db/gen-ai/microsoft-embedding-1); this recipe is text-only.
 
